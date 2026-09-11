@@ -111,12 +111,13 @@ INSERT INTO `homestays` (`id`, `name`, `description`, `price`, `old_price`, `loc
 (10, 'Sunset Cliff Villa Nha Trang', 'Biệt thự vách đá nhìn thẳng ra biển xanh Nha Trang. Trang bị phòng xông hơi, bàn bida, rạp chiếu phim mini cho chuyến đi đáng nhớ.', 4200000.00, 5000000.00, 5, 1, 4.90, 45, 12, 6, 5, 0, 1, 1);
 
 -- =====================================================
--- 6. SEED HOMESTAY IMAGES (Thư viện hình ảnh sắc nét)
+-- 6. SEED HOMESTAY IMAGES (Thư viện nhiều hình ảnh sắc nét cho từng homestay)
 -- =====================================================
 INSERT INTO `homestay_images` (`homestay_id`, `image_url`, `is_primary`, `sort_order`) VALUES
 (1, 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80', 1, 1),
 (1, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 2),
 (1, 'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?auto=format&fit=crop&w=900&q=80', 0, 3),
+(1, 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80', 0, 4),
 
 (2, 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80', 1, 1),
 (2, 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80', 0, 2),
@@ -128,19 +129,31 @@ INSERT INTO `homestay_images` (`homestay_id`, `image_url`, `is_primary`, `sort_o
 
 (4, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80', 1, 1),
 (4, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80', 0, 2),
+(4, 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80', 0, 3),
 
 (5, 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80', 1, 1),
 (5, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 2),
+(5, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80', 0, 3),
 
 (6, 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=900&q=80', 1, 1),
 (6, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80', 0, 2),
+(6, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 3),
 
 (7, 'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=900&q=80', 1, 1),
 (7, 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80', 0, 2),
+(7, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80', 0, 3),
 
 (8, 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80', 1, 1),
+(8, 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80', 0, 2),
+(8, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 3),
+
 (9, 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=900&q=80', 1, 1),
-(10, 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80', 1, 1);
+(9, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80', 0, 2),
+(9, 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=900&q=80', 0, 3),
+
+(10, 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80', 1, 1),
+(10, 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=900&q=80', 0, 2),
+(10, 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=900&q=80', 0, 3);
 
 -- =====================================================
 -- 7. SEED HOMESTAY AMENITIES (Liên kết tiện nghi)

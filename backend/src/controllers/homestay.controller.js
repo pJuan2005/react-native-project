@@ -28,11 +28,11 @@ const getHomestays = async (req, res) => {
       ORDER BY h.created_at DESC
     `);
 
-    // Get images for each homestay
+    // Get ALL images for each homestay ordered by primary first, then sort_order
     const [images] = await pool.query(`
       SELECT homestay_id, image_url
       FROM homestay_images
-      WHERE is_primary = 1
+      ORDER BY is_primary DESC, sort_order ASC
     `);
 
     // Get amenities for each homestay
@@ -70,7 +70,9 @@ const getHomestays = async (req, res) => {
       bedrooms: row.bedrooms,
       bathrooms: row.bathrooms,
       amenities: amenityMap[row.id] || [],
-      images: imageMap[row.id] || [],
+      images: imageMap[row.id] && imageMap[row.id].length > 0
+        ? imageMap[row.id]
+        : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'],
       description: row.description || '',
       isNew: !!row.is_new,
       isFeatured: !!row.is_featured,
@@ -118,7 +120,7 @@ const getHomestayById = async (req, res) => {
 
     const row = rows[0];
 
-    // Get ALL images for this homestay
+    // Get ALL images for this homestay (up to all galleries)
     const [images] = await pool.query(`
       SELECT image_url
       FROM homestay_images
@@ -149,7 +151,9 @@ const getHomestayById = async (req, res) => {
       bedrooms: row.bedrooms,
       bathrooms: row.bathrooms,
       amenities: amenities.map(a => a.name),
-      images: images.map(i => i.image_url),
+      images: images.length > 0
+        ? images.map(i => i.image_url)
+        : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'],
       isNew: !!row.is_new,
       isFeatured: !!row.is_featured,
     };

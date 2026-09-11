@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Modal,
   Pressable,
   SafeAreaView,
@@ -18,6 +19,7 @@ import {
 } from 'react-native';
 import API_BASE_URL from '@/src/config/api';
 
+const { width } = Dimensions.get('window');
 const DAYS_OF_WEEK = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
 export default function HomestayDetail() {
@@ -37,6 +39,7 @@ export default function HomestayDetail() {
   // Modals
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showVoucherModal, setShowVoucherModal] = useState(false);
+  const [showFullscreenGallery, setShowFullscreenGallery] = useState(false);
   const [promoInput, setPromoInput] = useState('');
   const [pickerMonth, setPickerMonth] = useState(new Date(2026, 8, 1)); // Tháng 9, 2026
 
@@ -93,6 +96,13 @@ export default function HomestayDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const imagesList = useMemo(() => {
+    if (homestay && homestay.images && homestay.images.length > 0) {
+      return homestay.images;
+    }
+    return ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'];
+  }, [homestay]);
+
   // Calculations
   const nights = useMemo(() => {
     if (!checkIn || !checkOut) return 0;
@@ -124,7 +134,6 @@ export default function HomestayDetail() {
 
     const generatedCode = `BK${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // Add to global booking context
     addToBooking(homestay, {
       checkIn,
       checkOut,
@@ -135,7 +144,6 @@ export default function HomestayDetail() {
       discountAmount: discountAmount > 0 ? discountAmount : undefined,
     });
 
-    // Open Banking-style Success Confirmation Receipt Screen
     setBookingSuccessData({
       bookingCode: generatedCode,
       homestayName: homestay.name,
@@ -162,6 +170,14 @@ export default function HomestayDetail() {
     }
   };
 
+  const prevImage = () => {
+    setCurrentImage((prev) => (prev > 0 ? prev - 1 : imagesList.length - 1));
+  };
+
+  const nextImage = () => {
+    setCurrentImage((prev) => (prev < imagesList.length - 1 ? prev + 1 : 0));
+  };
+
   // Calendar Day Click Logic
   const handleDayPress = (dateStr: string) => {
     if (!checkIn || (checkIn && checkOut)) {
@@ -177,7 +193,6 @@ export default function HomestayDetail() {
     }
   };
 
-  // Quick Date Presets
   const setQuickPreset = (type: 'tonight' | 'weekend' | '3days') => {
     const today = new Date();
     const formatDateStr = (d: Date) => d.toISOString().split('T')[0];
@@ -224,7 +239,6 @@ export default function HomestayDetail() {
     }
   };
 
-  // Calendar Grid Days Calculation
   const calendarDays = useMemo(() => {
     const year = pickerMonth.getFullYear();
     const month = pickerMonth.getMonth();
@@ -233,12 +247,10 @@ export default function HomestayDetail() {
 
     const days: { dateStr: string; dayNum: number; isCurrentMonth: boolean }[] = [];
 
-    // Empty cells before start of month
     for (let i = 0; i < firstDayIndex; i++) {
       days.push({ dateStr: `empty_${i}`, dayNum: 0, isCurrentMonth: false });
     }
 
-    // Days in month
     for (let d = 1; d <= totalDays; d++) {
       const mStr = (month + 1).toString().padStart(2, '0');
       const dStr = d.toString().padStart(2, '0');
@@ -261,7 +273,7 @@ export default function HomestayDetail() {
           <View style={s.icon} />
         </View>
         <View style={s.center}>
-          <ActivityIndicator size="large" color="#2563EB" />
+          <ActivityIndicator size="large" color="#0284C7" />
           <Text style={s.centerText}>Đang tải...</Text>
         </View>
       </SafeAreaView>
@@ -290,30 +302,89 @@ export default function HomestayDetail() {
   return (
     <SafeAreaView style={s.screen}>
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.icon}><Ionicons name="arrow-back" size={23} color="#0F172A" /></Pressable>
+        <Pressable onPress={() => router.back()} style={s.icon} hitSlop={8}>
+          <Ionicons name="arrow-back" size={22} color="#0F172A" />
+        </Pressable>
         <Text style={s.headerTitle}>Chi tiết homestay</Text>
-        <Pressable onPress={() => router.push('/bookings')} style={s.icon}><Ionicons name="calendar-outline" size={23} color="#0F172A" /></Pressable>
+        <Pressable onPress={() => router.push('/bookings')} style={s.icon} hitSlop={8}>
+          <Ionicons name="cart-outline" size={22} color="#0284C7" />
+        </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-        {/* Photo Carousel */}
+        {/* INTERACTIVE MULTI-IMAGE CAROUSEL VIEWER */}
         <View style={s.imageContainer}>
-          <ProductImage uri={homestay.images[currentImage]} style={s.image} containerStyle={s.image} />
-          {homestay.images.length > 1 && (
-            <View style={s.imageDots}>
-              {homestay.images.map((_, i) => (
-                <View key={i} style={[s.dot, i === currentImage && s.dotActive]} />
-              ))}
-            </View>
+          <Pressable
+            style={{ width: '100%', height: '100%' }}
+            onPress={() => setShowFullscreenGallery(true)}
+          >
+            <ProductImage
+              uri={imagesList[currentImage]}
+              style={s.image}
+              containerStyle={s.image}
+            />
+          </Pressable>
+
+          {/* Left Navigation Arrow */}
+          {imagesList.length > 1 && (
+            <Pressable style={[s.navArrow, s.navArrowLeft]} onPress={prevImage} hitSlop={8}>
+              <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
+            </Pressable>
           )}
+
+          {/* Right Navigation Arrow */}
+          {imagesList.length > 1 && (
+            <Pressable style={[s.navArrow, s.navArrowRight]} onPress={nextImage} hitSlop={8}>
+              <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+            </Pressable>
+          )}
+
+          {/* Image Counter Badge */}
+          <View style={s.imageCounterBadge}>
+            <Ionicons name="images" size={12} color="#FFFFFF" />
+            <Text style={s.imageCounterText}>
+              {currentImage + 1} / {imagesList.length} ảnh
+            </Text>
+          </View>
+
+          {/* Tap to Fullscreen View hint */}
+          <Pressable
+            style={s.expandIconBtn}
+            onPress={() => setShowFullscreenGallery(true)}
+            hitSlop={6}
+          >
+            <Ionicons name="expand" size={14} color="#FFFFFF" />
+          </Pressable>
         </View>
+
+        {/* THUMBNAIL STRIP (Bấm để chuyển ảnh ngay) */}
+        {imagesList.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.thumbList}
+          >
+            {imagesList.map((imgUrl, idx) => (
+              <Pressable
+                key={idx}
+                style={[
+                  s.thumbWrapper,
+                  currentImage === idx && s.thumbWrapperActive,
+                ]}
+                onPress={() => setCurrentImage(idx)}
+              >
+                <ProductImage uri={imgUrl} style={s.thumbImg} containerStyle={s.thumbImg} />
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
 
         {/* Title & Ratings */}
         <Text style={s.name}>{homestay.name}</Text>
         <View style={s.rating}>
           <Ionicons name="star" size={16} color="#F59E0B" />
           <Text style={s.ratingText}>{homestay.rating} ({homestay.reviewCount} đánh giá)</Text>
-          <Text style={s.locationText}>📍 {homestay.location} • {homestay.type}</Text>
+          <Text style={s.locationText}>📍 by {homestay.location} • {homestay.type}</Text>
         </View>
 
         <View style={s.priceRow}>
@@ -335,7 +406,7 @@ export default function HomestayDetail() {
           <View style={s.amenitiesGrid}>
             {homestay.amenities.map((a, i) => (
               <View key={i} style={s.amenityItem}>
-                <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+                <Ionicons name="checkmark-circle" size={18} color="#0284C7" />
                 <Text style={s.amenityText}>{a}</Text>
               </View>
             ))}
@@ -358,7 +429,7 @@ export default function HomestayDetail() {
         {/* Interactive Date Picker Field */}
         <View style={s.dateRow}>
           <Pressable style={s.dateField} onPress={() => setShowDatePicker(true)}>
-            <Ionicons name="calendar" size={18} color="#2563EB" />
+            <Ionicons name="calendar" size={18} color="#0284C7" />
             <View>
               <Text style={s.dateLabel}>Nhận phòng</Text>
               <Text style={s.dateValue}>{checkIn || 'Chọn ngày'}</Text>
@@ -366,7 +437,7 @@ export default function HomestayDetail() {
           </Pressable>
 
           <Pressable style={s.dateField} onPress={() => setShowDatePicker(true)}>
-            <Ionicons name="calendar-outline" size={18} color="#2563EB" />
+            <Ionicons name="calendar-outline" size={18} color="#0284C7" />
             <View>
               <Text style={s.dateLabel}>Trả phòng</Text>
               <Text style={s.dateValue}>{checkOut || 'Chọn ngày'}</Text>
@@ -379,11 +450,11 @@ export default function HomestayDetail() {
           <Text style={s.quantityLabel}>Số lượng khách</Text>
           <View style={s.stepper}>
             <Pressable style={s.step} onPress={() => setGuests(Math.max(1, guests - 1))}>
-              <Ionicons name="remove" size={18} color="#2563EB" />
+              <Ionicons name="remove" size={18} color="#0284C7" />
             </Pressable>
             <Text style={s.quantityValue}>{guests} người</Text>
             <Pressable style={s.step} onPress={() => setGuests(Math.min(homestay.maxGuests, guests + 1))}>
-              <Ionicons name="add" size={18} color="#2563EB" />
+              <Ionicons name="add" size={18} color="#0284C7" />
             </Pressable>
           </View>
         </View>
@@ -392,7 +463,7 @@ export default function HomestayDetail() {
         <Text style={s.section}>Mã giảm giá / Voucher</Text>
         <Pressable style={s.voucherCard} onPress={() => setShowVoucherModal(true)}>
           <View style={s.voucherLeft}>
-            <Ionicons name="ticket-outline" size={20} color="#2563EB" />
+            <Ionicons name="ticket-outline" size={20} color="#0284C7" />
             <View>
               <Text style={s.voucherTitle}>
                 {selectedVoucher ? selectedVoucher.title : 'Chọn hoặc nhập mã Voucher'}
@@ -435,7 +506,7 @@ export default function HomestayDetail() {
             style={[s.saveButton, isSaved && s.saveButtonSaved]}
             onPress={toggleFavorite}
           >
-            <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#EF4444' : '#2563EB'} />
+            <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#EF4444' : '#0284C7'} />
             <Text style={[s.saveText, isSaved && s.saveTextSaved]}>{isSaved ? 'Đã lưu' : 'Lưu'}</Text>
           </Pressable>
 
@@ -597,7 +668,7 @@ export default function HomestayDetail() {
                     }}
                   >
                     <View style={s.voucherIconBox}>
-                      <Ionicons name={(v.icon as any) || 'ticket-outline'} size={22} color="#2563EB" />
+                      <Ionicons name={(v.icon as any) || 'ticket-outline'} size={22} color="#0284C7" />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={s.voucherItemTitle}>{v.title}</Text>
@@ -615,7 +686,74 @@ export default function HomestayDetail() {
         </Pressable>
       </Modal>
 
-      {/* MODAL 3: BANK-STYLE SUCCESS CONFIRMATION RECEIPT */}
+      {/* MODAL 3: FULLSCREEN IMAGE GALLERY MODAL */}
+      <Modal
+        visible={showFullscreenGallery}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowFullscreenGallery(false)}
+      >
+        <View style={s.fullscreenOverlay}>
+          {/* Header */}
+          <View style={s.fullscreenHeader}>
+            <Text style={s.fullscreenTitle}>
+              {homestay.name} ({currentImage + 1}/{imagesList.length})
+            </Text>
+            <Pressable
+              style={s.closeFullscreenBtn}
+              onPress={() => setShowFullscreenGallery(false)}
+              hitSlop={8}
+            >
+              <Ionicons name="close" size={24} color="#FFFFFF" />
+            </Pressable>
+          </View>
+
+          {/* Main Fullscreen Image */}
+          <View style={s.fullscreenImageBox}>
+            <ProductImage
+              uri={imagesList[currentImage]}
+              style={s.fullscreenImage}
+              containerStyle={s.fullscreenImage}
+            />
+
+            {/* Left Nav */}
+            {imagesList.length > 1 && (
+              <Pressable style={[s.fullNavBtn, s.fullNavLeft]} onPress={prevImage} hitSlop={10}>
+                <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
+              </Pressable>
+            )}
+
+            {/* Right Nav */}
+            {imagesList.length > 1 && (
+              <Pressable style={[s.fullNavBtn, s.fullNavRight]} onPress={nextImage} hitSlop={10}>
+                <Ionicons name="chevron-forward" size={28} color="#FFFFFF" />
+              </Pressable>
+            )}
+          </View>
+
+          {/* Bottom Thumbnails Strip in Fullscreen */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.fullscreenThumbList}
+          >
+            {imagesList.map((imgUrl, idx) => (
+              <Pressable
+                key={idx}
+                style={[
+                  s.fullThumbWrapper,
+                  currentImage === idx && s.fullThumbWrapperActive,
+                ]}
+                onPress={() => setCurrentImage(idx)}
+              >
+                <ProductImage uri={imgUrl} style={s.fullThumbImg} containerStyle={s.fullThumbImg} />
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      </Modal>
+
+      {/* MODAL 4: BANK-STYLE SUCCESS CONFIRMATION RECEIPT */}
       <Modal
         visible={!!bookingSuccessData}
         transparent
@@ -677,7 +815,7 @@ export default function HomestayDetail() {
                   router.push('/bookings');
                 }}
               >
-                <Ionicons name="calendar-outline" size={18} color="#FFFFFF" />
+                <Ionicons name="cart-outline" size={18} color="#FFFFFF" />
                 <Text style={s.bankViewBookingsText}>Xem đặt phòng của tôi</Text>
               </Pressable>
 
@@ -688,7 +826,7 @@ export default function HomestayDetail() {
                   router.push('/');
                 }}
               >
-                <Ionicons name="home-outline" size={17} color="#2563EB" />
+                <Ionicons name="home-outline" size={17} color="#0369A1" />
                 <Text style={s.bankHomeText}>Về trang chủ</Text>
               </Pressable>
             </View>
@@ -755,37 +893,96 @@ function ReceiptLine({
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: { padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
-  icon: { padding: 6 },
-  content: { padding: 16, paddingTop: 4, paddingBottom: 110 },
+  screen: { flex: 1, backgroundColor: '#F0F9FF' },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderColor: '#E0F2FE',
+  },
+  headerTitle: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
+  icon: { padding: 4 },
+  content: { padding: 16, paddingTop: 8, paddingBottom: 110 },
+  // Image Box
   imageContainer: {
     position: 'relative',
     height: 240,
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#E0F2FE',
+    borderWidth: 1.5,
+    borderColor: '#BAE6FD',
   },
   image: { height: 240, width: '100%' },
-  imageDots: {
+  navArrow: {
     position: 'absolute',
-    bottom: 12,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
+    top: '50%',
+    marginTop: -18,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
   },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
-  dotActive: { backgroundColor: '#FFF', width: 16 },
-  name: { marginTop: 14, fontSize: 20, fontWeight: '700', color: '#0F172A' },
-  rating: { flexDirection: 'row', gap: 4, alignItems: 'center', marginTop: 6, flexWrap: 'wrap' },
-  ratingText: { fontSize: 13, color: '#475569', fontWeight: '600' },
+  navArrowLeft: { left: 10 },
+  navArrowRight: { right: 10 },
+  imageCounterBadge: {
+    position: 'absolute',
+    bottom: 10,
+    left: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  imageCounterText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
+  expandIconBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Thumbnails Strip
+  thumbList: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  thumbWrapper: {
+    width: 60,
+    height: 48,
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+  },
+  thumbWrapperActive: {
+    borderColor: '#0284C7',
+    borderWidth: 2.5,
+  },
+  thumbImg: { width: '100%', height: '100%' },
+  name: { marginTop: 12, fontSize: 19, fontWeight: '800', color: '#0F172A' },
+  rating: { flexDirection: 'row', gap: 4, alignItems: 'center', marginTop: 5, flexWrap: 'wrap' },
+  ratingText: { fontSize: 12, color: '#475569', fontWeight: '600' },
   locationText: { marginLeft: 6, fontSize: 12, color: '#64748B' },
   priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 8 },
-  price: { fontSize: 20, fontWeight: '800', color: '#2D6A4F' },
+  price: { fontSize: 20, fontWeight: '800', color: '#0369A1' },
   perNight: { fontSize: 13, fontWeight: '400', color: '#64748B' },
   oldPrice: { fontSize: 13, color: '#94A3B8', textDecorationLine: 'line-through' },
   sale: {
@@ -799,22 +996,22 @@ const s = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  section: { fontSize: 15, fontWeight: '800', color: '#111827', marginTop: 18, marginBottom: 8 },
-  description: { fontSize: 13, lineHeight: 20, color: '#4B5563' },
-  more: { marginTop: 4, color: '#4EBA87', fontWeight: '700', fontSize: 12 },
+  section: { fontSize: 15, fontWeight: '800', color: '#0F172A', marginTop: 16, marginBottom: 8 },
+  description: { fontSize: 13, lineHeight: 20, color: '#475569' },
+  more: { marginTop: 4, color: '#0284C7', fontWeight: '700', fontSize: 12 },
   amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   amenityItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#FFFFFF',
     padding: 8,
-    borderRadius: 8,
+    borderRadius: 10,
     width: '48.5%',
-    borderWidth: 1,
-    borderColor: '#D8F3DC',
+    borderWidth: 1.5,
+    borderColor: '#E0F2FE',
   },
-  amenityText: { fontSize: 12, color: '#1E293B' },
+  amenityText: { fontSize: 12, color: '#1E293B', fontWeight: '500' },
   noAmenities: { fontSize: 13, color: '#94A3B8' },
   info: { paddingVertical: 8, borderBottomWidth: 1, borderColor: '#F1F5F9', flexDirection: 'row', justifyContent: 'space-between' },
   infoLabel: { color: '#64748B', fontSize: 12 },
@@ -824,17 +1021,17 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
     borderWidth: 1.5,
-    borderColor: '#4EBA87',
+    borderColor: '#0284C7',
     borderRadius: 14,
     padding: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  dateLabel: { fontSize: 11, color: '#2D6A4F', fontWeight: '600' },
-  dateValue: { fontSize: 13, fontWeight: '700', color: '#111827', marginTop: 2 },
+  dateLabel: { fontSize: 11, color: '#0369A1', fontWeight: '600' },
+  dateValue: { fontSize: 13, fontWeight: '700', color: '#0F172A', marginTop: 2 },
   quantity: { marginTop: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  quantityLabel: { fontSize: 14, fontWeight: '700', color: '#111827' },
+  quantityLabel: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   step: {
     width: 32,
@@ -842,13 +1039,13 @@ const s = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
   },
-  quantityValue: { fontSize: 14, fontWeight: '700', color: '#111827', minWidth: 50, textAlign: 'center' },
+  quantityValue: { fontSize: 14, fontWeight: '700', color: '#0F172A', minWidth: 50, textAlign: 'center' },
   voucherCard: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#D8F3DC',
+    borderColor: '#BAE6FD',
     borderRadius: 14,
     padding: 12,
     flexDirection: 'row',
@@ -856,21 +1053,21 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
   },
   voucherLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  voucherTitle: { fontSize: 13, fontWeight: '700', color: '#111827' },
-  voucherSubtitle: { fontSize: 11, color: '#4EBA87', marginTop: 2, fontWeight: '600' },
-  priceSummary: { marginTop: 14, padding: 12, backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: '#E8F5E9' },
+  voucherTitle: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
+  voucherSubtitle: { fontSize: 11, color: '#0284C7', marginTop: 2, fontWeight: '600' },
+  priceSummary: { marginTop: 14, padding: 12, backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1.5, borderColor: '#E0F2FE' },
   line: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
   lineLabel: { color: '#64748B', fontSize: 12 },
   lineValue: { fontWeight: '600', color: '#1E293B', fontSize: 13 },
   total: { borderTopWidth: 1, borderColor: '#F1F5F9', marginTop: 6, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel: { fontSize: 14, fontWeight: '800', color: '#111827' },
-  totalValue: { fontSize: 17, fontWeight: '800', color: '#2D6A4F' },
+  totalLabel: { fontSize: 14, fontWeight: '800', color: '#0F172A' },
+  totalValue: { fontSize: 17, fontWeight: '800', color: '#0369A1' },
   rewardNotice: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, backgroundColor: '#FEF3C7', padding: 6, borderRadius: 6 },
   rewardNoticeText: { fontSize: 11, color: '#92400E', fontWeight: '600' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
   centerText: { marginTop: 12, fontSize: 14, color: '#64748B' },
   centerTitle: { marginTop: 12, fontSize: 15, fontWeight: '600', color: '#334155', textAlign: 'center' },
-  retryBtn: { marginTop: 14, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: '#4EBA87' },
+  retryBtn: { marginTop: 14, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: '#0284C7' },
   retryText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
   actions: { flexDirection: 'row', gap: 10, marginTop: 18 },
   saveButton: {
@@ -879,17 +1076,17 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 13,
     borderRadius: 25,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
     flexDirection: 'row',
     gap: 6,
     borderWidth: 1.5,
-    borderColor: '#4EBA87',
+    borderColor: '#0284C7',
   },
   saveButtonSaved: {
     backgroundColor: '#FEF2F2',
     borderColor: '#FECACA',
   },
-  saveText: { fontWeight: '700', color: '#2D6A4F', fontSize: 13 },
+  saveText: { fontWeight: '700', color: '#0369A1', fontSize: 13 },
   saveTextSaved: { color: '#DC2626' },
   bookButton: {
     flex: 2,
@@ -897,12 +1094,17 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 13,
     borderRadius: 25,
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
     flexDirection: 'row',
     gap: 6,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   bookText: { fontWeight: '700', color: '#FFF', fontSize: 14 },
-  // Calendar Modal Styles
+  // Calendar Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.5)',
@@ -924,12 +1126,12 @@ const s = StyleSheet.create({
   modalHeaderTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
   presetsRow: { flexDirection: 'row', gap: 6, marginBottom: 12 },
   presetChip: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
   },
-  presetChipText: { fontSize: 11, color: '#2D6A4F', fontWeight: '700' },
+  presetChipText: { fontSize: 11, color: '#0369A1', fontWeight: '700' },
   monthNav: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -960,14 +1162,14 @@ const s = StyleSheet.create({
     marginVertical: 2,
   },
   cellInRange: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
   },
   cellSelected: {
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
     borderRadius: 19,
   },
   calendarDayText: { fontSize: 13, color: '#1E293B', fontWeight: '500' },
-  textInRange: { color: '#2D6A4F', fontWeight: '700' },
+  textInRange: { color: '#0369A1', fontWeight: '700' },
   textSelected: { color: '#FFFFFF', fontWeight: '700' },
   dateSummaryRow: {
     marginTop: 14,
@@ -980,13 +1182,13 @@ const s = StyleSheet.create({
   },
   dateSummaryText: { fontSize: 12, color: '#334155', fontWeight: '600', flex: 1 },
   confirmDateBtn: {
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 16,
   },
   confirmDateText: { color: '#FFF', fontWeight: '700', fontSize: 12 },
-  // Voucher Modal Styles
+  // Voucher Modal
   promoInputRow: {
     flexDirection: 'row',
     gap: 8,
@@ -996,14 +1198,14 @@ const s = StyleSheet.create({
     flex: 1,
     height: 40,
     borderWidth: 1.5,
-    borderColor: '#4EBA87',
+    borderColor: '#0284C7',
     borderRadius: 20,
     paddingHorizontal: 12,
     fontSize: 12,
     color: '#0F172A',
   },
   promoApplyBtn: {
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
     paddingHorizontal: 14,
     borderRadius: 20,
     alignItems: 'center',
@@ -1018,19 +1220,19 @@ const s = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E8F5E9',
+    borderColor: '#E0F2FE',
     marginBottom: 8,
     backgroundColor: '#FFFFFF',
   },
   voucherItemSelected: {
-    borderColor: '#4EBA87',
-    backgroundColor: '#E8F5E9',
+    borderColor: '#0284C7',
+    backgroundColor: '#F0F9FF',
   },
   voucherIconBox: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1047,8 +1249,77 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   selectRadioActive: {
-    backgroundColor: '#4EBA87',
-    borderColor: '#4EBA87',
+    backgroundColor: '#0284C7',
+    borderColor: '#0284C7',
+  },
+  // Fullscreen Image Gallery Modal
+  fullscreenOverlay: {
+    flex: 1,
+    backgroundColor: '#000000',
+    justifyContent: 'space-between',
+    paddingVertical: 40,
+    paddingHorizontal: 16,
+  },
+  fullscreenHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  fullscreenTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    flex: 1,
+  },
+  closeFullscreenBtn: {
+    padding: 6,
+  },
+  fullscreenImageBox: {
+    width: '100%',
+    height: 320,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  fullNavBtn: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -22,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullNavLeft: { left: 8 },
+  fullNavRight: { right: 8 },
+  fullscreenThumbList: {
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  fullThumbWrapper: {
+    width: 64,
+    height: 52,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#475569',
+  },
+  fullThumbWrapperActive: {
+    borderColor: '#38BDF8',
+    borderWidth: 2.5,
+  },
+  fullThumbImg: {
+    width: '100%',
+    height: '100%',
   },
   // Bank Success Receipt Styles
   bankSuccessOverlay: {
@@ -1130,12 +1401,12 @@ const s = StyleSheet.create({
   },
   receiptBox: {
     width: '100%',
-    backgroundColor: '#F8FAF8',
+    backgroundColor: '#F8FAFC',
     borderRadius: 14,
     padding: 12,
     marginTop: 12,
     borderWidth: 1,
-    borderColor: '#E8F5E9',
+    borderColor: '#E2E8F0',
     gap: 8,
   },
   receiptLine: {
@@ -1158,7 +1429,7 @@ const s = StyleSheet.create({
   },
   receiptCode: {
     fontFamily: 'monospace',
-    color: '#2D6A4F',
+    color: '#0369A1',
     fontWeight: '700',
   },
   bankActions: {
@@ -1168,7 +1439,7 @@ const s = StyleSheet.create({
   },
   bankViewBookingsBtn: {
     width: '100%',
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
     paddingVertical: 12,
     borderRadius: 22,
     flexDirection: 'row',
@@ -1183,7 +1454,7 @@ const s = StyleSheet.create({
   },
   bankHomeBtn: {
     width: '100%',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
     paddingVertical: 11,
     borderRadius: 22,
     flexDirection: 'row',
@@ -1192,7 +1463,7 @@ const s = StyleSheet.create({
     gap: 6,
   },
   bankHomeText: {
-    color: '#2D6A4F',
+    color: '#0369A1',
     fontSize: 13,
     fontWeight: '700',
   },
