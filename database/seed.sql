@@ -10,21 +10,36 @@ USE `homestay_db`;
 -- Disable Foreign Key checks temporarily for clean seed execution
 SET FOREIGN_KEY_CHECKS = 0;
 
-TRUNCATE TABLE `point_transactions`;
-TRUNCATE TABLE `user_devices`;
-TRUNCATE TABLE `notifications`;
-TRUNCATE TABLE `reviews`;
-TRUNCATE TABLE `favorites`;
-TRUNCATE TABLE `payments`;
-TRUNCATE TABLE `bookings`;
-TRUNCATE TABLE `promotions`;
-TRUNCATE TABLE `homestay_amenities`;
-TRUNCATE TABLE `homestay_images`;
-TRUNCATE TABLE `homestays`;
-TRUNCATE TABLE `amenities`;
-TRUNCATE TABLE `homestay_types`;
-TRUNCATE TABLE `locations`;
-TRUNCATE TABLE `users`;
+DELETE FROM `point_transactions`;
+DELETE FROM `user_devices`;
+DELETE FROM `notifications`;
+DELETE FROM `reviews`;
+DELETE FROM `favorites`;
+DELETE FROM `payments`;
+DELETE FROM `bookings`;
+DELETE FROM `promotions`;
+DELETE FROM `homestay_amenities`;
+DELETE FROM `homestay_images`;
+DELETE FROM `homestays`;
+DELETE FROM `amenities`;
+DELETE FROM `homestay_types`;
+DELETE FROM `locations`;
+DELETE FROM `users`;
+
+ALTER TABLE `point_transactions` AUTO_INCREMENT = 1;
+ALTER TABLE `user_devices` AUTO_INCREMENT = 1;
+ALTER TABLE `notifications` AUTO_INCREMENT = 1;
+ALTER TABLE `reviews` AUTO_INCREMENT = 1;
+ALTER TABLE `favorites` AUTO_INCREMENT = 1;
+ALTER TABLE `payments` AUTO_INCREMENT = 1;
+ALTER TABLE `bookings` AUTO_INCREMENT = 1;
+ALTER TABLE `promotions` AUTO_INCREMENT = 1;
+ALTER TABLE `homestay_images` AUTO_INCREMENT = 1;
+ALTER TABLE `homestays` AUTO_INCREMENT = 1;
+ALTER TABLE `amenities` AUTO_INCREMENT = 1;
+ALTER TABLE `homestay_types` AUTO_INCREMENT = 1;
+ALTER TABLE `locations` AUTO_INCREMENT = 1;
+ALTER TABLE `users` AUTO_INCREMENT = 1;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
