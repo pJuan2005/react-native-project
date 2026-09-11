@@ -1,5 +1,5 @@
 import { ProductImage } from '@/components/product-image';
-import { formatPrice, Homestay } from '@/constants/mockData';
+import { formatPrice, Homestay, mockHomestays } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -21,15 +21,16 @@ export default function HomestaysScreen() {
     fetch(`${API_BASE_URL}/api/homestays`)
       .then(res => res.json())
       .then(json => {
-        if (json.success) {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           setHomestays(json.data);
         } else {
-          setError(json.message || 'Lỗi không xác định');
+          // Fallback sang mock data nếu DB chưa có dữ liệu
+          setHomestays(mockHomestays);
         }
       })
       .catch(err => {
-        console.error('API Error:', err);
-        setError('Không thể kết nối server');
+        console.warn('API Error (falling back to mock data):', err);
+        setHomestays(mockHomestays);
       })
       .finally(() => setLoading(false));
   }, []);

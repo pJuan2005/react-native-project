@@ -1,5 +1,5 @@
 import { ProductImage } from '@/components/product-image';
-import { formatPrice, Homestay } from '@/constants/mockData';
+import { formatPrice, Homestay, mockHomestays } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -29,15 +29,19 @@ export default function HomestayDetail() {
         return res.json();
       })
       .then(json => {
-        if (json.success) {
+        if (json.success && json.data) {
           setHomestay(json.data);
         } else {
-          setError(json.message || 'Lỗi không xác định');
+          const fallback = mockHomestays.find(h => h.id === id);
+          if (fallback) setHomestay(fallback);
+          else setError(json.message || 'Không tìm thấy homestay');
         }
       })
       .catch(err => {
-        console.error('API Error:', err);
-        setError(err.message === 'not_found' ? 'Không tìm thấy homestay' : 'Không thể tải thông tin Homestay');
+        console.warn('API Error (falling back to mock data):', err);
+        const fallback = mockHomestays.find(h => h.id === id);
+        if (fallback) setHomestay(fallback);
+        else setError('Không thể tải thông tin Homestay');
       })
       .finally(() => setLoading(false));
   }, [id]);

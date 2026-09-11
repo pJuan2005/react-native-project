@@ -1,4 +1,5 @@
 import { ProductImage } from '@/components/product-image';
+import { mockUser } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
@@ -15,13 +16,13 @@ type UserProfile = {
   avatar: string;
 };
 
-const EMPTY_PROFILE: UserProfile = { id: '1', name: '', email: '', phone: '', address: '', birthDate: '', avatar: '' };
+const EMPTY_PROFILE: UserProfile = { ...mockUser };
 
 export default function ProfileScreen() {
   const { bookings, savedHomestays } = useBooking();
-  const [profile, setProfile] = useState<UserProfile>(EMPTY_PROFILE);
+  const [profile, setProfile] = useState<UserProfile>(mockUser);
   const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' });
+  const [form, setForm] = useState({ name: mockUser.name, email: mockUser.email, phone: mockUser.phone, address: mockUser.address });
   const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'wishlist'>('profile');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -31,14 +32,18 @@ export default function ProfileScreen() {
     fetch(`${API_BASE_URL}/api/users/1`)
       .then(res => res.json())
       .then(json => {
-        if (json.success) {
+        if (json.success && json.data) {
           setProfile(json.data);
           setForm({ name: json.data.name, email: json.data.email, phone: json.data.phone, address: json.data.address });
         } else {
-          setError(json.message);
+          setProfile(mockUser);
+          setForm({ name: mockUser.name, email: mockUser.email, phone: mockUser.phone, address: mockUser.address });
         }
       })
-      .catch(() => setError('Không thể kết nối server'))
+      .catch(() => {
+        setProfile(mockUser);
+        setForm({ name: mockUser.name, email: mockUser.email, phone: mockUser.phone, address: mockUser.address });
+      })
       .finally(() => setLoading(false));
   }, []);
 
