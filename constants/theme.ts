@@ -1,33 +1,37 @@
 import { Platform } from 'react-native';
 
-// Bảng màu xanh ngọc / lá cây tự nhiên (Green / Emerald) theo phong cách ứng dụng cổ điển thân thiện
-const tintColorLight = '#4EBA87';
-const tintColorDark = '#52B788';
+// Bảng màu Xanh Nước Biển Đại Dương (Ocean Blue) & Trắng Tinh Khiết (Mệnh Thủy)
+const oceanBlue = '#0284C7';
+const deepOceanBlue = '#0369A1';
+const skyBlue = '#0EA5E9';
+const softAqua = '#E0F2FE';
 
 export const Colors = {
   light: {
-    text: '#222222',
+    text: '#0F172A',
     background: '#FFFFFF',
-    tint: tintColorLight,
-    primary: '#4EBA87',
-    primaryDark: '#2D6A4F',
-    primaryLight: '#E8F5E9',
-    border: '#52B788',
-    icon: '#52B788',
-    tabIconDefault: '#888888',
-    tabIconSelected: tintColorLight,
+    tint: oceanBlue,
+    primary: oceanBlue,
+    primaryDark: deepOceanBlue,
+    primaryLight: softAqua,
+    secondary: skyBlue,
+    border: '#BAE6FD',
+    icon: oceanBlue,
+    tabIconDefault: '#94A3B8',
+    tabIconSelected: oceanBlue,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    primary: '#52B788',
-    primaryDark: '#40916C',
-    primaryLight: '#1B4332',
-    border: '#52B788',
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#F8FAFC',
+    background: '#0F172A',
+    tint: skyBlue,
+    primary: skyBlue,
+    primaryDark: oceanBlue,
+    primaryLight: '#075985',
+    secondary: '#38BDF8',
+    border: '#0369A1',
+    icon: skyBlue,
+    tabIconDefault: '#64748B',
+    tabIconSelected: skyBlue,
   },
 };
 

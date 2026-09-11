@@ -51,23 +51,23 @@ export default function HomestaysScreen() {
           <Text style={styles.subtitle}>Tìm nơi nghỉ dưỡng phù hợp nhất</Text>
         </View>
         <Pressable style={styles.bookingButton} onPress={() => router.push('/bookings')}>
-          <Ionicons name="cart-outline" size={22} color="#4EBA87" />
+          <Ionicons name="cart-outline" size={20} color="#0284C7" />
         </Pressable>
       </View>
 
       {/* Search Bar */}
       <View style={styles.search}>
-        <Ionicons name="search" size={18} color="#4EBA87" />
+        <Ionicons name="search" size={18} color="#0284C7" />
         <TextInput
           value={searchText}
           onChangeText={setSearchText}
           placeholder="Tìm theo tên homestay, địa điểm..."
-          placeholderTextColor="#52B788"
+          placeholderTextColor="#38BDF8"
           style={styles.input}
         />
         {searchText.length > 0 && (
           <Pressable onPress={() => setSearchText('')} hitSlop={6}>
-            <Ionicons name="close-circle-outline" size={18} color="#88D49E" />
+            <Ionicons name="close-circle-outline" size={18} color="#7DD3FC" />
           </Pressable>
         )}
       </View>
@@ -103,7 +103,7 @@ export default function HomestaysScreen() {
             style={[styles.sortPill, sort === 'price' && styles.sortPillActive]}
             onPress={() => setSort(sort === 'price' ? 'default' : 'price')}
           >
-            <Ionicons name="pricetag-outline" size={12} color={sort === 'price' ? '#FFFFFF' : '#4EBA87'} />
+            <Ionicons name="pricetag-outline" size={12} color={sort === 'price' ? '#FFFFFF' : '#0284C7'} />
             <Text style={[styles.sortPillText, sort === 'price' && styles.sortPillTextActive]}>Giá</Text>
           </Pressable>
 
@@ -111,7 +111,7 @@ export default function HomestaysScreen() {
             style={[styles.sortPill, sort === 'rating' && styles.sortPillActive]}
             onPress={() => setSort(sort === 'rating' ? 'default' : 'rating')}
           >
-            <Ionicons name="star-outline" size={12} color={sort === 'rating' ? '#FFFFFF' : '#4EBA87'} />
+            <Ionicons name="star-outline" size={12} color={sort === 'rating' ? '#FFFFFF' : '#0284C7'} />
             <Text style={[styles.sortPillText, sort === 'rating' && styles.sortPillTextActive]}>Đánh giá</Text>
           </Pressable>
         </View>
@@ -120,7 +120,7 @@ export default function HomestaysScreen() {
       {/* List / Loading / Error */}
       {loading ? (
         <View style={styles.empty}>
-          <ActivityIndicator size="large" color="#4EBA87" />
+          <ActivityIndicator size="large" color="#0284C7" />
           <Text style={styles.emptyTitle}>Đang tải dữ liệu...</Text>
         </View>
       ) : error ? (
@@ -216,7 +216,7 @@ export function HomestayRow({ homestay, isSaved }: { homestay: Homestay; isSaved
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAF8' },
+  screen: { flex: 1, backgroundColor: '#F0F9FF' },
   header: {
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -226,17 +226,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderColor: '#E8F5E9',
+    borderColor: '#E0F2FE',
   },
-  title: { fontSize: 18, fontWeight: '800', color: '#111827' },
-  subtitle: { fontSize: 11, color: '#6B7280', marginTop: 1 },
+  title: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
+  subtitle: { fontSize: 11, color: '#64748B', marginTop: 1 },
   bookingButton: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#F0F9FF',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
   },
   search: {
     marginHorizontal: 16,
@@ -247,11 +249,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: '#4EBA87',
+    borderColor: '#0284C7',
     flexDirection: 'row',
     alignItems: 'center',
   },
-  input: { flex: 1, marginLeft: 8, fontSize: 14, color: '#2D6A4F', fontWeight: '600' },
+  input: { flex: 1, marginLeft: 8, fontSize: 14, color: '#0369A1', fontWeight: '600' },
   filterScrollWrapper: {
     height: 40,
     marginBottom: 4,
@@ -265,12 +267,12 @@ const styles = StyleSheet.create({
     height: 32,
     paddingHorizontal: 14,
     borderRadius: 16,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterSelected: { backgroundColor: '#4EBA87' },
-  filterText: { fontSize: 12, fontWeight: '700', color: '#2D6A4F' },
+  filterSelected: { backgroundColor: '#0284C7' },
+  filterText: { fontSize: 12, fontWeight: '700', color: '#0369A1' },
   filterTextSelected: { color: '#FFFFFF' },
   sortRow: {
     paddingHorizontal: 16,
@@ -279,7 +281,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  count: { fontSize: 12, color: '#6B7280', fontWeight: '500' },
+  count: { fontSize: 12, color: '#64748B', fontWeight: '500' },
   sortButtons: { flexDirection: 'row', gap: 6 },
   sortPill: {
     flexDirection: 'row',
@@ -290,13 +292,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#D8F3DC',
+    borderColor: '#BAE6FD',
   },
   sortPillActive: {
-    backgroundColor: '#4EBA87',
-    borderColor: '#4EBA87',
+    backgroundColor: '#0284C7',
+    borderColor: '#0284C7',
   },
-  sortPillText: { fontSize: 11, fontWeight: '600', color: '#2D6A4F' },
+  sortPillText: { fontSize: 11, fontWeight: '600', color: '#0369A1' },
   sortPillTextActive: { color: '#FFFFFF' },
   list: { paddingHorizontal: 16, gap: 10, paddingBottom: 24 },
   card: {
@@ -305,13 +307,13 @@ const styles = StyleSheet.create({
     padding: 10,
     flexDirection: 'row',
     gap: 12,
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: 1.5,
+    borderColor: '#E0F2FE',
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   imageContainer: { position: 'relative', width: 100, height: 100, borderRadius: 10, overflow: 'hidden' },
   image: { width: 100, height: 100 },
@@ -329,24 +331,24 @@ const styles = StyleSheet.create({
   },
   info: { flex: 1, justifyContent: 'space-between' },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  name: { fontSize: 14, fontWeight: '700', color: '#1F2937', flex: 1, marginRight: 6 },
+  name: { fontSize: 14, fontWeight: '700', color: '#0F172A', flex: 1, marginRight: 6 },
   saveBtn: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#F8FAF8',
+    backgroundColor: '#F0F9FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   saveBtnSaved: { backgroundColor: '#FEF2F2' },
-  location: { fontSize: 11, color: '#6B7280', marginTop: 1 },
+  location: { fontSize: 11, color: '#64748B', marginTop: 1 },
   meta: { flexDirection: 'row', gap: 4, alignItems: 'center', marginTop: 3 },
-  metaText: { fontSize: 11, color: '#6B7280' },
+  metaText: { fontSize: 11, color: '#64748B' },
   amenities: { marginTop: 4, flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  amenityTag: { fontSize: 10, color: '#2D6A4F', backgroundColor: '#E8F5E9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  amenityTag: { fontSize: 10, color: '#0369A1', backgroundColor: '#E0F2FE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   priceRow: { marginTop: 4 },
-  priceLabel: { fontSize: 12, color: '#4B5563' },
-  priceValue: { fontSize: 14, fontWeight: '700', color: '#111827' },
+  priceLabel: { fontSize: 11, color: '#475569' },
+  priceValue: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
   empty: { alignItems: 'center', paddingVertical: 40 },
   emptyTitle: { marginTop: 10, fontSize: 15, fontWeight: '600', color: '#334155' },
   emptyText: { marginTop: 4, fontSize: 12, color: '#64748B' },

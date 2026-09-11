@@ -41,7 +41,7 @@ export default function BookingsScreen() {
       {/* Header */}
       <View style={s.header}>
         <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={8}>
-          <Ionicons name="arrow-back" size={22} color="#111827" />
+          <Ionicons name="arrow-back" size={22} color="#0F172A" />
         </Pressable>
         <Text style={s.title}>
           {activeTab === 'bookings' ? 'Đặt phòng của tôi' : 'Danh sách yêu thích'}
@@ -49,7 +49,7 @@ export default function BookingsScreen() {
         <View style={{ width: 28 }} />
       </View>
 
-      {/* Segmented Tab Switcher */}
+      {/* Segmented Tab Switcher - Ocean Blue */}
       <View style={s.tabContainer}>
         <Pressable
           style={[s.tabButton, activeTab === 'bookings' && s.tabButtonActive]}
@@ -58,7 +58,7 @@ export default function BookingsScreen() {
           <Ionicons
             name={activeTab === 'bookings' ? 'cart' : 'cart-outline'}
             size={16}
-            color={activeTab === 'bookings' ? '#FFFFFF' : '#2D6A4F'}
+            color={activeTab === 'bookings' ? '#FFFFFF' : '#0369A1'}
           />
           <Text style={[s.tabText, activeTab === 'bookings' && s.tabTextActive]}>
             Phòng đã đặt ({bookings.length})
@@ -86,7 +86,7 @@ export default function BookingsScreen() {
           {bookings.length === 0 ? (
             <View style={s.empty}>
               <View style={s.emptyIconCircle}>
-                <Ionicons name="cart-outline" size={38} color="#4EBA87" />
+                <Ionicons name="cart-outline" size={38} color="#0284C7" />
               </View>
               <Text style={s.emptyTitle}>Chưa có đặt phòng nào</Text>
               <Text style={s.emptyText}>Khám phá các homestay tuyệt vời và đặt chỗ ngay hôm nay.</Text>
@@ -121,7 +121,7 @@ export default function BookingsScreen() {
 
                       {booking.checkIn && booking.checkOut && (
                         <Text style={s.dates}>
-                          📅 {formatDate(booking.checkIn)} - {formatDate(booking.checkOut)} ({booking.nights} đêm) • {booking.guests} khách
+                          📅 {formatDate(booking.checkIn)} - {formatDate(booking.checkOut)} ({booking.nights} đêm) • 👥 {booking.guests} khách
                         </Text>
                       )}
 
@@ -262,7 +262,7 @@ function Line({ label, value }: { label: string; value: string }) {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAF8' },
+  screen: { flex: 1, backgroundColor: '#F0F9FF' },
   header: {
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -272,13 +272,13 @@ const s = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderColor: '#E8F5E9',
+    borderColor: '#E0F2FE',
   },
   backBtn: { padding: 4 },
-  title: { fontSize: 16, fontWeight: '800', color: '#111827' },
+  title: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
     marginHorizontal: 16,
     marginTop: 10,
     marginBottom: 6,
@@ -295,12 +295,12 @@ const s = StyleSheet.create({
     borderRadius: 22,
   },
   tabButtonActive: {
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
   },
   tabText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#2D6A4F',
+    color: '#0369A1',
   },
   tabTextActive: {
     color: '#FFFFFF',
@@ -311,17 +311,17 @@ const s = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyTitle: { marginTop: 14, fontSize: 16, fontWeight: '800', color: '#111827' },
-  emptyText: { marginTop: 4, fontSize: 13, color: '#6B7280', textAlign: 'center', lineHeight: 18 },
+  emptyTitle: { marginTop: 14, fontSize: 16, fontWeight: '800', color: '#0F172A' },
+  emptyText: { marginTop: 4, fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 18 },
   continue: {
     marginTop: 18,
     paddingHorizontal: 18,
     paddingVertical: 10,
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
     borderRadius: 20,
   },
   continueText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
@@ -332,11 +332,11 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-    shadowColor: '#000',
+    borderWidth: 1.5,
+    borderColor: '#E0F2FE',
+    shadowColor: '#0284C7',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 1,
   },
@@ -347,11 +347,11 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-    shadowColor: '#000',
+    borderWidth: 1.5,
+    borderColor: '#E0F2FE',
+    shadowColor: '#0284C7',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 1,
   },
@@ -359,10 +359,10 @@ const s = StyleSheet.create({
   wishlistImage: { width: 80, height: 80, borderRadius: 8 },
   info: { flex: 1, justifyContent: 'space-between' },
   itemTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  name: { fontSize: 14, fontWeight: '700', color: '#1F2937', flex: 1, marginRight: 6 },
-  location: { fontSize: 11, color: '#6B7280', marginTop: 1 },
-  dates: { fontSize: 10, color: '#6B7280', marginTop: 2 },
-  voucherApplied: { fontSize: 10, color: '#2D6A4F', fontWeight: '600', marginTop: 2 },
+  name: { fontSize: 14, fontWeight: '700', color: '#0F172A', flex: 1, marginRight: 6 },
+  location: { fontSize: 11, color: '#64748B', marginTop: 1 },
+  dates: { fontSize: 10, color: '#64748B', marginTop: 2 },
+  voucherApplied: { fontSize: 10, color: '#0284C7', fontWeight: '600', marginTop: 2 },
   itemBottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -376,9 +376,9 @@ const s = StyleSheet.create({
     marginTop: 4,
   },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  ratingText: { fontSize: 11, color: '#4B5563', fontWeight: '500' },
-  priceLabel: { fontSize: 11, color: '#4B5563' },
-  priceValue: { fontSize: 13, fontWeight: '700', color: '#111827' },
+  ratingText: { fontSize: 11, color: '#475569', fontWeight: '500' },
+  priceLabel: { fontSize: 11, color: '#475569' },
+  priceValue: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
   reviewBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -390,7 +390,7 @@ const s = StyleSheet.create({
   },
   reviewBtnText: { fontSize: 10, fontWeight: '700', color: '#B45309' },
   bookNowSmallBtn: {
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 14,
@@ -401,12 +401,12 @@ const s = StyleSheet.create({
     padding: 14,
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
+    borderWidth: 1.5,
+    borderColor: '#E0F2FE',
   },
   line: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
-  lineLabel: { color: '#6B7280', fontSize: 12 },
-  lineValue: { fontWeight: '600', color: '#1F2937', fontSize: 12 },
+  lineLabel: { color: '#64748B', fontSize: 12 },
+  lineValue: { fontWeight: '600', color: '#0F172A', fontSize: 12 },
   total: {
     borderTopWidth: 1,
     borderColor: '#F1F5F9',
@@ -416,12 +416,12 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  totalLabel: { fontSize: 14, fontWeight: '800', color: '#111827' },
-  totalValue: { fontSize: 16, fontWeight: '800', color: '#2D6A4F' },
+  totalLabel: { fontSize: 14, fontWeight: '800', color: '#0F172A' },
+  totalValue: { fontSize: 16, fontWeight: '800', color: '#0284C7' },
   checkout: {
     marginTop: 12,
     padding: 12,
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
     borderRadius: 22,
     alignItems: 'center',
   },

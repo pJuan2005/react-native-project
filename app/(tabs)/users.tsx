@@ -11,7 +11,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
@@ -22,19 +21,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import API_BASE_URL from '@/src/config/api';
 
-type UserProfile = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  birthDate: string;
-  avatar: string;
-};
-
-// Danh sách avatar nhân vật Disney hoạt hình nổi tiếng
 const DISNEY_AVATARS = [
   {
     name: 'Mickey Mouse',
@@ -92,7 +79,6 @@ export default function ProfileScreen() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Keep form in sync when userProfile changes
   useEffect(() => {
     setForm({
       name: userProfile.name,
@@ -106,7 +92,6 @@ export default function ProfileScreen() {
   const selectAvatar = async (url: string) => {
     setForm((prev) => ({ ...prev, avatar: url }));
     setShowAvatarModal(false);
-    // Cập nhật ngay lập tức vào Context toàn cục để trang chủ đồng bộ tức thì
     await updateUserProfile({ avatar: url });
   };
 
@@ -164,7 +149,7 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Trang cá nhân</Text>
 
-        {/* Profile Avatar Header */}
+        {/* Profile Avatar Header - Ocean Theme */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <ProductImage uri={userProfile.avatar} style={styles.avatar} containerStyle={styles.avatar} />
@@ -193,199 +178,199 @@ export default function ProfileScreen() {
               setIsEditing(!isEditing);
             }}
           >
-            <Ionicons name={isEditing ? 'close-outline' : 'create-outline'} size={15} color="#2563EB" />
+            <Ionicons name={isEditing ? 'close-outline' : 'create-outline'} size={15} color="#0284C7" />
             <Text style={styles.editText}>{isEditing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa hồ sơ'}</Text>
           </Pressable>
         </View>
 
-            {/* Loyalty Points Card */}
-            <View style={styles.pointsCard}>
-              <View style={styles.pointsTop}>
-                <View>
-                  <Text style={styles.pointsLabel}>Điểm thưởng tích lũy</Text>
-                  <View style={styles.pointsNumberRow}>
-                    <Ionicons name="star" size={22} color="#F59E0B" />
-                    <Text style={styles.pointsValue}>{rewardPoints} <Text style={{ fontSize: 13, fontWeight: '500' }}>điểm</Text></Text>
-                  </View>
-                </View>
-                <Pressable style={styles.redeemBtn} onPress={() => setShowRedeemModal(true)}>
-                  <Ionicons name="gift-outline" size={15} color="#FFFFFF" />
-                  <Text style={styles.redeemBtnText}>Đổi Voucher</Text>
-                </Pressable>
-              </View>
-
-              <View style={styles.pointsBottom}>
-                <Text style={styles.pointsHint}>💡 +100 điểm sau mỗi chuyến đi • +50 điểm khi đánh giá 5★</Text>
-                <Pressable onPress={() => setShowHistoryModal(true)} hitSlop={6}>
-                  <Text style={styles.historyLink}>Lịch sử</Text>
-                </Pressable>
+        {/* Loyalty Points Card - Deep Ocean Blue */}
+        <View style={styles.pointsCard}>
+          <View style={styles.pointsTop}>
+            <View>
+              <Text style={styles.pointsLabel}>Điểm thưởng tích lũy</Text>
+              <View style={styles.pointsNumberRow}>
+                <Ionicons name="star" size={22} color="#F59E0B" />
+                <Text style={styles.pointsValue}>{rewardPoints} <Text style={{ fontSize: 13, fontWeight: '500' }}>điểm</Text></Text>
               </View>
             </View>
+            <Pressable style={styles.redeemBtn} onPress={() => setShowRedeemModal(true)}>
+              <Ionicons name="gift-outline" size={15} color="#FFFFFF" />
+              <Text style={styles.redeemBtnText}>Đổi Voucher</Text>
+            </Pressable>
+          </View>
 
-            {/* Segmented Tab Bar */}
-            <View style={styles.tabBar}>
-              <Pressable style={[styles.tabItem, activeTab === 'profile' && styles.tabItemActive]} onPress={() => setActiveTab('profile')}>
-                <Text style={[styles.tabText, activeTab === 'profile' && styles.tabTextActive]}>Hồ sơ</Text>
-              </Pressable>
-              <Pressable style={[styles.tabItem, activeTab === 'vouchers' && styles.tabItemActive]} onPress={() => setActiveTab('vouchers')}>
-                <Text style={[styles.tabText, activeTab === 'vouchers' && styles.tabTextActive]}>Voucher ({userVouchers.length})</Text>
-              </Pressable>
-              <Pressable style={[styles.tabItem, activeTab === 'bookings' && styles.tabItemActive]} onPress={() => setActiveTab('bookings')}>
-                <Text style={[styles.tabText, activeTab === 'bookings' && styles.tabTextActive]}>Đặt phòng ({bookings.length})</Text>
-              </Pressable>
-              <Pressable style={[styles.tabItem, activeTab === 'wishlist' && styles.tabItemActive]} onPress={() => setActiveTab('wishlist')}>
-                <Text style={[styles.tabText, activeTab === 'wishlist' && styles.tabTextActive]}>Yêu thích ({savedHomestays.length})</Text>
-              </Pressable>
-            </View>
+          <View style={styles.pointsBottom}>
+            <Text style={styles.pointsHint}>💡 +100 điểm sau mỗi chuyến đi • +50 điểm khi đánh giá 5★</Text>
+            <Pressable onPress={() => setShowHistoryModal(true)} hitSlop={6}>
+              <Text style={styles.historyLink}>Lịch sử</Text>
+            </Pressable>
+          </View>
+        </View>
 
-            {/* TAB 1: Profile Info / Edit */}
-            {activeTab === 'profile' && (
-              <>
-                {isEditing ? (
-                  <View style={styles.card}>
-                    <Text style={styles.sectionTitle}>Chỉnh sửa thông tin</Text>
-                    <View style={styles.avatarEditRow}>
-                      <Text style={styles.fieldLabel}>Ảnh đại diện</Text>
-                      <Pressable style={styles.changeAvatarBtn} onPress={() => setShowAvatarModal(true)}>
-                        <Ionicons name="image-outline" size={15} color="#2563EB" />
-                        <Text style={styles.changeAvatarText}>Đổi ảnh đại diện</Text>
-                      </Pressable>
-                    </View>
+        {/* Segmented Tab Bar - Ocean Blue */}
+        <View style={styles.tabBar}>
+          <Pressable style={[styles.tabItem, activeTab === 'profile' && styles.tabItemActive]} onPress={() => setActiveTab('profile')}>
+            <Text style={[styles.tabText, activeTab === 'profile' && styles.tabTextActive]}>Hồ sơ</Text>
+          </Pressable>
+          <Pressable style={[styles.tabItem, activeTab === 'vouchers' && styles.tabItemActive]} onPress={() => setActiveTab('vouchers')}>
+            <Text style={[styles.tabText, activeTab === 'vouchers' && styles.tabTextActive]}>Voucher ({userVouchers.length})</Text>
+          </Pressable>
+          <Pressable style={[styles.tabItem, activeTab === 'bookings' && styles.tabItemActive]} onPress={() => setActiveTab('bookings')}>
+            <Text style={[styles.tabText, activeTab === 'bookings' && styles.tabTextActive]}>Đặt phòng ({bookings.length})</Text>
+          </Pressable>
+          <Pressable style={[styles.tabItem, activeTab === 'wishlist' && styles.tabItemActive]} onPress={() => setActiveTab('wishlist')}>
+            <Text style={[styles.tabText, activeTab === 'wishlist' && styles.tabTextActive]}>Yêu thích ({savedHomestays.length})</Text>
+          </Pressable>
+        </View>
 
-                    <Field label="Họ và tên" value={form.name} onChangeText={(name) => setForm({ ...form, name })} />
-                    <Field label="Email" value={form.email} onChangeText={(email) => setForm({ ...form, email })} keyboardType="email-address" />
-                    <Field label="Số điện thoại" value={form.phone} onChangeText={(phone) => setForm({ ...form, phone })} keyboardType="phone-pad" />
-                    <Field label="Địa chỉ" value={form.address} onChangeText={(address) => setForm({ ...form, address })} />
-
-                    <Pressable style={[styles.saveButton, saving && { opacity: 0.6 }]} onPress={saveProfile} disabled={saving}>
-                      <Text style={styles.saveText}>{saving ? 'Đang lưu...' : 'Lưu thay đổi'}</Text>
-                    </Pressable>
-                  </View>
-                ) : (
-                  <View style={styles.card}>
-                    <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
-                    <Info label="Họ và tên" value={userProfile.name} />
-                    <Info label="Email" value={userProfile.email} />
-                    <Info label="Số điện thoại" value={userProfile.phone} />
-                    <Info label="Địa chỉ" value={userProfile.address} />
-                    <Info label="Ngày sinh" value={userProfile.birthDate} />
-                  </View>
-                )}
-              </>
-            )}
-
-            {/* TAB 2: Vouchers Wallet */}
-            {activeTab === 'vouchers' && (
+        {/* TAB 1: Profile Info / Edit */}
+        {activeTab === 'profile' && (
+          <>
+            {isEditing ? (
               <View style={styles.card}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.sectionTitle}>Ví Voucher ({userVouchers.length})</Text>
-                  <Pressable style={styles.redeemSmallBtn} onPress={() => setShowRedeemModal(true)}>
-                    <Ionicons name="add" size={14} color="#2563EB" />
-                    <Text style={styles.redeemSmallText}>Đổi thêm</Text>
+                <Text style={styles.sectionTitle}>Chỉnh sửa thông tin</Text>
+                <View style={styles.avatarEditRow}>
+                  <Text style={styles.fieldLabel}>Ảnh đại diện</Text>
+                  <Pressable style={styles.changeAvatarBtn} onPress={() => setShowAvatarModal(true)}>
+                    <Ionicons name="image-outline" size={15} color="#0284C7" />
+                    <Text style={styles.changeAvatarText}>Đổi ảnh đại diện</Text>
                   </Pressable>
                 </View>
 
-                {userVouchers.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Ionicons name="ticket-outline" size={36} color="#94A3B8" />
-                    <Text style={styles.emptyTitle}>Chưa có voucher nào</Text>
-                    <Text style={styles.emptyText}>Tích lũy điểm khi đặt phòng để quy đổi voucher!</Text>
-                  </View>
-                ) : (
-                  userVouchers.map((v) => (
-                    <View key={v.id} style={styles.voucherWalletCard}>
-                      <View style={styles.voucherWalletIcon}>
-                        <Ionicons name={(v.icon as any) || 'ticket-outline'} size={22} color="#2563EB" />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.voucherWalletTitle}>{v.title}</Text>
-                        <Text style={styles.voucherWalletDesc}>{v.description}</Text>
-                        <Text style={styles.voucherWalletMeta}>Mã: <Text style={styles.boldCode}>{v.code}</Text> • HSD: {v.expiresAt}</Text>
-                      </View>
-                      <Pressable
-                        style={styles.useVoucherBtn}
-                        onPress={() => router.push('/homestays')}
-                      >
-                        <Text style={styles.useVoucherText}>Dùng ngay</Text>
-                      </Pressable>
-                    </View>
-                  ))
-                )}
-              </View>
-            )}
+                <Field label="Họ và tên" value={form.name} onChangeText={(name) => setForm({ ...form, name })} />
+                <Field label="Email" value={form.email} onChangeText={(email) => setForm({ ...form, email })} keyboardType="email-address" />
+                <Field label="Số điện thoại" value={form.phone} onChangeText={(phone) => setForm({ ...form, phone })} keyboardType="phone-pad" />
+                <Field label="Địa chỉ" value={form.address} onChangeText={(address) => setForm({ ...form, address })} />
 
-            {/* TAB 3: Bookings History */}
-            {activeTab === 'bookings' && (
+                <Pressable style={[styles.saveButton, saving && { opacity: 0.6 }]} onPress={saveProfile} disabled={saving}>
+                  <Text style={styles.saveText}>{saving ? 'Đang lưu...' : 'Lưu thay đổi'}</Text>
+                </Pressable>
+              </View>
+            ) : (
               <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Lịch sử đặt phòng ({bookings.length})</Text>
-                {bookings.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Ionicons name="calendar-outline" size={36} color="#94A3B8" />
-                    <Text style={styles.emptyTitle}>Chưa có đặt phòng nào</Text>
-                    <Text style={styles.emptyText}>Hãy đặt homestay đầu tiên của bạn để nhận điểm thưởng.</Text>
-                  </View>
-                ) : (
-                  bookings.map((booking) => (
-                    <Pressable
-                      key={booking.id + (booking.checkIn || '')}
-                      style={styles.bookingItem}
-                      onPress={() => Alert.alert(booking.name, `${booking.location} • ${booking.checkIn} - ${booking.checkOut}`)}
-                    >
-                      <ProductImage uri={booking.homestayImage || booking.images[0]} style={styles.bookingImage} containerStyle={styles.bookingImage} />
-                      <View style={styles.bookingInfo}>
-                        <Text style={styles.bookingName}>{booking.name}</Text>
-                        <Text style={styles.bookingLocation}>📍 {booking.location} • {booking.type}</Text>
-                        <Text style={styles.bookingDates}>📅 {booking.checkIn} - {booking.checkOut} ({booking.nights} đêm)</Text>
-                        <Text style={styles.bookingPrice}>
-                          {booking.totalPrice
-                            ? `Tổng: ${new Intl.NumberFormat('vi-VN').format(booking.totalPrice)} ₫`
-                            : `${new Intl.NumberFormat('vi-VN').format(booking.price * booking.quantity)} ₫`}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.bookingStatus,
-                            booking.status === 'confirmed' && styles.statusConfirmed,
-                            booking.status === 'pending' && styles.statusPending,
-                            booking.status === 'completed' && styles.statusCompleted,
-                          ]}
-                        >
-                          {booking.status === 'confirmed' ? 'Đã xác nhận' : booking.status === 'pending' ? 'Chờ xác nhận' : 'Hoàn thành'}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  ))
-                )}
+                <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
+                <Info label="Họ và tên" value={userProfile.name} />
+                <Info label="Email" value={userProfile.email} />
+                <Info label="Số điện thoại" value={userProfile.phone} />
+                <Info label="Địa chỉ" value={userProfile.address} />
+                <Info label="Ngày sinh" value={userProfile.birthDate} />
               </View>
             )}
+          </>
+        )}
 
-            {/* TAB 4: Wishlist */}
-            {activeTab === 'wishlist' && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Danh sách yêu thích ({savedHomestays.length})</Text>
-                {savedHomestays.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Ionicons name="heart-outline" size={36} color="#94A3B8" />
-                    <Text style={styles.emptyTitle}>Chưa có homestay yêu thích</Text>
-                    <Text style={styles.emptyText}>Nhấn tim vào homestay để lưu lại.</Text>
-                  </View>
-                ) : (
-                  savedHomestays.map((homestay) => (
-                    <Pressable
-                      key={homestay.id}
-                      style={styles.wishlistItem}
-                      onPress={() => Alert.alert(homestay.name, `${homestay.location} • ${new Intl.NumberFormat('vi-VN').format(homestay.price)} ₫/đêm`)}
-                    >
-                      <ProductImage uri={homestay.images[0]} style={styles.wishlistImage} containerStyle={styles.wishlistImage} />
-                      <View style={styles.wishlistInfo}>
-                        <Text style={styles.wishlistName}>{homestay.name}</Text>
-                        <Text style={styles.wishlistLocation}>📍 {homestay.location} • {homestay.type}</Text>
-                        <Text style={styles.wishlistPrice}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} ₫/đêm</Text>
-                      </View>
-                    </Pressable>
-                  ))
-                )}
+        {/* TAB 2: Vouchers Wallet */}
+        {activeTab === 'vouchers' && (
+          <View style={styles.card}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Ví Voucher ({userVouchers.length})</Text>
+              <Pressable style={styles.redeemSmallBtn} onPress={() => setShowRedeemModal(true)}>
+                <Ionicons name="add" size={14} color="#0284C7" />
+                <Text style={styles.redeemSmallText}>Đổi thêm</Text>
+              </Pressable>
+            </View>
+
+            {userVouchers.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="ticket-outline" size={36} color="#94A3B8" />
+                <Text style={styles.emptyTitle}>Chưa có voucher nào</Text>
+                <Text style={styles.emptyText}>Tích lũy điểm khi đặt phòng để quy đổi voucher!</Text>
               </View>
+            ) : (
+              userVouchers.map((v) => (
+                <View key={v.id} style={styles.voucherWalletCard}>
+                  <View style={styles.voucherWalletIcon}>
+                    <Ionicons name={(v.icon as any) || 'ticket-outline'} size={22} color="#0284C7" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.voucherWalletTitle}>{v.title}</Text>
+                    <Text style={styles.voucherWalletDesc}>{v.description}</Text>
+                    <Text style={styles.voucherWalletMeta}>Mã: <Text style={styles.boldCode}>{v.code}</Text> • HSD: {v.expiresAt}</Text>
+                  </View>
+                  <Pressable
+                    style={styles.useVoucherBtn}
+                    onPress={() => router.push('/homestays')}
+                  >
+                    <Text style={styles.useVoucherText}>Dùng ngay</Text>
+                  </Pressable>
+                </View>
+              ))
             )}
+          </View>
+        )}
+
+        {/* TAB 3: Bookings History */}
+        {activeTab === 'bookings' && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Lịch sử đặt phòng ({bookings.length})</Text>
+            {bookings.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="cart-outline" size={36} color="#94A3B8" />
+                <Text style={styles.emptyTitle}>Chưa có đặt phòng nào</Text>
+                <Text style={styles.emptyText}>Hãy đặt homestay đầu tiên của bạn để nhận điểm thưởng.</Text>
+              </View>
+            ) : (
+              bookings.map((booking) => (
+                <Pressable
+                  key={booking.id + (booking.checkIn || '')}
+                  style={styles.bookingItem}
+                  onPress={() => Alert.alert(booking.name, `${booking.location} • ${booking.checkIn} - ${booking.checkOut}`)}
+                >
+                  <ProductImage uri={booking.homestayImage || booking.images[0]} style={styles.bookingImage} containerStyle={styles.bookingImage} />
+                  <View style={styles.bookingInfo}>
+                    <Text style={styles.bookingName}>{booking.name}</Text>
+                    <Text style={styles.bookingLocation}>📍 by {booking.location} • {booking.type}</Text>
+                    <Text style={styles.bookingDates}>📅 {booking.checkIn} - {booking.checkOut} ({booking.nights} đêm)</Text>
+                    <Text style={styles.bookingPrice}>
+                      {booking.totalPrice
+                        ? `Tổng: ${new Intl.NumberFormat('vi-VN').format(booking.totalPrice)} ₫`
+                        : `${new Intl.NumberFormat('vi-VN').format(booking.price * booking.quantity)} ₫`}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.bookingStatus,
+                        booking.status === 'confirmed' && styles.statusConfirmed,
+                        booking.status === 'pending' && styles.statusPending,
+                        booking.status === 'completed' && styles.statusCompleted,
+                      ]}
+                    >
+                      {booking.status === 'confirmed' ? 'Đã xác nhận' : booking.status === 'pending' ? 'Chờ xác nhận' : 'Hoàn thành'}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))
+            )}
+          </View>
+        )}
+
+        {/* TAB 4: Wishlist */}
+        {activeTab === 'wishlist' && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Danh sách yêu thích ({savedHomestays.length})</Text>
+            {savedHomestays.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="heart-outline" size={36} color="#94A3B8" />
+                <Text style={styles.emptyTitle}>Chưa có homestay yêu thích</Text>
+                <Text style={styles.emptyText}>Nhấn tim vào homestay để lưu lại vào danh sách.</Text>
+              </View>
+            ) : (
+              savedHomestays.map((homestay) => (
+                <Pressable
+                  key={homestay.id}
+                  style={styles.wishlistItem}
+                  onPress={() => Alert.alert(homestay.name, `${homestay.location} • ${new Intl.NumberFormat('vi-VN').format(homestay.price)} ₫/đêm`)}
+                >
+                  <ProductImage uri={homestay.images[0]} style={styles.wishlistImage} containerStyle={styles.wishlistImage} />
+                  <View style={styles.wishlistInfo}>
+                    <Text style={styles.wishlistName}>{homestay.name}</Text>
+                    <Text style={styles.wishlistLocation}>📍 by {homestay.location} • {homestay.type}</Text>
+                    <Text style={styles.wishlistPrice}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} ₫/đêm</Text>
+                  </View>
+                </Pressable>
+              ))
+            )}
+          </View>
+        )}
 
         {/* Menu Options */}
         <View style={styles.menuCard}>
@@ -418,7 +403,7 @@ export default function ProfileScreen() {
 
             <Pressable style={styles.pickDeviceBtn} onPress={pickImageFromDevice}>
               <View style={styles.pickDeviceIcon}>
-                <Ionicons name="images" size={18} color="#2563EB" />
+                <Ionicons name="images" size={18} color="#0284C7" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.pickDeviceTitle}>Chọn ảnh từ thư viện máy</Text>
@@ -458,7 +443,7 @@ export default function ProfileScreen() {
             <View style={styles.modalHeader}>
               <View>
                 <Text style={styles.modalTitle}>Đổi điểm lấy Voucher</Text>
-                <Text style={styles.modalSubtitle}>Điểm hiện có: <Text style={{ color: '#2563EB', fontWeight: '700' }}>{rewardPoints} điểm</Text></Text>
+                <Text style={styles.modalSubtitle}>Điểm hiện có: <Text style={{ color: '#0284C7', fontWeight: '700' }}>{rewardPoints} điểm</Text></Text>
               </View>
               <Pressable onPress={() => setShowRedeemModal(false)} hitSlop={8}>
                 <Ionicons name="close" size={22} color="#64748B" />
@@ -603,7 +588,7 @@ function Info({ label, value }: { label: string; value: string }) {
 function MenuItem({ icon, label }: { icon: any; label: string }) {
   return (
     <Pressable style={styles.menuItem} onPress={() => Alert.alert(label, 'Chức năng đang được phát triển.')}>
-      <Ionicons name={icon} size={18} color="#2563EB" />
+      <Ionicons name={icon} size={18} color="#0284C7" />
       <Text style={styles.menuText}>{label}</Text>
       <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
     </Pressable>
@@ -611,9 +596,9 @@ function MenuItem({ icon, label }: { icon: any; label: string }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
+  screen: { flex: 1, backgroundColor: '#F0F9FF' },
   content: { padding: 16, paddingBottom: 32 },
-  title: { fontSize: 20, fontWeight: '700', color: '#0F172A', marginBottom: 10 },
+  title: { fontSize: 20, fontWeight: '800', color: '#0F172A', marginBottom: 10 },
   profileHeader: { alignItems: 'center', paddingVertical: 12 },
   avatarContainer: { position: 'relative', width: 80, height: 80 },
   avatar: { width: 80, height: 80, borderRadius: 40 },
@@ -624,44 +609,49 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#0284C7',
     borderWidth: 2,
     borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  name: { fontSize: 17, fontWeight: '700', marginTop: 8, color: '#0F172A' },
+  name: { fontSize: 17, fontWeight: '800', marginTop: 8, color: '#0F172A' },
   email: { fontSize: 12, color: '#64748B', marginTop: 2 },
   editButton: {
     marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: '#E0F2FE',
     flexDirection: 'row',
     gap: 4,
     alignItems: 'center',
   },
-  editText: { color: '#2563EB', fontWeight: '600', fontSize: 11 },
+  editText: { color: '#0369A1', fontWeight: '700', fontSize: 11 },
   pointsCard: {
-    backgroundColor: '#2D6A4F',
+    backgroundColor: '#0369A1',
     borderRadius: 16,
     padding: 14,
     marginTop: 8,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
   },
   pointsTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  pointsLabel: { fontSize: 11, color: '#D8F3DC', fontWeight: '500' },
+  pointsLabel: { fontSize: 11, color: '#BAE6FD', fontWeight: '500' },
   pointsNumberRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
   pointsValue: { fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
   redeemBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 20,
@@ -673,29 +663,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
     borderTopWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: 'rgba(255,255,255,0.18)',
     paddingTop: 8,
   },
-  pointsHint: { fontSize: 10, color: '#D8F3DC', flex: 1 },
+  pointsHint: { fontSize: 10, color: '#BAE6FD', flex: 1 },
   historyLink: { fontSize: 11, color: '#FFFFFF', fontWeight: '700', textDecorationLine: 'underline' },
   tabBar: {
     marginTop: 12,
     flexDirection: 'row',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
     borderRadius: 25,
     padding: 3,
   },
   tabItem: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 22 },
-  tabItemActive: { backgroundColor: '#4EBA87' },
-  tabText: { fontSize: 11, fontWeight: '700', color: '#2D6A4F' },
+  tabItemActive: { backgroundColor: '#0284C7' },
+  tabText: { fontSize: 11, fontWeight: '700', color: '#0369A1' },
   tabTextActive: { color: '#FFFFFF' },
   card: {
     marginTop: 10,
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 14,
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
+    borderWidth: 1.5,
+    borderColor: '#E0F2FE',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -703,17 +693,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  sectionTitle: { fontSize: 14, fontWeight: '800', color: '#111827', marginBottom: 8 },
+  sectionTitle: { fontSize: 14, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
   redeemSmallBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 14,
   },
-  redeemSmallText: { fontSize: 11, fontWeight: '700', color: '#2D6A4F' },
+  redeemSmallText: { fontSize: 11, fontWeight: '700', color: '#0369A1' },
   avatarEditRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -724,12 +714,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#E0F2FE',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 14,
   },
-  changeAvatarText: { fontSize: 11, fontWeight: '700', color: '#2D6A4F' },
+  changeAvatarText: { fontSize: 11, fontWeight: '700', color: '#0369A1' },
   info: { paddingVertical: 8, borderBottomWidth: 1, borderColor: '#F1F5F9' },
   infoLabel: { fontSize: 11, color: '#64748B' },
   infoValue: { marginTop: 2, fontSize: 13, fontWeight: '600', color: '#1E293B' },
@@ -737,7 +727,7 @@ const styles = StyleSheet.create({
   input: {
     height: 42,
     borderWidth: 1.5,
-    borderColor: '#4EBA87',
+    borderColor: '#0284C7',
     borderRadius: 20,
     paddingHorizontal: 12,
     color: '#0F172A',
@@ -747,7 +737,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     padding: 12,
     borderRadius: 25,
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
     alignItems: 'center',
   },
   saveText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
@@ -769,16 +759,16 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#E0F2FE',
     alignItems: 'center',
     justifyContent: 'center',
   },
   voucherWalletTitle: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
   voucherWalletDesc: { fontSize: 11, color: '#475569', marginTop: 1 },
   voucherWalletMeta: { fontSize: 10, color: '#64748B', marginTop: 3 },
-  boldCode: { fontWeight: '700', color: '#2563EB' },
+  boldCode: { fontWeight: '700', color: '#0284C7' },
   useVoucherBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#0284C7',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,
@@ -790,7 +780,7 @@ const styles = StyleSheet.create({
   bookingName: { fontSize: 13, fontWeight: '700', color: '#1E293B' },
   bookingLocation: { fontSize: 11, color: '#64748B', marginTop: 1 },
   bookingDates: { fontSize: 10, color: '#64748B', marginTop: 2 },
-  bookingPrice: { fontSize: 12, fontWeight: '700', color: '#2563EB', marginTop: 2 },
+  bookingPrice: { fontSize: 12, fontWeight: '700', color: '#0284C7', marginTop: 2 },
   bookingStatus: {
     marginTop: 3,
     fontSize: 9,
@@ -808,14 +798,14 @@ const styles = StyleSheet.create({
   wishlistInfo: { flex: 1 },
   wishlistName: { fontSize: 13, fontWeight: '700', color: '#1E293B' },
   wishlistLocation: { fontSize: 11, color: '#64748B', marginTop: 1 },
-  wishlistPrice: { fontSize: 12, fontWeight: '700', color: '#2563EB', marginTop: 2 },
+  wishlistPrice: { fontSize: 12, fontWeight: '700', color: '#0284C7', marginTop: 2 },
   menuCard: {
     marginTop: 12,
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderWidth: 1.5,
+    borderColor: '#E0F2FE',
   },
   menuItem: { height: 44, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderColor: '#F1F5F9' },
   menuText: { flex: 1, fontSize: 12, fontWeight: '500', color: '#334155' },
@@ -849,9 +839,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#E0F2FE',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#BAE6FD',
     borderRadius: 10,
     padding: 10,
   },
@@ -859,11 +849,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#BAE6FD',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pickDeviceTitle: { fontSize: 12, fontWeight: '700', color: '#1E40AF' },
+  pickDeviceTitle: { fontSize: 12, fontWeight: '700', color: '#0369A1' },
   pickDeviceSubtitle: { fontSize: 10, color: '#64748B', marginTop: 1 },
   disneySectionTitle: {
     fontSize: 11,
@@ -888,7 +878,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#F1F5F9',
   },
-  presetAvatarSelected: { borderColor: '#2563EB', borderWidth: 2 },
+  presetAvatarSelected: { borderColor: '#0284C7', borderWidth: 2 },
   presetAvatar: { width: 54, height: 54, borderRadius: 27 },
   checkBadge: {
     position: 'absolute',
@@ -897,7 +887,7 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#0284C7',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -925,7 +915,7 @@ const styles = StyleSheet.create({
   redeemDesc: { fontSize: 11, color: '#475569', marginTop: 1 },
   redeemCost: { fontSize: 11, fontWeight: '700', color: '#D97706', marginTop: 3 },
   actionRedeemBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#0284C7',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,

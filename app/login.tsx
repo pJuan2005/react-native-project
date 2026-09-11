@@ -47,51 +47,52 @@ export default function LoginScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Logo Brand Header */}
+          {/* Logo Brand Header - Ocean Theme */}
           <View style={styles.logoContainer}>
             <View style={styles.logoIconBox}>
-              <Ionicons name="home-outline" size={44} color="#1E3A8A" />
+              <Ionicons name="water" size={44} color="#0284C7" />
             </View>
             <Text style={styles.brandTitle}>Homestay Booking</Text>
+            <Text style={styles.brandSubtitle}>Kỳ nghỉ biển & homestay sinh thái 2026</Text>
           </View>
 
           {/* Input Form */}
           <View style={styles.formContainer}>
             {/* Email Input */}
             <View style={styles.inputPill}>
-              <Ionicons name="mail" size={20} color="#4EBA87" style={styles.icon} />
+              <Ionicons name="mail" size={19} color="#0284C7" style={styles.icon} />
               <TextInput
                 value={email}
                 onChangeText={setEmail}
                 placeholder="Email"
-                placeholderTextColor="#52B788"
+                placeholderTextColor="#38BDF8"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 style={styles.input}
               />
               {email.length > 0 && (
                 <Pressable onPress={() => setEmail('')} hitSlop={8}>
-                  <Ionicons name="close-circle-outline" size={18} color="#88D49E" />
+                  <Ionicons name="close-circle-outline" size={18} color="#7DD3FC" />
                 </Pressable>
               )}
             </View>
 
             {/* Password Input */}
             <View style={styles.inputPill}>
-              <Ionicons name="lock-closed" size={20} color="#4EBA87" style={styles.icon} />
+              <Ionicons name="lock-closed" size={19} color="#0284C7" style={styles.icon} />
               <TextInput
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Password"
-                placeholderTextColor="#52B788"
+                placeholder="Mật khẩu"
+                placeholderTextColor="#38BDF8"
                 secureTextEntry={!showPassword}
                 style={styles.input}
               />
               <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
                 <Ionicons
                   name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                  size={20}
-                  color="#4EBA87"
+                  size={19}
+                  color="#0284C7"
                 />
               </Pressable>
             </View>
@@ -105,13 +106,13 @@ export default function LoginScreen() {
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.mainBtnText}>Login</Text>
+                <Text style={styles.mainBtnText}>Đăng nhập</Text>
               )}
             </Pressable>
 
             {/* Switch to Register link */}
             <Pressable style={styles.switchBtn} onPress={() => router.push('/register')}>
-              <Text style={styles.switchText}>Register</Text>
+              <Text style={styles.switchText}>Đăng ký tài khoản mới</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -133,34 +134,44 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 36,
   },
   logoIconBox: {
     width: 86,
     height: 86,
-    borderRadius: 22,
-    backgroundColor: '#F0FDF4',
+    borderRadius: 26,
+    backgroundColor: '#F0F9FF',
     borderWidth: 1.5,
-    borderColor: '#D8F3DC',
+    borderColor: '#BAE6FD',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
   brandTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#1E3A8A',
+    color: '#0369A1',
     letterSpacing: 0.5,
   },
+  brandSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 4,
+  },
   formContainer: {
-    gap: 18,
+    gap: 16,
   },
   inputPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1.8,
-    borderColor: '#4EBA87',
+    borderColor: '#0284C7',
     borderRadius: 25,
     paddingHorizontal: 18,
     height: 52,
@@ -170,16 +181,21 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 15,
-    color: '#222222',
+    fontSize: 14,
+    color: '#0F172A',
   },
   mainBtn: {
-    marginTop: 10,
+    marginTop: 8,
     height: 52,
-    backgroundColor: '#4EBA87',
+    backgroundColor: '#0284C7',
     borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   mainBtnText: {
     color: '#FFFFFF',
@@ -191,8 +207,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   switchText: {
-    color: '#4EBA87',
-    fontSize: 15,
-    fontWeight: '600',
+    color: '#0284C7',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
