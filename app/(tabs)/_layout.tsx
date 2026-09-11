@@ -1,11 +1,13 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
+  const isIos = Platform.OS === 'ios';
+
   return (
     <Tabs
       screenOptions={{
@@ -17,18 +19,24 @@ export default function TabLayout() {
           backgroundColor: '#FFFFFF',
           borderTopColor: '#E2E8F0',
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 62,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
-          paddingTop: 8,
-          elevation: 8,
+          height: isIos ? 88 : 70,
+          paddingTop: 6,
+          paddingBottom: isIos ? 28 : 10,
+          elevation: 10,
           shadowColor: '#0F172A',
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 6,
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+        },
+        tabBarItemStyle: {
+          justifyContent: 'center',
+          alignItems: 'center',
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
+          marginTop: 2,
+          paddingBottom: 2,
         },
       }}>
       <Tabs.Screen

@@ -44,6 +44,7 @@ export default function HomestaysScreen() {
 
   return (
     <SafeAreaView style={styles.screen}>
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Danh sách Homestay</Text>
@@ -54,32 +55,64 @@ export default function HomestaysScreen() {
         </Pressable>
       </View>
 
+      {/* Search Bar */}
       <View style={styles.search}>
         <Ionicons name="search-outline" size={18} color="#64748B" />
         <TextInput
           value={searchText}
           onChangeText={setSearchText}
-          placeholder="Tìm theo tên homestay, thành phố..."
+          placeholder="Tìm theo tên homestay, địa điểm..."
           placeholderTextColor="#94A3B8"
           style={styles.input}
         />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
-        <Filter label="Tất cả" selected={selectedType === 'all'} onPress={() => setSelectedType('all')} />
-        {types.map((type) => (
-          <Filter key={type} label={type} selected={selectedType === type} onPress={() => setSelectedType(type)} />
-        ))}
-      </ScrollView>
+      {/* Categories Filter Carousel */}
+      <View style={styles.filterScrollWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filters}
+        >
+          <Filter
+            label="Tất cả"
+            selected={selectedType === 'all'}
+            onPress={() => setSelectedType('all')}
+          />
+          {types.map((type) => (
+            <Filter
+              key={type}
+              label={type}
+              selected={selectedType === type}
+              onPress={() => setSelectedType(type)}
+            />
+          ))}
+        </ScrollView>
+      </View>
 
+      {/* Sort & Count Row */}
       <View style={styles.sortRow}>
         <Text style={styles.count}>{filteredHomestays.length} homestay sẵn sàng</Text>
         <View style={styles.sortButtons}>
-          <Filter label="Giá thấp" selected={sort === 'price'} onPress={() => setSort(sort === 'price' ? 'default' : 'price')} />
-          <Filter label="Đánh giá" selected={sort === 'rating'} onPress={() => setSort(sort === 'rating' ? 'default' : 'rating')} />
+          <Pressable
+            style={[styles.sortPill, sort === 'price' && styles.sortPillActive]}
+            onPress={() => setSort(sort === 'price' ? 'default' : 'price')}
+          >
+            <Ionicons name="pricetag-outline" size={12} color={sort === 'price' ? '#FFFFFF' : '#64748B'} />
+            <Text style={[styles.sortPillText, sort === 'price' && styles.sortPillTextActive]}>Giá</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.sortPill, sort === 'rating' && styles.sortPillActive]}
+            onPress={() => setSort(sort === 'rating' ? 'default' : 'rating')}
+          >
+            <Ionicons name="star-outline" size={12} color={sort === 'rating' ? '#FFFFFF' : '#64748B'} />
+            <Text style={[styles.sortPillText, sort === 'rating' && styles.sortPillTextActive]}>Đánh giá</Text>
+          </Pressable>
         </View>
       </View>
 
+      {/* List / Loading / Error */}
       {loading ? (
         <View style={styles.empty}>
           <ActivityIndicator size="large" color="#2563EB" />
@@ -96,6 +129,7 @@ export default function HomestaysScreen() {
           data={filteredHomestays}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => <HomestayRow homestay={item} isSaved={savedHomestays.some(s => s.id === item.id)} />}
           ListEmptyComponent={
             <View style={styles.empty}>
@@ -122,7 +156,10 @@ export function HomestayRow({ homestay, isSaved }: { homestay: Homestay; isSaved
   const { addToBooking, removeFromBooking } = useBooking();
 
   return (
-    <Pressable style={styles.card} onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}>
+    <Pressable
+      style={styles.card}
+      onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}
+    >
       <View style={styles.imageContainer}>
         <ProductImage uri={homestay.images[0]} style={styles.image} containerStyle={styles.image} />
         {homestay.oldPrice && (
@@ -176,24 +213,26 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#F8FAFC' },
   header: {
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 10,
+    paddingTop: 12,
+    paddingBottom: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  title: { fontSize: 20, fontWeight: '700', color: '#0F172A' },
+  title: { fontSize: 19, fontWeight: '700', color: '#0F172A' },
   subtitle: { fontSize: 12, color: '#64748B', marginTop: 2 },
   bookingButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   search: {
     marginHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 8,
     height: 42,
     paddingHorizontal: 12,
     backgroundColor: '#FFFFFF',
@@ -204,11 +243,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   input: { flex: 1, marginLeft: 8, fontSize: 14, color: '#0F172A' },
-  filters: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
+  filterScrollWrapper: {
+    height: 40,
+    marginBottom: 6,
+  },
+  filters: {
+    paddingHorizontal: 16,
+    gap: 8,
+    alignItems: 'center',
+  },
   filter: {
-    height: 32,
+    height: 34,
     paddingHorizontal: 14,
-    borderRadius: 16,
+    borderRadius: 17,
     backgroundColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
@@ -218,13 +265,30 @@ const styles = StyleSheet.create({
   filterTextSelected: { color: '#FFFFFF' },
   sortRow: {
     paddingHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   count: { fontSize: 12, color: '#64748B', fontWeight: '500' },
   sortButtons: { flexDirection: 'row', gap: 6 },
+  sortPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  sortPillActive: {
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
+  },
+  sortPillText: { fontSize: 11, fontWeight: '600', color: '#64748B' },
+  sortPillTextActive: { color: '#FFFFFF' },
   list: { paddingHorizontal: 16, gap: 10, paddingBottom: 24 },
   card: {
     backgroundColor: '#FFFFFF',
