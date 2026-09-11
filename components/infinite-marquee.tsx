@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import {
   Animated,
   Easing,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -19,75 +20,141 @@ const DEFAULT_ITEMS: MarqueeItem[] = [
   { icon: 'flame', text: 'Đà Lạt giảm 30% mùa hoa', badge: 'HOT', badgeColor: '#EF4444' },
   { icon: 'water', text: 'Phú Quốc - Hồ bơi vô cực sát biển', badge: 'VIP', badgeColor: '#0284C7' },
   { icon: 'sparkles', text: 'Mã WELCOME10 giảm ngay 10%', badge: 'VOUCHER', badgeColor: '#D97706' },
-  { icon: 'cloudy-night', text: 'Sa Pa - Săn mây thung lũng Mường Hoa', badge: 'NEW', badgeColor: '#10B981' },
-  { icon: 'lantern-outline', text: 'Hội An - Tour đèn lồng & xe đạp miễn phí', badge: 'POPULAR', badgeColor: '#8B5CF6' },
+  { icon: 'cloud-outline', text: 'Sa Pa - Săn mây thung lũng Mường Hoa', badge: 'NEW', badgeColor: '#10B981' },
+  { icon: 'bulb-outline', text: 'Hội An - Tour đèn lồng & xe đạp miễn phí', badge: 'POPULAR', badgeColor: '#8B5CF6' },
   { icon: 'sunny', text: 'Nha Trang - Biệt thự ngắm hoàng hôn 180°', badge: 'TOP', badgeColor: '#0284C7' },
   { icon: 'star', text: 'Tích +100 điểm thưởng sau mỗi chuyến đi', badge: 'REWARD', badgeColor: '#F59E0B' },
 ];
 
 export function InfiniteMarquee({
   items = DEFAULT_ITEMS,
-  speed = 40,
+  speed = 28,
   reverse = false,
 }: {
   items?: MarqueeItem[];
   speed?: number;
   reverse?: boolean;
 }) {
+  const isWeb = Platform.OS === 'web';
   const animatedValue = useRef(new Animated.Value(0)).current;
 
-  // Duplicate items 3 times to ensure infinite smooth seamless loop without empty gaps
-  const marqueeItems = [...items, ...items, ...items];
+  // Duplicate items 4 times to ensure seamless infinite loop
+  const marqueeItems = [...items, ...items, ...items, ...items];
 
   useEffect(() => {
-    // Total animation loop
-    const animation = Animated.loop(
-      Animated.timing(animatedValue, {
-        toValue: reverse ? 1 : -1,
-        duration: speed * 1000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    );
-    animation.start();
+    if (isWeb) return; // Web uses CSS keyframes for 100% uninterrupted animation
 
-    return () => animation.stop();
-  }, [animatedValue, speed, reverse]);
+    const startAnimation = () => {
+      animatedValue.setValue(0);
+      Animated.loop(
+        Animated.timing(animatedValue, {
+          toValue: reverse ? 1 : -1,
+          duration: speed * 1000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        })
+      ).start();
+    };
 
-  // Translate calculation
+    startAnimation();
+  }, [animatedValue, speed, reverse, isWeb]);
+
+  // Inject CSS Keyframes on Web so it NEVER pauses even when switching browser tabs
+  useEffect(() => {
+    if (isWeb && typeof document !== 'undefined') {
+      const styleId = 'infinite-marquee-styles';
+      if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+          @keyframes marqueeScrollLeft {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+          }
+          @keyframes marqueeScrollRight {
+            0% { transform: translate3d(-50%, 0, 0); }
+            100% { transform: translate3d(0, 0, 0); }
+          }
+          .marquee-left {
+            animation: marqueeScrollLeft ${speed}s linear infinite !important;
+            will-change: transform;
+          }
+          .marquee-right {
+            animation: marqueeScrollRight ${speed}s linear infinite !important;
+            will-change: transform;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+  }, [isWeb, speed]);
+
   const translateX = animatedValue.interpolate({
     inputRange: [-1, 0, 1],
-    outputRange: [-900, 0, 900],
+    outputRange: [-1200, 0, 1200],
   });
 
   return (
     <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.row,
-          {
-            transform: [{ translateX }],
-          },
-        ]}
-      >
-        {marqueeItems.map((item, index) => (
-          <View key={index} style={styles.itemPill}>
-            <Ionicons name={item.icon} size={14} color="#0284C7" />
-            <Text style={styles.itemText}>{item.text}</Text>
-            {item.badge && (
-              <View
-                style={[
-                  styles.badge,
-                  { backgroundColor: item.badgeColor || '#0284C7' },
-                ]}
-              >
-                <Text style={styles.badgeText}>{item.badge}</Text>
-              </View>
-            )}
-            <Text style={styles.dotSeparator}>•</Text>
-          </View>
-        ))}
-      </Animated.View>
+      {isWeb ? (
+        <View
+          // @ts-ignore
+          className={reverse ? 'marquee-right' : 'marquee-left'}
+          style={[
+            styles.row,
+            {
+              // @ts-ignore
+              animation: `${reverse ? 'marqueeScrollRight' : 'marqueeScrollLeft'} ${speed}s linear infinite`,
+              display: 'flex',
+            },
+          ]}
+        >
+          {marqueeItems.map((item, index) => (
+            <View key={index} style={styles.itemPill}>
+              <Ionicons name={item.icon} size={14} color="#0284C7" />
+              <Text style={styles.itemText}>{item.text}</Text>
+              {item.badge && (
+                <View
+                  style={[
+                    styles.badge,
+                    { backgroundColor: item.badgeColor || '#0284C7' },
+                  ]}
+                >
+                  <Text style={styles.badgeText}>{item.badge}</Text>
+                </View>
+              )}
+              <Text style={styles.dotSeparator}>•</Text>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <Animated.View
+          style={[
+            styles.row,
+            {
+              transform: [{ translateX }],
+            },
+          ]}
+        >
+          {marqueeItems.map((item, index) => (
+            <View key={index} style={styles.itemPill}>
+              <Ionicons name={item.icon} size={14} color="#0284C7" />
+              <Text style={styles.itemText}>{item.text}</Text>
+              {item.badge && (
+                <View
+                  style={[
+                    styles.badge,
+                    { backgroundColor: item.badgeColor || '#0284C7' },
+                  ]}
+                >
+                  <Text style={styles.badgeText}>{item.badge}</Text>
+                </View>
+              )}
+              <Text style={styles.dotSeparator}>•</Text>
+            </View>
+          ))}
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -104,13 +171,14 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 2700,
+    width: 3800,
   },
   itemPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 8,
+    flexShrink: 0,
   },
   itemText: {
     fontSize: 11,
