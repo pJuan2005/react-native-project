@@ -20,10 +20,20 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { ProductImage } from '@/components/product-image';
+import { InfiniteMarquee } from '@/components/infinite-marquee';
 import { formatPrice, mockLocations, mockHomestays, Homestay } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
 
 const { width } = Dimensions.get('window');
+
+const TRENDING_KEYWORDS = [
+  { icon: 'bed-outline', text: 'Villa hồ bơi riêng', badge: 'VIP', badgeColor: '#0284C7' },
+  { icon: 'sunny-outline', text: 'Phú Quốc view biển', badge: 'HOT', badgeColor: '#EF4444' },
+  { icon: 'leaf-outline', text: 'Đà Lạt đồi thông', badge: 'CHILL', badgeColor: '#10B981' },
+  { icon: 'cloud-outline', text: 'Sa Pa săn mây', badge: 'NEW', badgeColor: '#8B5CF6' },
+  { icon: 'home-outline', text: 'Hội An phố cổ', badge: 'TOP', badgeColor: '#F59E0B' },
+  { icon: 'ticket-outline', text: 'Giảm 200k đơn đầu', badge: 'PROMO', badgeColor: '#EC4899' },
+];
 
 export default function HomeScreen() {
   const [search, setSearch] = useState('');
@@ -110,6 +120,9 @@ export default function HomeScreen() {
           </ImageBackground>
         </Animated.View>
 
+        {/* CONTINUOUS AUTO-SCROLLING LIVE MARQUEE TICKER (Chạy liên tục từ phải sang trái) */}
+        <InfiniteMarquee speed={32} />
+
         {/* PROMOTION / DISCOUNT CAMPAIGN BANNER */}
         <Animated.View entering={FadeInUp.delay(150).duration(600)} style={styles.promoBannerContainer}>
           <ImageBackground
@@ -138,6 +151,11 @@ export default function HomeScreen() {
             </View>
           </ImageBackground>
         </Animated.View>
+
+        {/* CONTINUOUS SECONDARY MARQUEE (Chạy ngược chiều tạo hiệu ứng thị giác cực kỳ sống động) */}
+        <View style={{ marginTop: 10 }}>
+          <InfiniteMarquee items={TRENDING_KEYWORDS} speed={36} reverse={true} />
+        </View>
 
         {/* SECTION 1: DÀNH CHO BẠN */}
         <Animated.View entering={FadeInRight.delay(250).duration(600)}>
