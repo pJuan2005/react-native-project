@@ -153,7 +153,7 @@ function Filter({ label, selected, onPress }: { label: string; selected: boolean
 }
 
 export function HomestayRow({ homestay, isSaved }: { homestay: Homestay; isSaved: boolean }) {
-  const { addToBooking, removeFromBooking } = useBooking();
+  const { toggleSavedHomestay } = useBooking();
 
   return (
     <Pressable
@@ -177,11 +177,11 @@ export function HomestayRow({ homestay, isSaved }: { homestay: Homestay; isSaved
             style={[styles.saveBtn, isSaved && styles.saveBtnSaved]}
             onPress={(event) => {
               event.stopPropagation();
-              if (isSaved) {
-                removeFromBooking(homestay.id);
+              const nowSaved = toggleSavedHomestay(homestay);
+              if (nowSaved) {
+                Alert.alert('Đã lưu yêu thích ❤️', `${homestay.name} đã được thêm vào danh sách yêu thích.`);
               } else {
-                addToBooking(homestay);
-                Alert.alert('Đã lưu', `${homestay.name} đã được thêm vào danh sách yêu thích.`);
+                Alert.alert('Đã bỏ lưu 💔', `${homestay.name} đã được xóa khỏi danh sách yêu thích.`);
               }
             }}>
             <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#EF4444' : '#64748B'} />

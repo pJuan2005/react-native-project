@@ -8,7 +8,7 @@ import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput
 
 export default function HomeScreen() {
   const [search, setSearch] = useState('');
-  const { userProfile, addToBooking, savedHomestays, removeFromBooking } = useBooking();
+  const { userProfile, savedHomestays, toggleSavedHomestay } = useBooking();
 
   const featured = useMemo(
     () => mockHomestays.filter(h => h.isFeatured && h.name.toLowerCase().includes(search.toLowerCase())).slice(0, 4),
@@ -91,11 +91,11 @@ export default function HomeScreen() {
                 homestay={homestay}
                 isSaved={isSaved}
                 onToggleSave={() => {
-                  if (isSaved) {
-                    removeFromBooking(homestay.id);
+                  const nowSaved = toggleSavedHomestay(homestay);
+                  if (nowSaved) {
+                    Alert.alert('Đã lưu yêu thích ❤️', `${homestay.name} đã được thêm vào danh sách yêu thích.`);
                   } else {
-                    addToBooking(homestay);
-                    Alert.alert('Đã lưu', `${homestay.name} đã được thêm vào danh sách yêu thích.`);
+                    Alert.alert('Đã bỏ lưu 💔', `${homestay.name} đã được xóa khỏi danh sách yêu thích.`);
                   }
                 }}
               />
