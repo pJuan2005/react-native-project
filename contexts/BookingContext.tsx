@@ -44,6 +44,7 @@ type BookingContextValue = {
       discountAmount?: number;
     }
   ) => void;
+  toggleSavedHomestay: (homestay: Homestay) => boolean;
   removeFromBooking: (id: string) => void;
   removeSaved: (id: string) => void;
   clearBookings: () => void;
@@ -162,10 +163,26 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const toggleSavedHomestay = (homestay: Homestay): boolean => {
+    let nowSaved = false;
+    setSavedHomestays((items) => {
+      const exists = items.some((item) => item.id === homestay.id);
+      if (exists) {
+        nowSaved = false;
+        return items.filter((item) => item.id !== homestay.id);
+      } else {
+        nowSaved = true;
+        return [...items, { ...homestay, quantity: 1 }];
+      }
+    });
+    return nowSaved;
+  };
+
   const removeFromBooking = (id: string) =>
     setBookings((items) => items.filter((item) => item.id !== id && item.id + (item.checkIn || '') !== id));
 
-  const removeSaved = (id: string) => setSavedHomestays((items) => items.filter((item) => item.id !== id));
+  const removeSaved = (id: string) =>
+    setSavedHomestays((items) => items.filter((item) => item.id !== id));
 
   const clearBookings = () => setBookings([]);
 
@@ -222,6 +239,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       rewardPoints,
       pointHistory,
       addToBooking,
+      toggleSavedHomestay,
       removeFromBooking,
       removeSaved,
       clearBookings,

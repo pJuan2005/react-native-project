@@ -56,7 +56,13 @@ export default function HomestayDetail() {
     bookingTime: string;
   } | null>(null);
 
-  const { addToBooking, savedHomestays, removeFromBooking, userVouchers, calculateDiscount } = useBooking();
+  const {
+    addToBooking,
+    savedHomestays,
+    toggleSavedHomestay,
+    userVouchers,
+    calculateDiscount,
+  } = useBooking();
 
   const isSaved = homestay ? savedHomestays.some((s) => s.id === homestay.id) : false;
 
@@ -148,11 +154,11 @@ export default function HomestayDetail() {
 
   const toggleFavorite = () => {
     if (!homestay) return;
-    if (isSaved) {
-      removeFromBooking(homestay.id);
-    } else {
-      addToBooking(homestay);
+    const nowSaved = toggleSavedHomestay(homestay);
+    if (nowSaved) {
       Alert.alert('Đã lưu yêu thích ❤️', `${homestay.name} đã được thêm vào danh sách yêu thích.`);
+    } else {
+      Alert.alert('Đã bỏ lưu 💔', `${homestay.name} đã được xóa khỏi danh sách yêu thích.`);
     }
   };
 
