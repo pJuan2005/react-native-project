@@ -12,31 +12,32 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#4EBA87',
-        tabBarInactiveTintColor: '#888888',
+        tabBarInactiveTintColor: '#777777',
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopColor: '#E8F5E9',
           borderTopWidth: 1,
-          height: isIos ? 88 : 68,
-          paddingTop: 6,
-          paddingBottom: isIos ? 28 : 10,
-          elevation: 6,
+          height: isIos ? 90 : 74,
+          paddingTop: 8,
+          paddingBottom: isIos ? 30 : 14,
+          elevation: 8,
           shadowColor: '#000000',
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
+          shadowOpacity: 0.06,
           shadowRadius: 6,
         },
         tabBarItemStyle: {
           justifyContent: 'center',
           alignItems: 'center',
+          paddingBottom: 2,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '700',
+          lineHeight: 15,
           marginTop: 2,
-          paddingBottom: 2,
         },
       }}>
       <Tabs.Screen
