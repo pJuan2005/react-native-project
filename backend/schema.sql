@@ -1,3 +1,4 @@
+-- Reference to root schema file
 -- =====================================================
 -- HOMESTAY BOOKING COMPREHENSIVE DATABASE SCHEMA
 -- Database: homestay_db
