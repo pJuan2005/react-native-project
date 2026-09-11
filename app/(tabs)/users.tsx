@@ -5,6 +5,7 @@ import {
   Voucher,
 } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
@@ -62,6 +63,7 @@ const DISNEY_AVATARS = [
 ];
 
 export default function ProfileScreen() {
+  const { logout } = useAuth();
   const {
     userProfile,
     updateUserProfile,
@@ -397,7 +399,14 @@ export default function ProfileScreen() {
           onPress={() =>
             Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', [
               { text: 'Hủy', style: 'cancel' },
-              { text: 'Đăng xuất', style: 'destructive' },
+              {
+                text: 'Đăng xuất',
+                style: 'destructive',
+                onPress: () => {
+                  logout();
+                  router.replace('/login');
+                },
+              },
             ])
           }
         >

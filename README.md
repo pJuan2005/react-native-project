@@ -30,6 +30,12 @@ Dự án phát triển một nền tảng đặt phòng homestay hoàn chỉnh g
 
 ## ✨ Tính năng chính
 
+### 0. 🔐 Xác thực & Phân quyền (Authentication & Authorization)
+- **Màn hình Đăng nhập (`app/login.tsx`)**: Đăng nhập qua Email và Mật khẩu, hỗ trợ ẩn/hiện mật khẩu, nút chọn nhanh tài khoản mẫu thử nghiệm (1-Click Demo).
+- **Màn hình Đăng ký (`app/register.tsx`)**: Đăng ký thành viên mới với Họ tên, Email, Số điện thoại, Mật khẩu. Tặng ngay **+150 điểm thưởng** và Voucher chào mừng giảm 10% vào ví.
+- **Bảo vệ luồng điều hướng (Navigation Gate)**: Tự động bắt buộc người dùng chưa đăng nhập phải vào màn hình Login trước khi truy cập ứng dụng.
+- **Đăng xuất an toàn**: Xóa phiên đăng nhập và chuyển hướng ngay về màn hình Đăng nhập.
+
 ### 1. 🏠 Trang chủ (Home)
 - Banner ưu đãi khuyến mãi cho khách đặt sớm.
 - Thanh tìm kiếm nhanh homestay, địa điểm du lịch.

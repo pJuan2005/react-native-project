@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
+const authRoutes = require('./routes/auth.routes');
 const homestayRoutes = require('./routes/homestay.routes');
 const usersRoutes = require('./routes/users.routes');
 const adminRoutes = require('./routes/admin.routes');
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use('/admin', express.static(path.join(__dirname, '../../admin-web')));
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api', homestayRoutes);
 app.use('/api', usersRoutes);
 app.use('/api/admin', adminRoutes);
@@ -38,5 +40,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
   console.log(`💻 Web Admin Dashboard: http://localhost:${PORT}/admin`);
   console.log(`📱 Mobile API: http://localhost:${PORT}/api/homestays`);
+  console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth/login`);
   console.log(`=========================================`);
 });

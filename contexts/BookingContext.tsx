@@ -8,6 +8,7 @@ import {
   mockVouchers,
   initialPointTransactions,
 } from '@/constants/mockData';
+import { useAuth } from '@/contexts/AuthContext';
 import API_BASE_URL from '@/src/config/api';
 
 export type BookingItem = Homestay & {
@@ -58,30 +59,20 @@ type BookingContextValue = {
 const BookingContext = createContext<BookingContextValue | undefined>(undefined);
 
 export function BookingProvider({ children }: { children: ReactNode }) {
-  const [userProfile, setUserProfile] = useState<CustomerProfile>(mockUser);
+  const { user: authUser, updateUser: updateAuthUser } = useAuth();
+  const [userProfile, setUserProfile] = useState<CustomerProfile>(authUser || mockUser);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [savedHomestays, setSavedHomestays] = useState<BookingItem[]>([]);
   const [userVouchers, setUserVouchers] = useState<Voucher[]>(mockVouchers);
   const [rewardPoints, setRewardPoints] = useState<number>(350);
   const [pointHistory, setPointHistory] = useState<PointTransaction[]>(initialPointTransactions);
 
-  // Fetch initial user profile from Backend API
+  // Sync with authUser when user logs in or registers
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/users/1`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setUserProfile((prev) => ({
-            ...prev,
-            ...json.data,
-            avatar: json.data.avatar || prev.avatar,
-          }));
-        }
-      })
-      .catch((err) => {
-        console.warn('API fetch user profile failed, using local profile state:', err);
-      });
-  }, []);
+    if (authUser) {
+      setUserProfile(authUser);
+    }
+  }, [authUser]);
 
   const updateUserProfile = async (profileData: Partial<CustomerProfile>): Promise<boolean> => {
     // 1. Update global state immediately for instant UI responsiveness
@@ -89,10 +80,12 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       ...prev,
       ...profileData,
     }));
+    updateAuthUser(profileData);
 
     // 2. Sync with backend API
+    const targetUserId = userProfile.id || '1';
     try {
-      const res = await fetch(`${API_BASE_URL}/api/users/1`, {
+      const res = await fetch(`${API_BASE_URL}/api/users/${targetUserId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileData),
@@ -103,6 +96,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           ...prev,
           ...json.data,
         }));
+        updateAuthUser(json.data);
       }
       return true;
     } catch (err) {
