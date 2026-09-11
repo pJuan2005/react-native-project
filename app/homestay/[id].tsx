@@ -40,29 +40,47 @@ export default function HomestayDetail() {
   const [promoInput, setPromoInput] = useState('');
   const [pickerMonth, setPickerMonth] = useState(new Date(2026, 8, 1)); // Tháng 9, 2026
 
-  const { addToBooking, userVouchers, calculateDiscount } = useBooking();
+  // Bank-like Success Receipt Modal
+  const [bookingSuccessData, setBookingSuccessData] = useState<{
+    bookingCode: string;
+    homestayName: string;
+    location: string;
+    type: string;
+    checkIn: string;
+    checkOut: string;
+    nights: number;
+    guests: number;
+    totalPrice: number;
+    discountAmount: number;
+    voucherCode?: string;
+    bookingTime: string;
+  } | null>(null);
+
+  const { addToBooking, savedHomestays, removeFromBooking, userVouchers, calculateDiscount } = useBooking();
+
+  const isSaved = homestay ? savedHomestays.some((s) => s.id === homestay.id) : false;
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
     setError(null);
     fetch(`${API_BASE_URL}/api/homestays/${id}`)
-      .then(res => {
+      .then((res) => {
         if (!res.ok) throw new Error('not_found');
         return res.json();
       })
-      .then(json => {
+      .then((json) => {
         if (json.success && json.data) {
           setHomestay(json.data);
         } else {
-          const fallback = mockHomestays.find(h => h.id === id);
+          const fallback = mockHomestays.find((h) => h.id === id);
           if (fallback) setHomestay(fallback);
           else setError(json.message || 'Không tìm thấy homestay');
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.warn('API Error (falling back to mock data):', err);
-        const fallback = mockHomestays.find(h => h.id === id);
+        const fallback = mockHomestays.find((h) => h.id === id);
         if (fallback) setHomestay(fallback);
         else setError('Không thể tải thông tin Homestay');
       })
@@ -98,6 +116,9 @@ export default function HomestayDetail() {
       return;
     }
 
+    const generatedCode = `BK${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // Add to global booking context
     addToBooking(homestay, {
       checkIn,
       checkOut,
@@ -108,14 +129,31 @@ export default function HomestayDetail() {
       discountAmount: discountAmount > 0 ? discountAmount : undefined,
     });
 
-    Alert.alert(
-      'Đặt phòng thành công! 🎉',
-      `${homestay.name} đã được xác nhận. Bạn được cộng +100 điểm thưởng thành viên!`,
-      [
-        { text: 'Xem đặt phòng', onPress: () => router.push('/bookings') },
-        { text: 'Tiếp tục khám phá', style: 'cancel' },
-      ]
-    );
+    // Open Banking-style Success Confirmation Receipt Screen
+    setBookingSuccessData({
+      bookingCode: generatedCode,
+      homestayName: homestay.name,
+      location: homestay.location,
+      type: homestay.type,
+      checkIn,
+      checkOut,
+      nights,
+      guests,
+      totalPrice: finalTotalPrice,
+      discountAmount,
+      voucherCode: selectedVoucher?.code,
+      bookingTime: new Date().toLocaleString('vi-VN'),
+    });
+  };
+
+  const toggleFavorite = () => {
+    if (!homestay) return;
+    if (isSaved) {
+      removeFromBooking(homestay.id);
+    } else {
+      addToBooking(homestay);
+      Alert.alert('Đã lưu yêu thích ❤️', `${homestay.name} đã được thêm vào danh sách yêu thích.`);
+    }
   };
 
   // Calendar Day Click Logic
@@ -169,7 +207,7 @@ export default function HomestayDetail() {
       Alert.alert('Thông báo', 'Vui lòng nhập mã voucher');
       return;
     }
-    const matched = userVouchers.find(v => v.code.toUpperCase() === code);
+    const matched = userVouchers.find((v) => v.code.toUpperCase() === code);
     if (matched) {
       setSelectedVoucher(matched);
       setShowVoucherModal(false);
@@ -388,14 +426,11 @@ export default function HomestayDetail() {
         {/* Action Buttons */}
         <View style={s.actions}>
           <Pressable
-            style={s.saveButton}
-            onPress={() => {
-              addToBooking(homestay);
-              Alert.alert('Đã lưu', `${homestay.name} đã được thêm vào danh sách yêu thích.`);
-            }}
+            style={[s.saveButton, isSaved && s.saveButtonSaved]}
+            onPress={toggleFavorite}
           >
-            <Ionicons name="heart-outline" size={18} color="#2563EB" />
-            <Text style={s.saveText}>Lưu</Text>
+            <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#EF4444' : '#2563EB'} />
+            <Text style={[s.saveText, isSaved && s.saveTextSaved]}>{isSaved ? 'Đã lưu' : 'Lưu'}</Text>
           </Pressable>
 
           <Pressable
@@ -573,6 +608,87 @@ export default function HomestayDetail() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* MODAL 3: BANK-STYLE SUCCESS CONFIRMATION RECEIPT */}
+      <Modal
+        visible={!!bookingSuccessData}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setBookingSuccessData(null)}
+      >
+        <View style={s.bankSuccessOverlay}>
+          <View style={s.bankSuccessCard}>
+            {/* Success Glowing Icon */}
+            <View style={s.bankSuccessIconWrapper}>
+              <View style={s.bankSuccessIconOuter}>
+                <Ionicons name="checkmark-circle" size={68} color="#10B981" />
+              </View>
+            </View>
+
+            {/* Header Text */}
+            <Text style={s.bankSuccessTitle}>ĐẶT PHÒNG THÀNH CÔNG!</Text>
+            <Text style={s.bankSuccessAmount}>{formatPrice(bookingSuccessData?.totalPrice || 0)}</Text>
+
+            <View style={s.bankSuccessBadge}>
+              <Ionicons name="shield-checkmark" size={14} color="#15803D" />
+              <Text style={s.bankSuccessBadgeText}>Đã xác nhận & Thanh toán</Text>
+            </View>
+
+            {/* Reward Points Tag */}
+            <View style={s.bankRewardCard}>
+              <Ionicons name="star" size={16} color="#F59E0B" />
+              <Text style={s.bankRewardText}>
+                Bạn đã được cộng <Text style={{ fontWeight: '800' }}>+100 điểm thưởng</Text> vào ví!
+              </Text>
+            </View>
+
+            {/* Receipt Details Box */}
+            <View style={s.receiptBox}>
+              <ReceiptLine label="Mã đặt phòng" value={bookingSuccessData?.bookingCode || ''} isCode />
+              <ReceiptLine label="Chỗ nghỉ" value={bookingSuccessData?.homestayName || ''} />
+              <ReceiptLine label="Địa điểm" value={`${bookingSuccessData?.location} • ${bookingSuccessData?.type}`} />
+              <ReceiptLine
+                label="Thời gian lưu trú"
+                value={`${bookingSuccessData?.checkIn} ➔ ${bookingSuccessData?.checkOut} (${bookingSuccessData?.nights} đêm)`}
+              />
+              <ReceiptLine label="Số lượng khách" value={`${bookingSuccessData?.guests} người`} />
+              {bookingSuccessData?.discountAmount ? (
+                <ReceiptLine
+                  label="Voucher áp dụng"
+                  value={`-${formatPrice(bookingSuccessData.discountAmount)} (${bookingSuccessData.voucherCode})`}
+                  isGreen
+                />
+              ) : null}
+              <ReceiptLine label="Thời gian thực hiện" value={bookingSuccessData?.bookingTime || ''} />
+            </View>
+
+            {/* Action Buttons */}
+            <View style={s.bankActions}>
+              <Pressable
+                style={s.bankViewBookingsBtn}
+                onPress={() => {
+                  setBookingSuccessData(null);
+                  router.push('/bookings');
+                }}
+              >
+                <Ionicons name="calendar-outline" size={18} color="#FFFFFF" />
+                <Text style={s.bankViewBookingsText}>Xem đặt phòng của tôi</Text>
+              </Pressable>
+
+              <Pressable
+                style={s.bankHomeBtn}
+                onPress={() => {
+                  setBookingSuccessData(null);
+                  router.push('/');
+                }}
+              >
+                <Ionicons name="home-outline" size={17} color="#2563EB" />
+                <Text style={s.bankHomeText}>Về trang chủ</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -599,6 +715,33 @@ function Line({
     <View style={s.line}>
       <Text style={s.lineLabel}>{label}</Text>
       <Text style={[s.lineValue, isDiscount && { color: '#16A34A', fontWeight: '700' }]}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+function ReceiptLine({
+  label,
+  value,
+  isCode,
+  isGreen,
+}: {
+  label: string;
+  value: string;
+  isCode?: boolean;
+  isGreen?: boolean;
+}) {
+  return (
+    <View style={s.receiptLine}>
+      <Text style={s.receiptLabel}>{label}</Text>
+      <Text
+        style={[
+          s.receiptValue,
+          isCode && s.receiptCode,
+          isGreen && { color: '#16A34A', fontWeight: '700' },
+        ]}
+      >
         {value}
       </Text>
     </View>
@@ -731,8 +874,15 @@ const s = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     flexDirection: 'row',
     gap: 6,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  saveButtonSaved: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
   },
   saveText: { fontWeight: '700', color: '#2563EB', fontSize: 13 },
+  saveTextSaved: { color: '#DC2626' },
   bookButton: {
     flex: 2,
     alignItems: 'center',
@@ -891,5 +1041,156 @@ const s = StyleSheet.create({
   selectRadioActive: {
     backgroundColor: '#2563EB',
     borderColor: '#2563EB',
+  },
+  // Bank Success Receipt Styles
+  bankSuccessOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  bankSuccessCard: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  bankSuccessIconWrapper: {
+    marginTop: 4,
+    marginBottom: 10,
+  },
+  bankSuccessIconOuter: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#ECFDF5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bankSuccessTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#047857',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  bankSuccessAmount: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginTop: 4,
+  },
+  bankSuccessBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 6,
+  },
+  bankSuccessBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#15803D',
+  },
+  bankRewardCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginTop: 12,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  bankRewardText: {
+    fontSize: 12,
+    color: '#92400E',
+    fontWeight: '600',
+  },
+  receiptBox: {
+    width: '100%',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 8,
+  },
+  receiptLine: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  receiptLabel: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  receiptValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1E293B',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 10,
+  },
+  receiptCode: {
+    fontFamily: 'monospace',
+    color: '#2563EB',
+    fontWeight: '700',
+  },
+  bankActions: {
+    width: '100%',
+    marginTop: 18,
+    gap: 8,
+  },
+  bankViewBookingsBtn: {
+    width: '100%',
+    backgroundColor: '#2563EB',
+    paddingVertical: 12,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  bankViewBookingsText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  bankHomeBtn: {
+    width: '100%',
+    backgroundColor: '#EFF6FF',
+    paddingVertical: 11,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  bankHomeText: {
+    color: '#2563EB',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
