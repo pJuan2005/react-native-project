@@ -52,11 +52,46 @@ export type Booking = {
 };
 
 export const mockLocations: Location[] = [
-  { id: '1', name: 'Đà Lạt', description: 'Thành phố ngàn hoa mát mẻ quanh năm', homestayCount: 25, icon: 'leaf-outline', image: 'https://images.unsplash.com/photo-1583847268964-b28dc8fdf1f9?auto=format&fit=crop&w=900&q=80' },
-  { id: '2', name: 'Sa Pa', description: 'Sapa sương mơ, đà lạt miền Bắc', homestayCount: 18, icon: 'compass-outline', image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=900&q=80' },
-  { id: '3', name: 'Phú Quốc', description: 'Hòn ngọc ngào đảo biển xanh', homestayCount: 32, icon: 'water-outline', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=900&q=80' },
-  { id: '4', name: 'Hội An', description: 'Phố cổ ngàn đèn lồng lung linh', homestayCount: 15, icon: 'home-outline', image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80' },
-  { id: '5', name: 'Nha Trang', description: 'Thành phố biển xinh đẹp miền Trung', homestayCount: 22, icon: 'water-outline', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80' },
+  {
+    id: '1',
+    name: 'Đà Lạt',
+    description: 'Thành phố ngàn hoa và sương mây',
+    homestayCount: 25,
+    icon: 'leaf-outline',
+    image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    id: '2',
+    name: 'Sa Pa',
+    description: 'Ruộng bậc thang & núi non hùng vĩ',
+    homestayCount: 18,
+    icon: 'compass-outline',
+    image: 'https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    id: '3',
+    name: 'Phú Quốc',
+    description: 'Đảo ngọc biển xanh cát trắng nắng vàng',
+    homestayCount: 32,
+    icon: 'water-outline',
+    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    id: '4',
+    name: 'Hội An',
+    description: 'Phố cổ đèn lồng lung linh thơ mộng',
+    homestayCount: 15,
+    icon: 'home-outline',
+    image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    id: '5',
+    name: 'Nha Trang',
+    description: 'Vịnh biển trong xanh tuyệt đẹp',
+    homestayCount: 22,
+    icon: 'water-outline',
+    image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=900&q=80'
+  },
 ];
 
 export const mockHomestays: Homestay[] = [
@@ -97,8 +132,8 @@ export const mockHomestays: Homestay[] = [
     amenities: ['View sương mây', 'Sân thượng', 'Nướng BBQ', 'Bếp', 'WiFi', 'Nóng lạnh', 'Máy giặt', 'Xe đưa đón'],
     images: [
       'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1564013799859-5f3b72abc431?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=900&q=80',
     ],
     description: 'Cloud Nine mang đến trải nghiệm "đứng trên mây" với view sương mây tuyệt đẹp mỗi sáng sớm. Không gian ấm cúng, gỗ tự nhiên, sân thượng rộng rãi cho tiệc nướng BBQ thư giãn.',
     isFeatured: true,
@@ -119,8 +154,8 @@ export const mockHomestays: Homestay[] = [
     amenities: ['Biển ngay trước cửa', 'Hồ bơi vô cực', 'BBQ', 'Bếp', 'WiFi', 'Điều hòa', 'Bãi đỗ xe', 'Dịch vụ massage', 'Xe đạp'],
     images: [
       'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80',
     ],
     description: 'Seaside Bliss Villa tọa lạc ngay bãi biển Khem đẹp nhất Phú Quốc. Hồ bơi vô cực nhìn ra biển, 5 phòng ngủ sang trọng, đầy đủ tiện nghi cao cấp. Thiên đường nghỉ dưỡng gia đình, nhóm lớn.',
     isFeatured: true,
@@ -140,9 +175,9 @@ export const mockHomestays: Homestay[] = [
     bathrooms: 1,
     amenities: ['View ruộng bậc thang', 'Sương mây', 'Lò nướng', 'Bếp', 'WiFi', 'Nóng lạnh', 'Hướng dẫn tour', 'Xe máy cho thuê'],
     images: [
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80',
     ],
     description: 'Homestay truyền thống người Mông tại Sa Pa với view ruộng bậc thang tuyệt đẹp. Không gian gỗ nguyên bản, ấm cúng, gần chợ Sa Pa và Fansipan. Trải nghiệm văn hóa bản địa độc đáo.',
     isNew: true,
@@ -161,8 +196,8 @@ export const mockHomestays: Homestay[] = [
     bathrooms: 2,
     amenities: ['Gần phố cổ', 'View sông', 'Xe đạp miễn phí', 'Bếp', 'WiFi', 'Điều hòa', 'Máy giặt', 'Tour đèn lồng'],
     images: [
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80',
     ],
     description: 'Ancient Town Riverside tọa lạc ngay bên sông Thu Bồn, chỉ 5 phút đi bộ đến phố cổ Hội An. Kiến trúc cổ truyền, view sông thơ mộng, xe đạp miễn phí khám phá phố cổ về đêm.',
@@ -183,9 +218,9 @@ export const mockHomestays: Homestay[] = [
     bathrooms: 2,
     amenities: ['View biển panoramic', 'Hồ bơi', 'Spa', 'Nhà hàng', 'WiFi', 'Điều hòa', 'Bãi đỗ xe', 'Thư viện sách', 'Kayak'],
     images: [
+      'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=900&q=80',
       'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80',
     ],
     description: 'Ocean View Resort Nha Trang với view biển panoramic 180 độ. Phòng nghỉ sang trọng, hồ bơi ngoài trời, spa thư giãn, nhà hàng ăn uống ngon. Lý tưởng cho kỳ nghỉ couples hoặc gia đình nhỏ.',
     isNew: true,
@@ -205,8 +240,8 @@ export const mockHomestays: Homestay[] = [
     amenities: ['Rừng thông', 'Lò sưởi', 'BBQ', 'Bếp', 'WiFi', 'Nóng lạnh', 'View đồi', 'Đường đi bộ'],
     images: [
       'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80',
     ],
     description: 'Pine Hill Cabin giấu mình trong rừng thông Đà Lạt mát mẻ. Kiến trúc cabin gỗ ấm áp, lò sưởi thơ mộng, khu BBQ ngoài trời. Không gian riêng tư, bình yên cho cặp đôi hoặc gia đình nhỏ.',
   },
@@ -225,8 +260,8 @@ export const mockHomestays: Homestay[] = [
     amenities: ['Kiến trúc tre', 'Vuông vườn', 'Nấu ăn cùng chủ nhà', 'Xe đạp', 'WiFi', 'Điều hòa', 'Yoga buổi sáng', 'Tour làng nghề'],
     images: [
       'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80',
     ],
     description: 'Bamboo Eco Homestay Hội An với kiến trúc tre bambu độc đáo, thân thiện môi trường. Trải nghiệm nấu ăn cùng chủ nhà, yoga buổi sáng, tham quan làng nghề truyền thống. Không gian xanh, mát, chữa lành.',
   },
@@ -273,7 +308,7 @@ export const mockBookings: Booking[] = [
     id: 'BK003',
     homestayId: '5',
     homestayName: 'Ancient Town Riverside',
-    homestayImage: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80',
+    homestayImage: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
     location: 'Hội An',
     checkIn: '2026-07-20',
     checkOut: '2026-07-22',
