@@ -2,6 +2,7 @@ import { ProductImage } from '@/components/product-image';
 import { mockUser } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -27,14 +28,32 @@ type UserProfile = {
   avatar: string;
 };
 
-// Danh sách ảnh đại diện mẫu đẹp để người dùng chọn nhanh
-const AVATAR_PRESETS = [
-  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80',
-  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=300&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=300&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80',
+// Danh sách avatar nhân vật Disney hoạt hình nổi tiếng
+const DISNEY_AVATARS = [
+  {
+    name: 'Mickey Mouse',
+    url: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    name: 'Stitch',
+    url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    name: 'Elsa (Frozen)',
+    url: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    name: 'Simba (Lion King)',
+    url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    name: 'Donald Duck',
+    url: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&w=300&q=80',
+  },
+  {
+    name: 'Woody (Toy Story)',
+    url: 'https://images.unsplash.com/photo-1558679908-541bcf1249ff?auto=format&fit=crop&w=300&q=80',
+  },
 ];
 
 export default function ProfileScreen() {
@@ -53,7 +72,6 @@ export default function ProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
-  const [customAvatarUrl, setCustomAvatarUrl] = useState('');
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/users/1`)
@@ -98,13 +116,30 @@ export default function ProfileScreen() {
     setShowAvatarModal(false);
   };
 
-  const handleApplyCustomAvatar = () => {
-    if (!customAvatarUrl.trim()) {
-      Alert.alert('Thông báo', 'Vui lòng nhập đường dẫn hình ảnh');
-      return;
+  // Chọn ảnh từ thư viện thiết bị (Camera Roll / File Picker)
+  const pickImageFromDevice = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('Cần cấp quyền', 'Vui lòng cấp quyền truy cập thư viện ảnh để chọn ảnh đại diện.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedUri = result.assets[0].uri;
+        selectAvatar(selectedUri);
+      }
+    } catch (err) {
+      console.error('Image picker error:', err);
+      Alert.alert('Lỗi', 'Không thể mở thư viện ảnh.');
     }
-    selectAvatar(customAvatarUrl.trim());
-    setCustomAvatarUrl('');
   };
 
   const saveProfile = async () => {
@@ -121,13 +156,11 @@ export default function ProfileScreen() {
         setIsEditing(false);
         Alert.alert('Thành công', 'Cập nhật hồ sơ và ảnh đại diện thành công!');
       } else {
-        // Cập nhật local nếu API báo lỗi
         setProfile(prev => ({ ...prev, ...form }));
         setIsEditing(false);
         Alert.alert('Thành công', 'Đã lưu thay đổi hồ sơ.');
       }
     } catch {
-      // Offline fallback
       setProfile(prev => ({ ...prev, ...form }));
       setIsEditing(false);
       Alert.alert('Thành công', 'Đã lưu thay đổi hồ sơ.');
@@ -208,7 +241,7 @@ export default function ProfileScreen() {
                   <View style={styles.card}>
                     <Text style={styles.sectionTitle}>Chỉnh sửa thông tin</Text>
 
-                    {/* Avatar quick select in edit mode */}
+                    {/* Avatar quick select button */}
                     <View style={styles.avatarEditRow}>
                       <Text style={styles.fieldLabel}>Ảnh đại diện</Text>
                       <Pressable style={styles.changeAvatarBtn} onPress={() => setShowAvatarModal(true)}>
@@ -336,7 +369,7 @@ export default function ProfileScreen() {
         </Pressable>
       </ScrollView>
 
-      {/* Modal: Chọn ảnh đại diện */}
+      {/* Modal: Chọn ảnh đại diện Disney & Thư viện máy */}
       <Modal
         visible={showAvatarModal}
         transparent
@@ -352,39 +385,48 @@ export default function ProfileScreen() {
               </Pressable>
             </View>
 
-            <Text style={styles.modalSubtitle}>Chọn từ mẫu có sẵn:</Text>
-            <View style={styles.presetsGrid}>
-              {AVATAR_PRESETS.map((url, idx) => (
-                <Pressable
-                  key={idx}
-                  style={[
-                    styles.presetAvatarWrapper,
-                    form.avatar === url && styles.presetAvatarSelected,
-                  ]}
-                  onPress={() => selectAvatar(url)}
-                >
-                  <ProductImage uri={url} style={styles.presetAvatar} containerStyle={styles.presetAvatar} />
-                  {form.avatar === url && (
-                    <View style={styles.checkBadge}>
-                      <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                    </View>
-                  )}
-                </Pressable>
-              ))}
+            {/* Nút chọn ảnh từ thư viện máy */}
+            <Pressable style={styles.pickDeviceBtn} onPress={pickImageFromDevice}>
+              <View style={styles.pickDeviceIcon}>
+                <Ionicons name="images" size={20} color="#2563EB" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.pickDeviceTitle}>Chọn ảnh từ thư viện máy</Text>
+                <Text style={styles.pickDeviceSubtitle}>Tải ảnh có sẵn trên thiết bị của bạn</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+            </Pressable>
+
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>HOẶC CHỌN NHÂN VẬT DISNEY</Text>
+              <View style={styles.dividerLine} />
             </View>
 
-            <Text style={[styles.modalSubtitle, { marginTop: 16 }]}>Hoặc dán liên kết ảnh (URL):</Text>
-            <View style={styles.customUrlRow}>
-              <TextInput
-                value={customAvatarUrl}
-                onChangeText={setCustomAvatarUrl}
-                placeholder="https://example.com/avatar.jpg"
-                placeholderTextColor="#94A3B8"
-                style={styles.customUrlInput}
-              />
-              <Pressable style={styles.applyBtn} onPress={handleApplyCustomAvatar}>
-                <Text style={styles.applyBtnText}>Dùng ảnh</Text>
-              </Pressable>
+            {/* Grid nhân vật Disney */}
+            <View style={styles.presetsGrid}>
+              {DISNEY_AVATARS.map((item, idx) => (
+                <Pressable
+                  key={idx}
+                  style={styles.disneyItem}
+                  onPress={() => selectAvatar(item.url)}
+                >
+                  <View
+                    style={[
+                      styles.presetAvatarWrapper,
+                      form.avatar === item.url && styles.presetAvatarSelected,
+                    ]}
+                  >
+                    <ProductImage uri={item.url} style={styles.presetAvatar} containerStyle={styles.presetAvatar} />
+                    {form.avatar === item.url && (
+                      <View style={styles.checkBadge}>
+                        <Ionicons name="checkmark" size={10} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </View>
+                  <Text numberOfLines={1} style={styles.disneyName}>{item.name}</Text>
+                </Pressable>
+              ))}
             </View>
           </Pressable>
         </Pressable>
@@ -575,69 +617,82 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
   },
   modalContent: {
     width: '100%',
-    maxWidth: 380,
+    maxWidth: 360,
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 20,
-    elevation: 5,
+    padding: 18,
+    elevation: 6,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   modalTitle: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
-  modalSubtitle: { fontSize: 12, fontWeight: '600', color: '#64748B', marginBottom: 8 },
+  pickDeviceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: 12,
+    padding: 12,
+  },
+  pickDeviceIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pickDeviceTitle: { fontSize: 13, fontWeight: '700', color: '#1E40AF' },
+  pickDeviceSubtitle: { fontSize: 11, color: '#64748B', marginTop: 1 },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginVertical: 14,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#E2E8F0' },
+  dividerText: { fontSize: 10, fontWeight: '700', color: '#94A3B8' },
   presetsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
     justifyContent: 'space-between',
+    rowGap: 12,
+  },
+  disneyItem: {
+    width: '30%',
+    alignItems: 'center',
   },
   presetAvatarWrapper: {
     position: 'relative',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: '#F1F5F9',
   },
-  presetAvatarSelected: { borderColor: '#2563EB' },
-  presetAvatar: { width: 60, height: 60, borderRadius: 30 },
+  presetAvatarSelected: { borderColor: '#2563EB', borderWidth: 2.5 },
+  presetAvatar: { width: 58, height: 58, borderRadius: 29 },
   checkBadge: {
     position: 'absolute',
     bottom: 2,
     right: 2,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  customUrlRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
-  customUrlInput: {
-    flex: 1,
-    height: 38,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    fontSize: 12,
-    color: '#0F172A',
-  },
-  applyBtn: {
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  applyBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 12 },
+  disneyName: { fontSize: 11, fontWeight: '600', color: '#475569', marginTop: 4, textAlign: 'center' },
 });
