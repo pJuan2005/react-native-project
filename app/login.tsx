@@ -40,11 +40,6 @@ export default function LoginScreen() {
     }
   };
 
-  const fillDemoAccount = (demoEmail: string, demoPass: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-  };
-
   return (
     <SafeAreaView style={styles.screen}>
       <KeyboardAvoidingView
@@ -55,7 +50,7 @@ export default function LoginScreen() {
           {/* Logo Brand Header */}
           <View style={styles.logoContainer}>
             <View style={styles.logoIconBox}>
-              <Ionicons name="home-outline" size={42} color="#1E3A8A" />
+              <Ionicons name="home-outline" size={44} color="#1E3A8A" />
             </View>
             <Text style={styles.brandTitle}>Homestay Booking</Text>
           </View>
@@ -118,28 +113,6 @@ export default function LoginScreen() {
             <Pressable style={styles.switchBtn} onPress={() => router.push('/register')}>
               <Text style={styles.switchText}>Register</Text>
             </Pressable>
-
-            {/* Demo 1-Click Login Helper */}
-            <View style={styles.demoBox}>
-              <Text style={styles.demoTitle}>Tài khoản mẫu thử nghiệm (1-Click):</Text>
-              <View style={styles.demoButtonsRow}>
-                <Pressable
-                  style={styles.demoChip}
-                  onPress={() => fillDemoAccount('phamchuan2608@gmail.com', '123456')}
-                >
-                  <Ionicons name="person-outline" size={13} color="#2D6A4F" />
-                  <Text style={styles.demoChipText}>Khách hàng (Chuẩn)</Text>
-                </Pressable>
-
-                <Pressable
-                  style={styles.demoChip}
-                  onPress={() => fillDemoAccount('admin@homestay.com', '123456')}
-                >
-                  <Ionicons name="shield-outline" size={13} color="#2D6A4F" />
-                  <Text style={styles.demoChipText}>Admin Quản trị</Text>
-                </Pressable>
-              </View>
-            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -154,33 +127,33 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 28,
-    paddingTop: 40,
+    paddingTop: 60,
     paddingBottom: 40,
     justifyContent: 'center',
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 36,
+    marginBottom: 40,
   },
   logoIconBox: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+    width: 86,
+    height: 86,
+    borderRadius: 22,
     backgroundColor: '#F0FDF4',
     borderWidth: 1.5,
     borderColor: '#D8F3DC',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   brandTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
     color: '#1E3A8A',
     letterSpacing: 0.5,
   },
   formContainer: {
-    gap: 16,
+    gap: 18,
   },
   inputPill: {
     flexDirection: 'row',
@@ -189,8 +162,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.8,
     borderColor: '#4EBA87',
     borderRadius: 25,
-    paddingHorizontal: 16,
-    height: 50,
+    paddingHorizontal: 18,
+    height: 52,
   },
   icon: {
     marginRight: 10,
@@ -201,8 +174,8 @@ const styles = StyleSheet.create({
     color: '#222222',
   },
   mainBtn: {
-    marginTop: 8,
-    height: 50,
+    marginTop: 10,
+    height: 52,
     backgroundColor: '#4EBA87',
     borderRadius: 25,
     alignItems: 'center',
@@ -215,45 +188,11 @@ const styles = StyleSheet.create({
   },
   switchBtn: {
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   switchText: {
     color: '#4EBA87',
     fontSize: 15,
     fontWeight: '600',
-  },
-  demoBox: {
-    marginTop: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderColor: '#E8F5E9',
-    alignItems: 'center',
-  },
-  demoTitle: {
-    fontSize: 12,
-    color: '#666666',
-    marginBottom: 8,
-  },
-  demoButtonsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  demoChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#E8F5E9',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#B7E4C7',
-  },
-  demoChipText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#2D6A4F',
   },
 });
