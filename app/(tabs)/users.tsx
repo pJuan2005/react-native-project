@@ -397,13 +397,8 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
             </Pressable>
 
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>HOẶC CHỌN NHÂN VẬT DISNEY</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
             {/* Grid nhân vật Disney */}
+            <Text style={styles.disneySectionTitle}>Avatar mẫu:</Text>
             <View style={styles.presetsGrid}>
               {DISNEY_AVATARS.map((item, idx) => (
                 <Pressable
@@ -654,14 +649,13 @@ const styles = StyleSheet.create({
   },
   pickDeviceTitle: { fontSize: 13, fontWeight: '700', color: '#1E40AF' },
   pickDeviceSubtitle: { fontSize: 11, color: '#64748B', marginTop: 1 },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginVertical: 14,
+  disneySectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+    marginTop: 14,
+    marginBottom: 8,
   },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#E2E8F0' },
-  dividerText: { fontSize: 10, fontWeight: '700', color: '#94A3B8' },
   presetsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
