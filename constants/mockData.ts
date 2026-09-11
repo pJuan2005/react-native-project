@@ -49,6 +49,30 @@ export type Booking = {
   totalPrice: number;
   status: 'confirmed' | 'pending' | 'cancelled' | 'completed';
   createdAt: string;
+  voucherCode?: string;
+  discountAmount?: number;
+};
+
+export type Voucher = {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number; // Tỷ lệ % (vd: 10) hoặc số tiền cố định (vd: 150000)
+  minOrderPrice?: number;
+  maxDiscount?: number;
+  expiresAt: string;
+  requiredPoints?: number; // Số điểm thưởng để quy đổi
+  icon?: string;
+};
+
+export type PointTransaction = {
+  id: string;
+  title: string;
+  points: number;
+  type: 'earn' | 'redeem';
+  date: string;
 };
 
 export const mockLocations: Location[] = [
@@ -319,9 +343,109 @@ export const mockBookings: Booking[] = [
   },
 ];
 
+export const mockVouchers: Voucher[] = [
+  {
+    id: 'VOUCHER_1',
+    code: 'WELCOME10',
+    title: 'Ưu đãi chào mừng',
+    description: 'Giảm 10% tối đa 300.000₫ cho khách hàng mới',
+    discountType: 'percentage',
+    discountValue: 10,
+    maxDiscount: 300000,
+    expiresAt: '2026-12-31',
+    icon: 'gift-outline',
+  },
+  {
+    id: 'VOUCHER_2',
+    code: 'HELLOHOLIDAY',
+    title: 'Voucher Lễ Hội 2026',
+    description: 'Giảm trực tiếp 200.000₫ cho đơn từ 1.500.000₫',
+    discountType: 'fixed',
+    discountValue: 200000,
+    minOrderPrice: 1500000,
+    expiresAt: '2026-11-30',
+    icon: 'sparkles-outline',
+  },
+  {
+    id: 'VOUCHER_3',
+    code: 'WEEKEND15',
+    title: 'Ưu đãi cuối tuần',
+    description: 'Giảm 15% tối đa 400.000₫ cho chuyến đi từ 2 đêm',
+    discountType: 'percentage',
+    discountValue: 15,
+    maxDiscount: 400000,
+    expiresAt: '2026-10-31',
+    icon: 'flame-outline',
+  },
+];
+
+// Danh sách voucher có thể quy đổi từ Điểm thưởng
+export const redeemableVouchers: Voucher[] = [
+  {
+    id: 'REDEEM_100K',
+    code: 'POINT100K',
+    title: 'Voucher 100.000 ₫',
+    description: 'Giảm ngay 100.000₫ cho mọi homestay',
+    discountType: 'fixed',
+    discountValue: 100000,
+    requiredPoints: 200,
+    expiresAt: '2026-12-31',
+    icon: 'trophy-outline',
+  },
+  {
+    id: 'REDEEM_250K',
+    code: 'POINT250K',
+    title: 'Voucher 250.000 ₫',
+    description: 'Giảm ngay 250.000₫ cho đơn từ 1.200.000₫',
+    discountType: 'fixed',
+    discountValue: 250000,
+    minOrderPrice: 1200000,
+    requiredPoints: 450,
+    expiresAt: '2026-12-31',
+    icon: 'medal-outline',
+  },
+  {
+    id: 'REDEEM_500K',
+    code: 'POINT500K',
+    title: 'Voucher VIP 500.000 ₫',
+    description: 'Giảm ngay 500.000₫ cho đơn từ 2.500.000₫',
+    discountType: 'fixed',
+    discountValue: 500000,
+    minOrderPrice: 2500000,
+    requiredPoints: 800,
+    expiresAt: '2026-12-31',
+    icon: 'diamond-outline',
+  },
+];
+
+export const initialPointTransactions: PointTransaction[] = [
+  {
+    id: 'PT01',
+    title: 'Hoàn thành chuyến đi Hội An (Ancient Town Riverside)',
+    points: 150,
+    type: 'earn',
+    date: '22/07/2026',
+  },
+  {
+    id: 'PT02',
+    title: 'Đánh giá 5 sao cho chỗ nghỉ',
+    points: 50,
+    type: 'earn',
+    date: '23/07/2026',
+  },
+  {
+    id: 'PT03',
+    title: 'Thưởng thành viên mới',
+    points: 150,
+    type: 'earn',
+    date: '01/07/2026',
+  },
+];
+
 export const formatPrice = (price: number) => `${new Intl.NumberFormat('vi-VN').format(price)} ₫`;
 
 export const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
   return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
+

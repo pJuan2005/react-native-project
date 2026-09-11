@@ -48,24 +48,34 @@ Dự án phát triển một nền tảng đặt phòng homestay hoàn chỉnh g
 - Tìm kiếm linh hoạt theo tên homestay hoặc địa điểm.
 - Sắp xếp linh hoạt theo: *Mặc định, Giá (tăng dần), Đánh giá Rating (giảm dần)*.
 
-### 4. 📄 Chi tiết Homestay (Homestay Detail)
+### 4. 📄 Chi tiết Homestay (Homestay Detail) & Lịch Đặt phòng
 - Thư viện hình ảnh sắc nét kèm hiệu ứng chấm chuyển ảnh.
 - Hiển thị đầy đủ thông tin: giá tiền, giá gốc giảm giá, địa chỉ, loại hình, số lượng phòng ngủ/phòng tắm, sức chứa tối đa.
 - Danh sách tiện nghi chi tiết (*Hồ bơi riêng, BBQ, View núi/biển, Bếp đầy đủ, WiFi, Xe đưa đón,...*).
-- Chọn ngày nhận phòng (Check-in), ngày trả phòng (Check-out) và số lượng khách.
-- Tự động tính toán số đêm và tổng tiền thanh toán theo thời gian thực.
+- **Bộ lịch chọn ngày tương tác (Interactive Calendar Date Picker)**: Chọn ngày nhận phòng (Check-in), ngày trả phòng (Check-out) trực quan theo tháng hoặc chọn nhanh theo mẫu (*Hôm nay, Cuối tuần,...*).
+- **Tích hợp Voucher giảm giá**: Nhập mã hoặc chọn voucher có sẵn để giảm trực tiếp vào tiền phòng.
+- Tự động tính toán số đêm, chiết khấu voucher và tổng tiền thanh toán theo thời gian thực.
 - Thao tác lưu vào danh sách yêu thích hoặc xác nhận đặt phòng.
 
-### 5. 📅 Quản lý Đặt phòng & Yêu thích (Bookings & Wishlist)
-- Hiển thị danh sách các phòng đã đặt kèm chi tiết ngày nhận/trả phòng, số khách và tổng tiền.
+### 5. 🎁 Hệ thống Tích điểm & Đổi Voucher (Loyalty & Rewards)
+- **Tích điểm tự động**: Cộng ngay **+100 điểm** sau khi đặt phòng thành công và **+50 điểm** khi đánh giá 5★ chuyến đi.
+- **Ví Voucher**: Quản lý các voucher được tặng dịp lễ, ưu đãi chào mừng hoặc voucher do người dùng tự đổi.
+- **Quy đổi điểm thưởng**: Cho phép dùng điểm tích lũy để đổi các Voucher giảm giá (100k, 250k, 500k).
+- **Lịch sử tích/đổi điểm**: Xem chi tiết các giao dịch cộng/trừ điểm thưởng.
+
+### 6. 📅 Quản lý Đặt phòng & Yêu thích (Bookings & Wishlist)
+- Hiển thị danh sách các phòng đã đặt kèm chi tiết ngày nhận/trả phòng, số khách, voucher đã giảm và tổng tiền.
+- Chức năng đánh giá chuyến đi để nhận thêm điểm thưởng tích lũy.
 - Danh sách homestay đã lưu vào mục yêu thích (Wishlist).
 - Xóa đặt phòng / hủy homestay khỏi danh sách.
 - Tổng kết chi phí và nút thanh toán trực quan.
 
-### 6. 👤 Trang cá nhân (User Profile)
+### 7. 👤 Trang cá nhân (User Profile)
 - Xem thông tin tài khoản người dùng (Họ tên, Email, Số điện thoại, Địa chỉ, Ngày sinh).
+- **Đổi ảnh đại diện linh hoạt**: Chọn ảnh từ thư viện thiết bị hoặc bộ sưu tập Avatar Disney.
+- Xem số dư điểm thưởng tích lũy và truy cập nhanh chức năng Đổi Voucher.
 - Chức năng chỉnh sửa và cập nhật hồ sơ cá nhân trực tiếp (gọi API `PUT /api/users/:id`).
-- Chuyển đổi tab nhanh giữa: *Hồ sơ*, *Lịch sử đặt phòng*, *Danh sách yêu thích*.
+- Chuyển đổi tab nhanh giữa: *Hồ sơ*, *Voucher*, *Lịch sử đặt phòng*, *Danh sách yêu thích*.
 - Các mục hỗ trợ, cài đặt và nút đăng xuất.
 
 ---
