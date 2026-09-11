@@ -90,6 +90,7 @@ export default function ProfileScreen() {
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Keep form in sync when userProfile changes
   useEffect(() => {
@@ -393,25 +394,14 @@ export default function ProfileScreen() {
           <MenuItem icon="information-circle-outline" label="Về ứng dụng Homestay" />
         </View>
 
-        {/* Logout */}
+        {/* Logout Button */}
         <Pressable
           style={styles.logout}
-          onPress={() =>
-            Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', [
-              { text: 'Hủy', style: 'cancel' },
-              {
-                text: 'Đăng xuất',
-                style: 'destructive',
-                onPress: () => {
-                  logout();
-                  router.replace('/login');
-                },
-              },
-            ])
-          }
+          onPress={() => setShowLogoutModal(true)}
+          hitSlop={8}
         >
           <Ionicons name="log-out-outline" size={17} color="#DC2626" />
-          <Text style={styles.logoutText}>Đăng xuất</Text>
+          <Text style={styles.logoutText}>Đăng xuất tài khoản</Text>
         </Pressable>
       </ScrollView>
 
@@ -529,6 +519,46 @@ export default function ProfileScreen() {
                 </View>
               ))}
             </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* MODAL 4: XÁC NHẬN ĐĂNG XUẤT */}
+      <Modal
+        visible={showLogoutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLogoutModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowLogoutModal(false)}>
+          <Pressable style={styles.logoutModalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.logoutIconWrapper}>
+              <Ionicons name="log-out-outline" size={32} color="#DC2626" />
+            </View>
+            <Text style={styles.logoutModalTitle}>Đăng xuất tài khoản</Text>
+            <Text style={styles.logoutModalText}>
+              Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng Homestay Booking không?
+            </Text>
+
+            <View style={styles.logoutActions}>
+              <Pressable
+                style={styles.cancelLogoutBtn}
+                onPress={() => setShowLogoutModal(false)}
+              >
+                <Text style={styles.cancelLogoutText}>Hủy</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.confirmLogoutBtn}
+                onPress={() => {
+                  setShowLogoutModal(false);
+                  logout();
+                  router.replace('/login');
+                }}
+              >
+                <Text style={styles.confirmLogoutText}>Đăng xuất</Text>
+              </Pressable>
+            </View>
           </Pressable>
         </Pressable>
       </Modal>
@@ -917,4 +947,71 @@ const styles = StyleSheet.create({
   historyPoints: { fontSize: 13, fontWeight: '700' },
   pointsEarn: { color: '#16A34A' },
   pointsRedeem: { color: '#DC2626' },
+  // Logout Modal
+  logoutModalContent: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 22,
+    alignItems: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  logoutIconWrapper: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FEF2F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  logoutModalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 6,
+  },
+  logoutModalText: {
+    fontSize: 12,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 18,
+  },
+  logoutActions: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  cancelLogoutBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelLogoutText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  confirmLogoutBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmLogoutText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
 });
