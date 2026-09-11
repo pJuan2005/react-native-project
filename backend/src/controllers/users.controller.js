@@ -37,7 +37,7 @@ const getUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, address } = req.body;
+    const { name, email, phone, address, avatar, birthDate } = req.body;
 
     // Validation
     if (name !== undefined && name.trim() === '') {
@@ -49,7 +49,10 @@ const updateUser = async (req, res) => {
     }
 
     // Check user exists
-    const [existing] = await pool.query('SELECT id, name, email, phone, address FROM users WHERE id = ?', [id]);
+    const [existing] = await pool.query(
+      'SELECT id, name, email, phone, address, birth_date, avatar_url FROM users WHERE id = ?',
+      [id]
+    );
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
@@ -61,10 +64,12 @@ const updateUser = async (req, res) => {
     const newEmail = email !== undefined ? email : current.email;
     const newPhone = phone !== undefined ? phone : current.phone;
     const newAddress = address !== undefined ? address : current.address;
+    const newAvatar = avatar !== undefined ? avatar : current.avatar_url;
+    const newBirthDate = birthDate !== undefined && birthDate !== '' ? birthDate : current.birth_date;
 
     await pool.query(
-      'UPDATE users SET name = ?, email = ?, phone = ?, address = ? WHERE id = ?',
-      [newName, newEmail, newPhone, newAddress, id]
+      'UPDATE users SET name = ?, email = ?, phone = ?, address = ?, avatar_url = ?, birth_date = ? WHERE id = ?',
+      [newName, newEmail, newPhone, newAddress, newAvatar, newBirthDate, id]
     );
 
     // Return updated user
