@@ -8,7 +8,7 @@ import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput
 
 export default function HomeScreen() {
   const [search, setSearch] = useState('');
-  const { addToBooking, savedHomestays, removeFromBooking } = useBooking();
+  const { userProfile, addToBooking, savedHomestays, removeFromBooking } = useBooking();
 
   const featured = useMemo(
     () => mockHomestays.filter(h => h.isFeatured && h.name.toLowerCase().includes(search.toLowerCase())).slice(0, 4),
@@ -22,7 +22,7 @@ export default function HomeScreen() {
         {/* Header Bar */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.hello}>Xin chào, {mockUser.name} 👋</Text>
+            <Text style={styles.hello}>Xin chào, {userProfile.name} 👋</Text>
             <Text style={styles.welcome}>Tìm homestay lý tưởng cho chuyến đi của bạn</Text>
           </View>
           <View style={styles.headerActions}>
@@ -30,7 +30,7 @@ export default function HomeScreen() {
               <Ionicons name="calendar-outline" size={20} color="#2563EB" />
             </Pressable>
             <Pressable style={styles.profileAvatar} onPress={() => router.push('/users')}>
-              <ProductImage uri={mockUser.avatar} style={styles.avatar} containerStyle={styles.avatar} />
+              <ProductImage uri={userProfile.avatar} style={styles.avatar} containerStyle={styles.avatar} />
             </Pressable>
           </View>
         </View>

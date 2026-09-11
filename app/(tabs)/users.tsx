@@ -63,6 +63,8 @@ const DISNEY_AVATARS = [
 
 export default function ProfileScreen() {
   const {
+    userProfile,
+    updateUserProfile,
     bookings,
     savedHomestays,
     userVouchers,
@@ -71,66 +73,38 @@ export default function ProfileScreen() {
     redeemPointsForVoucher,
   } = useBooking();
 
-  const [profile, setProfile] = useState<UserProfile>(mockUser);
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
-    name: mockUser.name,
-    email: mockUser.email,
-    phone: mockUser.phone,
-    address: mockUser.address,
-    avatar: mockUser.avatar,
+    name: userProfile.name,
+    email: userProfile.email,
+    phone: userProfile.phone,
+    address: userProfile.address,
+    avatar: userProfile.avatar,
   });
   const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'wishlist' | 'vouchers'>('profile');
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Modals
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
+  // Keep form in sync when userProfile changes
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/users/1`)
-      .then(res => res.json())
-      .then(json => {
-        if (json.success && json.data) {
-          setProfile(json.data);
-          setForm({
-            name: json.data.name,
-            email: json.data.email,
-            phone: json.data.phone,
-            address: json.data.address,
-            avatar: json.data.avatar || mockUser.avatar,
-          });
-        } else {
-          setProfile(mockUser);
-          setForm({
-            name: mockUser.name,
-            email: mockUser.email,
-            phone: mockUser.phone,
-            address: mockUser.address,
-            avatar: mockUser.avatar,
-          });
-        }
-      })
-      .catch(() => {
-        setProfile(mockUser);
-        setForm({
-          name: mockUser.name,
-          email: mockUser.email,
-          phone: mockUser.phone,
-          address: mockUser.address,
-          avatar: mockUser.avatar,
-        });
-      })
-      .finally(() => setLoading(false));
-  }, []);
+    setForm({
+      name: userProfile.name,
+      email: userProfile.email,
+      phone: userProfile.phone,
+      address: userProfile.address,
+      avatar: userProfile.avatar,
+    });
+  }, [userProfile]);
 
-  const selectAvatar = (url: string) => {
-    setForm(prev => ({ ...prev, avatar: url }));
-    setProfile(prev => ({ ...prev, avatar: url }));
+  const selectAvatar = async (url: string) => {
+    setForm((prev) => ({ ...prev, avatar: url }));
     setShowAvatarModal(false);
+    // Cập nhật ngay lập tức vào Context toàn cục để trang chủ đồng bộ tức thì
+    await updateUserProfile({ avatar: url });
   };
 
   const pickImageFromDevice = async () => {
@@ -150,7 +124,7 @@ export default function ProfileScreen() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const selectedUri = result.assets[0].uri;
-        selectAvatar(selectedUri);
+        await selectAvatar(selectedUri);
       }
     } catch (err) {
       console.error('Image picker error:', err);
@@ -171,23 +145,10 @@ export default function ProfileScreen() {
   const saveProfile = async () => {
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/users/1`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const json = await res.json();
-      if (json.success) {
-        setProfile(json.data);
-        setIsEditing(false);
-        Alert.alert('Thành công', 'Cập nhật hồ sơ thành công!');
-      } else {
-        setProfile(prev => ({ ...prev, ...form }));
-        setIsEditing(false);
-        Alert.alert('Thành công', 'Đã lưu thay đổi hồ sơ.');
-      }
+      await updateUserProfile(form);
+      setIsEditing(false);
+      Alert.alert('Thành công! 🎉', 'Hồ sơ và ảnh đại diện đã được cập nhật đồng bộ.');
     } catch {
-      setProfile(prev => ({ ...prev, ...form }));
       setIsEditing(false);
       Alert.alert('Thành công', 'Đã lưu thay đổi hồ sơ.');
     } finally {
@@ -200,52 +161,39 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Trang cá nhân</Text>
 
-        {loading ? (
-          <View style={styles.emptyState}>
-            <ActivityIndicator size="large" color="#2563EB" />
-            <Text style={styles.emptyTitle}>Đang tải thông tin...</Text>
+        {/* Profile Avatar Header */}
+        <View style={styles.profileHeader}>
+          <View style={styles.avatarContainer}>
+            <ProductImage uri={userProfile.avatar} style={styles.avatar} containerStyle={styles.avatar} />
+            <Pressable
+              style={styles.avatarBadge}
+              onPress={() => setShowAvatarModal(true)}
+              hitSlop={8}
+            >
+              <Ionicons name="camera" size={14} color="#FFFFFF" />
+            </Pressable>
           </View>
-        ) : error ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="alert-circle-outline" size={40} color="#EF4444" />
-            <Text style={styles.emptyTitle}>Lỗi</Text>
-            <Text style={styles.emptyText}>{error}</Text>
-          </View>
-        ) : (
-          <>
-            {/* Profile Avatar Header */}
-            <View style={styles.profileHeader}>
-              <View style={styles.avatarContainer}>
-                <ProductImage uri={profile.avatar} style={styles.avatar} containerStyle={styles.avatar} />
-                <Pressable
-                  style={styles.avatarBadge}
-                  onPress={() => setShowAvatarModal(true)}
-                  hitSlop={8}
-                >
-                  <Ionicons name="camera" size={14} color="#FFFFFF" />
-                </Pressable>
-              </View>
 
-              <Text style={styles.name}>{profile.name}</Text>
-              <Text style={styles.email}>{profile.email}</Text>
+          <Text style={styles.name}>{userProfile.name}</Text>
+          <Text style={styles.email}>{userProfile.email}</Text>
 
-              <Pressable
-                style={styles.editButton}
-                onPress={() => {
-                  setForm({
-                    name: profile.name,
-                    email: profile.email,
-                    phone: profile.phone,
-                    address: profile.address,
-                    avatar: profile.avatar,
-                  });
-                  setIsEditing(!isEditing);
-                }}
-              >
-                <Ionicons name={isEditing ? 'close-outline' : 'create-outline'} size={15} color="#2563EB" />
-                <Text style={styles.editText}>{isEditing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa hồ sơ'}</Text>
-              </Pressable>
-            </View>
+          <Pressable
+            style={styles.editButton}
+            onPress={() => {
+              setForm({
+                name: userProfile.name,
+                email: userProfile.email,
+                phone: userProfile.phone,
+                address: userProfile.address,
+                avatar: userProfile.avatar,
+              });
+              setIsEditing(!isEditing);
+            }}
+          >
+            <Ionicons name={isEditing ? 'close-outline' : 'create-outline'} size={15} color="#2563EB" />
+            <Text style={styles.editText}>{isEditing ? 'Hủy chỉnh sửa' : 'Chỉnh sửa hồ sơ'}</Text>
+          </Pressable>
+        </View>
 
             {/* Loyalty Points Card */}
             <View style={styles.pointsCard}>
@@ -313,11 +261,11 @@ export default function ProfileScreen() {
                 ) : (
                   <View style={styles.card}>
                     <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
-                    <Info label="Họ và tên" value={profile.name} />
-                    <Info label="Email" value={profile.email} />
-                    <Info label="Số điện thoại" value={profile.phone} />
-                    <Info label="Địa chỉ" value={profile.address} />
-                    <Info label="Ngày sinh" value={profile.birthDate} />
+                    <Info label="Họ và tên" value={userProfile.name} />
+                    <Info label="Email" value={userProfile.email} />
+                    <Info label="Số điện thoại" value={userProfile.phone} />
+                    <Info label="Địa chỉ" value={userProfile.address} />
+                    <Info label="Ngày sinh" value={userProfile.birthDate} />
                   </View>
                 )}
               </>
@@ -435,8 +383,6 @@ export default function ProfileScreen() {
                 )}
               </View>
             )}
-          </>
-        )}
 
         {/* Menu Options */}
         <View style={styles.menuCard}>

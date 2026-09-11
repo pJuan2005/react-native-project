@@ -1,11 +1,14 @@
-import { createContext, ReactNode, useContext, useMemo, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
 import {
   Homestay,
   Voucher,
   PointTransaction,
+  CustomerProfile,
+  mockUser,
   mockVouchers,
   initialPointTransactions,
 } from '@/constants/mockData';
+import API_BASE_URL from '@/src/config/api';
 
 export type BookingItem = Homestay & {
   quantity: number;
@@ -21,6 +24,9 @@ export type BookingItem = Homestay & {
 };
 
 type BookingContextValue = {
+  userProfile: CustomerProfile;
+  setUserProfile: React.Dispatch<React.SetStateAction<CustomerProfile>>;
+  updateUserProfile: (profileData: Partial<CustomerProfile>) => Promise<boolean>;
   bookings: BookingItem[];
   savedHomestays: BookingItem[];
   userVouchers: Voucher[];
@@ -51,11 +57,58 @@ type BookingContextValue = {
 const BookingContext = createContext<BookingContextValue | undefined>(undefined);
 
 export function BookingProvider({ children }: { children: ReactNode }) {
+  const [userProfile, setUserProfile] = useState<CustomerProfile>(mockUser);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [savedHomestays, setSavedHomestays] = useState<BookingItem[]>([]);
   const [userVouchers, setUserVouchers] = useState<Voucher[]>(mockVouchers);
   const [rewardPoints, setRewardPoints] = useState<number>(350);
   const [pointHistory, setPointHistory] = useState<PointTransaction[]>(initialPointTransactions);
+
+  // Fetch initial user profile from Backend API
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/users/1`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          setUserProfile((prev) => ({
+            ...prev,
+            ...json.data,
+            avatar: json.data.avatar || prev.avatar,
+          }));
+        }
+      })
+      .catch((err) => {
+        console.warn('API fetch user profile failed, using local profile state:', err);
+      });
+  }, []);
+
+  const updateUserProfile = async (profileData: Partial<CustomerProfile>): Promise<boolean> => {
+    // 1. Update global state immediately for instant UI responsiveness
+    setUserProfile((prev) => ({
+      ...prev,
+      ...profileData,
+    }));
+
+    // 2. Sync with backend API
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/users/1`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profileData),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        setUserProfile((prev) => ({
+          ...prev,
+          ...json.data,
+        }));
+      }
+      return true;
+    } catch (err) {
+      console.warn('Backend sync failed, saved locally:', err);
+      return true;
+    }
+  };
 
   const calculateDiscount = (voucher: Voucher | null, rawTotal: number): number => {
     if (!voucher || rawTotal <= 0) return 0;
@@ -160,6 +213,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
+      userProfile,
+      setUserProfile,
+      updateUserProfile,
       bookings,
       savedHomestays,
       userVouchers,
@@ -175,7 +231,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       calculateDiscount,
       completeStayAndReward,
     }),
-    [bookings, savedHomestays, userVouchers, rewardPoints, pointHistory]
+    [userProfile, bookings, savedHomestays, userVouchers, rewardPoints, pointHistory]
   );
 
   return <BookingContext.Provider value={value}>{children}</BookingContext.Provider>;
