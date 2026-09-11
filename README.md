@@ -70,30 +70,33 @@ Dự án phát triển một nền tảng đặt phòng homestay hoàn chỉnh g
 - Xóa đặt phòng / hủy homestay khỏi danh sách.
 - Tổng kết chi phí và nút thanh toán trực quan.
 
-### 7. 👤 Trang cá nhân (User Profile)
-- Xem thông tin tài khoản người dùng (Họ tên, Email, Số điện thoại, Địa chỉ, Ngày sinh).
-- **Đổi ảnh đại diện linh hoạt**: Chọn ảnh từ thư viện thiết bị hoặc bộ sưu tập Avatar Disney.
-- Xem số dư điểm thưởng tích lũy và truy cập nhanh chức năng Đổi Voucher.
-- Chức năng chỉnh sửa và cập nhật hồ sơ cá nhân trực tiếp (gọi API `PUT /api/users/:id`).
-- Chuyển đổi tab nhanh giữa: *Hồ sơ*, *Voucher*, *Lịch sử đặt phòng*, *Danh sách yêu thích*.
-- Các mục hỗ trợ, cài đặt và nút đăng xuất.
+### 8. 💻 Trang Quản Trị Web Admin (Admin Portal)
+- **Truy cập trực tiếp**: Mở trình duyệt truy cập `http://localhost:3000/admin`.
+- **Dashboard Thống kê**: Biểu đồ doanh thu hàng tháng (Chart.js), đếm số đơn đặt phòng, phòng đang hoạt động và số lượng khách hàng.
+- **Quản lý Đặt phòng (Bookings Management)**: Lọc đơn theo trạng thái (*Chờ duyệt, Đã xác nhận, Hoàn thành, Đã hủy*), thao tác 1 chạm để **Duyệt đơn** hoặc **Hủy đơn** trực tiếp vào MySQL.
+- **Quản lý Homestay**: Xem danh sách chỗ nghỉ, thêm homestay mới qua Modal và cập nhật trạng thái kinh doanh.
+- **Quản lý Voucher & Khuyến mãi**: Theo dõi các chương trình khuyến mãi và lượt sử dụng.
 
 ---
 
 ## 🛠 Công nghệ sử dụng
 
-### Frontend (Mobile App)
+### Frontend Mobile App (Khách hàng)
 - **Framework**: React Native 0.81, Expo SDK 54
 - **Routing**: Expo Router (File-based navigation)
 - **Language**: TypeScript
 - **State Management**: React Context API (`BookingContext`)
 - **UI & Icons**: Ionicons (`@expo/vector-icons`), Expo Image, React Native Reanimated
-- **Device Features**: Expo Haptics (phản hồi rung xúc giác khi bấm tab)
+- **Device Features**: Expo Haptics (rung xúc giác), Expo Image Picker (chọn ảnh từ thư viện máy)
 
-### Backend & Database
+### Frontend Web Admin (Quản trị viên)
+- **Technology**: Single Page Application (SPA), HTML5, Tailwind CSS, Chart.js, FontAwesome Icons
+- **Features**: Dashboard doanh thu trực quan, Quản lý đơn phòng real-time, Thêm homestay
+
+### Backend & Database (Hệ thống trung tâm)
 - **Runtime**: Node.js (v18+)
-- **Framework**: Express.js
-- **Database**: MySQL / MariaDB (hỗ trợ Views, Triggers tự động cập nhật số lượng homestay, Stored Procedures tạo đơn đặt phòng, Functions kiểm tra phòng trống)
+- **Framework**: Express.js REST API
+- **Database**: MySQL / MariaDB (15 bảng thực thể, Views, Triggers, Stored Procedures chống Overbooking)
 - **Database Driver**: `mysql2/promise` (Connection Pooling)
 - **Middleware**: CORS, Dotenv, Body Parser
 
@@ -102,58 +105,42 @@ Dự án phát triển một nền tảng đặt phòng homestay hoàn chỉnh g
 ## 📂 Cấu trúc thư mục dự án
 
 ```text
-├── app/                        # Giao diện ứng dụng (Expo Router)
-│   ├── (tabs)/                 # Tab Navigation chính
+├── app/                        # 📱 Giao diện Mobile (Expo Router)
+│   ├── (tabs)/                 # Bottom Tab Navigation chính
 │   │   ├── _layout.tsx         # Cấu hình Bottom Tab Bar
 │   │   ├── index.tsx           # Tab Trang chủ
 │   │   ├── locations.tsx       # Tab Khám phá địa điểm
 │   │   ├── homestays.tsx       # Tab Danh sách & tìm kiếm homestay
-│   │   └── users.tsx           # Tab Trang cá nhân & quản lý
-│   ├── homestay/[id].tsx       # Màn hình chi tiết homestay & đặt phòng
+│   │   ├── bookings.tsx        # Tab Quản lý đặt phòng
+│   │   └── users.tsx           # Tab Trang cá nhân & Voucher
+│   ├── homestay/[id].tsx       # Màn hình chi tiết homestay, lịch & voucher
 │   ├── location/[id].tsx       # Màn hình homestay theo địa điểm
-│   ├── category/[id].tsx       # Alias hỗ trợ danh mục địa điểm
-│   ├── product/[id].tsx        # Alias chi tiết homestay
-│   ├── user/[id].tsx           # Alias trang người dùng
-│   ├── bookings.tsx            # Màn hình quản lý đặt phòng & giỏ hàng
-│   ├── modal.tsx               # Màn hình modal chung
 │   └── _layout.tsx             # Root Stack Layout & BookingProvider
+├── admin-web/                  # 💻 Giao diện Quản trị Web Admin (SPA)
+│   └── index.html              # Bảng điều khiển, Duyệt đơn, Quản lý homestay
 ├── components/                 # Các UI Components tái sử dụng
 │   ├── haptic-tab.tsx          # Tab button có phản hồi rung xúc giác
 │   ├── product-image.tsx       # Component hiển thị ảnh homestay/địa điểm
-│   ├── themed-text.tsx         # Text hỗ trợ Dark/Light theme
-│   ├── themed-view.tsx         # View hỗ trợ Dark/Light theme
 │   └── ui/                     # Các components UI cơ bản
 ├── contexts/                   # Quản lý State toàn cục
-│   └── BookingContext.tsx      # Quản lý danh sách đặt phòng và yêu thích
+│   └── BookingContext.tsx      # Quản lý Đặt phòng, Yêu thích, Voucher & Điểm
 ├── constants/                  # Hằng số & Dữ liệu mẫu
 │   ├── mockData.ts             # Dữ liệu fallback & kiểu dữ liệu TypeScript
 │   └── theme.ts                # Bảng màu sắc & giao diện
-├── hooks/                      # Custom React Hooks
-│   ├── use-color-scheme.ts     # Hook nhận biết Dark/Light Mode
-│   └── use-theme-color.ts      # Hook lấy màu theo theme
-├── src/
-│   └── config/
-│       └── api.ts              # Cấu hình URL kết nối Backend API
-├── database/                   # CSDL nâng cao
-│   └── schema.sql              # Schema DDL, Views, Triggers, Stored Procedures
-├── backend/                    # Mã nguồn máy chủ Node.js / Express
+├── src/config/api.ts           # Cấu hình URL kết nối Backend API
+├── database/                   # 🗄️ CSDL MySQL chuẩn
+│   ├── schema.sql              # Schema DDL (15 Tables, Views, Triggers, Procedures)
+│   └── seed.sql                # Dữ liệu mẫu phong phú
+├── backend/                    # 🚀 Máy chủ Node.js Express REST API
 │   ├── src/
-│   │   ├── config/
-│   │   │   └── db.js           # Cấu hình kết nối MySQL Connection Pool
-│   │   ├── controllers/
-│   │   │   ├── homestay.controller.js  # Xử lý API homestay
-│   │   │   └── users.controller.js     # Xử lý API người dùng
-│   │   ├── routes/
-│   │   │   ├── homestay.routes.js      # Định tuyến homestay
-│   │   │   └── users.routes.js         # Định tuyến user
-│   │   └── server.js           # Khởi tạo Express Server & Middleware
-│   ├── seed.sql                # Dữ liệu mẫu (Homestays, Locations, Users,...)
-│   ├── .env.example            # Mẫu cấu hình môi trường backend
-│   └── package.json            # Cấu hình dependencies Backend
-├── .gitignore                  # Cấu hình file/thư mục bỏ qua khi commit Git
-├── app.json                    # Cấu hình ứng dụng Expo (App Name, Icon, Splash)
+│   │   ├── config/db.js        # Kết nối MySQL Connection Pool
+│   │   ├── controllers/        # Xử lý logic API Mobile & API Admin
+│   │   ├── routes/             # Định tuyến /api và /api/admin
+│   │   └── server.js           # Express Server & Static Web Admin
+│   ├── schema.sql              # Bản sao schema CSDL
+│   └── seed.sql                # Bản sao seed CSDL
+├── ARCHITECTURE.md             # Tài liệu kiến trúc hệ thống chuyên sâu
 ├── package.json                # Dependencies của ứng dụng Frontend
-├── tsconfig.json               # Cấu hình TypeScript
 └── README.md                   # Tài liệu hướng dẫn & mô tả dự án
 ```
 
