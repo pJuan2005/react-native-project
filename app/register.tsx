@@ -20,7 +20,6 @@ export default function RegisterScreen() {
   const { register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -28,30 +27,30 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!name.trim()) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng nhập họ và tên của bạn.');
+      Alert.alert('Thông báo', 'Vui lòng nhập họ và tên của bạn.');
       return;
     }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      Alert.alert('Email không hợp lệ', 'Vui lòng nhập địa chỉ email chính xác.');
+      Alert.alert('Thông báo', 'Vui lòng nhập địa chỉ email hợp lệ.');
       return;
     }
     if (password.length < 6) {
-      Alert.alert('Mật khẩu yếu', 'Mật khẩu phải có ít nhất 6 ký tự.');
+      Alert.alert('Thông báo', 'Mật khẩu phải có ít nhất 6 ký tự.');
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Mật khẩu không khớp', 'Mật khẩu xác nhận không trùng khớp.');
+      Alert.alert('Thông báo', 'Mật khẩu xác nhận không trùng khớp.');
       return;
     }
 
     setLoading(true);
-    const result = await register(name.trim(), email.trim(), password, phone.trim());
+    const result = await register(name.trim(), email.trim(), password);
     setLoading(false);
 
     if (result.success) {
       Alert.alert('Đăng ký thành công! 🎉', result.message, [
         {
-          text: 'Bắt đầu khám phá',
+          text: 'Vào ứng dụng',
           onPress: () => router.replace('/(tabs)'),
         },
       ]);
@@ -67,138 +66,99 @@ export default function RegisterScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Back to Login Button */}
-          <Pressable style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={22} color="#0F172A" />
-            <Text style={styles.backText}>Đăng nhập</Text>
-          </Pressable>
-
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Tạo tài khoản mới</Text>
-            <Text style={styles.subtitle}>Đăng ký thành viên để nhận ngay 150 điểm thưởng và voucher ưu đãi</Text>
+          {/* Logo Brand Header */}
+          <View style={styles.logoContainer}>
+            <View style={styles.logoIconBox}>
+              <Ionicons name="home-outline" size={42} color="#1E3A8A" />
+            </View>
+            <Text style={styles.brandTitle}>Homestay Booking</Text>
           </View>
 
-          {/* Form Card */}
-          <View style={styles.card}>
+          {/* Form Inputs */}
+          <View style={styles.formContainer}>
             {/* Full Name */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Họ và tên *</Text>
-              <View style={styles.inputBox}>
-                <Ionicons name="person-outline" size={18} color="#64748B" style={styles.inputIcon} />
-                <TextInput
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="Nguyễn Văn A"
-                  placeholderTextColor="#94A3B8"
-                  style={styles.input}
-                />
-              </View>
+            <View style={styles.inputPill}>
+              <Ionicons name="person" size={20} color="#4EBA87" style={styles.icon} />
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="Full Name"
+                placeholderTextColor="#52B788"
+                style={styles.input}
+              />
             </View>
 
             {/* Email */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Địa chỉ Email *</Text>
-              <View style={styles.inputBox}>
-                <Ionicons name="mail-outline" size={18} color="#64748B" style={styles.inputIcon} />
-                <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="email@example.com"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  style={styles.input}
-                />
-              </View>
-            </View>
-
-            {/* Phone */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Số điện thoại</Text>
-              <View style={styles.inputBox}>
-                <Ionicons name="call-outline" size={18} color="#64748B" style={styles.inputIcon} />
-                <TextInput
-                  value={phone}
-                  onChangeText={setPhone}
-                  placeholder="0912 345 678"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="phone-pad"
-                  style={styles.input}
-                />
-              </View>
+            <View style={styles.inputPill}>
+              <Ionicons name="mail" size={20} color="#4EBA87" style={styles.icon} />
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Email"
+                placeholderTextColor="#52B788"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={styles.input}
+              />
             </View>
 
             {/* Password */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Mật khẩu (tối thiểu 6 ký tự) *</Text>
-              <View style={styles.inputBox}>
-                <Ionicons name="lock-closed-outline" size={18} color="#64748B" style={styles.inputIcon} />
-                <TextInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Nhập mật khẩu"
-                  placeholderTextColor="#94A3B8"
-                  secureTextEntry={!showPassword}
-                  style={styles.input}
+            <View style={styles.inputPill}>
+              <Ionicons name="lock-closed" size={20} color="#4EBA87" style={styles.icon} />
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Password"
+                placeholderTextColor="#52B788"
+                secureTextEntry={!showPassword}
+                style={styles.input}
+              />
+              <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                <Ionicons
+                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                  size={20}
+                  color="#4EBA87"
                 />
-                <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={6}>
-                  <Ionicons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={18}
-                    color="#64748B"
-                  />
-                </Pressable>
-              </View>
+              </Pressable>
             </View>
 
             {/* Confirm Password */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Xác nhận mật khẩu *</Text>
-              <View style={styles.inputBox}>
-                <Ionicons name="shield-checkmark-outline" size={18} color="#64748B" style={styles.inputIcon} />
-                <TextInput
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="Nhập lại mật khẩu"
-                  placeholderTextColor="#94A3B8"
-                  secureTextEntry={!showPassword}
-                  style={styles.input}
+            <View style={styles.inputPill}>
+              <Ionicons name="lock-closed" size={20} color="#4EBA87" style={styles.icon} />
+              <TextInput
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Confirm Password"
+                placeholderTextColor="#52B788"
+                secureTextEntry={!showPassword}
+                style={styles.input}
+              />
+              <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                <Ionicons
+                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                  size={20}
+                  color="#4EBA87"
                 />
-              </View>
+              </Pressable>
             </View>
 
-            {/* Reward Bonus Callout */}
-            <View style={styles.bonusBanner}>
-              <Ionicons name="gift" size={18} color="#D97706" />
-              <Text style={styles.bonusText}>
-                Tặng ngay <Text style={{ fontWeight: '800' }}>+150 điểm thưởng</Text> & Voucher giảm 10%
-              </Text>
-            </View>
-
-            {/* Submit Button */}
+            {/* Register Button */}
             <Pressable
-              style={[styles.registerBtn, loading && { opacity: 0.7 }]}
+              style={[styles.mainBtn, loading && { opacity: 0.8 }]}
               onPress={handleRegister}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <>
-                  <Text style={styles.registerBtnText}>Tạo tài khoản</Text>
-                  <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
-                </>
+                <Text style={styles.mainBtnText}>Register</Text>
               )}
             </Pressable>
 
-            {/* Switch to Login */}
-            <View style={styles.footerRow}>
-              <Text style={styles.footerText}>Đã có tài khoản?</Text>
-              <Pressable onPress={() => router.replace('/login')}>
-                <Text style={styles.loginLink}>Đăng nhập ngay</Text>
-              </Pressable>
-            </View>
+            {/* Link back to Login */}
+            <Pressable style={styles.switchBtn} onPress={() => router.replace('/login')}>
+              <Text style={styles.switchText}>Login</Text>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -207,126 +167,78 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
+  screen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   content: {
-    padding: 20,
-    paddingTop: 16,
+    paddingHorizontal: 28,
+    paddingTop: 30,
     paddingBottom: 40,
+    justifyContent: 'center',
   },
-  backBtn: {
-    flexDirection: 'row',
+  logoContainer: {
     alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    marginBottom: 16,
-    paddingVertical: 4,
+    marginBottom: 30,
   },
-  backText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#0F172A',
+  logoIconBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1.5,
+    borderColor: '#D8F3DC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
   },
-  header: {
-    marginBottom: 20,
-  },
-  title: {
+  brandTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#0F172A',
+    color: '#1E3A8A',
+    letterSpacing: 0.5,
   },
-  subtitle: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 4,
-    lineHeight: 18,
+  formContainer: {
+    gap: 15,
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  fieldGroup: {
-    marginBottom: 13,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#334155',
-    marginBottom: 5,
-  },
-  inputBox: {
+  inputPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 44,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.8,
+    borderColor: '#4EBA87',
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    height: 50,
   },
-  inputIcon: {
-    marginRight: 8,
+  icon: {
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    fontSize: 13,
-    color: '#0F172A',
-  },
-  bonusBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#FEF3C7',
-    padding: 10,
-    borderRadius: 10,
-    marginVertical: 12,
-  },
-  bonusText: {
-    fontSize: 11,
-    color: '#92400E',
-    fontWeight: '600',
-    flex: 1,
-  },
-  registerBtn: {
-    height: 48,
-    backgroundColor: '#2563EB',
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  registerBtnText: {
-    color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '700',
+    color: '#222222',
   },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  mainBtn: {
+    marginTop: 10,
+    height: 50,
+    backgroundColor: '#4EBA87',
+    borderRadius: 25,
     alignItems: 'center',
-    gap: 6,
-    marginTop: 18,
+    justifyContent: 'center',
   },
-  footerText: {
-    fontSize: 13,
-    color: '#64748B',
-  },
-  loginLink: {
-    fontSize: 13,
+  mainBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '700',
-    color: '#2563EB',
+  },
+  switchBtn: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  switchText: {
+    color: '#4EBA87',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

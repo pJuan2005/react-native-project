@@ -1,92 +1,106 @@
-import { ProductImage } from '@/components/product-image';
-import { formatPrice, mockLocations, mockHomestays, mockUser, Homestay } from '@/constants/mockData';
-import { useBooking } from '@/contexts/BookingContext';
+import React, { useMemo, useState } from 'react';
+import {
+  Alert,
+  Dimensions,
+  Image,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ProductImage } from '@/components/product-image';
+import { formatPrice, mockLocations, mockHomestays, Homestay } from '@/constants/mockData';
+import { useBooking } from '@/contexts/BookingContext';
+
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const [search, setSearch] = useState('');
   const { userProfile, savedHomestays, toggleSavedHomestay } = useBooking();
 
-  const featured = useMemo(
-    () => mockHomestays.filter(h => h.isFeatured && h.name.toLowerCase().includes(search.toLowerCase())).slice(0, 4),
+  const forYouList = useMemo(
+    () =>
+      mockHomestays.filter((h) =>
+        h.name.toLowerCase().includes(search.toLowerCase()) ||
+        h.location.toLowerCase().includes(search.toLowerCase())
+      ),
     [search]
   );
-  const newest = mockHomestays.filter(h => h.isNew).slice(0, 4);
+
+  const featuredList = useMemo(() => mockHomestays.filter((h) => h.isFeatured), []);
+  const newestList = useMemo(() => mockHomestays.filter((h) => h.isNew), []);
 
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header Bar */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.hello}>Xin chào, {userProfile.name} 👋</Text>
-            <Text style={styles.welcome}>Tìm homestay lý tưởng cho chuyến đi của bạn</Text>
-          </View>
-          <View style={styles.headerActions}>
-            <Pressable style={styles.headerIcon} onPress={() => router.push('/bookings')}>
-              <Ionicons name="calendar-outline" size={20} color="#2563EB" />
-            </Pressable>
-            <Pressable style={styles.profileAvatar} onPress={() => router.push('/users')}>
-              <ProductImage uri={userProfile.avatar} style={styles.avatar} containerStyle={styles.avatar} />
-            </Pressable>
-          </View>
+        {/* GREEN TOP APP BAR */}
+        <View style={styles.topAppBar}>
+          <Pressable style={styles.appBarIconBtn} onPress={() => router.push('/users')}>
+            <Ionicons name="ellipsis-vertical" size={22} color="#FFFFFF" />
+          </Pressable>
+          <Text style={styles.appBarTitle}>HOMESTAY BOOKING</Text>
+          <Pressable style={styles.appBarIconBtn} onPress={() => router.push('/bookings')}>
+            <Ionicons name="cart-outline" size={24} color="#FFFFFF" />
+          </Pressable>
         </View>
 
-        {/* Search Bar */}
-        <Pressable style={styles.search} onPress={() => router.push('/homestays')}>
-          <Ionicons name="search-outline" size={19} color="#64748B" />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Tìm kiếm homestay, điểm đến..."
-            placeholderTextColor="#94A3B8"
-            style={styles.input}
-          />
-        </Pressable>
-
-        {/* Banner Promotion */}
-        <View style={styles.banner}>
-          <View style={styles.bannerIconCircle}>
-            <Ionicons name="sparkles" size={24} color="#2563EB" />
-          </View>
-          <View style={styles.bannerContent}>
-            <Text style={styles.bannerTitle}>Ưu đãi mùa du lịch 🎉</Text>
-            <Text style={styles.bannerText}>Giảm ngay 30% cho kỳ nghỉ cuối tuần</Text>
-            <Pressable style={styles.bannerButton} onPress={() => router.push('/homestays')}>
-              <Text style={styles.bannerButtonText}>Khám phá ngay</Text>
-              <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Section: Locations */}
-        <SectionTitle title="Điểm đến phổ biến" onPress={() => router.push('/locations')} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryList}>
-          {mockLocations.map(loc => (
-            <Pressable
-              key={loc.id}
-              style={styles.locationCard}
-              onPress={() => router.push({ pathname: '/location/[id]' as any, params: { id: loc.id } })}>
-              <ProductImage uri={loc.image} style={styles.locationImage} containerStyle={styles.locationImage} />
-              <View style={styles.locationOverlay}>
-                <Ionicons name={loc.icon} size={18} color="#FFFFFF" />
-                <Text style={styles.locationName}>{loc.name}</Text>
-                <Text style={styles.locationCount}>{loc.homestayCount} chỗ nghỉ</Text>
+        {/* HERO GREEN DOME CURVE (Phong cách Book Shop) */}
+        <View style={styles.heroDomeWrapper}>
+          <View style={styles.heroDome}>
+            {/* Travel Illustration Graphics */}
+            <View style={styles.heroIllustrationBox}>
+              <Image
+                source={{
+                  uri: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=400&q=80',
+                }}
+                style={styles.heroImage}
+                resizeMode="cover"
+              />
+              <View style={styles.heroBadge}>
+                <Ionicons name="sparkles" size={14} color="#F59E0B" />
+                <Text style={styles.heroBadgeText}>Nghỉ dưỡng 2026</Text>
               </View>
-            </Pressable>
-          ))}
-        </ScrollView>
+            </View>
+          </View>
+        </View>
 
-        {/* Section: Featured Homestays */}
-        <SectionTitle title="Homestay nổi bật" onPress={() => router.push('/homestays')} />
-        <View style={styles.productGrid}>
-          {featured.map(homestay => {
-            const isSaved = savedHomestays.some(s => s.id === homestay.id);
+        {/* SEARCH BAR (Tối giản phong cách classic) */}
+        <View style={styles.searchSection}>
+          <Pressable style={styles.searchBox} onPress={() => router.push('/homestays')}>
+            <Ionicons name="search" size={20} color="#4EBA87" />
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Tìm kiếm homestay..."
+              placeholderTextColor="#52B788"
+              style={styles.searchInput}
+            />
+            {search.length > 0 && (
+              <Pressable onPress={() => setSearch('')} hitSlop={6}>
+                <Ionicons name="close-circle-outline" size={18} color="#88D49E" />
+              </Pressable>
+            )}
+          </Pressable>
+        </View>
+
+        {/* SECTION 1: DÀNH CHO BẠN (Cards phong cách Book Shop) */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Dành cho bạn</Text>
+          <Pressable onPress={() => router.push('/homestays')}>
+            <Text style={styles.viewAllText}>Xem tất cả</Text>
+          </Pressable>
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalCardsList}>
+          {forYouList.slice(0, 5).map((homestay) => {
+            const isSaved = savedHomestays.some((s) => s.id === homestay.id);
             return (
-              <HomeHomestay
+              <BookShopCard
                 key={homestay.id}
                 homestay={homestay}
                 isSaved={isSaved}
@@ -101,261 +115,359 @@ export default function HomeScreen() {
               />
             );
           })}
+        </ScrollView>
+
+        {/* SECTION 2: ĐIỂM ĐẾN PHỔ BIẾN */}
+        <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+          <Text style={styles.sectionTitle}>Khám phá địa điểm</Text>
+          <Pressable onPress={() => router.push('/locations')}>
+            <Text style={styles.viewAllText}>Tất cả ({mockLocations.length})</Text>
+          </Pressable>
         </View>
 
-        {/* Section: New Arrivals */}
-        <SectionTitle title="Mới ra mắt" onPress={() => router.push('/homestays')} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.newList}>
-          {newest.map(homestay => (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.locationPillsList}>
+          {mockLocations.map((loc) => (
             <Pressable
-              key={homestay.id}
-              style={styles.newCard}
-              onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}>
-              <ProductImage uri={homestay.images[0]} style={styles.newImage} containerStyle={styles.newImage} />
-              <Text style={styles.newBadge}>MỚI</Text>
-              <View style={styles.newInfo}>
-                <Text numberOfLines={1} style={styles.newName}>{homestay.name}</Text>
-                <Text style={styles.newLocation}>📍 {homestay.location}</Text>
-                <Text style={styles.newPrice}>{formatPrice(homestay.price)}<Text style={styles.perNight}>/đêm</Text></Text>
+              key={loc.id}
+              style={styles.locationPill}
+              onPress={() => router.push({ pathname: '/location/[id]' as any, params: { id: loc.id } })}
+            >
+              <ProductImage uri={loc.image} style={styles.locThumb} containerStyle={styles.locThumb} />
+              <View>
+                <Text style={styles.locName}>{loc.name}</Text>
+                <Text style={styles.locCount}>{loc.homestayCount} chỗ nghỉ</Text>
               </View>
             </Pressable>
           ))}
         </ScrollView>
+
+        {/* SECTION 3: HOMESTAY NỔI BẬT (Grid 2 cột) */}
+        <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+          <Text style={styles.sectionTitle}>Homestay nổi bật</Text>
+          <Pressable onPress={() => router.push('/homestays')}>
+            <Text style={styles.viewAllText}>Xem thêm</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.gridContainer}>
+          {featuredList.map((homestay) => {
+            const isSaved = savedHomestays.some((s) => s.id === homestay.id);
+            return (
+              <View key={homestay.id} style={styles.gridCardWrapper}>
+                <BookShopCard
+                  homestay={homestay}
+                  isSaved={isSaved}
+                  cardWidth="100%"
+                  onToggleSave={() => {
+                    const nowSaved = toggleSavedHomestay(homestay);
+                    if (nowSaved) {
+                      Alert.alert('Đã lưu yêu thích ❤️', `${homestay.name} đã được thêm vào danh sách yêu thích.`);
+                    } else {
+                      Alert.alert('Đã bỏ lưu 💔', `${homestay.name} đã được xóa khỏi danh sách yêu thích.`);
+                    }
+                  }}
+                />
+              </View>
+            );
+          })}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function SectionTitle({ title, onPress }: { title: string; onPress: () => void }) {
-  return (
-    <View style={styles.sectionRow}>
-      <Text style={styles.sectionInline}>{title}</Text>
-      <Pressable onPress={onPress} hitSlop={8}>
-        <Text style={styles.all}>Xem tất cả</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-function HomeHomestay({
+// Card phong cách Book Shop cổ điển
+function BookShopCard({
   homestay,
   isSaved,
+  cardWidth = 165,
   onToggleSave,
 }: {
   homestay: Homestay;
   isSaved: boolean;
+  cardWidth?: number | string;
   onToggleSave: () => void;
 }) {
   return (
     <Pressable
-      style={styles.productCard}
-      onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}>
-      <View style={styles.productImageWrapper}>
-        <ProductImage uri={homestay.images[0]} style={styles.productImage} containerStyle={styles.productImage} />
+      style={[styles.card, { width: cardWidth as any }]}
+      onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}
+    >
+      {/* Image container */}
+      <View style={styles.cardImageContainer}>
+        <ProductImage uri={homestay.images[0]} style={styles.cardImage} containerStyle={styles.cardImage} />
         {homestay.oldPrice && (
-          <Text style={styles.saleBadge}>
-            -{Math.round((1 - homestay.price / homestay.oldPrice) * 100)}%
-          </Text>
+          <View style={styles.saleBadge}>
+            <Text style={styles.saleText}>-{Math.round((1 - homestay.price / homestay.oldPrice) * 100)}%</Text>
+          </View>
         )}
         <Pressable
-          style={[styles.heartBtn, isSaved && styles.heartBtnActive]}
+          style={[styles.heartIconBtn, isSaved && styles.heartIconBtnSaved]}
           onPress={(e) => {
             e.stopPropagation();
             onToggleSave();
-          }}>
-          <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#EF4444' : '#475569'} />
+          }}
+          hitSlop={6}
+        >
+          <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={17} color={isSaved ? '#EF4444' : '#64748B'} />
         </Pressable>
       </View>
-      <View style={styles.productContent}>
-        <Text numberOfLines={1} style={styles.productName}>{homestay.name}</Text>
-        <Text style={styles.productLocation}>📍 {homestay.location} • {homestay.type}</Text>
-        <View style={styles.priceRow}>
-          <Text style={styles.productPrice}>{formatPrice(homestay.price)}</Text>
-          <Text style={styles.perNight}>/đêm</Text>
-        </View>
-        <View style={styles.rating}>
-          <Ionicons name="star" size={13} color="#F59E0B" />
-          <Text style={styles.ratingText}>{homestay.rating} ({homestay.reviewCount})</Text>
-        </View>
+
+      {/* Content */}
+      <View style={styles.cardBody}>
+        <Text numberOfLines={2} style={styles.bookTitle}>
+          {homestay.name}
+        </Text>
+        <Text style={styles.authorSubtitle}>by {homestay.location}</Text>
+        <Text style={styles.priceLabel}>
+          price: <Text style={styles.priceValue}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} Đ</Text>
+        </Text>
       </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
-  content: { paddingBottom: 24 },
-  header: {
+  screen: {
+    flex: 1,
+    backgroundColor: '#F8FAF8',
+  },
+  content: {
+    paddingBottom: 30,
+  },
+  // Top App Bar
+  topAppBar: {
+    height: 54,
+    backgroundColor: '#4EBA87',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 14,
+  },
+  appBarTitle: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  appBarIconBtn: {
+    padding: 6,
+  },
+  // Hero Green Dome Curve
+  heroDomeWrapper: {
+    backgroundColor: '#F8FAF8',
+    overflow: 'hidden',
+  },
+  heroDome: {
+    backgroundColor: '#4EBA87',
+    height: 150,
+    borderBottomLeftRadius: width / 2,
+    borderBottomRightRadius: width / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ scaleX: 1.2 }],
     paddingBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  },
+  heroIllustrationBox: {
+    transform: [{ scaleX: 0.83 }],
     alignItems: 'center',
   },
-  avatar: { width: 42, height: 42, borderRadius: 21 },
-  profileAvatar: { borderRadius: 21, overflow: 'hidden', borderWidth: 1.5, borderColor: '#BFDBFE' },
-  hello: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
-  welcome: { fontSize: 12, color: '#64748B', marginTop: 2 },
-  headerActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  headerIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
+  heroImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
   },
-  search: {
-    marginHorizontal: 16,
-    marginTop: 6,
-    marginBottom: 12,
-    height: 44,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+  heroBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  input: { flex: 1, marginLeft: 10, fontSize: 14, color: '#0F172A' },
-  banner: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: '#1E40AF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  bannerIconCircle: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bannerContent: { flex: 1 },
-  bannerTitle: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
-  bannerText: { fontSize: 12, color: '#BFDBFE', marginTop: 3 },
-  bannerButton: {
-    alignSelf: 'flex-start',
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: '#2563EB',
-    flexDirection: 'row',
     gap: 4,
-    alignItems: 'center',
-  },
-  bannerButtonText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
-  sectionRow: {
-    paddingHorizontal: 16,
-    marginTop: 6,
-    marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  sectionInline: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
-  all: { fontSize: 12, fontWeight: '600', color: '#2563EB' },
-  categoryList: { paddingHorizontal: 16, gap: 10, paddingBottom: 16 },
-  locationCard: {
-    width: 140,
-    height: 100,
-    borderRadius: 14,
-    overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: '#CBD5E1',
-  },
-  locationImage: { width: 140, height: 100 },
-  locationOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 8,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-  },
-  locationName: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
-  locationCount: { fontSize: 10, color: '#E2E8F0', marginTop: 1 },
-  productGrid: {
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 12,
-  },
-  productCard: {
-    width: '48.5%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    marginTop: -10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  heroBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#2D6A4F',
+  },
+  // Search Bar
+  searchSection: {
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+    paddingHorizontal: 20,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#4EBA87',
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    height: 46,
+    width: '100%',
+    shadowColor: '#4EBA87',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#2D6A4F',
+    fontWeight: '600',
+  },
+  // Section Headers
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginTop: 18,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  viewAllText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4EBA87',
+  },
+  // Horizontal List
+  horizontalCardsList: {
+    paddingHorizontal: 16,
+    gap: 12,
+    paddingBottom: 6,
+  },
+  // Book Shop Card Style
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#E8F5E9',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  productImageWrapper: { position: 'relative', width: '100%', height: 110 },
-  productImage: { width: '100%', height: 110 },
+  cardImageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 140,
+    backgroundColor: '#E8F5E9',
+  },
+  cardImage: {
+    width: '100%',
+    height: 140,
+  },
   saleBadge: {
     position: 'absolute',
-    top: 6,
-    left: 6,
+    top: 8,
+    left: 8,
     backgroundColor: '#EF4444',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  saleText: {
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '700',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 5,
   },
-  heartBtn: {
+  heartIconBtn: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#FFFFFF',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.9)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heartBtnActive: { backgroundColor: '#FEF2F2' },
-  productContent: { padding: 8 },
-  productName: { fontSize: 13, fontWeight: '700', color: '#1E293B' },
-  productLocation: { fontSize: 11, color: '#64748B', marginTop: 2 },
-  priceRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 4 },
-  productPrice: { fontSize: 14, fontWeight: '700', color: '#2563EB' },
-  perNight: { fontSize: 11, fontWeight: '400', color: '#64748B' },
-  rating: { flexDirection: 'row', gap: 3, alignItems: 'center', marginTop: 4 },
-  ratingText: { fontSize: 11, fontWeight: '600', color: '#475569' },
-  newList: { paddingHorizontal: 16, gap: 10, paddingBottom: 16 },
-  newCard: {
-    width: 170,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
+  heartIconBtnSaved: {
+    backgroundColor: '#FEF2F2',
   },
-  newImage: { width: 170, height: 100 },
-  newBadge: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    backgroundColor: '#10B981',
-    color: '#FFFFFF',
-    fontSize: 9,
+  cardBody: {
+    padding: 10,
+  },
+  bookTitle: {
+    fontSize: 13,
     fontWeight: '700',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 5,
+    color: '#1F2937',
+    lineHeight: 18,
+    minHeight: 36,
   },
-  newInfo: { padding: 8 },
-  newName: { fontSize: 13, fontWeight: '700', color: '#1E293B' },
-  newLocation: { marginTop: 2, fontSize: 11, color: '#64748B' },
-  newPrice: { marginTop: 4, fontSize: 13, fontWeight: '700', color: '#2563EB' },
+  authorSubtitle: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  priceLabel: {
+    fontSize: 11,
+    color: '#4B5563',
+    marginTop: 4,
+  },
+  priceValue: {
+    fontWeight: '700',
+    color: '#111827',
+  },
+  // Locations Pills
+  locationPillsList: {
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  locationPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#D8F3DC',
+  },
+  locThumb: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  locName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  locCount: {
+    fontSize: 10,
+    color: '#6B7280',
+  },
+  // Grid Container
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    justifyContent: 'space-between',
+    rowGap: 12,
+  },
+  gridCardWrapper: {
+    width: '48.5%',
+  },
 });

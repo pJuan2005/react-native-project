@@ -11,22 +11,22 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#2563EB',
-        tabBarInactiveTintColor: '#64748B',
+        tabBarActiveTintColor: '#4EBA87',
+        tabBarInactiveTintColor: '#888888',
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
-          borderTopColor: '#E2E8F0',
+          borderTopColor: '#E8F5E9',
           borderTopWidth: 1,
-          height: isIos ? 88 : 70,
+          height: isIos ? 88 : 68,
           paddingTop: 6,
           paddingBottom: isIos ? 28 : 10,
-          elevation: 10,
-          shadowColor: '#0F172A',
+          elevation: 6,
+          shadowColor: '#000000',
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
+          shadowOpacity: 0.05,
+          shadowRadius: 6,
         },
         tabBarItemStyle: {
           justifyContent: 'center',
@@ -34,7 +34,7 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontWeight: '700',
           marginTop: 2,
           paddingBottom: 2,
         },
@@ -71,7 +71,7 @@ export default function TabLayout() {
         options={{
           title: 'Đặt phòng',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons size={22} name={focused ? 'calendar' : 'calendar-outline'} color={color} />
+            <Ionicons size={22} name={focused ? 'cart' : 'cart-outline'} color={color} />
           ),
         }}
       />

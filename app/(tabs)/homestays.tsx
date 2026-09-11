@@ -51,20 +51,25 @@ export default function HomestaysScreen() {
           <Text style={styles.subtitle}>Tìm nơi nghỉ dưỡng phù hợp nhất</Text>
         </View>
         <Pressable style={styles.bookingButton} onPress={() => router.push('/bookings')}>
-          <Ionicons name="calendar-outline" size={20} color="#2563EB" />
+          <Ionicons name="cart-outline" size={22} color="#4EBA87" />
         </Pressable>
       </View>
 
       {/* Search Bar */}
       <View style={styles.search}>
-        <Ionicons name="search-outline" size={18} color="#64748B" />
+        <Ionicons name="search" size={18} color="#4EBA87" />
         <TextInput
           value={searchText}
           onChangeText={setSearchText}
           placeholder="Tìm theo tên homestay, địa điểm..."
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor="#52B788"
           style={styles.input}
         />
+        {searchText.length > 0 && (
+          <Pressable onPress={() => setSearchText('')} hitSlop={6}>
+            <Ionicons name="close-circle-outline" size={18} color="#88D49E" />
+          </Pressable>
+        )}
       </View>
 
       {/* Categories Filter Carousel */}
@@ -98,7 +103,7 @@ export default function HomestaysScreen() {
             style={[styles.sortPill, sort === 'price' && styles.sortPillActive]}
             onPress={() => setSort(sort === 'price' ? 'default' : 'price')}
           >
-            <Ionicons name="pricetag-outline" size={12} color={sort === 'price' ? '#FFFFFF' : '#64748B'} />
+            <Ionicons name="pricetag-outline" size={12} color={sort === 'price' ? '#FFFFFF' : '#4EBA87'} />
             <Text style={[styles.sortPillText, sort === 'price' && styles.sortPillTextActive]}>Giá</Text>
           </Pressable>
 
@@ -106,7 +111,7 @@ export default function HomestaysScreen() {
             style={[styles.sortPill, sort === 'rating' && styles.sortPillActive]}
             onPress={() => setSort(sort === 'rating' ? 'default' : 'rating')}
           >
-            <Ionicons name="star-outline" size={12} color={sort === 'rating' ? '#FFFFFF' : '#64748B'} />
+            <Ionicons name="star-outline" size={12} color={sort === 'rating' ? '#FFFFFF' : '#4EBA87'} />
             <Text style={[styles.sortPillText, sort === 'rating' && styles.sortPillTextActive]}>Đánh giá</Text>
           </Pressable>
         </View>
@@ -115,7 +120,7 @@ export default function HomestaysScreen() {
       {/* List / Loading / Error */}
       {loading ? (
         <View style={styles.empty}>
-          <ActivityIndicator size="large" color="#2563EB" />
+          <ActivityIndicator size="large" color="#4EBA87" />
           <Text style={styles.emptyTitle}>Đang tải dữ liệu...</Text>
         </View>
       ) : error ? (
@@ -188,11 +193,11 @@ export function HomestayRow({ homestay, isSaved }: { homestay: Homestay; isSaved
           </Pressable>
         </View>
 
-        <Text style={styles.location}>📍 {homestay.location} • {homestay.type}</Text>
+        <Text style={styles.location}>📍 by {homestay.location} • {homestay.type}</Text>
 
         <View style={styles.meta}>
           <Ionicons name="star" size={13} color="#F59E0B" />
-          <Text style={styles.metaText}>{homestay.rating} ({homestay.reviewCount}) • {homestay.maxGuests} khách • {homestay.bedrooms} PN</Text>
+          <Text style={styles.metaText}>{homestay.rating} ({homestay.reviewCount}) • {homestay.maxGuests} khách</Text>
         </View>
 
         <View style={styles.amenities}>
@@ -201,8 +206,9 @@ export function HomestayRow({ homestay, isSaved }: { homestay: Homestay; isSaved
         </View>
 
         <View style={styles.priceRow}>
-          <Text style={styles.price}>{formatPrice(homestay.price)}</Text>
-          <Text style={styles.perNight}>/đêm</Text>
+          <Text style={styles.priceLabel}>
+            price: <Text style={styles.priceValue}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} Đ</Text>
+          </Text>
         </View>
       </View>
     </Pressable>
@@ -210,7 +216,7 @@ export function HomestayRow({ homestay, isSaved }: { homestay: Homestay; isSaved
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
+  screen: { flex: 1, backgroundColor: '#F8FAF8' },
   header: {
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -218,34 +224,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderColor: '#E8F5E9',
   },
-  title: { fontSize: 19, fontWeight: '700', color: '#0F172A' },
-  subtitle: { fontSize: 12, color: '#64748B', marginTop: 2 },
+  title: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  subtitle: { fontSize: 11, color: '#6B7280', marginTop: 1 },
   bookingButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#EFF6FF',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#E8F5E9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   search: {
     marginHorizontal: 16,
-    marginTop: 4,
-    marginBottom: 8,
-    height: 42,
-    paddingHorizontal: 12,
+    marginTop: 10,
+    marginBottom: 6,
+    height: 44,
+    paddingHorizontal: 14,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: '#4EBA87',
     flexDirection: 'row',
     alignItems: 'center',
   },
-  input: { flex: 1, marginLeft: 8, fontSize: 14, color: '#0F172A' },
+  input: { flex: 1, marginLeft: 8, fontSize: 14, color: '#2D6A4F', fontWeight: '600' },
   filterScrollWrapper: {
     height: 40,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   filters: {
     paddingHorizontal: 16,
@@ -253,15 +262,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filter: {
-    height: 34,
+    height: 32,
     paddingHorizontal: 14,
-    borderRadius: 17,
-    backgroundColor: '#E2E8F0',
+    borderRadius: 16,
+    backgroundColor: '#E8F5E9',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterSelected: { backgroundColor: '#2563EB' },
-  filterText: { fontSize: 12, fontWeight: '600', color: '#475569' },
+  filterSelected: { backgroundColor: '#4EBA87' },
+  filterText: { fontSize: 12, fontWeight: '700', color: '#2D6A4F' },
   filterTextSelected: { color: '#FFFFFF' },
   sortRow: {
     paddingHorizontal: 16,
@@ -270,7 +279,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  count: { fontSize: 12, color: '#64748B', fontWeight: '500' },
+  count: { fontSize: 12, color: '#6B7280', fontWeight: '500' },
   sortButtons: { flexDirection: 'row', gap: 6 },
   sortPill: {
     flexDirection: 'row',
@@ -279,15 +288,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#D8F3DC',
   },
   sortPillActive: {
-    backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
+    backgroundColor: '#4EBA87',
+    borderColor: '#4EBA87',
   },
-  sortPillText: { fontSize: 11, fontWeight: '600', color: '#64748B' },
+  sortPillText: { fontSize: 11, fontWeight: '600', color: '#2D6A4F' },
   sortPillTextActive: { color: '#FFFFFF' },
   list: { paddingHorizontal: 16, gap: 10, paddingBottom: 24 },
   card: {
@@ -297,7 +306,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#E8F5E9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   imageContainer: { position: 'relative', width: 100, height: 100, borderRadius: 10, overflow: 'hidden' },
   image: { width: 100, height: 100 },
@@ -315,24 +329,24 @@ const styles = StyleSheet.create({
   },
   info: { flex: 1, justifyContent: 'space-between' },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  name: { fontSize: 14, fontWeight: '700', color: '#1E293B', flex: 1, marginRight: 6 },
+  name: { fontSize: 14, fontWeight: '700', color: '#1F2937', flex: 1, marginRight: 6 },
   saveBtn: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F8FAF8',
     alignItems: 'center',
     justifyContent: 'center',
   },
   saveBtnSaved: { backgroundColor: '#FEF2F2' },
-  location: { fontSize: 11, color: '#64748B', marginTop: 1 },
+  location: { fontSize: 11, color: '#6B7280', marginTop: 1 },
   meta: { flexDirection: 'row', gap: 4, alignItems: 'center', marginTop: 3 },
-  metaText: { fontSize: 11, color: '#64748B' },
+  metaText: { fontSize: 11, color: '#6B7280' },
   amenities: { marginTop: 4, flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  amenityTag: { fontSize: 10, color: '#2563EB', backgroundColor: '#EFF6FF', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  priceRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 4 },
-  price: { fontSize: 14, fontWeight: '700', color: '#2563EB' },
-  perNight: { fontSize: 11, fontWeight: '400', color: '#64748B' },
+  amenityTag: { fontSize: 10, color: '#2D6A4F', backgroundColor: '#E8F5E9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  priceRow: { marginTop: 4 },
+  priceLabel: { fontSize: 12, color: '#4B5563' },
+  priceValue: { fontSize: 14, fontWeight: '700', color: '#111827' },
   empty: { alignItems: 'center', paddingVertical: 40 },
   emptyTitle: { marginTop: 10, fontSize: 15, fontWeight: '600', color: '#334155' },
   emptyText: { marginTop: 4, fontSize: 12, color: '#64748B' },

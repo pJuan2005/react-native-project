@@ -25,7 +25,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng nhập đầy đủ Email và Mật khẩu.');
+      Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ Email và Mật khẩu.');
       return;
     }
 
@@ -52,90 +52,82 @@ export default function LoginScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Brand Header */}
-          <View style={styles.header}>
-            <View style={styles.logoCircle}>
-              <Ionicons name="home" size={32} color="#2563EB" />
+          {/* Logo Brand Header */}
+          <View style={styles.logoContainer}>
+            <View style={styles.logoIconBox}>
+              <Ionicons name="home-outline" size={42} color="#1E3A8A" />
             </View>
-            <Text style={styles.appName}>Homestay Booking</Text>
-            <Text style={styles.tagline}>Khám phá & Đặt homestay nghỉ dưỡng tuyệt vời</Text>
+            <Text style={styles.brandTitle}>Homestay Booking</Text>
           </View>
 
-          {/* Login Card */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Đăng nhập</Text>
-            <Text style={styles.cardSubtitle}>Vui lòng đăng nhập tài khoản để tiếp tục</Text>
-
-            {/* Email Field */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Email</Text>
-              <View style={styles.inputBox}>
-                <Ionicons name="mail-outline" size={18} color="#64748B" style={styles.inputIcon} />
-                <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="nhapemail@gmail.com"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  style={styles.input}
-                />
-                {email.length > 0 && (
-                  <Pressable onPress={() => setEmail('')} hitSlop={6}>
-                    <Ionicons name="close-circle" size={16} color="#94A3B8" />
-                  </Pressable>
-                )}
-              </View>
-            </View>
-
-            {/* Password Field */}
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Mật khẩu</Text>
-              <View style={styles.inputBox}>
-                <Ionicons name="lock-closed-outline" size={18} color="#64748B" style={styles.inputIcon} />
-                <TextInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Mật khẩu của bạn"
-                  placeholderTextColor="#94A3B8"
-                  secureTextEntry={!showPassword}
-                  style={styles.input}
-                />
-                <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={6}>
-                  <Ionicons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={18}
-                    color="#64748B"
-                  />
+          {/* Input Form */}
+          <View style={styles.formContainer}>
+            {/* Email Input */}
+            <View style={styles.inputPill}>
+              <Ionicons name="mail" size={20} color="#4EBA87" style={styles.icon} />
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Email"
+                placeholderTextColor="#52B788"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={styles.input}
+              />
+              {email.length > 0 && (
+                <Pressable onPress={() => setEmail('')} hitSlop={8}>
+                  <Ionicons name="close-circle-outline" size={18} color="#88D49E" />
                 </Pressable>
-              </View>
+              )}
             </View>
 
-            {/* Login Button */}
+            {/* Password Input */}
+            <View style={styles.inputPill}>
+              <Ionicons name="lock-closed" size={20} color="#4EBA87" style={styles.icon} />
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Password"
+                placeholderTextColor="#52B788"
+                secureTextEntry={!showPassword}
+                style={styles.input}
+              />
+              <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                <Ionicons
+                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                  size={20}
+                  color="#4EBA87"
+                />
+              </Pressable>
+            </View>
+
+            {/* Main Action Button */}
             <Pressable
-              style={[styles.loginBtn, loading && { opacity: 0.7 }]}
+              style={[styles.mainBtn, loading && { opacity: 0.8 }]}
               onPress={handleLogin}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <>
-                  <Text style={styles.loginBtnText}>Đăng nhập</Text>
-                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-                </>
+                <Text style={styles.mainBtnText}>Login</Text>
               )}
             </Pressable>
 
-            {/* Demo Quick Login Presets */}
-            <View style={styles.demoSection}>
+            {/* Switch to Register link */}
+            <Pressable style={styles.switchBtn} onPress={() => router.push('/register')}>
+              <Text style={styles.switchText}>Register</Text>
+            </Pressable>
+
+            {/* Demo 1-Click Login Helper */}
+            <View style={styles.demoBox}>
               <Text style={styles.demoTitle}>Tài khoản mẫu thử nghiệm (1-Click):</Text>
-              <View style={styles.demoRow}>
+              <View style={styles.demoButtonsRow}>
                 <Pressable
                   style={styles.demoChip}
                   onPress={() => fillDemoAccount('phamchuan2608@gmail.com', '123456')}
                 >
-                  <Ionicons name="person-outline" size={14} color="#2563EB" />
+                  <Ionicons name="person-outline" size={13} color="#2D6A4F" />
                   <Text style={styles.demoChipText}>Khách hàng (Chuẩn)</Text>
                 </Pressable>
 
@@ -143,18 +135,10 @@ export default function LoginScreen() {
                   style={styles.demoChip}
                   onPress={() => fillDemoAccount('admin@homestay.com', '123456')}
                 >
-                  <Ionicons name="shield-checkmark-outline" size={14} color="#059669" />
-                  <Text style={[styles.demoChipText, { color: '#059669' }]}>Admin Quản trị</Text>
+                  <Ionicons name="shield-outline" size={13} color="#2D6A4F" />
+                  <Text style={styles.demoChipText}>Admin Quản trị</Text>
                 </Pressable>
               </View>
-            </View>
-
-            {/* Switch to Register */}
-            <View style={styles.footerRow}>
-              <Text style={styles.footerText}>Chưa có tài khoản?</Text>
-              <Pressable onPress={() => router.push('/register')}>
-                <Text style={styles.registerLink}>Đăng ký ngay</Text>
-              </Pressable>
             </View>
           </View>
         </ScrollView>
@@ -164,161 +148,112 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
+  screen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   content: {
-    padding: 20,
-    paddingTop: 30,
+    paddingHorizontal: 28,
+    paddingTop: 40,
     paddingBottom: 40,
     justifyContent: 'center',
   },
-  header: {
+  logoContainer: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 36,
   },
-  logoCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#EFF6FF',
-    borderWidth: 2,
-    borderColor: '#BFDBFE',
+  logoIconBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1.5,
+    borderColor: '#D8F3DC',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 4,
+    marginBottom: 10,
   },
-  appName: {
+  brandTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#0F172A',
-    marginTop: 12,
+    color: '#1E3A8A',
+    letterSpacing: 0.5,
   },
-  tagline: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 4,
-    textAlign: 'center',
+  formContainer: {
+    gap: 16,
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  cardSubtitle: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 3,
-    marginBottom: 18,
-  },
-  fieldGroup: {
-    marginBottom: 14,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#334155',
-    marginBottom: 6,
-  },
-  inputBox: {
+  inputPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 46,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.8,
+    borderColor: '#4EBA87',
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    height: 50,
   },
-  inputIcon: {
-    marginRight: 8,
+  icon: {
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    fontSize: 14,
-    color: '#0F172A',
+    fontSize: 15,
+    color: '#222222',
   },
-  loginBtn: {
+  mainBtn: {
     marginTop: 8,
-    height: 48,
-    backgroundColor: '#2563EB',
-    borderRadius: 12,
-    flexDirection: 'row',
+    height: 50,
+    backgroundColor: '#4EBA87',
+    borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
   },
-  loginBtnText: {
+  mainBtnText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
   },
-  demoSection: {
+  switchBtn: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  switchText: {
+    color: '#4EBA87',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  demoBox: {
     marginTop: 20,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#E8F5E9',
+    alignItems: 'center',
   },
   demoTitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
+    fontSize: 12,
+    color: '#666666',
     marginBottom: 8,
   },
-  demoRow: {
+  demoButtonsRow: {
     flexDirection: 'row',
     gap: 8,
     flexWrap: 'wrap',
+    justifyContent: 'center',
   },
   demoChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 10,
+    gap: 4,
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#B7E4C7',
   },
   demoChipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#2563EB',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 20,
-  },
-  footerText: {
-    fontSize: 13,
-    color: '#64748B',
-  },
-  registerLink: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#2563EB',
+    color: '#2D6A4F',
   },
 });

@@ -25,7 +25,7 @@ export default function LocationDetail() {
     <SafeAreaView style={s.screen}>
       <View style={s.header}>
         <Pressable onPress={() => router.back()} hitSlop={8}>
-          <Ionicons name="arrow-back" size={22} color="#0F172A" />
+          <Ionicons name="arrow-back" size={22} color="#111827" />
         </Pressable>
         <Text style={s.title}>{location.name}</Text>
         <View style={{ width: 22 }} />
@@ -51,6 +51,7 @@ export default function LocationDetail() {
           />
         )}
         contentContainerStyle={s.list}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={<Text style={s.empty}>Chưa có homestay tại địa điểm này.</Text>}
       />
     </SafeAreaView>
@@ -58,7 +59,7 @@ export default function LocationDetail() {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
+  screen: { flex: 1, backgroundColor: '#F8FAF8' },
   header: {
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -68,9 +69,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E8F5E9',
   },
-  title: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
+  title: { fontSize: 16, fontWeight: '800', color: '#111827' },
   list: { padding: 16, gap: 10, paddingTop: 12 },
   hero: { borderRadius: 16, overflow: 'hidden', marginBottom: 6, position: 'relative', height: 180 },
   heroImage: { width: '100%', height: '100%' },
@@ -82,8 +83,8 @@ const s = StyleSheet.create({
     padding: 16,
     backgroundColor: 'rgba(15, 23, 42, 0.65)',
   },
-  name: { fontSize: 20, fontWeight: '700', color: '#FFF', marginTop: 6 },
+  name: { fontSize: 20, fontWeight: '800', color: '#FFF', marginTop: 6 },
   description: { color: '#E2E8F0', marginTop: 2, fontSize: 12 },
-  count: { fontWeight: '700', color: '#BFDBFE', marginTop: 8, fontSize: 11 },
+  count: { fontWeight: '700', color: '#A7F3D0', marginTop: 8, fontSize: 11 },
   empty: { textAlign: 'center', color: '#64748B', marginTop: 30, fontSize: 13 },
 });

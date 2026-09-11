@@ -40,8 +40,8 @@ export default function BookingsScreen() {
     <SafeAreaView style={s.screen}>
       {/* Header */}
       <View style={s.header}>
-        <Pressable onPress={() => router.back()} style={s.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#0F172A" />
+        <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={8}>
+          <Ionicons name="arrow-back" size={22} color="#111827" />
         </Pressable>
         <Text style={s.title}>
           {activeTab === 'bookings' ? 'Đặt phòng của tôi' : 'Danh sách yêu thích'}
@@ -56,9 +56,9 @@ export default function BookingsScreen() {
           onPress={() => setActiveTab('bookings')}
         >
           <Ionicons
-            name={activeTab === 'bookings' ? 'calendar' : 'calendar-outline'}
+            name={activeTab === 'bookings' ? 'cart' : 'cart-outline'}
             size={16}
-            color={activeTab === 'bookings' ? '#FFFFFF' : '#64748B'}
+            color={activeTab === 'bookings' ? '#FFFFFF' : '#2D6A4F'}
           />
           <Text style={[s.tabText, activeTab === 'bookings' && s.tabTextActive]}>
             Phòng đã đặt ({bookings.length})
@@ -86,7 +86,7 @@ export default function BookingsScreen() {
           {bookings.length === 0 ? (
             <View style={s.empty}>
               <View style={s.emptyIconCircle}>
-                <Ionicons name="calendar-outline" size={38} color="#2563EB" />
+                <Ionicons name="cart-outline" size={38} color="#4EBA87" />
               </View>
               <Text style={s.emptyTitle}>Chưa có đặt phòng nào</Text>
               <Text style={s.emptyText}>Khám phá các homestay tuyệt vời và đặt chỗ ngay hôm nay.</Text>
@@ -117,11 +117,11 @@ export default function BookingsScreen() {
                         </Pressable>
                       </View>
 
-                      <Text style={s.location}>📍 {booking.location} • {booking.type}</Text>
+                      <Text style={s.location}>📍 by {booking.location} • {booking.type}</Text>
 
                       {booking.checkIn && booking.checkOut && (
                         <Text style={s.dates}>
-                          📅 {formatDate(booking.checkIn)} - {formatDate(booking.checkOut)} ({booking.nights} đêm) • 👥 {booking.guests} khách
+                          📅 {formatDate(booking.checkIn)} - {formatDate(booking.checkOut)} ({booking.nights} đêm) • {booking.guests} khách
                         </Text>
                       )}
 
@@ -132,8 +132,8 @@ export default function BookingsScreen() {
                       ) : null}
 
                       <View style={s.itemBottomRow}>
-                        <Text style={s.price}>
-                          {formatPrice(booking.totalPrice || booking.price * booking.quantity)}
+                        <Text style={s.priceLabel}>
+                          price: <Text style={s.priceValue}>{new Intl.NumberFormat('vi-VN').format(booking.totalPrice || booking.price * booking.quantity)} Đ</Text>
                         </Text>
 
                         <Pressable
@@ -218,7 +218,7 @@ export default function BookingsScreen() {
                       </Pressable>
                     </View>
 
-                    <Text style={s.location}>📍 {homestay.location} • {homestay.type}</Text>
+                    <Text style={s.location}>📍 by {homestay.location} • {homestay.type}</Text>
 
                     <View style={s.ratingRow}>
                       <Ionicons name="star" size={13} color="#F59E0B" />
@@ -228,8 +228,8 @@ export default function BookingsScreen() {
                     </View>
 
                     <View style={s.wishlistBottomRow}>
-                      <Text style={s.price}>
-                        {formatPrice(homestay.price)}<Text style={s.perNight}>/đêm</Text>
+                      <Text style={s.priceLabel}>
+                        price: <Text style={s.priceValue}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} Đ</Text>
                       </Text>
                       <Pressable
                         style={s.bookNowSmallBtn}
@@ -262,7 +262,7 @@ function Line({ label, value }: { label: string; value: string }) {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F8FAFC' },
+  screen: { flex: 1, backgroundColor: '#F8FAF8' },
   header: {
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -272,20 +272,18 @@ const s = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E8F5E9',
   },
   backBtn: { padding: 4 },
-  title: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
+  title: { fontSize: 16, fontWeight: '800', color: '#111827' },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#E8F5E9',
     marginHorizontal: 16,
     marginTop: 10,
     marginBottom: 6,
-    borderRadius: 12,
+    borderRadius: 25,
     padding: 3,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   tabButton: {
     flex: 1,
@@ -294,15 +292,15 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 8,
-    borderRadius: 9,
+    borderRadius: 22,
   },
   tabButtonActive: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#4EBA87',
   },
   tabText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
+    fontWeight: '700',
+    color: '#2D6A4F',
   },
   tabTextActive: {
     color: '#FFFFFF',
@@ -313,48 +311,58 @@ const s = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#E8F5E9',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyTitle: { marginTop: 14, fontSize: 16, fontWeight: '700', color: '#0F172A' },
-  emptyText: { marginTop: 4, fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 18 },
+  emptyTitle: { marginTop: 14, fontSize: 16, fontWeight: '800', color: '#111827' },
+  emptyText: { marginTop: 4, fontSize: 13, color: '#6B7280', textAlign: 'center', lineHeight: 18 },
   continue: {
     marginTop: 18,
     paddingHorizontal: 18,
     paddingVertical: 10,
-    backgroundColor: '#2563EB',
-    borderRadius: 10,
+    backgroundColor: '#4EBA87',
+    borderRadius: 20,
   },
   continueText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
   bookingCard: {
     backgroundColor: '#FFF',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 10,
     flexDirection: 'row',
     gap: 10,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#E8F5E9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   wishlistCard: {
     backgroundColor: '#FFF',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 10,
     flexDirection: 'row',
     gap: 10,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#E8F5E9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   bookingImage: { width: 74, height: 74, borderRadius: 8 },
   wishlistImage: { width: 80, height: 80, borderRadius: 8 },
   info: { flex: 1, justifyContent: 'space-between' },
   itemTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  name: { fontSize: 14, fontWeight: '700', color: '#1E293B', flex: 1, marginRight: 6 },
-  location: { fontSize: 11, color: '#64748B', marginTop: 1 },
-  dates: { fontSize: 10, color: '#64748B', marginTop: 2 },
-  voucherApplied: { fontSize: 10, color: '#16A34A', fontWeight: '600', marginTop: 2 },
+  name: { fontSize: 14, fontWeight: '700', color: '#1F2937', flex: 1, marginRight: 6 },
+  location: { fontSize: 11, color: '#6B7280', marginTop: 1 },
+  dates: { fontSize: 10, color: '#6B7280', marginTop: 2 },
+  voucherApplied: { fontSize: 10, color: '#2D6A4F', fontWeight: '600', marginTop: 2 },
   itemBottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -368,9 +376,9 @@ const s = StyleSheet.create({
     marginTop: 4,
   },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  ratingText: { fontSize: 11, color: '#475569', fontWeight: '500' },
-  price: { fontSize: 14, fontWeight: '700', color: '#2563EB' },
-  perNight: { fontSize: 11, fontWeight: '400', color: '#64748B' },
+  ratingText: { fontSize: 11, color: '#4B5563', fontWeight: '500' },
+  priceLabel: { fontSize: 11, color: '#4B5563' },
+  priceValue: { fontSize: 13, fontWeight: '700', color: '#111827' },
   reviewBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -382,10 +390,10 @@ const s = StyleSheet.create({
   },
   reviewBtnText: { fontSize: 10, fontWeight: '700', color: '#B45309' },
   bookNowSmallBtn: {
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    backgroundColor: '#4EBA87',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
   },
   bookNowSmallText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
   summaryCard: {
@@ -394,11 +402,11 @@ const s = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E8F5E9',
   },
   line: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
-  lineLabel: { color: '#64748B', fontSize: 12 },
-  lineValue: { fontWeight: '600', color: '#1E293B', fontSize: 12 },
+  lineLabel: { color: '#6B7280', fontSize: 12 },
+  lineValue: { fontWeight: '600', color: '#1F2937', fontSize: 12 },
   total: {
     borderTopWidth: 1,
     borderColor: '#F1F5F9',
@@ -408,13 +416,13 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  totalLabel: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
-  totalValue: { fontSize: 16, fontWeight: '700', color: '#2563EB' },
+  totalLabel: { fontSize: 14, fontWeight: '800', color: '#111827' },
+  totalValue: { fontSize: 16, fontWeight: '800', color: '#2D6A4F' },
   checkout: {
     marginTop: 12,
     padding: 12,
-    backgroundColor: '#2563EB',
-    borderRadius: 10,
+    backgroundColor: '#4EBA87',
+    borderRadius: 22,
     alignItems: 'center',
   },
   checkoutText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
