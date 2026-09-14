@@ -31,16 +31,16 @@ Database bao gồm **15 bảng thực thể**, **3 Views**, **4 Triggers**, **1 
 
 ## 🚀 Khởi tạo Database
 
-Tất cả đã được tổ chức thành **đúng 1 file Schema** và **đúng 1 file Seed**:
+Tất cả đã được tổ chức thành **đúng 1 file Schema** và **đúng 1 file Seed** đặt tại thư mục `database/`:
 
 ```bash
 # 1. Tạo cấu trúc bảng, views, triggers và stored procedures
-mysql -u root -p < schema.sql
+mysql -u root -p < ../database/schema.sql
 
 # 2. Import dữ liệu mẫu phong phú
-mysql -u root -p homestay_db < seed.sql
+mysql -u root -p homestay_db < ../database/seed.sql
 ```
-*(Hoặc mở phpMyAdmin ➔ Import file `schema.sql` rồi import tiếp `seed.sql`).*
+*(Hoặc mở phpMyAdmin ➔ Import file `database/schema.sql` rồi import tiếp `database/seed.sql`).*
 
 ---
 

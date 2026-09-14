@@ -34,8 +34,8 @@ function NavigationGate() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAFC' }}>
-        <ActivityIndicator size="large" color="#2563EB" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0F9FF' }}>
+        <ActivityIndicator size="large" color="#0284C7" />
       </View>
     );
   }
@@ -47,10 +47,7 @@ function NavigationGate() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="homestay/[id]" />
       <Stack.Screen name="location/[id]" />
-      <Stack.Screen name="category/[id]" />
-      <Stack.Screen name="user/[id]" />
       <Stack.Screen name="bookings" />
-      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
     </Stack>
   );
 }
