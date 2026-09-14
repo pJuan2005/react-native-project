@@ -111,40 +111,48 @@ Dự án phát triển một nền tảng đặt phòng homestay hoàn chỉnh g
 ## 📂 Cấu trúc thư mục dự án
 
 ```text
-├── app/                        # 📱 Giao diện Mobile (Expo Router)
-│   ├── (tabs)/                 # Bottom Tab Navigation chính
+├── app/                        # 📱 Giao diện Mobile (React Native / Expo Router)
+│   ├── (tabs)/                 # Bottom Tab Navigation chính (5 Tabs)
 │   │   ├── _layout.tsx         # Cấu hình Bottom Tab Bar
-│   │   ├── index.tsx           # Tab Trang chủ
+│   │   ├── index.tsx           # Tab Trang chủ (Hero Banner, Marquee Ticker)
 │   │   ├── locations.tsx       # Tab Khám phá địa điểm
 │   │   ├── homestays.tsx       # Tab Danh sách & tìm kiếm homestay
-│   │   ├── bookings.tsx        # Tab Quản lý đặt phòng
-│   │   └── users.tsx           # Tab Trang cá nhân & Voucher
+│   │   ├── bookings.tsx        # Tab Quản lý đặt phòng & Wishlist
+│   │   └── users.tsx           # Tab Trang cá nhân, Voucher & Điểm
 │   ├── homestay/[id].tsx       # Màn hình chi tiết homestay, lịch & voucher
 │   ├── location/[id].tsx       # Màn hình homestay theo địa điểm
-│   └── _layout.tsx             # Root Stack Layout & BookingProvider
+│   ├── login.tsx               # Màn hình Đăng nhập
+│   ├── register.tsx            # Màn hình Đăng ký
+│   └── _layout.tsx             # Root Stack Layout & Auth Gate
 ├── admin-web/                  # 💻 Giao diện Quản trị Web Admin (SPA)
 │   └── index.html              # Bảng điều khiển, Duyệt đơn, Quản lý homestay
 ├── components/                 # Các UI Components tái sử dụng
 │   ├── haptic-tab.tsx          # Tab button có phản hồi rung xúc giác
-│   ├── product-image.tsx       # Component hiển thị ảnh homestay/địa điểm
-│   └── ui/                     # Các components UI cơ bản
+│   ├── infinite-marquee.tsx    # Dải băng lướt tin tức & ưu đãi 24/7
+│   └── product-image.tsx       # Component hiển thị ảnh homestay/địa điểm
 ├── contexts/                   # Quản lý State toàn cục
+│   ├── AuthContext.tsx         # Quản lý xác thực & phiên đăng nhập
 │   └── BookingContext.tsx      # Quản lý Đặt phòng, Yêu thích, Voucher & Điểm
 ├── constants/                  # Hằng số & Dữ liệu mẫu
 │   ├── mockData.ts             # Dữ liệu fallback & kiểu dữ liệu TypeScript
-│   └── theme.ts                # Bảng màu sắc & giao diện
+│   └── theme.ts                # Bảng màu Xanh Nước Biển + Trắng (Mệnh Thủy)
 ├── src/config/api.ts           # Cấu hình URL kết nối Backend API
-├── database/                   # 🗄️ CSDL MySQL chuẩn
+├── database/                   # 🗄️ CSDL MySQL chuẩn (Single Source of Truth)
 │   ├── schema.sql              # Schema DDL (15 Tables, Views, Triggers, Procedures)
 │   └── seed.sql                # Dữ liệu mẫu phong phú
-├── backend/                    # 🚀 Máy chủ Node.js Express REST API
+├── backend/                    # 🚀 Máy chủ Node.js Express (3-Tier Layered Architecture)
 │   ├── src/
-│   │   ├── config/db.js        # Kết nối MySQL Connection Pool
-│   │   ├── controllers/        # Xử lý logic API Mobile & API Admin
-│   │   ├── routes/             # Định tuyến /api và /api/admin
-│   │   └── server.js           # Express Server & Static Web Admin
-│   ├── schema.sql              # Bản sao schema CSDL
-│   └── seed.sql                # Bản sao seed CSDL
+│   │   ├── config/             # database.js, env.js
+│   │   ├── models/             # user, homestay, booking, location, promotion models
+│   │   ├── services/           # auth, homestay, user, admin services
+│   │   ├── controllers/        # auth, homestay, user, admin controllers
+│   │   ├── middlewares/        # auth.middleware.js, error.middleware.js
+│   │   ├── routes/             # auth, homestay, user, admin routes & index.js
+│   │   ├── utils/              # response.js, hash.js
+│   │   ├── app.js              # Cấu hình Express app & middlewares
+│   │   └── server.js           # Khởi chạy Express Server
+│   ├── package.json            # Dependencies của Backend
+│   └── README.md               # Tài liệu hướng dẫn riêng cho Backend
 ├── ARCHITECTURE.md             # Tài liệu kiến trúc hệ thống chuyên sâu
 ├── package.json                # Dependencies của ứng dụng Frontend
 └── README.md                   # Tài liệu hướng dẫn & mô tả dự án

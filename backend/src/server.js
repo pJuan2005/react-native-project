@@ -1,45 +1,25 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
+const app = require('./app');
+const config = require('./config/env');
 
-const authRoutes = require('./routes/auth.routes');
-const homestayRoutes = require('./routes/homestay.routes');
-const usersRoutes = require('./routes/users.routes');
-const adminRoutes = require('./routes/admin.routes');
+const PORT = config.PORT;
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`=======================================================`);
+  console.log(`🚀 Homestay 3-Tier Backend API is running!`);
+  console.log(`🌐 Server Port     : http://0.0.0.0:${PORT}`);
+  console.log(`📡 API Base URL    : http://localhost:${PORT}/api`);
+  console.log(`💻 Web Admin Portal: http://localhost:${PORT}/admin`);
+  console.log(`📱 Mobile Endpoint : http://localhost:${PORT}/api/homestays`);
+  console.log(`🔐 Auth Endpoint   : http://localhost:${PORT}/api/auth/login`);
+  console.log(`=======================================================`);
+});
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Serve Web Admin Dashboard SPA statically
-app.use('/admin', express.static(path.join(__dirname, '../../admin-web')));
-
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api', homestayRoutes);
-app.use('/api', usersRoutes);
-app.use('/api/admin', adminRoutes);
-
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Homestay Backend REST API is running',
-    version: '1.0.0',
-    adminUrl: `http://localhost:${PORT}/admin`,
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
   });
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`=========================================`);
-  console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
-  console.log(`💻 Web Admin Dashboard: http://localhost:${PORT}/admin`);
-  console.log(`📱 Mobile API: http://localhost:${PORT}/api/homestays`);
-  console.log(`🔐 Auth API: http://localhost:${PORT}/api/auth/login`);
-  console.log(`=========================================`);
-});
+module.exports = server;

@@ -80,18 +80,22 @@ Dự án được cấu trúc dạng Monorepo chuẩn mực, phân tách độc 
 ├── admin-web/            # 💻 FRONTEND WEB ADMIN (Tailwind CSS + Chart.js SPA)
 │   └── index.html        # Dashboard, Duyệt đơn booking, Thêm homestay, Quản lý voucher
 │
-├── backend/              # 🚀 BACKEND REST API (Node.js + Express + MySQL)
+├── backend/              # 🚀 BACKEND REST API (Node.js + Express 3-Tier Layered)
 │   ├── src/
-│   │   ├── config/       # Kết nối CSDL MySQL Connection Pool
-│   │   ├── controllers/  # Xử lý logic API Client & API Admin
-│   │   ├── routes/       # Định tuyến /api và /api/admin
-│   │   └── server.js     # Khởi chạy Express Server & Static Web Admin
-│   ├── schema.sql        # Cấu trúc CSDL chuẩn 15 bảng
-│   └── seed.sql          # Dữ liệu mẫu phong phú
+│   │   ├── config/       # database.js, env.js
+│   │   ├── models/       # user, homestay, booking, location, promotion models
+│   │   ├── services/     # auth, homestay, user, admin services
+│   │   ├── controllers/  # auth, homestay, user, admin controllers
+│   │   ├── middlewares/  # auth.middleware.js, error.middleware.js
+│   │   ├── routes/       # auth, homestay, user, admin routes & index.js
+│   │   ├── utils/        # response.js, hash.js
+│   │   ├── app.js        # Express app setup & middleware mounting
+│   │   └── server.js     # Server entrypoint & port listening
+│   └── package.json
 │
-└── database/             # 🗄️ CƠ SỞ DỮ LIỆU CHUẨN
+└── database/             # 🗄️ CƠ SỞ DỮ LIỆU CHUẨN (Single Source of Truth)
     ├── schema.sql        # Schema DDL (15 Tables, Views, Triggers, Procedures)
-    └── seed.sql          # Dữ liệu nạp mẫu
+    └── seed.sql          # Dữ liệu nạp mẫu phong phú (100% MySQL/phpMyAdmin Compatible)
 ```
 
 ---
