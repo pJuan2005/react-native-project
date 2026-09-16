@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,6 +13,10 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -66,17 +71,27 @@ export default function RegisterScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Logo Brand Header */}
-          <View style={styles.logoContainer}>
-            <View style={styles.logoIconBox}>
-              <Ionicons name="water" size={40} color="#0284C7" />
+          {/* HEADER WITH ENTRANCE ANIMATION */}
+          <Animated.View entering={FadeInDown.duration(700)} style={styles.logoContainer}>
+            <View style={styles.imageCardWrapper}>
+              <Image
+                source={{
+                  uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=400&q=80',
+                }}
+                style={styles.heroArtImage}
+                resizeMode="cover"
+              />
+              <View style={styles.ecoLeafBadge}>
+                <Ionicons name="sparkles" size={12} color="#FFFFFF" />
+              </View>
             </View>
-            <Text style={styles.brandTitle}>Tạo tài khoản</Text>
-            <Text style={styles.brandSubtitle}>Đăng ký thành viên để nhận ngay 150 điểm thưởng</Text>
-          </View>
 
-          {/* Form Inputs */}
-          <View style={styles.formContainer}>
+            <Text style={styles.brandTitle}>Tạo tài khoản</Text>
+            <Text style={styles.brandSubtitle}>Hệ sinh thái du lịch & nghỉ dưỡng xanh</Text>
+          </Animated.View>
+
+          {/* FORM WITH ENTRANCE ANIMATION */}
+          <Animated.View entering={FadeInUp.delay(180).duration(700)} style={styles.formContainer}>
             {/* Full Name */}
             <View style={styles.inputPill}>
               <Ionicons name="person" size={19} color="#0284C7" style={styles.icon} />
@@ -160,7 +175,7 @@ export default function RegisterScreen() {
             <Pressable style={styles.switchBtn} onPress={() => router.replace('/login')}>
               <Text style={styles.switchText}>Đã có tài khoản? Đăng nhập</Text>
             </Pressable>
-          </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -174,29 +189,47 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 28,
-    paddingTop: 36,
+    paddingTop: 30,
     paddingBottom: 40,
     justifyContent: 'center',
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
   },
-  logoIconBox: {
-    width: 78,
-    height: 78,
-    borderRadius: 24,
-    backgroundColor: '#F0F9FF',
-    borderWidth: 1.5,
+  imageCardWrapper: {
+    position: 'relative',
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    padding: 3,
+    backgroundColor: '#E0F2FE',
+    borderWidth: 2,
     borderColor: '#BAE6FD',
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 10,
     shadowColor: '#0284C7',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 3,
+  },
+  heroArtImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 38,
+  },
+  ecoLeafBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#0284C7',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   brandTitle: {
     fontSize: 22,
@@ -205,9 +238,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   brandSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '600',
     color: '#64748B',
-    marginTop: 4,
+    marginTop: 3,
     textAlign: 'center',
   },
   formContainer: {

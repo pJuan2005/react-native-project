@@ -6,6 +6,7 @@ import {
 } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppTheme, ThemeMode } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
@@ -51,6 +52,7 @@ const DISNEY_AVATARS = [
 
 export default function ProfileScreen() {
   const { logout } = useAuth();
+  const { themeMode, isDark, setThemeMode, colors } = useAppTheme();
   const {
     userProfile,
     updateUserProfile,
@@ -77,6 +79,7 @@ export default function ProfileScreen() {
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
@@ -145,9 +148,18 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Trang cá nhân</Text>
+        <View style={styles.topHeaderRow}>
+          <Text style={[styles.title, { color: colors.text }]}>Trang cá nhân</Text>
+          <Pressable
+            style={styles.settingsIconBtn}
+            onPress={() => setShowSettingsModal(true)}
+            hitSlop={8}
+          >
+            <Ionicons name="settings-outline" size={20} color="#0284C7" />
+          </Pressable>
+        </View>
 
         {/* Profile Avatar Header - Ocean Theme */}
         <View style={styles.profileHeader}>
@@ -162,7 +174,7 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
-          <Text style={styles.name}>{userProfile.name}</Text>
+          <Text style={[styles.name, { color: colors.text }]}>{userProfile.name}</Text>
           <Text style={styles.email}>{userProfile.email}</Text>
 
           <Pressable
@@ -208,7 +220,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Segmented Tab Bar - Ocean Blue */}
-        <View style={styles.tabBar}>
+        <View style={[styles.tabBar, isDark && { backgroundColor: '#1E293B' }]}>
           <Pressable style={[styles.tabItem, activeTab === 'profile' && styles.tabItemActive]} onPress={() => setActiveTab('profile')}>
             <Text style={[styles.tabText, activeTab === 'profile' && styles.tabTextActive]}>Hồ sơ</Text>
           </Pressable>
@@ -227,8 +239,8 @@ export default function ProfileScreen() {
         {activeTab === 'profile' && (
           <>
             {isEditing ? (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Chỉnh sửa thông tin</Text>
+              <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Chỉnh sửa thông tin</Text>
                 <View style={styles.avatarEditRow}>
                   <Text style={styles.fieldLabel}>Ảnh đại diện</Text>
                   <Pressable style={styles.changeAvatarBtn} onPress={() => setShowAvatarModal(true)}>
@@ -247,13 +259,13 @@ export default function ProfileScreen() {
                 </Pressable>
               </View>
             ) : (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
-                <Info label="Họ và tên" value={userProfile.name} />
-                <Info label="Email" value={userProfile.email} />
-                <Info label="Số điện thoại" value={userProfile.phone} />
-                <Info label="Địa chỉ" value={userProfile.address} />
-                <Info label="Ngày sinh" value={userProfile.birthDate} />
+              <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Thông tin cá nhân</Text>
+                <Info label="Họ và tên" value={userProfile.name} isDark={isDark} />
+                <Info label="Email" value={userProfile.email} isDark={isDark} />
+                <Info label="Số điện thoại" value={userProfile.phone} isDark={isDark} />
+                <Info label="Địa chỉ" value={userProfile.address} isDark={isDark} />
+                <Info label="Ngày sinh" value={userProfile.birthDate} isDark={isDark} />
               </View>
             )}
           </>
@@ -261,9 +273,9 @@ export default function ProfileScreen() {
 
         {/* TAB 2: Vouchers Wallet */}
         {activeTab === 'vouchers' && (
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
             <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Ví Voucher ({userVouchers.length})</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Ví Voucher ({userVouchers.length})</Text>
               <Pressable style={styles.redeemSmallBtn} onPress={() => setShowRedeemModal(true)}>
                 <Ionicons name="add" size={14} color="#0284C7" />
                 <Text style={styles.redeemSmallText}>Đổi thêm</Text>
@@ -278,12 +290,12 @@ export default function ProfileScreen() {
               </View>
             ) : (
               userVouchers.map((v) => (
-                <View key={v.id} style={styles.voucherWalletCard}>
+                <View key={v.id} style={[styles.voucherWalletCard, isDark && { backgroundColor: '#0F172A', borderColor: '#334155' }]}>
                   <View style={styles.voucherWalletIcon}>
                     <Ionicons name={(v.icon as any) || 'ticket-outline'} size={22} color="#0284C7" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.voucherWalletTitle}>{v.title}</Text>
+                    <Text style={[styles.voucherWalletTitle, isDark && { color: '#F8FAFC' }]}>{v.title}</Text>
                     <Text style={styles.voucherWalletDesc}>{v.description}</Text>
                     <Text style={styles.voucherWalletMeta}>Mã: <Text style={styles.boldCode}>{v.code}</Text> • HSD: {v.expiresAt}</Text>
                   </View>
@@ -301,8 +313,8 @@ export default function ProfileScreen() {
 
         {/* TAB 3: Bookings History */}
         {activeTab === 'bookings' && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Lịch sử đặt phòng ({bookings.length})</Text>
+          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Lịch sử đặt phòng ({bookings.length})</Text>
             {bookings.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="cart-outline" size={36} color="#94A3B8" />
@@ -318,7 +330,7 @@ export default function ProfileScreen() {
                 >
                   <ProductImage uri={booking.homestayImage || booking.images[0]} style={styles.bookingImage} containerStyle={styles.bookingImage} />
                   <View style={styles.bookingInfo}>
-                    <Text style={styles.bookingName}>{booking.name}</Text>
+                    <Text style={[styles.bookingName, isDark && { color: '#F8FAFC' }]}>{booking.name}</Text>
                     <Text style={styles.bookingLocation}>📍 by {booking.location} • {booking.type}</Text>
                     <Text style={styles.bookingDates}>📅 {booking.checkIn} - {booking.checkOut} ({booking.nights} đêm)</Text>
                     <Text style={styles.bookingPrice}>
@@ -345,8 +357,8 @@ export default function ProfileScreen() {
 
         {/* TAB 4: Wishlist */}
         {activeTab === 'wishlist' && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Danh sách yêu thích ({savedHomestays.length})</Text>
+          <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Danh sách yêu thích ({savedHomestays.length})</Text>
             {savedHomestays.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="heart-outline" size={36} color="#94A3B8" />
@@ -362,7 +374,7 @@ export default function ProfileScreen() {
                 >
                   <ProductImage uri={homestay.images[0]} style={styles.wishlistImage} containerStyle={styles.wishlistImage} />
                   <View style={styles.wishlistInfo}>
-                    <Text style={styles.wishlistName}>{homestay.name}</Text>
+                    <Text style={[styles.wishlistName, isDark && { color: '#F8FAFC' }]}>{homestay.name}</Text>
                     <Text style={styles.wishlistLocation}>📍 by {homestay.location} • {homestay.type}</Text>
                     <Text style={styles.wishlistPrice}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} ₫/đêm</Text>
                   </View>
@@ -373,20 +385,38 @@ export default function ProfileScreen() {
         )}
 
         {/* Menu Options */}
-        <View style={styles.menuCard}>
-          <MenuItem icon="settings-outline" label="Cài đặt tài khoản" />
-          <MenuItem icon="help-circle-outline" label="Trợ giúp & Hỗ trợ" />
-          <MenuItem icon="information-circle-outline" label="Về ứng dụng Homestay" />
+        <View style={[styles.menuCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+          <MenuItem
+            icon="settings-outline"
+            label="Cài đặt giao diện & Hệ thống"
+            onPress={() => setShowSettingsModal(true)}
+            isDark={isDark}
+          />
+          <MenuItem
+            icon="help-circle-outline"
+            label="Trợ giúp & Hỗ trợ"
+            onPress={() => Alert.alert('Trợ giúp', 'Liên hệ tổng đài CSKH: 1900 8888 (24/7)')}
+            isDark={isDark}
+          />
+          <MenuItem
+            icon="information-circle-outline"
+            label="Về ứng dụng Homestay Booking"
+            onPress={() => Alert.alert('Homestay Booking', 'Phiên bản v2.0.0 - Nền tảng du lịch & nghỉ dưỡng xanh')}
+            isDark={isDark}
+          />
         </View>
 
-        {/* Logout Button */}
+        {/* PROMINENT LOGOUT BUTTON CARD (Khung viền đỏ rõ nét, không bị chìm nền) */}
         <Pressable
-          style={styles.logout}
+          style={[styles.logoutCardBtn, isDark && { backgroundColor: '#1E293B', borderColor: '#7F1D1D' }]}
           onPress={() => setShowLogoutModal(true)}
           hitSlop={8}
         >
-          <Ionicons name="log-out-outline" size={17} color="#DC2626" />
-          <Text style={styles.logoutText}>Đăng xuất tài khoản</Text>
+          <View style={styles.logoutIconBox}>
+            <Ionicons name="log-out-outline" size={18} color="#DC2626" />
+          </View>
+          <Text style={styles.logoutCardText}>Đăng xuất tài khoản</Text>
+          <Ionicons name="chevron-forward" size={16} color="#DC2626" />
         </Pressable>
       </ScrollView>
 
@@ -508,7 +538,61 @@ export default function ProfileScreen() {
         </Pressable>
       </Modal>
 
-      {/* MODAL 4: XÁC NHẬN ĐĂNG XUẤT */}
+      {/* MODAL 4: CÀI ĐẶT GIAO DIỆN SÁNG / TỐI (DARK MODE SETTINGS) */}
+      <Modal
+        visible={showSettingsModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSettingsModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowSettingsModal(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Cài đặt hệ thống</Text>
+                <Text style={styles.modalSubtitle}>Tùy chỉnh giao diện hiển thị ứng dụng</Text>
+              </View>
+              <Pressable onPress={() => setShowSettingsModal(false)} hitSlop={8}>
+                <Ionicons name="close" size={22} color="#64748B" />
+              </Pressable>
+            </View>
+
+            <Text style={styles.themeSectionTitle}>Chế độ giao diện:</Text>
+            <View style={styles.themeOptionsList}>
+              <ThemeOptionItem
+                icon="sunny"
+                title="Giao diện sáng (Light)"
+                description="Tone màu Xanh Nước Biển & Trắng tươi sáng"
+                isSelected={themeMode === 'light'}
+                onSelect={() => setThemeMode('light')}
+              />
+              <ThemeOptionItem
+                icon="moon"
+                title="Giao diện tối (Dark)"
+                description="Tone màu Đen Xanh bảo vệ mắt vào ban đêm"
+                isSelected={themeMode === 'dark'}
+                onSelect={() => setThemeMode('dark')}
+              />
+              <ThemeOptionItem
+                icon="phone-portrait-outline"
+                title="Tự động theo thiết bị (System)"
+                description="Tự động chuyển sáng/tối theo cài đặt của máy"
+                isSelected={themeMode === 'system'}
+                onSelect={() => setThemeMode('system')}
+              />
+            </View>
+
+            <Pressable
+              style={styles.closeSettingsBtn}
+              onPress={() => setShowSettingsModal(false)}
+            >
+              <Text style={styles.closeSettingsText}>Đóng cài đặt</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* MODAL 5: XÁC NHẬN ĐĂNG XUẤT */}
       <Modal
         visible={showLogoutModal}
         transparent
@@ -551,6 +635,43 @@ export default function ProfileScreen() {
   );
 }
 
+function ThemeOptionItem({
+  icon,
+  title,
+  description,
+  isSelected,
+  onSelect,
+}: {
+  icon: any;
+  title: string;
+  description: string;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <Pressable
+      style={[
+        styles.themeOptionCard,
+        isSelected && styles.themeOptionCardSelected,
+      ]}
+      onPress={onSelect}
+    >
+      <View style={[styles.themeOptionIconBox, isSelected && { backgroundColor: '#0284C7' }]}>
+        <Ionicons name={icon} size={18} color={isSelected ? '#FFFFFF' : '#0284C7'} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.themeOptionTitle, isSelected && { color: '#0369A1', fontWeight: '800' }]}>
+          {title}
+        </Text>
+        <Text style={styles.themeOptionDesc}>{description}</Text>
+      </View>
+      <View style={[styles.themeRadio, isSelected && styles.themeRadioActive]}>
+        {isSelected && <Ionicons name="checkmark" size={12} color="#FFFFFF" />}
+      </View>
+    </Pressable>
+  );
+}
+
 function Field({
   label,
   value,
@@ -576,20 +697,30 @@ function Field({
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function Info({ label, value, isDark }: { label: string; value: string; isDark?: boolean }) {
   return (
     <View style={styles.info}>
       <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value || 'Chưa cập nhật'}</Text>
+      <Text style={[styles.infoValue, isDark && { color: '#F8FAFC' }]}>{value || 'Chưa cập nhật'}</Text>
     </View>
   );
 }
 
-function MenuItem({ icon, label }: { icon: any; label: string }) {
+function MenuItem({
+  icon,
+  label,
+  onPress,
+  isDark,
+}: {
+  icon: any;
+  label: string;
+  onPress?: () => void;
+  isDark?: boolean;
+}) {
   return (
-    <Pressable style={styles.menuItem} onPress={() => Alert.alert(label, 'Chức năng đang được phát triển.')}>
+    <Pressable style={styles.menuItem} onPress={onPress}>
       <Ionicons name={icon} size={18} color="#0284C7" />
-      <Text style={styles.menuText}>{label}</Text>
+      <Text style={[styles.menuText, isDark && { color: '#E2E8F0' }]}>{label}</Text>
       <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
     </Pressable>
   );
@@ -598,7 +729,21 @@ function MenuItem({ icon, label }: { icon: any; label: string }) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#F0F9FF' },
   content: { padding: 16, paddingBottom: 32 },
-  title: { fontSize: 20, fontWeight: '800', color: '#0F172A', marginBottom: 10 },
+  topHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  title: { fontSize: 20, fontWeight: '800', color: '#0F172A' },
+  settingsIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   profileHeader: { alignItems: 'center', paddingVertical: 12 },
   avatarContainer: { position: 'relative', width: 80, height: 80 },
   avatar: { width: 80, height: 80, borderRadius: 40 },
@@ -808,13 +953,44 @@ const styles = StyleSheet.create({
     borderColor: '#E0F2FE',
   },
   menuItem: { height: 44, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderColor: '#F1F5F9' },
-  menuText: { flex: 1, fontSize: 12, fontWeight: '500', color: '#334155' },
-  logout: { marginTop: 14, alignSelf: 'center', flexDirection: 'row', gap: 6, alignItems: 'center', padding: 6 },
-  logoutText: { color: '#DC2626', fontWeight: '700', fontSize: 12 },
+  menuText: { flex: 1, fontSize: 12, fontWeight: '600', color: '#334155' },
+  // Distinct Logout Button Card
+  logoutCardBtn: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#FECACA',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  logoutIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FEF2F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutCardText: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
   // Modals
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
@@ -823,8 +999,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 360,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     elevation: 6,
   },
   modalHeader: {
@@ -833,7 +1009,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  modalTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
   modalSubtitle: { fontSize: 11, color: '#64748B', marginTop: 2 },
   pickDeviceBtn: {
     flexDirection: 'row',
@@ -935,6 +1111,74 @@ const styles = StyleSheet.create({
   historyPoints: { fontSize: 13, fontWeight: '700' },
   pointsEarn: { color: '#16A34A' },
   pointsRedeem: { color: '#DC2626' },
+  // Settings Modal Styles
+  themeSectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0369A1',
+    marginTop: 6,
+    marginBottom: 10,
+  },
+  themeOptionsList: {
+    gap: 8,
+  },
+  themeOptionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+  },
+  themeOptionCardSelected: {
+    borderColor: '#0284C7',
+    backgroundColor: '#E0F2FE',
+  },
+  themeOptionIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeOptionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  themeOptionDesc: {
+    fontSize: 10,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  themeRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeRadioActive: {
+    backgroundColor: '#0284C7',
+    borderColor: '#0284C7',
+  },
+  closeSettingsBtn: {
+    marginTop: 16,
+    backgroundColor: '#0284C7',
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  closeSettingsText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 13,
+  },
   // Logout Modal
   logoutModalContent: {
     width: '100%',

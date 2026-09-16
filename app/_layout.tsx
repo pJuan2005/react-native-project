@@ -1,12 +1,13 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
-import { ActivityIndicator, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { BookingProvider } from '@/contexts/BookingContext';
+import { ThemeProvider, useAppTheme } from '@/contexts/ThemeContext';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -14,6 +15,7 @@ export const unstable_settings = {
 
 function NavigationGate() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { isDark, colors } = useAppTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -33,35 +35,35 @@ function NavigationGate() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0F9FF' }}>
-        <ActivityIndicator size="large" color="#0284C7" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="login" />
-      <Stack.Screen name="register" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="homestay/[id]" />
-      <Stack.Screen name="location/[id]" />
-      <Stack.Screen name="bookings" />
-    </Stack>
+    <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="login" />
+        <Stack.Screen name="register" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="homestay/[id]" />
+        <Stack.Screen name="location/[id]" />
+        <Stack.Screen name="bookings" />
+      </Stack>
+      <StatusBar style={isDark ? 'light' : 'auto'} />
+    </NavigationThemeProvider>
   );
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <AuthProvider>
-      <BookingProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider>
+      <AuthProvider>
+        <BookingProvider>
           <NavigationGate />
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </BookingProvider>
-    </AuthProvider>
+        </BookingProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

@@ -1,43 +1,49 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HapticTab } from '@/components/haptic-tab';
+import { useAppTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const { isDark, colors } = useAppTheme();
   const isIos = Platform.OS === 'ios';
+
+  // Compute exact bottom padding matching device home bar without extra empty space
+  const bottomPadding = isIos ? Math.max(insets.bottom, 12) : 8;
+  const tabHeight = 52 + bottomPadding;
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#0284C7',
-        tabBarInactiveTintColor: '#64748B',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: isDark ? '#64748B' : '#777777',
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E0F2FE',
+          backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+          borderTopColor: isDark ? '#334155' : '#E0F2FE',
           borderTopWidth: 1.5,
-          height: isIos ? 86 : 64,
+          height: tabHeight,
           paddingTop: 6,
-          paddingBottom: isIos ? 26 : 6,
-          elevation: 10,
+          paddingBottom: bottomPadding,
+          elevation: 8,
           shadowColor: '#0284C7',
-          shadowOffset: { width: 0, height: -3 },
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: isDark ? 0.2 : 0.06,
+          shadowRadius: 6,
         },
         tabBarItemStyle: {
           justifyContent: 'center',
           alignItems: 'center',
-          paddingVertical: 1,
         },
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '700',
           marginTop: 1,
-          marginBottom: 1,
         },
       }}>
       <Tabs.Screen

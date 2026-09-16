@@ -10,12 +10,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import Animated, {
   FadeInDown,
   FadeInUp,
   FadeInRight,
-  FadeIn,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -23,6 +23,7 @@ import { ProductImage } from '@/components/product-image';
 import { InfiniteMarquee } from '@/components/infinite-marquee';
 import { formatPrice, mockLocations, mockHomestays, Homestay } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
+import { useAppTheme } from '@/contexts/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -36,6 +37,8 @@ const TRENDING_KEYWORDS = [
 ];
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+  const { isDark, colors } = useAppTheme();
   const [search, setSearch] = useState('');
   const { userProfile, savedHomestays, toggleSavedHomestay } = useBooking();
 
@@ -52,9 +55,10 @@ export default function HomeScreen() {
   const newestList = useMemo(() => mockHomestays.filter((h) => h.isNew), []);
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <StatusBar style="light" />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* HERO BANNER - OCEAN BLUE & BACKGROUND PHONG CẢNH DU LỊCH */}
+        {/* HERO BANNER - SEAMLESS TOP STATUS BAR EXTENSION */}
         <Animated.View entering={FadeInDown.duration(600)}>
           <ImageBackground
             source={{
@@ -63,8 +67,8 @@ export default function HomeScreen() {
             style={styles.heroBackground}
             imageStyle={styles.heroBackgroundImage}
           >
-            {/* Ocean Blue Overlay */}
-            <View style={styles.heroOverlay}>
+            {/* Ocean Blue Overlay with top inset padding */}
+            <View style={[styles.heroOverlay, { paddingTop: Math.max(insets.top, 14) + 6 }]}>
               {/* Top Bar Navigation */}
               <View style={styles.topBar}>
                 <View style={styles.userInfoRow}>
@@ -90,14 +94,14 @@ export default function HomeScreen() {
                 </Pressable>
               </View>
 
-              {/* Brand Title & Ocean Theme */}
+              {/* Brand Title & Ocean Eco Theme */}
               <View style={styles.sloganBox}>
                 <View style={styles.oceanBadge}>
-                  <Ionicons name="water" size={13} color="#0284C7" />
-                  <Text style={styles.oceanBadgeText}>Nghỉ dưỡng biển & sinh thái 2026</Text>
+                  <Ionicons name="leaf" size={13} color="#0284C7" />
+                  <Text style={styles.oceanBadgeText}>Hệ sinh thái du lịch & nghỉ dưỡng xanh</Text>
                 </View>
                 <Text style={styles.sloganTitle}>HOMESTAY BOOKING</Text>
-                <Text style={styles.sloganSub}>Trải nghiệm không gian sống và kỳ nghỉ trong lành</Text>
+                <Text style={styles.sloganSub}>Trải nghiệm không gian sống và văn hóa bản địa</Text>
               </View>
 
               {/* Search Bar in Hero */}
@@ -160,7 +164,7 @@ export default function HomeScreen() {
         {/* SECTION 1: DÀNH CHO BẠN */}
         <Animated.View entering={FadeInRight.delay(250).duration(600)}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Dành cho bạn</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Dành cho bạn</Text>
             <Pressable onPress={() => router.push('/homestays')} hitSlop={6}>
               <Text style={styles.viewAllText}>Xem tất cả</Text>
             </Pressable>
@@ -171,13 +175,15 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalCardsList}
           >
-            {forYouList.slice(0, 5).map((homestay, index) => {
+            {forYouList.slice(0, 5).map((homestay) => {
               const isSaved = savedHomestays.some((s) => s.id === homestay.id);
               return (
                 <BookShopCard
                   key={homestay.id}
                   homestay={homestay}
                   isSaved={isSaved}
+                  isDark={isDark}
+                  colors={colors}
                   onToggleSave={() => {
                     const nowSaved = toggleSavedHomestay(homestay);
                     if (nowSaved) {
@@ -195,7 +201,7 @@ export default function HomeScreen() {
         {/* SECTION 2: KHÁM PHÁ ĐỊA ĐIỂM */}
         <Animated.View entering={FadeInUp.delay(350).duration(600)}>
           <View style={[styles.sectionHeader, { marginTop: 20 }]}>
-            <Text style={styles.sectionTitle}>Khám phá địa điểm</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Khám phá địa điểm</Text>
             <Pressable onPress={() => router.push('/locations')} hitSlop={6}>
               <Text style={styles.viewAllText}>Tất cả ({mockLocations.length})</Text>
             </Pressable>
@@ -209,12 +215,12 @@ export default function HomeScreen() {
             {mockLocations.map((loc) => (
               <Pressable
                 key={loc.id}
-                style={styles.locationPill}
+                style={[styles.locationPill, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
                 onPress={() => router.push({ pathname: '/location/[id]' as any, params: { id: loc.id } })}
               >
                 <ProductImage uri={loc.image} style={styles.locThumb} containerStyle={styles.locThumb} />
                 <View>
-                  <Text style={styles.locName}>{loc.name}</Text>
+                  <Text style={[styles.locName, { color: colors.text }]}>{loc.name}</Text>
                   <Text style={styles.locCount}>{loc.homestayCount} chỗ nghỉ</Text>
                 </View>
               </Pressable>
@@ -225,7 +231,7 @@ export default function HomeScreen() {
         {/* SECTION 3: HOMESTAY NỔI BẬT (Grid 2 cột) */}
         <Animated.View entering={FadeInUp.delay(450).duration(600)}>
           <View style={[styles.sectionHeader, { marginTop: 20 }]}>
-            <Text style={styles.sectionTitle}>Homestay nổi bật</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Homestay nổi bật</Text>
             <Pressable onPress={() => router.push('/homestays')} hitSlop={6}>
               <Text style={styles.viewAllText}>Xem thêm</Text>
             </Pressable>
@@ -240,6 +246,8 @@ export default function HomeScreen() {
                     homestay={homestay}
                     isSaved={isSaved}
                     cardWidth="100%"
+                    isDark={isDark}
+                    colors={colors}
                     onToggleSave={() => {
                       const nowSaved = toggleSavedHomestay(homestay);
                       if (nowSaved) {
@@ -255,7 +263,7 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -264,16 +272,27 @@ function BookShopCard({
   homestay,
   isSaved,
   cardWidth = 165,
+  isDark,
+  colors,
   onToggleSave,
 }: {
   homestay: Homestay;
   isSaved: boolean;
   cardWidth?: number | string;
+  isDark?: boolean;
+  colors?: any;
   onToggleSave: () => void;
 }) {
   return (
     <Pressable
-      style={[styles.card, { width: cardWidth as any }]}
+      style={[
+        styles.card,
+        {
+          width: cardWidth as any,
+          backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+          borderColor: isDark ? '#334155' : '#E0F2FE',
+        },
+      ]}
       onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}
     >
       {/* Image container */}
@@ -298,12 +317,12 @@ function BookShopCard({
 
       {/* Content */}
       <View style={styles.cardBody}>
-        <Text numberOfLines={2} style={styles.bookTitle}>
+        <Text numberOfLines={2} style={[styles.bookTitle, isDark && { color: '#F8FAFC' }]}>
           {homestay.name}
         </Text>
         <Text style={styles.authorSubtitle}>by {homestay.location}</Text>
         <Text style={styles.priceLabel}>
-          price: <Text style={styles.priceValue}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} Đ</Text>
+          price: <Text style={[styles.priceValue, isDark && { color: '#38BDF8' }]}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} Đ</Text>
         </Text>
       </View>
     </Pressable>
@@ -316,7 +335,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F9FF',
   },
   content: {
-    paddingBottom: 28,
+    paddingBottom: 24,
   },
   // Hero Banner Background - Ocean Blue
   heroBackground: {
@@ -331,7 +350,6 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     paddingHorizontal: 16,
-    paddingTop: 12,
     paddingBottom: 18,
     backgroundColor: 'rgba(3, 105, 161, 0.78)',
   },

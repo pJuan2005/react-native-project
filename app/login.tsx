@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,6 +13,10 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,17 +52,27 @@ export default function LoginScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Logo Brand Header - Ocean Theme */}
-          <View style={styles.logoContainer}>
-            <View style={styles.logoIconBox}>
-              <Ionicons name="water" size={44} color="#0284C7" />
+          {/* AESTHETIC HOMESTAY ARTWORK HEADER WITH ENTRANCE ANIMATION */}
+          <Animated.View entering={FadeInDown.duration(700)} style={styles.logoContainer}>
+            <View style={styles.imageCardWrapper}>
+              <Image
+                source={{
+                  uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=400&q=80',
+                }}
+                style={styles.heroArtImage}
+                resizeMode="cover"
+              />
+              <View style={styles.ecoLeafBadge}>
+                <Ionicons name="leaf" size={13} color="#FFFFFF" />
+              </View>
             </View>
-            <Text style={styles.brandTitle}>Homestay Booking</Text>
-            <Text style={styles.brandSubtitle}>Kỳ nghỉ biển & homestay sinh thái 2026</Text>
-          </View>
 
-          {/* Input Form */}
-          <View style={styles.formContainer}>
+            <Text style={styles.brandTitle}>Homestay Booking</Text>
+            <Text style={styles.brandSubtitle}>Hệ sinh thái du lịch & nghỉ dưỡng xanh</Text>
+          </Animated.View>
+
+          {/* INPUT FORM WITH ENTRANCE ANIMATION */}
+          <Animated.View entering={FadeInUp.delay(200).duration(700)} style={styles.formContainer}>
             {/* Email Input */}
             <View style={styles.inputPill}>
               <Ionicons name="mail" size={19} color="#0284C7" style={styles.icon} />
@@ -114,7 +129,7 @@ export default function LoginScreen() {
             <Pressable style={styles.switchBtn} onPress={() => router.push('/register')}>
               <Text style={styles.switchText}>Đăng ký tài khoản mới</Text>
             </Pressable>
-          </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -128,29 +143,47 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 28,
-    paddingTop: 60,
+    paddingTop: 40,
     paddingBottom: 40,
     justifyContent: 'center',
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 36,
+    marginBottom: 32,
   },
-  logoIconBox: {
-    width: 86,
-    height: 86,
-    borderRadius: 26,
-    backgroundColor: '#F0F9FF',
-    borderWidth: 1.5,
+  imageCardWrapper: {
+    position: 'relative',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    padding: 3,
+    backgroundColor: '#E0F2FE',
+    borderWidth: 2,
     borderColor: '#BAE6FD',
+    marginBottom: 14,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  heroArtImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 42,
+  },
+  ecoLeafBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#0284C7',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
-    shadowColor: '#0284C7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 3,
   },
   brandTitle: {
     fontSize: 24,
@@ -159,9 +192,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   brandSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '600',
     color: '#64748B',
-    marginTop: 4,
+    marginTop: 3,
+    letterSpacing: 0.2,
   },
   formContainer: {
     gap: 16,
@@ -193,7 +228,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: '#0284C7',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 3,
   },
