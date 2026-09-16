@@ -4,8 +4,9 @@ import { useBooking } from '@/contexts/BookingContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import API_BASE_URL from '@/src/config/api';
+import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
 
 export default function HomestaysScreen() {
   const [searchText, setSearchText] = useState('');
@@ -18,7 +19,7 @@ export default function HomestaysScreen() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/homestays`)
+    fetchWithTimeout(`${API_BASE_URL}/api/homestays`, {}, 3000)
       .then(res => res.json())
       .then(json => {
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {

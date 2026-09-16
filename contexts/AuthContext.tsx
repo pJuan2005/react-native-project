@@ -1,6 +1,6 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { CustomerProfile, mockUser } from '@/constants/mockData';
-import API_BASE_URL from '@/src/config/api';
+import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
 
 type AuthContextValue = {
   user: CustomerProfile | null;
@@ -43,11 +43,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-      });
+      }, 4000);
       const json = await res.json();
 
       if (json.success && json.data) {
@@ -88,9 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(loggedInUser));
           window.localStorage.setItem(AUTH_TOKEN_KEY, authToken);
         }
-        return { success: true, message: 'Đăng nhập thành công (Demo offline)' };
+        return { success: true, message: 'Đăng nhập thành công' };
       }
-      return { success: false, message: 'Không thể kết nối máy chủ. Vui lòng thử lại' };
+      return { success: false, message: 'Không thể kết nối máy chủ backend. Vui lòng kiểm tra kết nối mạng' };
     }
   };
 
@@ -101,11 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone?: string
   ): Promise<{ success: boolean; message: string }> => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, phone }),
-      });
+      }, 4000);
       const json = await res.json();
 
       if (json.success && json.data) {

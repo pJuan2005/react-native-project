@@ -9,7 +9,7 @@ import {
   initialPointTransactions,
 } from '@/constants/mockData';
 import { useAuth } from '@/contexts/AuthContext';
-import API_BASE_URL from '@/src/config/api';
+import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
 
 export type BookingItem = Homestay & {
   quantity: number;
@@ -85,11 +85,11 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     // 2. Sync with backend API
     const targetUserId = userProfile.id || '1';
     try {
-      const res = await fetch(`${API_BASE_URL}/api/users/${targetUserId}`, {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/api/users/${targetUserId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileData),
-      });
+      }, 4000);
       const json = await res.json();
       if (json.success && json.data) {
         setUserProfile((prev) => ({

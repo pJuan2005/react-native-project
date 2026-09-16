@@ -4,7 +4,8 @@ import { useBooking } from '@/contexts/BookingContext';
 import { ProductImage } from '@/components/product-image';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { FlatList, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LocationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();

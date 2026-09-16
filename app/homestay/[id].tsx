@@ -10,14 +10,14 @@ import {
   Dimensions,
   Modal,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import API_BASE_URL from '@/src/config/api';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
 
 const { width } = Dimensions.get('window');
 const DAYS_OF_WEEK = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -73,7 +73,7 @@ export default function HomestayDetail() {
     if (!id) return;
     setLoading(true);
     setError(null);
-    fetch(`${API_BASE_URL}/api/homestays/${id}`)
+    fetchWithTimeout(`${API_BASE_URL}/api/homestays/${id}`, {}, 3000)
       .then((res) => {
         if (!res.ok) throw new Error('not_found');
         return res.json();
