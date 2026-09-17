@@ -1,5 +1,6 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { useColorScheme as useSystemColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -17,10 +18,12 @@ type ThemeContextValue = {
     primaryLight: string;
     border: string;
     cardBorder: string;
+    inputBg: string;
+    headerBg: string;
   };
 };
 
-const THEME_STORAGE_KEY = 'HOMESTAY_THEME_MODE';
+const THEME_STORAGE_KEY = '@homestay_theme_mode_v1';
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
@@ -28,28 +31,26 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const systemColorScheme = useSystemColorScheme();
   const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
 
-  // Load saved theme from localStorage on Web
+  // Load saved theme from AsyncStorage (survives app reload / kill / device reboot)
   useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const saved = window.localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode;
+    (async () => {
+      try {
+        const saved = await AsyncStorage.getItem(THEME_STORAGE_KEY);
         if (saved && ['light', 'dark', 'system'].includes(saved)) {
-          setThemeModeState(saved);
+          setThemeModeState(saved as ThemeMode);
         }
+      } catch (e) {
+        console.warn('Error reading theme mode from AsyncStorage:', e);
       }
-    } catch (e) {
-      console.warn('Error reading theme mode from storage:', e);
-    }
+    })();
   }, []);
 
-  const setThemeMode = (mode: ThemeMode) => {
+  const setThemeMode = async (mode: ThemeMode) => {
     setThemeModeState(mode);
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem(THEME_STORAGE_KEY, mode);
-      }
+      await AsyncStorage.setItem(THEME_STORAGE_KEY, mode);
     } catch (e) {
-      console.warn('Error saving theme mode to storage:', e);
+      console.warn('Error saving theme mode to AsyncStorage:', e);
     }
   };
 
@@ -58,15 +59,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const colors = isDark
     ? {
-        background: '#0F172A',
-        cardBackground: '#1E293B',
+        background: '#0B132B',
+        cardBackground: '#1C2541',
         text: '#F8FAFC',
         textSecondary: '#94A3B8',
         primary: '#38BDF8',
         primaryDark: '#0284C7',
-        primaryLight: '#082F49',
+        primaryLight: '#1E3A8A',
         border: '#334155',
         cardBorder: '#334155',
+        inputBg: '#1E293B',
+        headerBg: '#0F172A',
       }
     : {
         background: '#F0F9FF',
@@ -78,6 +81,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         primaryLight: '#E0F2FE',
         border: '#BAE6FD',
         cardBorder: '#E0F2FE',
+        inputBg: '#FFFFFF',
+        headerBg: '#FFFFFF',
       };
 
   return (

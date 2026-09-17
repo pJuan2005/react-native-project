@@ -1,12 +1,15 @@
 import { ProductImage } from '@/components/product-image';
 import { Location, mockLocations } from '@/constants/mockData';
+import { useAppTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
 export default function LocationsScreen() {
+  const { isDark, colors } = useAppTheme();
   const [search, setSearch] = useState('');
   const locations = useMemo(
     () => mockLocations.filter((l) => l.name.toLowerCase().includes(search.toLowerCase())),
@@ -14,29 +17,33 @@ export default function LocationsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderColor: colors.cardBorder }]}>
         <View>
-          <Text style={styles.title}>Khám phá Địa điểm</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Khám phá Địa điểm</Text>
           <Text style={styles.subtitle}>Tìm homestay theo từng vùng miền du lịch</Text>
         </View>
-        <Pressable style={styles.headerBtn} onPress={() => router.push('/bookings')}>
-          <Ionicons name="cart-outline" size={20} color="#0284C7" />
+        <Pressable
+          style={[styles.headerBtn, { backgroundColor: isDark ? '#1C2541' : '#F0F9FF', borderColor: colors.border }]}
+          onPress={() => router.push('/bookings')}
+        >
+          <Ionicons name="cart-outline" size={20} color={colors.primary} />
         </Pressable>
       </View>
 
-      <View style={styles.search}>
-        <Ionicons name="search" size={18} color="#0284C7" />
+      <View style={[styles.search, { backgroundColor: colors.cardBackground, borderColor: colors.primary }]}>
+        <Ionicons name="search" size={18} color={colors.primary} />
         <TextInput
           value={search}
           onChangeText={setSearch}
           placeholder="Tìm kiếm địa điểm du lịch..."
-          placeholderTextColor="#38BDF8"
-          style={styles.input}
+          placeholderTextColor={isDark ? '#64748B' : '#38BDF8'}
+          style={[styles.input, { color: colors.text }]}
         />
         {search.length > 0 && (
           <Pressable onPress={() => setSearch('')} hitSlop={6}>
-            <Ionicons name="close-circle-outline" size={18} color="#7DD3FC" />
+            <Ionicons name="close-circle-outline" size={18} color={colors.primary} />
           </Pressable>
         )}
       </View>
@@ -46,16 +53,16 @@ export default function LocationsScreen() {
         keyExtractor={(i) => i.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => <LocationCard location={item} />}
+        renderItem={({ item }) => <LocationCard location={item} colors={colors} />}
       />
     </SafeAreaView>
   );
 }
 
-function LocationCard({ location }: { location: Location }) {
+function LocationCard({ location, colors }: { location: Location; colors: any }) {
   return (
     <Pressable
-      style={styles.card}
+      style={[styles.card, { borderColor: colors.cardBorder }]}
       onPress={() => router.push({ pathname: '/location/[id]' as any, params: { id: location.id } })}
     >
       <ProductImage uri={location.image} style={styles.image} containerStyle={styles.image} />
@@ -75,7 +82,7 @@ function LocationCard({ location }: { location: Location }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#F0F9FF' },
+  screen: { flex: 1 },
   header: {
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -83,21 +90,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderColor: '#E0F2FE',
   },
-  title: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
+  title: { fontSize: 18, fontWeight: '800' },
   subtitle: { marginTop: 1, fontSize: 11, color: '#64748B' },
   headerBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#F0F9FF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
   },
   search: {
     marginHorizontal: 16,
@@ -106,13 +109,11 @@ const styles = StyleSheet.create({
     height: 44,
     paddingHorizontal: 14,
     borderRadius: 22,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#0284C7',
     flexDirection: 'row',
     alignItems: 'center',
   },
-  input: { flex: 1, marginLeft: 8, fontSize: 14, color: '#0369A1', fontWeight: '600' },
+  input: { flex: 1, marginLeft: 8, fontSize: 14, fontWeight: '600' },
   list: { padding: 16, gap: 12, paddingBottom: 30 },
   card: {
     borderRadius: 16,
@@ -120,7 +121,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     height: 140,
     borderWidth: 1.5,
-    borderColor: '#E0F2FE',
     shadowColor: '#0284C7',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,

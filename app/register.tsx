@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -19,9 +20,11 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppTheme } from '@/contexts/ThemeContext';
 
 export default function RegisterScreen() {
   const { register } = useAuth();
+  const { isDark, colors } = useAppTheme();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -64,7 +67,8 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: isDark ? '#0B132B' : '#FFFFFF' }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -72,8 +76,13 @@ export default function RegisterScreen() {
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* PROFESSIONALLY DESIGNED VECTOR EMBLEM LOGO */}
           <Animated.View entering={FadeInDown.duration(700)} style={styles.logoContainer}>
-            <View style={styles.emblemOuter}>
-              <View style={styles.emblemInner}>
+            <View
+              style={[
+                styles.emblemOuter,
+                isDark && { backgroundColor: '#1C2541', borderColor: '#334155' },
+              ]}
+            >
+              <View style={[styles.emblemInner, isDark && { backgroundColor: '#0284C7' }]}>
                 <View style={styles.logoGraphicBox}>
                   {/* Sun / Nature element */}
                   <View style={styles.sunCircle}>
@@ -95,81 +104,107 @@ export default function RegisterScreen() {
               </View>
             </View>
 
-            <Text style={styles.brandTitle}>Tạo tài khoản</Text>
-            <Text style={styles.brandSubtitle}>Hệ sinh thái du lịch & nghỉ dưỡng xanh</Text>
+            <Text style={[styles.brandTitle, isDark && { color: '#38BDF8' }]}>Tạo tài khoản</Text>
+            <Text style={[styles.brandSubtitle, isDark && { color: '#94A3B8' }]}>
+              Hệ sinh thái du lịch & nghỉ dưỡng xanh
+            </Text>
           </Animated.View>
 
           {/* FORM WITH ENTRANCE ANIMATION */}
           <Animated.View entering={FadeInUp.delay(180).duration(700)} style={styles.formContainer}>
             {/* Full Name */}
-            <View style={styles.inputPill}>
-              <Ionicons name="person" size={19} color="#0284C7" style={styles.icon} />
+            <View
+              style={[
+                styles.inputPill,
+                isDark && { backgroundColor: '#1C2541', borderColor: '#38BDF8' },
+              ]}
+            >
+              <Ionicons name="person" size={19} color={colors.primary} style={styles.icon} />
               <TextInput
                 value={name}
                 onChangeText={setName}
                 placeholder="Họ và tên"
-                placeholderTextColor="#38BDF8"
-                style={styles.input}
+                placeholderTextColor={isDark ? '#64748B' : '#38BDF8'}
+                style={[styles.input, isDark && { color: '#F8FAFC' }]}
               />
             </View>
 
             {/* Email */}
-            <View style={styles.inputPill}>
-              <Ionicons name="mail" size={19} color="#0284C7" style={styles.icon} />
+            <View
+              style={[
+                styles.inputPill,
+                isDark && { backgroundColor: '#1C2541', borderColor: '#38BDF8' },
+              ]}
+            >
+              <Ionicons name="mail" size={19} color={colors.primary} style={styles.icon} />
               <TextInput
                 value={email}
                 onChangeText={setEmail}
                 placeholder="Địa chỉ Email"
-                placeholderTextColor="#38BDF8"
+                placeholderTextColor={isDark ? '#64748B' : '#38BDF8'}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                style={styles.input}
+                style={[styles.input, isDark && { color: '#F8FAFC' }]}
               />
             </View>
 
             {/* Password */}
-            <View style={styles.inputPill}>
-              <Ionicons name="lock-closed" size={19} color="#0284C7" style={styles.icon} />
+            <View
+              style={[
+                styles.inputPill,
+                isDark && { backgroundColor: '#1C2541', borderColor: '#38BDF8' },
+              ]}
+            >
+              <Ionicons name="lock-closed" size={19} color={colors.primary} style={styles.icon} />
               <TextInput
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Mật khẩu"
-                placeholderTextColor="#38BDF8"
+                placeholderTextColor={isDark ? '#64748B' : '#38BDF8'}
                 secureTextEntry={!showPassword}
-                style={styles.input}
+                style={[styles.input, isDark && { color: '#F8FAFC' }]}
               />
               <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
                 <Ionicons
                   name={showPassword ? 'eye-outline' : 'eye-off-outline'}
                   size={19}
-                  color="#0284C7"
+                  color={colors.primary}
                 />
               </Pressable>
             </View>
 
             {/* Confirm Password */}
-            <View style={styles.inputPill}>
-              <Ionicons name="shield-checkmark" size={19} color="#0284C7" style={styles.icon} />
+            <View
+              style={[
+                styles.inputPill,
+                isDark && { backgroundColor: '#1C2541', borderColor: '#38BDF8' },
+              ]}
+            >
+              <Ionicons name="shield-checkmark" size={19} color={colors.primary} style={styles.icon} />
               <TextInput
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Xác nhận mật khẩu"
-                placeholderTextColor="#38BDF8"
+                placeholderTextColor={isDark ? '#64748B' : '#38BDF8'}
                 secureTextEntry={!showPassword}
-                style={styles.input}
+                style={[styles.input, isDark && { color: '#F8FAFC' }]}
               />
               <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
                 <Ionicons
                   name={showPassword ? 'eye-outline' : 'eye-off-outline'}
                   size={19}
-                  color="#0284C7"
+                  color={colors.primary}
                 />
               </Pressable>
             </View>
 
             {/* Register Button */}
             <Pressable
-              style={[styles.mainBtn, loading && { opacity: 0.8 }]}
+              style={[
+                styles.mainBtn,
+                { backgroundColor: colors.primary },
+                loading && { opacity: 0.8 },
+              ]}
               onPress={handleRegister}
               disabled={loading}
             >
@@ -182,7 +217,7 @@ export default function RegisterScreen() {
 
             {/* Link back to Login */}
             <Pressable style={styles.switchBtn} onPress={() => router.replace('/login')}>
-              <Text style={styles.switchText}>Đã có tài khoản? Đăng nhập</Text>
+              <Text style={[styles.switchText, { color: colors.primary }]}>Đã có tài khoản? Đăng nhập</Text>
             </Pressable>
           </Animated.View>
         </ScrollView>
@@ -335,7 +370,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   switchText: {
-    color: '#0284C7',
     fontSize: 14,
     fontWeight: '700',
   },

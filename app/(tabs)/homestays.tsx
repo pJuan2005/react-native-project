@@ -1,14 +1,17 @@
 import { ProductImage } from '@/components/product-image';
 import { formatPrice, Homestay, mockHomestays } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
+import { useAppTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
 
 export default function HomestaysScreen() {
+  const { isDark, colors } = useAppTheme();
   const [searchText, setSearchText] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [sort, setSort] = useState<'default' | 'price' | 'rating'>('default');
@@ -44,31 +47,35 @@ export default function HomestaysScreen() {
   const types = useMemo(() => [...new Set(homestays.map(h => h.type))], [homestays]);
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg, borderColor: colors.cardBorder }]}>
         <View>
-          <Text style={styles.title}>Danh sách Homestay</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Danh sách Homestay</Text>
           <Text style={styles.subtitle}>Tìm nơi nghỉ dưỡng phù hợp nhất</Text>
         </View>
-        <Pressable style={styles.bookingButton} onPress={() => router.push('/bookings')}>
-          <Ionicons name="cart-outline" size={20} color="#0284C7" />
+        <Pressable
+          style={[styles.bookingButton, { backgroundColor: isDark ? '#1C2541' : '#F0F9FF', borderColor: colors.border }]}
+          onPress={() => router.push('/bookings')}
+        >
+          <Ionicons name="cart-outline" size={20} color={colors.primary} />
         </Pressable>
       </View>
 
       {/* Search Bar */}
-      <View style={styles.search}>
-        <Ionicons name="search" size={18} color="#0284C7" />
+      <View style={[styles.search, { backgroundColor: colors.cardBackground, borderColor: colors.primary }]}>
+        <Ionicons name="search" size={18} color={colors.primary} />
         <TextInput
           value={searchText}
           onChangeText={setSearchText}
           placeholder="Tìm theo tên homestay, địa điểm..."
-          placeholderTextColor="#38BDF8"
-          style={styles.input}
+          placeholderTextColor={isDark ? '#64748B' : '#38BDF8'}
+          style={[styles.input, { color: colors.text }]}
         />
         {searchText.length > 0 && (
           <Pressable onPress={() => setSearchText('')} hitSlop={6}>
-            <Ionicons name="close-circle-outline" size={18} color="#7DD3FC" />
+            <Ionicons name="close-circle-outline" size={18} color={colors.primary} />
           </Pressable>
         )}
       </View>
@@ -83,6 +90,8 @@ export default function HomestaysScreen() {
           <Filter
             label="Tất cả"
             selected={selectedType === 'all'}
+            isDark={isDark}
+            colors={colors}
             onPress={() => setSelectedType('all')}
           />
           {types.map((type) => (
@@ -90,6 +99,8 @@ export default function HomestaysScreen() {
               key={type}
               label={type}
               selected={selectedType === type}
+              isDark={isDark}
+              colors={colors}
               onPress={() => setSelectedType(type)}
             />
           ))}
@@ -101,19 +112,27 @@ export default function HomestaysScreen() {
         <Text style={styles.count}>{filteredHomestays.length} homestay sẵn sàng</Text>
         <View style={styles.sortButtons}>
           <Pressable
-            style={[styles.sortPill, sort === 'price' && styles.sortPillActive]}
+            style={[
+              styles.sortPill,
+              { backgroundColor: isDark ? '#1C2541' : '#FFFFFF', borderColor: isDark ? '#334155' : '#BAE6FD' },
+              sort === 'price' && { backgroundColor: colors.primary, borderColor: colors.primary },
+            ]}
             onPress={() => setSort(sort === 'price' ? 'default' : 'price')}
           >
-            <Ionicons name="pricetag-outline" size={12} color={sort === 'price' ? '#FFFFFF' : '#0284C7'} />
-            <Text style={[styles.sortPillText, sort === 'price' && styles.sortPillTextActive]}>Giá</Text>
+            <Ionicons name="pricetag-outline" size={12} color={sort === 'price' ? '#FFFFFF' : colors.primary} />
+            <Text style={[styles.sortPillText, { color: colors.primary }, sort === 'price' && { color: '#FFFFFF' }]}>Giá</Text>
           </Pressable>
 
           <Pressable
-            style={[styles.sortPill, sort === 'rating' && styles.sortPillActive]}
+            style={[
+              styles.sortPill,
+              { backgroundColor: isDark ? '#1C2541' : '#FFFFFF', borderColor: isDark ? '#334155' : '#BAE6FD' },
+              sort === 'rating' && { backgroundColor: colors.primary, borderColor: colors.primary },
+            ]}
             onPress={() => setSort(sort === 'rating' ? 'default' : 'rating')}
           >
-            <Ionicons name="star-outline" size={12} color={sort === 'rating' ? '#FFFFFF' : '#0284C7'} />
-            <Text style={[styles.sortPillText, sort === 'rating' && styles.sortPillTextActive]}>Đánh giá</Text>
+            <Ionicons name="star-outline" size={12} color={sort === 'rating' ? '#FFFFFF' : colors.primary} />
+            <Text style={[styles.sortPillText, { color: colors.primary }, sort === 'rating' && { color: '#FFFFFF' }]}>Đánh giá</Text>
           </Pressable>
         </View>
       </View>
@@ -121,7 +140,7 @@ export default function HomestaysScreen() {
       {/* List / Loading / Error */}
       {loading ? (
         <View style={styles.empty}>
-          <ActivityIndicator size="large" color="#0284C7" />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.emptyTitle}>Đang tải dữ liệu...</Text>
         </View>
       ) : error ? (
@@ -136,7 +155,14 @@ export default function HomestaysScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => <HomestayRow homestay={item} isSaved={savedHomestays.some(s => s.id === item.id)} />}
+          renderItem={({ item }) => (
+            <HomestayRow
+              homestay={item}
+              isSaved={savedHomestays.some(s => s.id === item.id)}
+              isDark={isDark}
+              colors={colors}
+            />
+          )}
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="search-outline" size={36} color="#94A3B8" />
@@ -150,20 +176,63 @@ export default function HomestaysScreen() {
   );
 }
 
-function Filter({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+function Filter({
+  label,
+  selected,
+  isDark,
+  colors,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  isDark: boolean;
+  colors: any;
+  onPress: () => void;
+}) {
   return (
-    <Pressable onPress={onPress} style={[styles.filter, selected && styles.filterSelected]}>
-      <Text style={[styles.filterText, selected && styles.filterTextSelected]}>{label}</Text>
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.filter,
+        { backgroundColor: isDark ? '#1C2541' : '#E0F2FE' },
+        selected && { backgroundColor: colors.primary },
+      ]}
+    >
+      <Text
+        style={[
+          styles.filterText,
+          { color: isDark ? '#38BDF8' : '#0369A1' },
+          selected && { color: '#FFFFFF' },
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
 
-export function HomestayRow({ homestay, isSaved }: { homestay: Homestay; isSaved: boolean }) {
+export function HomestayRow({
+  homestay,
+  isSaved,
+  isDark,
+  colors,
+}: {
+  homestay: Homestay;
+  isSaved: boolean;
+  isDark?: boolean;
+  colors?: any;
+}) {
   const { toggleSavedHomestay } = useBooking();
 
   return (
     <Pressable
-      style={styles.card}
+      style={[
+        styles.card,
+        {
+          backgroundColor: isDark ? '#1C2541' : '#FFFFFF',
+          borderColor: isDark ? '#334155' : '#E0F2FE',
+        },
+      ]}
       onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}
     >
       <View style={styles.imageContainer}>
@@ -177,7 +246,7 @@ export function HomestayRow({ homestay, isSaved }: { homestay: Homestay; isSaved
 
       <View style={styles.info}>
         <View style={styles.topRow}>
-          <Text numberOfLines={1} style={styles.name}>{homestay.name}</Text>
+          <Text numberOfLines={1} style={[styles.name, isDark && { color: '#F8FAFC' }]}>{homestay.name}</Text>
           <Pressable
             hitSlop={8}
             style={[styles.saveBtn, isSaved && styles.saveBtnSaved]}
@@ -208,7 +277,7 @@ export function HomestayRow({ homestay, isSaved }: { homestay: Homestay; isSaved
 
         <View style={styles.priceRow}>
           <Text style={styles.priceLabel}>
-            price: <Text style={styles.priceValue}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} Đ</Text>
+            price: <Text style={[styles.priceValue, isDark && { color: '#38BDF8' }]}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} Đ</Text>
           </Text>
         </View>
       </View>
@@ -235,11 +304,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#F0F9FF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
   },
   search: {
     marginHorizontal: 16,
@@ -247,14 +314,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     height: 44,
     paddingHorizontal: 14,
-    backgroundColor: '#FFFFFF',
     borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: '#0284C7',
     flexDirection: 'row',
     alignItems: 'center',
   },
-  input: { flex: 1, marginLeft: 8, fontSize: 14, color: '#0369A1', fontWeight: '600' },
+  input: { flex: 1, marginLeft: 8, fontSize: 14, fontWeight: '600' },
   filterScrollWrapper: {
     height: 40,
     marginBottom: 4,
@@ -268,13 +333,10 @@ const styles = StyleSheet.create({
     height: 32,
     paddingHorizontal: 14,
     borderRadius: 16,
-    backgroundColor: '#E0F2FE',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterSelected: { backgroundColor: '#0284C7' },
-  filterText: { fontSize: 12, fontWeight: '700', color: '#0369A1' },
-  filterTextSelected: { color: '#FFFFFF' },
+  filterText: { fontSize: 12, fontWeight: '700' },
   sortRow: {
     paddingHorizontal: 16,
     marginBottom: 10,
@@ -291,25 +353,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#BAE6FD',
   },
-  sortPillActive: {
-    backgroundColor: '#0284C7',
-    borderColor: '#0284C7',
-  },
-  sortPillText: { fontSize: 11, fontWeight: '600', color: '#0369A1' },
-  sortPillTextActive: { color: '#FFFFFF' },
+  sortPillText: { fontSize: 11, fontWeight: '600' },
   list: { paddingHorizontal: 16, gap: 10, paddingBottom: 24 },
   card: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 10,
     flexDirection: 'row',
     gap: 12,
     borderWidth: 1.5,
-    borderColor: '#E0F2FE',
     shadowColor: '#0284C7',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,

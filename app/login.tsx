@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -19,9 +20,11 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppTheme } from '@/contexts/ThemeContext';
 
 export default function LoginScreen() {
   const { login } = useAuth();
+  const { isDark, colors } = useAppTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -45,16 +48,22 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: isDark ? '#0B132B' : '#FFFFFF' }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* PROFESSIONALLY DESIGNED VECTOR EMBLEM LOGO (Không dùng ảnh chụp thô) */}
+          {/* PROFESSIONALLY DESIGNED VECTOR EMBLEM LOGO */}
           <Animated.View entering={FadeInDown.duration(700)} style={styles.logoContainer}>
-            <View style={styles.emblemOuter}>
-              <View style={styles.emblemInner}>
+            <View
+              style={[
+                styles.emblemOuter,
+                isDark && { backgroundColor: '#1C2541', borderColor: '#334155' },
+              ]}
+            >
+              <View style={[styles.emblemInner, isDark && { backgroundColor: '#0284C7' }]}>
                 <View style={styles.logoGraphicBox}>
                   {/* Sun / Nature element */}
                   <View style={styles.sunCircle}>
@@ -76,54 +85,76 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <Text style={styles.brandTitle}>Homestay Booking</Text>
-            <Text style={styles.brandSubtitle}>Hệ sinh thái du lịch & nghỉ dưỡng xanh</Text>
+            <Text style={[styles.brandTitle, isDark && { color: '#38BDF8' }]}>Homestay Booking</Text>
+            <Text style={[styles.brandSubtitle, isDark && { color: '#94A3B8' }]}>
+              Hệ sinh thái du lịch & nghỉ dưỡng xanh
+            </Text>
           </Animated.View>
 
           {/* INPUT FORM WITH ENTRANCE ANIMATION */}
           <Animated.View entering={FadeInUp.delay(200).duration(700)} style={styles.formContainer}>
             {/* Email Input */}
-            <View style={styles.inputPill}>
-              <Ionicons name="mail" size={19} color="#0284C7" style={styles.icon} />
+            <View
+              style={[
+                styles.inputPill,
+                isDark && {
+                  backgroundColor: '#1C2541',
+                  borderColor: '#38BDF8',
+                },
+              ]}
+            >
+              <Ionicons name="mail" size={19} color={colors.primary} style={styles.icon} />
               <TextInput
                 value={email}
                 onChangeText={setEmail}
                 placeholder="Email"
-                placeholderTextColor="#38BDF8"
+                placeholderTextColor={isDark ? '#64748B' : '#38BDF8'}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                style={styles.input}
+                style={[styles.input, isDark && { color: '#F8FAFC' }]}
               />
               {email.length > 0 && (
                 <Pressable onPress={() => setEmail('')} hitSlop={8}>
-                  <Ionicons name="close-circle-outline" size={18} color="#7DD3FC" />
+                  <Ionicons name="close-circle-outline" size={18} color={isDark ? '#64748B' : '#7DD3FC'} />
                 </Pressable>
               )}
             </View>
 
             {/* Password Input */}
-            <View style={styles.inputPill}>
-              <Ionicons name="lock-closed" size={19} color="#0284C7" style={styles.icon} />
+            <View
+              style={[
+                styles.inputPill,
+                isDark && {
+                  backgroundColor: '#1C2541',
+                  borderColor: '#38BDF8',
+                },
+              ]}
+            >
+              <Ionicons name="lock-closed" size={19} color={colors.primary} style={styles.icon} />
               <TextInput
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Mật khẩu"
-                placeholderTextColor="#38BDF8"
+                placeholderTextColor={isDark ? '#64748B' : '#38BDF8'}
                 secureTextEntry={!showPassword}
-                style={styles.input}
+                style={[styles.input, isDark && { color: '#F8FAFC' }]}
               />
               <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
                 <Ionicons
                   name={showPassword ? 'eye-outline' : 'eye-off-outline'}
                   size={19}
-                  color="#0284C7"
+                  color={colors.primary}
                 />
               </Pressable>
             </View>
 
             {/* Main Action Button */}
             <Pressable
-              style={[styles.mainBtn, loading && { opacity: 0.8 }]}
+              style={[
+                styles.mainBtn,
+                { backgroundColor: colors.primary },
+                loading && { opacity: 0.8 },
+              ]}
               onPress={handleLogin}
               disabled={loading}
             >
@@ -136,7 +167,7 @@ export default function LoginScreen() {
 
             {/* Switch to Register link */}
             <Pressable style={styles.switchBtn} onPress={() => router.push('/register')}>
-              <Text style={styles.switchText}>Đăng ký tài khoản mới</Text>
+              <Text style={[styles.switchText, { color: colors.primary }]}>Đăng ký tài khoản mới</Text>
             </Pressable>
           </Animated.View>
         </ScrollView>
@@ -148,11 +179,10 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   content: {
     paddingHorizontal: 28,
-    paddingTop: 40,
+    paddingTop: 36,
     paddingBottom: 40,
     justifyContent: 'center',
   },
@@ -269,7 +299,6 @@ const styles = StyleSheet.create({
   mainBtn: {
     marginTop: 8,
     height: 52,
-    backgroundColor: '#0284C7',
     borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
@@ -289,7 +318,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   switchText: {
-    color: '#0284C7',
     fontSize: 14,
     fontWeight: '700',
   },

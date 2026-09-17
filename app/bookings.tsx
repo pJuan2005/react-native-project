@@ -1,13 +1,16 @@
 import { ProductImage } from '@/components/product-image';
 import { formatPrice, formatDate } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
+import { useAppTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
 export default function BookingsScreen() {
+  const { isDark, colors } = useAppTheme();
   const {
     bookings,
     savedHomestays,
@@ -38,36 +41,37 @@ export default function BookingsScreen() {
   };
 
   return (
-    <SafeAreaView style={s.screen}>
+    <SafeAreaView style={[s.screen, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       {/* Header */}
-      <View style={s.header}>
+      <View style={[s.header, { backgroundColor: colors.headerBg, borderColor: colors.cardBorder }]}>
         <Pressable onPress={() => router.back()} style={s.backBtn} hitSlop={8}>
-          <Ionicons name="arrow-back" size={22} color="#0F172A" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </Pressable>
-        <Text style={s.title}>
+        <Text style={[s.title, { color: colors.text }]}>
           {activeTab === 'bookings' ? 'Đặt phòng của tôi' : 'Danh sách yêu thích'}
         </Text>
         <View style={{ width: 28 }} />
       </View>
 
       {/* Segmented Tab Switcher - Ocean Blue */}
-      <View style={s.tabContainer}>
+      <View style={[s.tabContainer, { backgroundColor: isDark ? '#1C2541' : '#E0F2FE' }]}>
         <Pressable
-          style={[s.tabButton, activeTab === 'bookings' && s.tabButtonActive]}
+          style={[s.tabButton, activeTab === 'bookings' && { backgroundColor: colors.primary }]}
           onPress={() => setActiveTab('bookings')}
         >
           <Ionicons
             name={activeTab === 'bookings' ? 'cart' : 'cart-outline'}
             size={16}
-            color={activeTab === 'bookings' ? '#FFFFFF' : '#0369A1'}
+            color={activeTab === 'bookings' ? '#FFFFFF' : isDark ? '#38BDF8' : '#0369A1'}
           />
-          <Text style={[s.tabText, activeTab === 'bookings' && s.tabTextActive]}>
+          <Text style={[s.tabText, { color: isDark ? '#38BDF8' : '#0369A1' }, activeTab === 'bookings' && { color: '#FFFFFF' }]}>
             Phòng đã đặt ({bookings.length})
           </Text>
         </Pressable>
 
         <Pressable
-          style={[s.tabButton, activeTab === 'wishlist' && s.tabButtonActive]}
+          style={[s.tabButton, activeTab === 'wishlist' && { backgroundColor: colors.primary }]}
           onPress={() => setActiveTab('wishlist')}
         >
           <Ionicons
@@ -75,7 +79,7 @@ export default function BookingsScreen() {
             size={16}
             color={activeTab === 'wishlist' ? '#FFFFFF' : '#EF4444'}
           />
-          <Text style={[s.tabText, activeTab === 'wishlist' && s.tabTextActive]}>
+          <Text style={[s.tabText, { color: isDark ? '#38BDF8' : '#0369A1' }, activeTab === 'wishlist' && { color: '#FFFFFF' }]}>
             Yêu thích ({savedHomestays.length})
           </Text>
         </Pressable>
@@ -86,12 +90,12 @@ export default function BookingsScreen() {
         <>
           {bookings.length === 0 ? (
             <View style={s.empty}>
-              <View style={s.emptyIconCircle}>
-                <Ionicons name="cart-outline" size={38} color="#0284C7" />
+              <View style={[s.emptyIconCircle, { backgroundColor: isDark ? '#1C2541' : '#E0F2FE' }]}>
+                <Ionicons name="cart-outline" size={38} color={colors.primary} />
               </View>
-              <Text style={s.emptyTitle}>Chưa có đặt phòng nào</Text>
+              <Text style={[s.emptyTitle, { color: colors.text }]}>Chưa có đặt phòng nào</Text>
               <Text style={s.emptyText}>Khám phá các homestay tuyệt vời và đặt chỗ ngay hôm nay.</Text>
-              <Pressable style={s.continue} onPress={() => router.push('/homestays')}>
+              <Pressable style={[s.continue, { backgroundColor: colors.primary }]} onPress={() => router.push('/homestays')}>
                 <Text style={s.continueText}>Khám phá homestay</Text>
               </Pressable>
             </View>
@@ -104,7 +108,7 @@ export default function BookingsScreen() {
               renderItem={({ item: booking }) => {
                 const key = booking.id + (booking.checkIn || '');
                 return (
-                  <View style={s.bookingCard}>
+                  <View style={[s.bookingCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
                     <ProductImage
                       uri={booking.homestayImage || booking.images[0]}
                       style={s.bookingImage}
@@ -112,7 +116,7 @@ export default function BookingsScreen() {
                     />
                     <View style={s.info}>
                       <View style={s.itemTopRow}>
-                        <Text numberOfLines={1} style={s.name}>{booking.name}</Text>
+                        <Text numberOfLines={1} style={[s.name, { color: colors.text }]}>{booking.name}</Text>
                         <Pressable hitSlop={8} onPress={() => removeFromBooking(key)}>
                           <Ionicons name="trash-outline" size={17} color="#EF4444" />
                         </Pressable>
@@ -134,7 +138,7 @@ export default function BookingsScreen() {
 
                       <View style={s.itemBottomRow}>
                         <Text style={s.priceLabel}>
-                          price: <Text style={s.priceValue}>{new Intl.NumberFormat('vi-VN').format(booking.totalPrice || booking.price * booking.quantity)} Đ</Text>
+                          price: <Text style={[s.priceValue, isDark && { color: '#38BDF8' }]}>{new Intl.NumberFormat('vi-VN').format(booking.totalPrice || booking.price * booking.quantity)} Đ</Text>
                         </Text>
 
                         <Pressable
@@ -150,14 +154,14 @@ export default function BookingsScreen() {
                 );
               }}
               ListFooterComponent={
-                <View style={s.summaryCard}>
-                  <Line label="Tổng giá trị đặt phòng" value={formatPrice(total)} />
+                <View style={[s.summaryCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+                  <Line label="Tổng giá trị đặt phòng" value={formatPrice(total)} isDark={isDark} />
                   <View style={s.total}>
-                    <Text style={s.totalLabel}>Tổng thanh toán</Text>
-                    <Text style={s.totalValue}>{formatPrice(total)}</Text>
+                    <Text style={[s.totalLabel, { color: colors.text }]}>Tổng thanh toán</Text>
+                    <Text style={[s.totalValue, { color: colors.primary }]}>{formatPrice(total)}</Text>
                   </View>
                   <Pressable
-                    style={s.checkout}
+                    style={[s.checkout, { backgroundColor: colors.primary }]}
                     onPress={() =>
                       Alert.alert(
                         'Thanh toán',
@@ -180,12 +184,12 @@ export default function BookingsScreen() {
         <>
           {savedHomestays.length === 0 ? (
             <View style={s.empty}>
-              <View style={[s.emptyIconCircle, { backgroundColor: '#FEF2F2' }]}>
+              <View style={[s.emptyIconCircle, { backgroundColor: isDark ? '#31141B' : '#FEF2F2' }]}>
                 <Ionicons name="heart-outline" size={38} color="#EF4444" />
               </View>
-              <Text style={s.emptyTitle}>Chưa có homestay yêu thích</Text>
+              <Text style={[s.emptyTitle, { color: colors.text }]}>Chưa có homestay yêu thích</Text>
               <Text style={s.emptyText}>Nhấn vào biểu tượng trái tim ở các homestay để lưu lại xem sau.</Text>
-              <Pressable style={s.continue} onPress={() => router.push('/homestays')}>
+              <Pressable style={[s.continue, { backgroundColor: colors.primary }]} onPress={() => router.push('/homestays')}>
                 <Text style={s.continueText}>Tìm homestay yêu thích</Text>
               </Pressable>
             </View>
@@ -197,7 +201,7 @@ export default function BookingsScreen() {
               showsVerticalScrollIndicator={false}
               renderItem={({ item: homestay }) => (
                 <Pressable
-                  style={s.wishlistCard}
+                  style={[s.wishlistCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}
                   onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}
                 >
                   <ProductImage
@@ -207,7 +211,7 @@ export default function BookingsScreen() {
                   />
                   <View style={s.info}>
                     <View style={s.itemTopRow}>
-                      <Text numberOfLines={1} style={s.name}>{homestay.name}</Text>
+                      <Text numberOfLines={1} style={[s.name, { color: colors.text }]}>{homestay.name}</Text>
                       <Pressable
                         hitSlop={8}
                         onPress={(e) => {
@@ -230,10 +234,10 @@ export default function BookingsScreen() {
 
                     <View style={s.wishlistBottomRow}>
                       <Text style={s.priceLabel}>
-                        price: <Text style={s.priceValue}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} Đ</Text>
+                        price: <Text style={[s.priceValue, isDark && { color: '#38BDF8' }]}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} Đ</Text>
                       </Text>
                       <Pressable
-                        style={s.bookNowSmallBtn}
+                        style={[s.bookNowSmallBtn, { backgroundColor: colors.primary }]}
                         onPress={(e) => {
                           e.stopPropagation();
                           router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } });
@@ -253,11 +257,11 @@ export default function BookingsScreen() {
   );
 }
 
-function Line({ label, value }: { label: string; value: string }) {
+function Line({ label, value, isDark }: { label: string; value: string; isDark?: boolean }) {
   return (
     <View style={s.line}>
       <Text style={s.lineLabel}>{label}</Text>
-      <Text style={s.lineValue}>{value}</Text>
+      <Text style={[s.lineValue, isDark && { color: '#F8FAFC' }]}>{value}</Text>
     </View>
   );
 }
@@ -295,16 +299,9 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 22,
   },
-  tabButtonActive: {
-    backgroundColor: '#0284C7',
-  },
   tabText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#0369A1',
-  },
-  tabTextActive: {
-    color: '#FFFFFF',
   },
   contentList: { padding: 16, paddingBottom: 32 },
   empty: { alignItems: 'center', paddingVertical: 50, paddingHorizontal: 20 },
@@ -312,29 +309,25 @@ const s = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#E0F2FE',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyTitle: { marginTop: 14, fontSize: 16, fontWeight: '800', color: '#0F172A' },
+  emptyTitle: { marginTop: 14, fontSize: 16, fontWeight: '800' },
   emptyText: { marginTop: 4, fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 18 },
   continue: {
     marginTop: 18,
     paddingHorizontal: 18,
     paddingVertical: 10,
-    backgroundColor: '#0284C7',
     borderRadius: 20,
   },
   continueText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
   bookingCard: {
-    backgroundColor: '#FFF',
     borderRadius: 14,
     padding: 10,
     flexDirection: 'row',
     gap: 10,
     marginBottom: 10,
     borderWidth: 1.5,
-    borderColor: '#E0F2FE',
     shadowColor: '#0284C7',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
@@ -342,14 +335,12 @@ const s = StyleSheet.create({
     elevation: 1,
   },
   wishlistCard: {
-    backgroundColor: '#FFF',
     borderRadius: 14,
     padding: 10,
     flexDirection: 'row',
     gap: 10,
     marginBottom: 10,
     borderWidth: 1.5,
-    borderColor: '#E0F2FE',
     shadowColor: '#0284C7',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
@@ -360,7 +351,7 @@ const s = StyleSheet.create({
   wishlistImage: { width: 80, height: 80, borderRadius: 8 },
   info: { flex: 1, justifyContent: 'space-between' },
   itemTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  name: { fontSize: 14, fontWeight: '700', color: '#0F172A', flex: 1, marginRight: 6 },
+  name: { fontSize: 14, fontWeight: '700', flex: 1, marginRight: 6 },
   location: { fontSize: 11, color: '#64748B', marginTop: 1 },
   dates: { fontSize: 10, color: '#64748B', marginTop: 2 },
   voucherApplied: { fontSize: 10, color: '#0284C7', fontWeight: '600', marginTop: 2 },
@@ -391,7 +382,6 @@ const s = StyleSheet.create({
   },
   reviewBtnText: { fontSize: 10, fontWeight: '700', color: '#B45309' },
   bookNowSmallBtn: {
-    backgroundColor: '#0284C7',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 14,
@@ -400,10 +390,8 @@ const s = StyleSheet.create({
   summaryCard: {
     marginTop: 10,
     padding: 14,
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#E0F2FE',
   },
   line: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
   lineLabel: { color: '#64748B', fontSize: 12 },
@@ -417,12 +405,11 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  totalLabel: { fontSize: 14, fontWeight: '800', color: '#0F172A' },
-  totalValue: { fontSize: 16, fontWeight: '800', color: '#0284C7' },
+  totalLabel: { fontSize: 14, fontWeight: '800' },
+  totalValue: { fontSize: 16, fontWeight: '800' },
   checkout: {
     marginTop: 12,
     padding: 12,
-    backgroundColor: '#0284C7',
     borderRadius: 22,
     alignItems: 'center',
   },
