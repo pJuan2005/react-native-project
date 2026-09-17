@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -52,17 +51,27 @@ export default function LoginScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* AESTHETIC HOMESTAY ARTWORK HEADER WITH ENTRANCE ANIMATION */}
+          {/* PROFESSIONALLY DESIGNED VECTOR EMBLEM LOGO (Không dùng ảnh chụp thô) */}
           <Animated.View entering={FadeInDown.duration(700)} style={styles.logoContainer}>
-            <View style={styles.imageCardWrapper}>
-              <Image
-                source={{
-                  uri: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=400&q=80',
-                }}
-                style={styles.heroArtImage}
-                resizeMode="cover"
-              />
-              <View style={styles.ecoLeafBadge}>
+            <View style={styles.emblemOuter}>
+              <View style={styles.emblemInner}>
+                <View style={styles.logoGraphicBox}>
+                  {/* Sun / Nature element */}
+                  <View style={styles.sunCircle}>
+                    <Ionicons name="sunny" size={16} color="#F59E0B" />
+                  </View>
+                  {/* Homestay Villa Icon */}
+                  <Ionicons name="business" size={38} color="#FFFFFF" />
+                  {/* Ocean wave ripples */}
+                  <View style={styles.waveBar}>
+                    <Ionicons name="water" size={14} color="#E0F2FE" />
+                    <View style={styles.waveDot} />
+                    <Ionicons name="water" size={14} color="#E0F2FE" />
+                  </View>
+                </View>
+              </View>
+              {/* Floating Eco Leaf Badge */}
+              <View style={styles.ecoBadge}>
                 <Ionicons name="leaf" size={13} color="#FFFFFF" />
               </View>
             </View>
@@ -151,39 +160,77 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  imageCardWrapper: {
+  emblemOuter: {
     position: 'relative',
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    padding: 3,
+    width: 94,
+    height: 94,
+    borderRadius: 30,
     backgroundColor: '#E0F2FE',
+    padding: 5,
     borderWidth: 2,
     borderColor: '#BAE6FD',
     marginBottom: 14,
     shadowColor: '#0284C7',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  heroArtImage: {
+  emblemInner: {
     width: '100%',
     height: '100%',
-    borderRadius: 42,
+    borderRadius: 25,
+    backgroundColor: '#0284C7',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  ecoLeafBadge: {
+  logoGraphicBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  sunCircle: {
     position: 'absolute',
-    bottom: -2,
-    right: -2,
+    top: -6,
+    right: -10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  waveBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: -2,
+  },
+  waveDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#BAE6FD',
+  },
+  ecoBadge: {
+    position: 'absolute',
+    bottom: -3,
+    right: -3,
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#0284C7',
-    borderWidth: 2,
+    backgroundColor: '#10B981',
+    borderWidth: 2.5,
     borderColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   brandTitle: {
     fontSize: 24,
