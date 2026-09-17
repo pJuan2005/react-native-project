@@ -1,13 +1,20 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import {
-  Animated,
-  Easing,
   Platform,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing,
+  cancelAnimation,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { useAppTheme } from '@/contexts/ThemeContext';
 
 interface MarqueeItem {
   icon: any;
@@ -35,34 +42,40 @@ export function InfiniteMarquee({
   speed?: number;
   reverse?: boolean;
 }) {
+  const { isDark, colors } = useAppTheme();
   const isWeb = Platform.OS === 'web';
-  const animatedValue = useRef(new Animated.Value(0)).current;
 
   // Duplicate items 4 times to ensure seamless infinite loop
   const marqueeItems = [...items, ...items, ...items, ...items];
 
+  // Reanimated UI-thread shared value (Runs directly on native 60/120fps UI Thread, never pauses on theme switch)
+  const offset = useSharedValue(0);
+
   useEffect(() => {
-    if (isWeb) return; // Web uses CSS keyframes for 100% uninterrupted animation
+    if (isWeb) return;
 
-    const startAnimation = () => {
-      animatedValue.setValue(0);
-      Animated.loop(
-        Animated.timing(animatedValue, {
-          toValue: reverse ? 1 : -1,
-          duration: speed * 1000,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        })
-      ).start();
+    cancelAnimation(offset);
+    offset.value = 0;
+
+    const targetDistance = reverse ? 1000 : -1000;
+    offset.value = withRepeat(
+      withTiming(targetDistance, {
+        duration: speed * 1000,
+        easing: Easing.linear,
+      }),
+      -1,
+      false
+    );
+
+    return () => {
+      cancelAnimation(offset);
     };
+  }, [speed, reverse, isWeb]);
 
-    startAnimation();
-  }, [animatedValue, speed, reverse, isWeb]);
-
-  // Inject CSS Keyframes on Web so it NEVER pauses even when switching browser tabs
+  // Inject CSS Keyframes on Web for 100% background tab resilience
   useEffect(() => {
     if (isWeb && typeof document !== 'undefined') {
-      const styleId = 'infinite-marquee-styles';
+      const styleId = 'infinite-marquee-css-keyframes';
       if (!document.getElementById(styleId)) {
         const style = document.createElement('style');
         style.id = styleId;
@@ -75,11 +88,11 @@ export function InfiniteMarquee({
             0% { transform: translate3d(-50%, 0, 0); }
             100% { transform: translate3d(0, 0, 0); }
           }
-          .marquee-left {
+          .marquee-scroll-left {
             animation: marqueeScrollLeft ${speed}s linear infinite !important;
             will-change: transform;
           }
-          .marquee-right {
+          .marquee-scroll-right {
             animation: marqueeScrollRight ${speed}s linear infinite !important;
             will-change: transform;
           }
@@ -89,17 +102,24 @@ export function InfiniteMarquee({
     }
   }, [isWeb, speed]);
 
-  const translateX = animatedValue.interpolate({
-    inputRange: [-1, 0, 1],
-    outputRange: [-1200, 0, 1200],
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: offset.value }],
+    };
   });
 
+  const containerBg = isDark ? '#1C2541' : '#E0F2FE';
+  const containerBorder = isDark ? '#334155' : '#BAE6FD';
+  const itemTextColor = isDark ? '#38BDF8' : '#0369A1';
+  const iconColor = isDark ? '#38BDF8' : '#0284C7';
+  const dotColor = isDark ? '#64748B' : '#7DD3FC';
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: containerBg, borderColor: containerBorder }]}>
       {isWeb ? (
         <View
           // @ts-ignore
-          className={reverse ? 'marquee-right' : 'marquee-left'}
+          className={reverse ? 'marquee-scroll-right' : 'marquee-scroll-left'}
           style={[
             styles.row,
             {
@@ -111,46 +131,39 @@ export function InfiniteMarquee({
         >
           {marqueeItems.map((item, index) => (
             <View key={index} style={styles.itemPill}>
-              <Ionicons name={item.icon} size={14} color="#0284C7" />
-              <Text style={styles.itemText}>{item.text}</Text>
+              <Ionicons name={item.icon} size={14} color={iconColor} />
+              <Text style={[styles.itemText, { color: itemTextColor }]}>{item.text}</Text>
               {item.badge && (
                 <View
                   style={[
                     styles.badge,
-                    { backgroundColor: item.badgeColor || '#0284C7' },
+                    { backgroundColor: item.badgeColor || colors.primary },
                   ]}
                 >
                   <Text style={styles.badgeText}>{item.badge}</Text>
                 </View>
               )}
-              <Text style={styles.dotSeparator}>•</Text>
+              <Text style={[styles.dotSeparator, { color: dotColor }]}>•</Text>
             </View>
           ))}
         </View>
       ) : (
-        <Animated.View
-          style={[
-            styles.row,
-            {
-              transform: [{ translateX }],
-            },
-          ]}
-        >
+        <Animated.View style={[styles.row, animatedStyle]}>
           {marqueeItems.map((item, index) => (
             <View key={index} style={styles.itemPill}>
-              <Ionicons name={item.icon} size={14} color="#0284C7" />
-              <Text style={styles.itemText}>{item.text}</Text>
+              <Ionicons name={item.icon} size={14} color={iconColor} />
+              <Text style={[styles.itemText, { color: itemTextColor }]}>{item.text}</Text>
               {item.badge && (
                 <View
                   style={[
                     styles.badge,
-                    { backgroundColor: item.badgeColor || '#0284C7' },
+                    { backgroundColor: item.badgeColor || colors.primary },
                   ]}
                 >
                   <Text style={styles.badgeText}>{item.badge}</Text>
                 </View>
               )}
-              <Text style={styles.dotSeparator}>•</Text>
+              <Text style={[styles.dotSeparator, { color: dotColor }]}>•</Text>
             </View>
           ))}
         </Animated.View>
@@ -162,11 +175,9 @@ export function InfiniteMarquee({
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    backgroundColor: '#E0F2FE',
     paddingVertical: 7,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#BAE6FD',
   },
   row: {
     flexDirection: 'row',
@@ -183,7 +194,6 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#0369A1',
     letterSpacing: 0.2,
   },
   badge: {
@@ -197,7 +207,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   dotSeparator: {
-    color: '#7DD3FC',
     fontSize: 14,
     marginLeft: 6,
     fontWeight: '900',
