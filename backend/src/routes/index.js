@@ -4,6 +4,12 @@ const router = express.Router();
 const authRoutes = require('./auth.routes');
 const homestayRoutes = require('./homestay.routes');
 const userRoutes = require('./user.routes');
+const locationRoutes = require('./location.routes');
+const bookingRoutes = require('./booking.routes');
+const favoriteRoutes = require('./favorite.routes');
+const promotionRoutes = require('./promotion.routes');
+const reviewRoutes = require('./review.routes');
+const notificationRoutes = require('./notification.routes');
 const adminRoutes = require('./admin.routes');
 
 // Health Check
@@ -16,10 +22,18 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Mount Routes
+// Mount Client Mobile Routes
 router.use('/auth', authRoutes);
 router.use('/', homestayRoutes);
 router.use('/', userRoutes);
+router.use('/', locationRoutes);
+router.use('/', bookingRoutes);
+router.use('/', favoriteRoutes);
+router.use('/', promotionRoutes);
+router.use('/', reviewRoutes);
+router.use('/', notificationRoutes);
+
+// Mount Admin Routes
 router.use('/admin', adminRoutes);
 
 module.exports = router;
