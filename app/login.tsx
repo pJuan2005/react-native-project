@@ -21,10 +21,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppTheme } from '@/contexts/ThemeContext';
+import { useResponsive } from '@/utils/responsive';
 
 export default function LoginScreen() {
   const { login } = useAuth();
   const { isDark, colors } = useAppTheme();
+  const { width, height, isSmallDevice, moderateScale } = useResponsive();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -54,12 +56,22 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            { paddingHorizontal: Math.max(20, Math.round(width * 0.075)) },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
           {/* PROFESSIONALLY DESIGNED VECTOR EMBLEM LOGO */}
-          <Animated.View entering={FadeInDown.duration(700)} style={styles.logoContainer}>
+          <Animated.View
+            entering={FadeInDown.duration(700)}
+            style={[styles.logoContainer, isSmallDevice && { marginBottom: 20 }]}
+          >
             <View
               style={[
                 styles.emblemOuter,
+                isSmallDevice && { width: 82, height: 82, borderRadius: 26 },
                 isDark && { backgroundColor: '#1C2541', borderColor: '#334155' },
               ]}
             >
@@ -85,14 +97,17 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <Text style={[styles.brandTitle, isDark && { color: '#38BDF8' }]}>Homestay Booking</Text>
+            <Text style={[styles.brandTitle, { fontSize: moderateScale(isSmallDevice ? 20 : 24) }, isDark && { color: '#38BDF8' }]}>Homestay Booking</Text>
             <Text style={[styles.brandSubtitle, isDark && { color: '#94A3B8' }]}>
               Hệ sinh thái du lịch & nghỉ dưỡng xanh
             </Text>
           </Animated.View>
 
           {/* INPUT FORM WITH ENTRANCE ANIMATION */}
-          <Animated.View entering={FadeInUp.delay(200).duration(700)} style={styles.formContainer}>
+          <Animated.View
+            entering={FadeInUp.delay(200).duration(700)}
+            style={[styles.formContainer, isSmallDevice && { gap: 12 }]}
+          >
             {/* Email Input */}
             <View
               style={[

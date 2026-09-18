@@ -17,14 +17,18 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
+import { useResponsive } from '@/utils/responsive';
 
-const { width } = Dimensions.get('window');
 const DAYS_OF_WEEK = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
 export default function HomestayDetail() {
+  const insets = useSafeAreaInsets();
+  const { width, height, isSmallDevice, moderateScale } = useResponsive();
+  const carouselHeight = Math.round(Math.min(width * 0.62, 280));
+
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isDark, colors } = useAppTheme();
   const [homestay, setHomestay] = useState<Homestay | null>(null);
@@ -318,15 +322,15 @@ export default function HomestayDetail() {
 
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         {/* INTERACTIVE MULTI-IMAGE CAROUSEL VIEWER */}
-        <View style={[s.imageContainer, { borderColor: colors.border }]}>
+        <View style={[s.imageContainer, { height: carouselHeight, borderColor: colors.border }]}>
           <Pressable
             style={{ width: '100%', height: '100%' }}
             onPress={() => setShowFullscreenGallery(true)}
           >
             <ProductImage
               uri={imagesList[currentImage]}
-              style={s.image}
-              containerStyle={s.image}
+              style={[s.image, { height: carouselHeight }]}
+              containerStyle={[s.image, { height: carouselHeight }]}
             />
           </Pressable>
 
@@ -506,31 +510,40 @@ export default function HomestayDetail() {
             </View>
           </View>
         )}
-
-        {/* Action Buttons */}
-        <View style={s.actions}>
-          <Pressable
-            style={[
-              s.saveButton,
-              { backgroundColor: isDark ? '#1C2541' : '#E0F2FE', borderColor: colors.primary },
-              isSaved && s.saveButtonSaved,
-            ]}
-            onPress={toggleFavorite}
-          >
-            <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#EF4444' : colors.primary} />
-            <Text style={[s.saveText, { color: colors.primary }, isSaved && s.saveTextSaved]}>{isSaved ? 'Đã lưu' : 'Lưu'}</Text>
-          </Pressable>
-
-          <Pressable
-            style={[s.bookButton, { backgroundColor: colors.primary }, (!checkIn || !checkOut) && { opacity: 0.7 }]}
-            onPress={handleBook}
-            disabled={!checkIn || !checkOut}
-          >
-            <Ionicons name="calendar-outline" size={18} color="#FFF" />
-            <Text style={s.bookText}>Đặt phòng ngay</Text>
-          </Pressable>
-        </View>
       </ScrollView>
+
+      {/* STICKY BOTTOM ACTION BAR (Tối ưu an toàn cho tất cả thiết bị có hoặc không có Home Bar) */}
+      <View
+        style={[
+          s.stickyBottomBar,
+          {
+            backgroundColor: colors.headerBg,
+            borderColor: colors.cardBorder,
+            paddingBottom: Math.max(insets.bottom, 12),
+          },
+        ]}
+      >
+        <Pressable
+          style={[
+            s.saveButton,
+            { backgroundColor: isDark ? '#1C2541' : '#E0F2FE', borderColor: colors.primary },
+            isSaved && s.saveButtonSaved,
+          ]}
+          onPress={toggleFavorite}
+        >
+          <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#EF4444' : colors.primary} />
+          <Text style={[s.saveText, { color: colors.primary }, isSaved && s.saveTextSaved]}>{isSaved ? 'Đã lưu' : 'Lưu'}</Text>
+        </Pressable>
+
+        <Pressable
+          style={[s.bookButton, { backgroundColor: colors.primary }, (!checkIn || !checkOut) && { opacity: 0.7 }]}
+          onPress={handleBook}
+          disabled={!checkIn || !checkOut}
+        >
+          <Ionicons name="calendar-outline" size={18} color="#FFF" />
+          <Text style={s.bookText}>Đặt phòng ngay</Text>
+        </Pressable>
+      </View>
 
       {/* MODAL 1: CALENDAR DATE PICKER */}
       <Modal visible={showDatePicker} transparent animationType="slide" onRequestClose={() => setShowDatePicker(false)}>
@@ -918,16 +931,15 @@ const s = StyleSheet.create({
   },
   headerTitle: { fontSize: 16, fontWeight: '800' },
   icon: { padding: 4 },
-  content: { padding: 16, paddingTop: 8, paddingBottom: 110 },
+  content: { padding: 16, paddingTop: 8, paddingBottom: 24 },
   imageContainer: {
     position: 'relative',
-    height: 240,
     width: '100%',
     borderRadius: 18,
     overflow: 'hidden',
     borderWidth: 1.5,
   },
-  image: { height: 240, width: '100%' },
+  image: { width: '100%' },
   navArrow: {
     position: 'absolute',
     top: '50%',
@@ -1064,7 +1076,18 @@ const s = StyleSheet.create({
   centerTitle: { marginTop: 12, fontSize: 15, fontWeight: '600', textAlign: 'center' },
   retryBtn: { marginTop: 14, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
   retryText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 18 },
+  stickyBottomBar: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 6,
+  },
   saveButton: {
     flex: 1,
     alignItems: 'center',
@@ -1105,6 +1128,9 @@ const s = StyleSheet.create({
     borderTopRightRadius: 20,
     padding: 16,
     maxHeight: '85%',
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
   },
   modalHeader: {
     flexDirection: 'row',

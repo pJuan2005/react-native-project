@@ -151,10 +151,6 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         }));
         setUserVouchers(mappedVouchers);
       }
-          quantity: 1,
-        }));
-        setSavedHomestays(mappedFavs);
-      }
     } catch (err) {
       console.warn('API sync bookings/favorites failed, using local state:', err);
     }

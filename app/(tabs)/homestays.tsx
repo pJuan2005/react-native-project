@@ -9,6 +9,7 @@ import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, StyleSheet, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
+import { useResponsive } from '@/utils/responsive';
 
 export default function HomestaysScreen() {
   const { isDark, colors } = useAppTheme();
@@ -223,6 +224,8 @@ export function HomestayRow({
   colors?: any;
 }) {
   const { toggleSavedHomestay } = useBooking();
+  const { scale, isSmallDevice, moderateScale } = useResponsive();
+  const imgSize = Math.round(Math.min(Math.max(scale(92), 80), 108));
 
   return (
     <Pressable
@@ -235,8 +238,12 @@ export function HomestayRow({
       ]}
       onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}
     >
-      <View style={styles.imageContainer}>
-        <ProductImage uri={homestay.images[0]} style={styles.image} containerStyle={styles.image} />
+      <View style={[styles.imageContainer, { width: imgSize, height: imgSize }]}>
+        <ProductImage
+          uri={homestay.images[0]}
+          style={[styles.image, { width: imgSize, height: imgSize }]}
+          containerStyle={[styles.image, { width: imgSize, height: imgSize }]}
+        />
         {homestay.oldPrice && (
           <Text style={styles.saleBadge}>
             -{Math.round((1 - homestay.price / homestay.oldPrice) * 100)}%
@@ -246,7 +253,7 @@ export function HomestayRow({
 
       <View style={styles.info}>
         <View style={styles.topRow}>
-          <Text numberOfLines={1} style={[styles.name, isDark && { color: '#F8FAFC' }]}>{homestay.name}</Text>
+          <Text numberOfLines={1} style={[styles.name, isDark && { color: '#F8FAFC' }, { fontSize: moderateScale(14) }]}>{homestay.name}</Text>
           <Pressable
             hitSlop={8}
             style={[styles.saveBtn, isSaved && styles.saveBtnSaved]}

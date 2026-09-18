@@ -21,10 +21,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppTheme } from '@/contexts/ThemeContext';
+import { useResponsive } from '@/utils/responsive';
 
 export default function RegisterScreen() {
   const { register } = useAuth();
   const { isDark, colors } = useAppTheme();
+  const { width, isSmallDevice, moderateScale } = useResponsive();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -73,12 +75,22 @@ export default function RegisterScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            { paddingHorizontal: Math.max(20, Math.round(width * 0.075)) },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
           {/* PROFESSIONALLY DESIGNED VECTOR EMBLEM LOGO */}
-          <Animated.View entering={FadeInDown.duration(700)} style={styles.logoContainer}>
+          <Animated.View
+            entering={FadeInDown.duration(700)}
+            style={[styles.logoContainer, isSmallDevice && { marginBottom: 18 }]}
+          >
             <View
               style={[
                 styles.emblemOuter,
+                isSmallDevice && { width: 80, height: 80, borderRadius: 26 },
                 isDark && { backgroundColor: '#1C2541', borderColor: '#334155' },
               ]}
             >
@@ -104,14 +116,17 @@ export default function RegisterScreen() {
               </View>
             </View>
 
-            <Text style={[styles.brandTitle, isDark && { color: '#38BDF8' }]}>Tạo tài khoản</Text>
+            <Text style={[styles.brandTitle, { fontSize: moderateScale(isSmallDevice ? 20 : 24) }, isDark && { color: '#38BDF8' }]}>Tạo tài khoản</Text>
             <Text style={[styles.brandSubtitle, isDark && { color: '#94A3B8' }]}>
               Hệ sinh thái du lịch & nghỉ dưỡng xanh
             </Text>
           </Animated.View>
 
           {/* FORM WITH ENTRANCE ANIMATION */}
-          <Animated.View entering={FadeInUp.delay(180).duration(700)} style={styles.formContainer}>
+          <Animated.View
+            entering={FadeInUp.delay(180).duration(700)}
+            style={[styles.formContainer, isSmallDevice && { gap: 11 }]}
+          >
             {/* Full Name */}
             <View
               style={[

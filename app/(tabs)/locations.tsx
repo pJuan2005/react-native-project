@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { useResponsive } from '@/utils/responsive';
 
 export default function LocationsScreen() {
   const { isDark, colors } = useAppTheme();
@@ -60,9 +61,12 @@ export default function LocationsScreen() {
 }
 
 function LocationCard({ location, colors }: { location: Location; colors: any }) {
+  const { scale } = useResponsive();
+  const cardHeight = Math.round(Math.min(Math.max(scale(136), 125), 160));
+
   return (
     <Pressable
-      style={[styles.card, { borderColor: colors.cardBorder }]}
+      style={[styles.card, { height: cardHeight, borderColor: colors.cardBorder }]}
       onPress={() => router.push({ pathname: '/location/[id]' as any, params: { id: location.id } })}
     >
       <ProductImage uri={location.image} style={styles.image} containerStyle={styles.image} />

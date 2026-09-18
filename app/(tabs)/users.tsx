@@ -22,6 +22,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useResponsive } from '@/utils/responsive';
 
 const DISNEY_AVATARS = [
   {
@@ -997,7 +998,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '100%',
-    maxWidth: 360,
+    maxWidth: 400,
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 18,

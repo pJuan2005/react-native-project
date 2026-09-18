@@ -21,9 +21,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
+import { useResponsive } from '@/utils/responsive';
 
 export default function BookingsScreen() {
   const { isDark, colors } = useAppTheme();
+  const { width, height, scale, isSmallDevice, moderateScale, getModalWidth } = useResponsive();
+  const qrSize = Math.round(Math.min(width * 0.52, 190));
+  const modalCardWidth = getModalWidth(390, 16);
+  const paymentModalWidth = getModalWidth(410, 14);
+
   const {
     bookings,
     savedHomestays,
@@ -434,7 +440,7 @@ export default function BookingsScreen() {
         onRequestClose={() => setSelectedBookingDetail(null)}
       >
         <View style={s.modalOverlay}>
-          <View style={[s.detailModalCard, { backgroundColor: isDark ? '#1C2541' : '#FFFFFF' }]}>
+          <View style={[s.detailModalCard, { width: modalCardWidth, backgroundColor: isDark ? '#1C2541' : '#FFFFFF' }]}>
             {/* Modal Header */}
             <View style={[s.detailModalHeader, { borderBottomColor: colors.cardBorder }]}>
               <View>
@@ -448,7 +454,7 @@ export default function BookingsScreen() {
               </Pressable>
             </View>
 
-            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ maxHeight: height * 0.62 }} showsVerticalScrollIndicator={false}>
               {/* Homestay Card Preview */}
               <View style={[s.detailPreviewRow, { backgroundColor: isDark ? '#0B132B' : '#F0F9FF', borderColor: colors.cardBorder }]}>
                 <ProductImage
@@ -585,7 +591,7 @@ export default function BookingsScreen() {
         onRequestClose={() => setPaymentBooking(null)}
       >
         <View style={s.modalOverlay}>
-          <View style={[s.paymentModalCard, { backgroundColor: isDark ? '#1C2541' : '#FFFFFF' }]}>
+          <View style={[s.paymentModalCard, { width: paymentModalWidth, backgroundColor: isDark ? '#1C2541' : '#FFFFFF' }]}>
             {/* Payment Header */}
             <View style={[s.detailModalHeader, { borderBottomColor: colors.cardBorder }]}>
               <View>
@@ -599,7 +605,7 @@ export default function BookingsScreen() {
               </Pressable>
             </View>
 
-            <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ maxHeight: height * 0.65 }} showsVerticalScrollIndicator={false}>
               {/* QR Code Section */}
               <View style={[s.qrBox, { backgroundColor: isDark ? '#0B132B' : '#F8FAFC', borderColor: colors.cardBorder }]}>
                 <Text style={[s.qrTitle, { color: colors.text }]}>Quét mã VietQR chuyển khoản</Text>
@@ -607,7 +613,7 @@ export default function BookingsScreen() {
                   source={{
                     uri: `https://img.vietqr.io/image/mbbank-0988888888-compact2.png?amount=${paymentBooking?.totalPrice || 0}&addInfo=${paymentBooking?.bookingCode || 'DATPHONG'}&accountName=HOMESTAY%20BOOKING%20VN`,
                   }}
-                  style={s.qrImage}
+                  style={[s.qrImage, { width: qrSize, height: qrSize }]}
                   resizeMode="contain"
                 />
                 <Text style={s.qrHint}>Tự động nhận diện số tài khoản & số tiền chuyển khoản</Text>

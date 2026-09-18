@@ -24,8 +24,7 @@ import { InfiniteMarquee } from '@/components/infinite-marquee';
 import { formatPrice, mockLocations, mockHomestays, Homestay } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
 import { useAppTheme } from '@/contexts/ThemeContext';
-
-const { width } = Dimensions.get('window');
+import { useResponsive } from '@/utils/responsive';
 
 const TRENDING_KEYWORDS = [
   { icon: 'bed-outline', text: 'Villa hồ bơi riêng', badge: 'VIP', badgeColor: '#0284C7' },
@@ -39,8 +38,12 @@ const TRENDING_KEYWORDS = [
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { isDark, colors } = useAppTheme();
+  const { width, getGridCardWidth, isSmallDevice, moderateScale } = useResponsive();
   const [search, setSearch] = useState('');
   const { userProfile, savedHomestays, toggleSavedHomestay } = useBooking();
+
+  const horizontalCardWidth = Math.min(Math.max(width * 0.43, 148), 190);
+  const gridCardWidth = getGridCardWidth(16, 10);
 
   const forYouList = useMemo(
     () =>
@@ -182,6 +185,7 @@ export default function HomeScreen() {
                   key={homestay.id}
                   homestay={homestay}
                   isSaved={isSaved}
+                  cardWidth={horizontalCardWidth}
                   isDark={isDark}
                   colors={colors}
                   onToggleSave={() => {
@@ -241,7 +245,7 @@ export default function HomeScreen() {
             {featuredList.map((homestay) => {
               const isSaved = savedHomestays.some((s) => s.id === homestay.id);
               return (
-                <View key={homestay.id} style={styles.gridCardWrapper}>
+                <View key={homestay.id} style={[styles.gridCardWrapper, { width: gridCardWidth }]}>
                   <BookShopCard
                     homestay={homestay}
                     isSaved={isSaved}
@@ -271,7 +275,7 @@ export default function HomeScreen() {
 function BookShopCard({
   homestay,
   isSaved,
-  cardWidth = 165,
+  cardWidth,
   isDark,
   colors,
   onToggleSave,
@@ -283,12 +287,16 @@ function BookShopCard({
   colors?: any;
   onToggleSave: () => void;
 }) {
+  const { width } = useResponsive();
+  const resolvedWidth = cardWidth ?? Math.min(Math.max(width * 0.43, 148), 190);
+  const imageHeight = typeof resolvedWidth === 'number' ? Math.round(resolvedWidth * 0.76) : 130;
+
   return (
     <Pressable
       style={[
         styles.card,
         {
-          width: cardWidth as any,
+          width: resolvedWidth as any,
           backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
           borderColor: isDark ? '#334155' : '#E0F2FE',
         },
@@ -296,8 +304,12 @@ function BookShopCard({
       onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}
     >
       {/* Image container */}
-      <View style={styles.cardImageContainer}>
-        <ProductImage uri={homestay.images[0]} style={styles.cardImage} containerStyle={styles.cardImage} />
+      <View style={[styles.cardImageContainer, { height: imageHeight }]}>
+        <ProductImage
+          uri={homestay.images[0]}
+          style={[styles.cardImage, { height: imageHeight }]}
+          containerStyle={[styles.cardImage, { height: imageHeight }]}
+        />
         {homestay.oldPrice && (
           <View style={styles.saleBadge}>
             <Text style={styles.saleText}>-{Math.round((1 - homestay.price / homestay.oldPrice) * 100)}%</Text>
@@ -653,6 +665,6 @@ const styles = StyleSheet.create({
     rowGap: 10,
   },
   gridCardWrapper: {
-    width: '48.5%',
+    // Dynamic width calculated and passed directly into style
   },
 });
