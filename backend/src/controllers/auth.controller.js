@@ -1,5 +1,5 @@
 const AuthService = require('../services/auth.service');
-const { success, created, badRequest, unauthorized, error } = require('../utils/response');
+const { success, created, badRequest, unauthorized, notFound, error } = require('../utils/response');
 
 const register = async (req, res) => {
   try {
@@ -42,11 +42,39 @@ const login = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const userId = req.user?.id || '1';
+    let userId = null;
+
+    // 1. Check Bearer Token header: Authorization: Bearer token_<userId>_<timestamp>
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.replace('Bearer ', '').trim();
+      const parts = token.split('_');
+      if (parts.length >= 2 && parts[1]) {
+        userId = parts[1];
+      }
+    }
+
+    // 2. Check query param fallback: /api/auth/me?userId=7
+    if (!userId && req.query.userId) {
+      userId = req.query.userId;
+    }
+
+    // 3. Check req.user from middleware
+    if (!userId && req.user?.id) {
+      userId = req.user.id;
+    }
+
+    if (!userId) {
+      return unauthorized(res, 'Vui lòng cung cấp Bearer token hợp lệ trong header Authorization');
+    }
+
     const data = await AuthService.getMe(userId);
     return success(res, data, 'Lấy thông tin tài khoản thành công');
   } catch (err) {
-    return error(res, 'Lỗi khi lấy thông tin người dùng');
+    if (err.message.includes('Không tìm thấy')) {
+      return notFound(res, err.message);
+    }
+    return error(res, err.message || 'Lỗi khi lấy thông tin người dùng');
   }
 };
 
