@@ -3,10 +3,30 @@ const { success, badRequest, error } = require('../utils/response');
 
 const getPromotions = async (req, res) => {
   try {
-    const data = await PromotionService.getActivePromotions();
+    const userId = req.query.userId || req.user?.id;
+    const data = await PromotionService.getActivePromotions(userId);
     return success(res, data, 'Lấy danh sách voucher khuyến mãi thành công');
   } catch (err) {
     return error(res, 'Lỗi khi lấy danh sách khuyến mãi');
+  }
+};
+
+const getMyVouchers = async (req, res) => {
+  try {
+    const userId = req.query.userId || req.user?.id;
+    const data = await PromotionService.getMyVouchers(userId);
+    return success(res, data, 'Lấy ví voucher của tôi thành công');
+  } catch (err) {
+    return error(res, 'Lỗi khi lấy ví voucher');
+  }
+};
+
+const getRedeemable = async (req, res) => {
+  try {
+    const data = await PromotionService.getRedeemablePromotions();
+    return success(res, data, 'Lấy danh sách voucher có thể đổi điểm thành công');
+  } catch (err) {
+    return error(res, 'Lỗi khi lấy danh sách đổi điểm');
   }
 };
 
@@ -43,6 +63,8 @@ const getPointHistory = async (req, res) => {
 
 module.exports = {
   getPromotions,
+  getMyVouchers,
+  getRedeemable,
   checkVoucher,
   redeemVoucher,
   getPointHistory,

@@ -441,6 +441,27 @@
     </div>
   </div>
 
+  <!-- MODAL: PREVIEW PAYMENT PROOF -->
+  <div id="proof-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-slate-900 text-sm">Biên lai chuyển khoản</h3>
+          <p id="proof-code-title" class="text-xs text-blue-600 font-mono font-bold"></p>
+        </div>
+        <button onclick="closeProofModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div class="p-4 flex items-center justify-center bg-slate-50 min-h-[260px]">
+        <img id="proof-img" src="" alt="Biên lai chuyển khoản" class="max-h-[70vh] rounded-xl object-contain shadow-sm border border-slate-200">
+      </div>
+      <div class="p-3 border-t border-slate-100 bg-white flex justify-end">
+        <button onclick="closeProofModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Đóng</button>
+      </div>
+    </div>
+  </div>
+
   <!-- JAVASCRIPT LOGIC -->
   <script>
     const API_BASE = '/api';
@@ -618,7 +639,16 @@
               </td>
               <td class="py-3.5 px-4">
                 <p class="font-bold text-slate-900">${formatMoney(b.total_price)}</p>
-                <p class="text-[11px] text-slate-400 uppercase">${b.payment_method || 'cash'}</p>
+                <div class="flex flex-col gap-1 mt-1">
+                  <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full w-max ${b.payment_status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">
+                    ${b.payment_status === 'completed' ? '✓ Đã thanh toán' : (b.payment_method === 'bank_transfer' ? 'Chuyển khoản (chờ)' : 'Tiền mặt')}
+                  </span>
+                  ${b.proof_image_url ? `
+                    <button onclick="viewProofImage('${encodeURIComponent(b.proof_image_url)}', '${b.booking_code}')" class="text-[11px] text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1">
+                      <i class="fa-solid fa-file-invoice-dollar"></i> Xem biên lai
+                    </button>
+                  ` : ''}
+                </div>
               </td>
               <td class="py-3.5 px-4">${renderStatusBadge(b.status)}</td>
               <td class="py-3.5 px-4 text-center">
@@ -718,6 +748,19 @@
     }
     function closeAddHomestayModal() {
       document.getElementById('add-homestay-modal').classList.add('hidden');
+    }
+
+    // Payment Proof Modal Handlers
+    function viewProofImage(encodedUrl, bookingCode) {
+      const url = decodeURIComponent(encodedUrl);
+      document.getElementById('proof-img').src = url;
+      document.getElementById('proof-code-title').innerText = `Đơn đặt phòng: ${bookingCode}`;
+      document.getElementById('proof-modal').classList.remove('hidden');
+    }
+
+    function closeProofModal() {
+      document.getElementById('proof-modal').classList.add('hidden');
+      document.getElementById('proof-img').src = '';
     }
 
     // Add Homestay Handler

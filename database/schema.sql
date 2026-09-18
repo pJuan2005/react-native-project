@@ -235,6 +235,7 @@ CREATE TABLE `payments` (
   `booking_id` BIGINT UNSIGNED NOT NULL,
   `payment_method` ENUM('cash', 'bank_transfer', 'vnpay', 'momo') NOT NULL DEFAULT 'cash',
   `transaction_code` VARCHAR(100) NULL COMMENT 'Mã tham chiếu ngân hàng hoặc mã cổng thanh toán',
+  `proof_image_url` VARCHAR(500) NULL COMMENT 'Ảnh chụp biên lai chuyển khoản ngân hàng',
   `amount` DECIMAL(12,2) NOT NULL,
   `status` ENUM('pending', 'completed', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
   `paid_at` TIMESTAMP NULL,

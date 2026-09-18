@@ -56,7 +56,7 @@ const getBookingById = async (req, res) => {
 const cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.body.userId || req.query.userId || req.user?.id || '1';
+    const userId = req.body.userId || req.query.userId || req.user?.id;
     const { reason } = req.body;
 
     await BookingService.cancelBooking(id, userId, reason);
@@ -66,9 +66,33 @@ const cancelBooking = async (req, res) => {
   }
 };
 
+const uploadPaymentProof = async (req, res) => {
+  try {
+    const bookingId = req.params.id || req.body.bookingId;
+    const userId = req.body.userId || req.query.userId || req.user?.id;
+    const { proofImageUrl, transactionCode } = req.body;
+
+    const data = await BookingService.uploadPaymentProof({
+      bookingId,
+      userId,
+      proofImageUrl,
+      transactionCode,
+    });
+
+    return success(
+      res,
+      data,
+      'Thanh toán thành công! Đã gửi minh chứng chuyển khoản. Đơn phòng đang chờ Web Admin duyệt để hoàn tất.'
+    );
+  } catch (err) {
+    return badRequest(res, err.message || 'Lỗi khi gửi minh chứng thanh toán');
+  }
+};
+
 module.exports = {
   createBooking,
   getMyBookings,
   getBookingById,
   cancelBooking,
+  uploadPaymentProof,
 };

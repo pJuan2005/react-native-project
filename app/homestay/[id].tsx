@@ -779,12 +779,12 @@ export default function HomestayDetail() {
               </View>
             </View>
 
-            <Text style={s.bankSuccessTitle}>ĐẶT PHÒNG THÀNH CÔNG!</Text>
+            <Text style={s.bankSuccessTitle}>ĐÃ TẠO ĐƠN ĐẶT PHÒNG!</Text>
             <Text style={[s.bankSuccessAmount, { color: colors.text }]}>{formatPrice(bookingSuccessData?.totalPrice || 0)}</Text>
 
-            <View style={s.bankSuccessBadge}>
-              <Ionicons name="shield-checkmark" size={14} color="#15803D" />
-              <Text style={s.bankSuccessBadgeText}>Đã xác nhận & Thanh toán</Text>
+            <View style={[s.bankSuccessBadge, { backgroundColor: '#FEF3C7' }]}>
+              <Ionicons name="time-outline" size={14} color="#D97706" />
+              <Text style={[s.bankSuccessBadgeText, { color: '#B45309' }]}>Chờ thanh toán chuyển khoản & Admin duyệt</Text>
             </View>
 
             <View style={s.bankRewardCard}>

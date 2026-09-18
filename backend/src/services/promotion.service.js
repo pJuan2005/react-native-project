@@ -2,8 +2,19 @@ const PromotionModel = require('../models/promotion.model');
 const PointModel = require('../models/point.model');
 
 class PromotionService {
-  static async getActivePromotions() {
+  static async getActivePromotions(userId) {
+    if (userId) {
+      return PromotionModel.findMyVouchers(userId);
+    }
     return PromotionModel.findAllActive();
+  }
+
+  static async getMyVouchers(userId) {
+    return PromotionModel.findMyVouchers(userId);
+  }
+
+  static async getRedeemablePromotions() {
+    return PromotionModel.findRedeemable();
   }
 
   static async checkVoucherCode(code, rawTotal = 0) {

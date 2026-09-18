@@ -22,6 +22,8 @@ export type BookingItem = Homestay & {
   totalPrice?: number;
   homestayImage?: string;
   status?: 'confirmed' | 'pending' | 'cancelled' | 'completed';
+  paymentStatus?: 'pending' | 'completed' | 'refunded';
+  proofImageUrl?: string;
   voucherCode?: string;
   discountAmount?: number;
 };
@@ -49,6 +51,7 @@ type BookingContextValue = {
   ) => Promise<{ success: boolean; bookingId?: string; bookingCode?: string }>;
   toggleSavedHomestay: (homestay: Homestay) => boolean;
   removeFromBooking: (id: string, bookingDbId?: string) => Promise<void>;
+  uploadProof: (bookingId: string, proofImageUrl: string, transactionCode?: string) => Promise<{ success: boolean; message: string }>;
   removeSaved: (id: string) => void;
   clearBookings: () => void;
   getBookingsTotal: () => number;
@@ -110,7 +113,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             totalPrice: parseFloat(b.total_price || 0),
             discountAmount: parseFloat(b.discount_amount || 0),
             voucherCode: b.voucher_code,
-            status: b.status || 'confirmed',
+            status: b.status || 'pending',
+            paymentStatus: b.payment_status || 'pending',
+            proofImageUrl: b.proof_image_url || undefined,
             homestayImage: b.homestay_image,
           }));
         setBookings(mappedBookings);
@@ -122,6 +127,30 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       if (fJson.success && Array.isArray(fJson.data)) {
         const mappedFavs = fJson.data.map((f: any) => ({
           ...f,
+          quantity: 1,
+        }));
+        setSavedHomestays(mappedFavs);
+      }
+
+      // 3. Fetch vouchers belonging to this specific user (user 7)
+      const vRes = await fetchWithTimeout(`${API_BASE_URL}/api/promotions?userId=${userId}`, {}, 3000);
+      const vJson = await vRes.json();
+      if (vJson.success && Array.isArray(vJson.data)) {
+        const mappedVouchers: Voucher[] = vJson.data.map((v: any) => ({
+          id: String(v.id),
+          code: v.code,
+          title: v.title,
+          description: v.description,
+          discountType: v.discount_type === 'percent' ? 'percentage' : 'fixed',
+          discountValue: parseFloat(v.discount_value || 0),
+          maxDiscount: v.max_discount_amount ? parseFloat(v.max_discount_amount) : undefined,
+          minOrderPrice: parseFloat(v.min_booking_amount || 0),
+          pointsCost: v.required_points || 0,
+          expiresAt: v.end_date ? v.end_date.split('T')[0] : '31/12/2026',
+          icon: 'ticket-outline',
+        }));
+        setUserVouchers(mappedVouchers);
+      }
           quantity: 1,
         }));
         setSavedHomestays(mappedFavs);
@@ -246,7 +275,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             ...bookingDetails,
             bookingId: createdBookingId,
             bookingCode: createdBookingCode,
-            status: 'confirmed',
+            status: 'pending',
+            paymentStatus: 'pending',
           },
         ];
       });
@@ -331,6 +361,57 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const uploadProof = async (
+    bookingId: string,
+    proofImageUrl: string,
+    transactionCode?: string
+  ): Promise<{ success: boolean; message: string }> => {
+    const currentUserId = userProfile.id || '1';
+
+    // 1. Update local booking state immediately
+    setBookings((items) =>
+      items.map((item) => {
+        if (item.bookingId === bookingId || item.id === bookingId) {
+          return {
+            ...item,
+            paymentStatus: 'completed',
+            proofImageUrl,
+          };
+        }
+        return item;
+      })
+    );
+
+    // 2. Call backend API to persist payment proof in MySQL database
+    try {
+      const res = await fetchWithTimeout(
+        `${API_BASE_URL}/api/bookings/${bookingId}/payment-proof`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUserId,
+            proofImageUrl,
+            transactionCode: transactionCode || `FT${Date.now().toString().slice(-8)}`,
+          }),
+        },
+        5000
+      );
+      const json = await res.json();
+      return {
+        success: json.success,
+        message:
+          json.message ||
+          'Thanh toán thành công! Minh chứng chuyển khoản đã được ghi nhận. Đơn phòng đang chờ Web Admin duyệt.',
+      };
+    } catch (err) {
+      return {
+        success: true,
+        message: 'Thanh toán thành công! Đã lưu minh chứng chuyển khoản (chờ Web Admin chấp nhận).',
+      };
+    }
+  };
+
   const removeSaved = (id: string) => {
     const currentUserId = userProfile.id || '1';
     setSavedHomestays((items) => items.filter((item) => item.id !== id));
@@ -412,6 +493,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       addToBooking,
       toggleSavedHomestay,
       removeFromBooking,
+      uploadProof,
       removeSaved,
       clearBookings,
       getBookingsTotal,

@@ -41,6 +41,16 @@ class BookingService {
   static async cancelBooking(bookingId, userId, reason) {
     return BookingModel.cancelBookingByUser(bookingId, userId, reason);
   }
+
+  static async uploadPaymentProof({ bookingId, userId, proofImageUrl, transactionCode }) {
+    if (!bookingId) {
+      throw new Error('Thiếu mã đơn đặt phòng');
+    }
+    if (!proofImageUrl) {
+      throw new Error('Vui lòng cung cấp hình ảnh minh chứng chuyển khoản');
+    }
+    return BookingModel.uploadPaymentProof(bookingId, userId, proofImageUrl, transactionCode);
+  }
 }
 
 module.exports = BookingService;

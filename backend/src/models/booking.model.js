@@ -24,6 +24,8 @@ class BookingModel {
         b.notes,
         pay.payment_method,
         pay.status AS payment_status,
+        pay.proof_image_url,
+        pay.transaction_code,
         b.created_at
       FROM bookings b
       JOIN users u ON b.user_id = u.id
@@ -84,6 +86,7 @@ class BookingModel {
         b.cancelled_reason,
         pay.payment_method,
         pay.status AS payment_status,
+        pay.proof_image_url,
         pay.transaction_code,
         b.created_at
       FROM bookings b
@@ -94,8 +97,8 @@ class BookingModel {
       LEFT JOIN homestay_images hi ON hi.homestay_id = h.id AND hi.is_primary = 1
       LEFT JOIN promotions p ON b.promotion_id = p.id
       LEFT JOIN payments pay ON pay.booking_id = b.id
-      WHERE b.id = ?`,
-      [id]
+      WHERE b.id = ? OR b.booking_code = ?`,
+      [id, id]
     );
     return rows[0] || null;
   }
@@ -122,6 +125,9 @@ class BookingModel {
         b.total_price,
         b.status,
         b.notes,
+        pay.payment_method,
+        pay.status AS payment_status,
+        pay.proof_image_url,
         b.created_at
       FROM bookings b
       JOIN homestays h ON b.homestay_id = h.id
@@ -129,6 +135,7 @@ class BookingModel {
       JOIN homestay_types t ON h.type_id = t.id
       LEFT JOIN homestay_images hi ON hi.homestay_id = h.id AND hi.is_primary = 1
       LEFT JOIN promotions p ON b.promotion_id = p.id
+      LEFT JOIN payments pay ON pay.booking_id = b.id
       WHERE b.user_id = ?
     `;
     const params = [userId];
@@ -220,13 +227,13 @@ class BookingModel {
     const finalTotal = Math.max(0, rawTotal - discountAmount);
     const bookingCode = `BK${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // 5. Insert Booking
+    // 5. Insert Booking với status mặc định = 'pending' (Chờ thanh toán / Chờ Web Admin duyệt)
     const [result] = await db.query(
       `INSERT INTO bookings (
         booking_code, user_id, homestay_id, check_in, check_out,
         guests, nights, price_per_night, promotion_id, discount_amount,
         total_price, status, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
       [
         bookingCode,
         userId,
@@ -248,13 +255,11 @@ class BookingModel {
     // 6. Insert Payment Record
     await db.query(
       `INSERT INTO payments (booking_id, payment_method, amount, status, paid_at)
-       VALUES (?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, 'pending', NULL)`,
       [
         bookingId,
         paymentMethod || 'cash',
         finalTotal,
-        ['vnpay', 'momo'].includes(paymentMethod) ? 'completed' : 'pending',
-        ['vnpay', 'momo'].includes(paymentMethod) ? new Date() : null,
       ]
     );
 
@@ -268,10 +273,10 @@ class BookingModel {
     // 8. In-App Notification
     await db.query(
       `INSERT INTO notifications (user_id, title, content, type, reference_id)
-       VALUES (?, 'Đặt phòng thành công! 🎉', ?, 'booking_status', ?)`,
+       VALUES (?, 'Đã tạo đơn đặt phòng! ⏳', ?, 'booking_status', ?)`,
       [
         userId,
-        `Đơn đặt phòng ${bookingCode} tại ${homestay.name} đã được xác nhận. Nhận phòng ngày ${checkIn}.`,
+        `Đơn đặt phòng ${bookingCode} tại ${homestay.name} đã được ghi nhận. Vui lòng thanh toán để Admin duyệt đơn.`,
         bookingId,
       ]
     );
@@ -287,36 +292,92 @@ class BookingModel {
       pricePerNight,
       discountAmount,
       totalPrice: finalTotal,
-      status: 'confirmed',
+      status: 'pending',
       paymentMethod,
     };
   }
 
-  static async cancelBookingByUser(bookingId, userId, reason = 'Khách hủy đơn trên app') {
-    const [rows] = await db.query('SELECT id, user_id, status FROM bookings WHERE id = ?', [bookingId]);
+  static async uploadPaymentProof(bookingId, userId, proofImageUrl, transactionCode = null) {
+    const [rows] = await db.query(
+      'SELECT id, user_id, booking_code, status FROM bookings WHERE id = ? OR booking_code = ?',
+      [bookingId, bookingId]
+    );
     if (rows.length === 0) {
       throw new Error('Không tìm thấy đơn đặt phòng');
     }
     const booking = rows[0];
-    if (String(booking.user_id) !== String(userId)) {
+    if (userId && String(booking.user_id) !== String(userId)) {
+      throw new Error('Bạn không có quyền thao tác trên đơn đặt phòng này');
+    }
+
+    // Cập nhật trạng thái thanh toán = 'completed' (Thanh toán thành công)
+    // Trạng thái đặt phòng (booking.status) vẫn giữ là 'pending' (Chờ Web Admin chấp nhận)
+    await db.query(
+      `UPDATE payments
+       SET proof_image_url = ?, payment_method = 'bank_transfer', transaction_code = COALESCE(?, transaction_code), status = 'completed', paid_at = NOW(), updated_at = NOW()
+       WHERE booking_id = ?`,
+      [proofImageUrl, transactionCode || `FT${Date.now().toString().slice(-8)}`, booking.id]
+    );
+
+    // Ghi chú vào đơn đặt phòng
+    await db.query(
+      `UPDATE bookings
+       SET notes = CONCAT(IFNULL(notes, ''), ' [Đã thanh toán CK, chờ Admin duyệt]')
+       WHERE id = ?`,
+      [booking.id]
+    );
+
+    // Thêm thông báo trong ứng dụng cho khách hàng
+    if (booking.user_id) {
+      await db.query(
+        `INSERT INTO notifications (user_id, title, content, type, reference_id)
+         VALUES (?, 'Thanh toán thành công! 💳', ?, 'booking_status', ?)`,
+        [
+          booking.user_id,
+          `Đã ghi nhận minh chứng chuyển khoản cho đơn ${booking.booking_code}. Thanh toán thành công! Vui lòng chờ Web Admin kiểm tra và duyệt để chuyển sang trạng thái Đặt phòng thành công.`,
+          booking.id,
+        ]
+      );
+    }
+
+    return {
+      bookingId: booking.id,
+      bookingCode: booking.booking_code,
+      proofImageUrl,
+      paymentStatus: 'completed',
+      bookingStatus: booking.status,
+      message: 'Thanh toán thành công! Minh chứng chuyển khoản đã được ghi nhận. Đơn đang chờ Quản trị viên (Web Admin) duyệt.',
+    };
+  }
+
+  static async cancelBookingByUser(bookingId, userId, reason = 'Khách hủy đơn trên app') {
+    const [rows] = await db.query(
+      'SELECT id, user_id, status FROM bookings WHERE id = ? OR booking_code = ?',
+      [bookingId, bookingId]
+    );
+    if (rows.length === 0) {
+      throw new Error('Không tìm thấy đơn đặt phòng');
+    }
+    const booking = rows[0];
+    if (userId && String(booking.user_id) !== String(userId)) {
       throw new Error('Bạn không có quyền hủy đơn đặt phòng này');
     }
     if (booking.status === 'completed') {
       throw new Error('Không thể hủy chuyến đi đã hoàn thành');
     }
     if (booking.status === 'cancelled') {
-      throw new Error('Đơn đặt phòng này đã được hủy trước đó');
+      return true; // Đã hủy từ trước
     }
 
     await db.query(
       'UPDATE bookings SET status = "cancelled", cancelled_at = NOW(), cancelled_reason = ? WHERE id = ?',
-      [reason, bookingId]
+      [reason, booking.id]
     );
 
-    // Update payment status to refunded if completed
+    // Cập nhật trạng thái thanh toán sang refunded nếu đã thanh toán
     await db.query(
-      'UPDATE payments SET status = "refunded" WHERE booking_id = ? AND status = "completed"',
-      [bookingId]
+      'UPDATE payments SET status = "refunded", updated_at = NOW() WHERE booking_id = ?',
+      [booking.id]
     );
 
     return true;
@@ -332,6 +393,14 @@ class BookingModel {
     }
 
     const [result] = await db.query('UPDATE bookings SET status = ? WHERE id = ?', [status, id]);
+
+    if (status === 'confirmed' || status === 'completed') {
+      await db.query(
+        "UPDATE payments SET status = 'completed', paid_at = COALESCE(paid_at, NOW()) WHERE booking_id = ?",
+        [id]
+      );
+    }
+
     return result.affectedRows > 0;
   }
 

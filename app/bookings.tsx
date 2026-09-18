@@ -5,9 +5,22 @@ import { useAppTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function BookingsScreen() {
   const { isDark, colors } = useAppTheme();
@@ -15,6 +28,7 @@ export default function BookingsScreen() {
     bookings,
     savedHomestays,
     removeFromBooking,
+    uploadProof,
     removeSaved,
     getBookingsTotal,
     completeStayAndReward,
@@ -22,7 +36,12 @@ export default function BookingsScreen() {
 
   const [activeTab, setActiveTab] = useState<'bookings' | 'wishlist'>('bookings');
   const [selectedBookingDetail, setSelectedBookingDetail] = useState<BookingItem | null>(null);
-  const [bookingToCancel, setBookingToCancel] = useState<BookingItem | null>(null);
+
+  // Payment Modal State
+  const [paymentBooking, setPaymentBooking] = useState<BookingItem | null>(null);
+  const [proofImage, setProofImage] = useState<string | null>(null);
+  const [transactionCode, setTransactionCode] = useState('');
+  const [isSubmittingProof, setIsSubmittingProof] = useState(false);
 
   const total = getBookingsTotal();
 
@@ -43,17 +62,105 @@ export default function BookingsScreen() {
     );
   };
 
-  const handleConfirmCancelBooking = async () => {
-    if (!bookingToCancel) return;
-    const key = bookingToCancel.id + (bookingToCancel.checkIn || '');
-    const dbId = bookingToCancel.bookingId || bookingToCancel.id;
+  // Safe Cancel Confirmation with Native Alert
+  const handlePromptCancel = (booking: BookingItem) => {
+    Alert.alert(
+      'Xác nhận hủy đặt phòng',
+      `Bạn có chắc chắn muốn hủy đơn đặt phòng tại "${booking.name}" không? Thao tác này sẽ cập nhật vào CSDL.`,
+      [
+        { text: 'Giữ lại', style: 'cancel' },
+        {
+          text: 'Hủy đơn',
+          style: 'destructive',
+          onPress: async () => {
+            const key = booking.id + (booking.checkIn || '');
+            const dbId = booking.bookingId || booking.id;
+            await removeFromBooking(key, dbId);
+            if (selectedBookingDetail?.id === booking.id) {
+              setSelectedBookingDetail(null);
+            }
+            Alert.alert('Đã hủy đặt phòng', `Đơn đặt phòng "${booking.name}" đã được hủy thành công.`);
+          },
+        },
+      ]
+    );
+  };
 
-    await removeFromBooking(key, dbId);
-    setBookingToCancel(null);
-    if (selectedBookingDetail?.id === bookingToCancel.id) {
-      setSelectedBookingDetail(null);
+  // Image Picker for Payment Proof
+  const handlePickProofImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Quyền truy cập', 'Vui lòng cấp quyền truy cập thư viện ảnh để tải lên minh chứng chuyển khoản.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.6,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        if (asset.base64) {
+          setProofImage(`data:image/jpeg;base64,${asset.base64}`);
+        } else {
+          setProofImage(asset.uri);
+        }
+      }
+    } catch (err) {
+      console.warn('Pick proof image failed:', err);
     }
-    Alert.alert('Đã hủy đặt phòng', `Đơn đặt phòng "${bookingToCancel.name}" đã được hủy thành công.`);
+  };
+
+  // Use Demo Mock Bill
+  const handleUseMockBill = () => {
+    setProofImage(
+      'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80'
+    );
+    if (!transactionCode) {
+      setTransactionCode(`MB${Date.now().toString().slice(-6)}`);
+    }
+  };
+
+  // Submit Payment Proof
+  const handleSubmitPaymentProof = async () => {
+    if (!paymentBooking) return;
+    if (!proofImage) {
+      Alert.alert('Thiếu minh chứng', 'Vui lòng chọn ảnh chụp biên lai chuyển khoản hoặc sử dụng ảnh mẫu.');
+      return;
+    }
+
+    setIsSubmittingProof(true);
+    const targetId = paymentBooking.bookingId || paymentBooking.id;
+    const res = await uploadProof(targetId, proofImage, transactionCode.trim());
+    setIsSubmittingProof(false);
+
+    setPaymentBooking(null);
+    setProofImage(null);
+    setTransactionCode('');
+
+    Alert.alert(
+      'Thanh toán thành công! 🎉',
+      'Minh chứng chuyển khoản của bạn đã được ghi nhận thành công! Đơn đặt phòng đang chờ Quản trị viên (Web Admin) phê duyệt để chuyển sang trạng thái "Đặt phòng thành công".',
+      [{ text: 'Đã hiểu' }]
+    );
+  };
+
+  // Handle Checkout button in footer
+  const handleProceedCheckout = () => {
+    const unpaid = bookings.find((b) => b.paymentStatus !== 'completed' && b.status !== 'cancelled');
+    if (unpaid) {
+      setPaymentBooking(unpaid);
+      setProofImage(null);
+      setTransactionCode('');
+    } else if (bookings.length > 0) {
+      Alert.alert('Thông báo', 'Tất cả các phòng đã đặt của bạn đều đã được thanh toán thành công!');
+    } else {
+      Alert.alert('Chưa có đặt phòng', 'Vui lòng chọn homestay và đặt phòng trước khi thanh toán.');
+    }
   };
 
   return (
@@ -70,7 +177,7 @@ export default function BookingsScreen() {
         <View style={{ width: 28 }} />
       </View>
 
-      {/* Segmented Tab Switcher - Ocean Blue */}
+      {/* Segmented Tab Switcher */}
       <View style={[s.tabContainer, { backgroundColor: isDark ? '#1C2541' : '#E0F2FE' }]}>
         <Pressable
           style={[s.tabButton, activeTab === 'bookings' && { backgroundColor: colors.primary }]}
@@ -101,7 +208,7 @@ export default function BookingsScreen() {
         </Pressable>
       </View>
 
-      {/* TAB 1: CONFIRMED BOOKINGS */}
+      {/* TAB 1: BOOKINGS */}
       {activeTab === 'bookings' && (
         <>
           {bookings.length === 0 ? (
@@ -122,62 +229,108 @@ export default function BookingsScreen() {
               contentContainerStyle={s.contentList}
               showsVerticalScrollIndicator={false}
               renderItem={({ item: booking }) => {
+                const isPaid = booking.paymentStatus === 'completed';
+                const isConfirmed = booking.status === 'confirmed';
+
                 return (
-                  <Pressable
-                    style={[s.bookingCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}
-                    onPress={() => setSelectedBookingDetail(booking)}
-                  >
-                    <ProductImage
-                      uri={booking.homestayImage || booking.images[0]}
-                      style={s.bookingImage}
-                      containerStyle={s.bookingImage}
-                    />
-                    <View style={s.info}>
-                      <View style={s.itemTopRow}>
-                        <Text numberOfLines={1} style={[s.name, { color: colors.text }]}>{booking.name}</Text>
-                        <Pressable
-                          hitSlop={8}
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            setBookingToCancel(booking);
-                          }}
-                        >
-                          <Ionicons name="trash-outline" size={18} color="#EF4444" />
-                        </Pressable>
+                  <View style={[s.bookingCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+                    {/* Clickable Card Body */}
+                    <Pressable
+                      style={s.cardTouchable}
+                      onPress={() => setSelectedBookingDetail(booking)}
+                    >
+                      <ProductImage
+                        uri={booking.homestayImage || booking.images[0]}
+                        style={s.bookingImage}
+                        containerStyle={s.bookingImage}
+                      />
+                      <View style={s.info}>
+                        <View style={s.itemTopRow}>
+                          <Text numberOfLines={1} style={[s.name, { color: colors.text }]}>{booking.name}</Text>
+                        </View>
+
+                        <Text style={s.location}>📍 by {booking.location} • {booking.type}</Text>
+
+                        {booking.checkIn && booking.checkOut && (
+                          <Text style={s.dates}>
+                            📅 {formatDate(booking.checkIn)} - {formatDate(booking.checkOut)} ({booking.nights} đêm) • 👥 {booking.guests} khách
+                          </Text>
+                        )}
+
+                        {booking.discountAmount ? (
+                          <Text style={s.voucherApplied}>
+                            🏷️ Đã giảm -{formatPrice(booking.discountAmount)} ({booking.voucherCode})
+                          </Text>
+                        ) : null}
+
+                        {/* Dual Status Badges */}
+                        <View style={s.badgeRow}>
+                          {isPaid ? (
+                            <View style={s.paidBadge}>
+                              <Ionicons name="checkmark-circle" size={11} color="#15803D" />
+                              <Text style={s.paidBadgeText}>Đã thanh toán CK</Text>
+                            </View>
+                          ) : (
+                            <View style={s.unpaidBadge}>
+                              <Ionicons name="card-outline" size={11} color="#D97706" />
+                              <Text style={s.unpaidBadgeText}>Chưa thanh toán</Text>
+                            </View>
+                          )}
+
+                          {isConfirmed ? (
+                            <View style={s.confirmedBadge}>
+                              <Ionicons name="shield-checkmark" size={11} color="#0284C7" />
+                              <Text style={s.confirmedBadgeText}>Đặt phòng thành công</Text>
+                            </View>
+                          ) : (
+                            <View style={s.pendingBadge}>
+                              <Ionicons name="time-outline" size={11} color="#D97706" />
+                              <Text style={s.pendingBadgeText}>Chờ Web Admin duyệt</Text>
+                            </View>
+                          )}
+                        </View>
+
+                        <View style={s.itemBottomRow}>
+                          <Text style={s.priceLabel}>
+                            Tổng: <Text style={[s.priceValue, isDark && { color: '#38BDF8' }]}>{new Intl.NumberFormat('vi-VN').format(booking.totalPrice || booking.price * booking.quantity)} Đ</Text>
+                          </Text>
+
+                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                            {!isPaid && (
+                              <Pressable
+                                style={[s.payNowBtn, { backgroundColor: colors.primary }]}
+                                onPress={() => {
+                                  setPaymentBooking(booking);
+                                  setProofImage(null);
+                                  setTransactionCode('');
+                                }}
+                              >
+                                <Ionicons name="card" size={12} color="#FFFFFF" />
+                                <Text style={s.payNowText}>Thanh toán</Text>
+                              </Pressable>
+                            )}
+
+                            <Pressable
+                              style={s.reviewBtn}
+                              onPress={() => handleReviewAndReward(booking.bookingId || booking.id, booking.name)}
+                            >
+                              <Ionicons name="star" size={12} color="#D97706" />
+                              <Text style={s.reviewBtnText}>Đánh giá</Text>
+                            </Pressable>
+                          </View>
+                        </View>
                       </View>
+                    </Pressable>
 
-                      <Text style={s.location}>📍 by {booking.location} • {booking.type}</Text>
-
-                      {booking.checkIn && booking.checkOut && (
-                        <Text style={s.dates}>
-                          📅 {formatDate(booking.checkIn)} - {formatDate(booking.checkOut)} ({booking.nights} đêm) • 👥 {booking.guests} khách
-                        </Text>
-                      )}
-
-                      {booking.discountAmount ? (
-                        <Text style={s.voucherApplied}>
-                          🏷️ Đã giảm -{formatPrice(booking.discountAmount)} ({booking.voucherCode})
-                        </Text>
-                      ) : null}
-
-                      <View style={s.itemBottomRow}>
-                        <Text style={s.priceLabel}>
-                          price: <Text style={[s.priceValue, isDark && { color: '#38BDF8' }]}>{new Intl.NumberFormat('vi-VN').format(booking.totalPrice || booking.price * booking.quantity)} Đ</Text>
-                        </Text>
-
-                        <Pressable
-                          style={s.reviewBtn}
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            handleReviewAndReward(booking.bookingId || booking.id, booking.name);
-                          }}
-                        >
-                          <Ionicons name="star" size={12} color="#D97706" />
-                          <Text style={s.reviewBtnText}>Đánh giá +150đ</Text>
-                        </Pressable>
-                      </View>
-                    </View>
-                  </Pressable>
+                    {/* Independent Trash Button (No event bubbling collision) */}
+                    <Pressable
+                      style={s.trashBtnCorner}
+                      hitSlop={10}
+                      onPress={() => handlePromptCancel(booking)}
+                    >
+                      <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                    </Pressable>
+                  </View>
                 );
               }}
               ListFooterComponent={
@@ -189,13 +342,7 @@ export default function BookingsScreen() {
                   </View>
                   <Pressable
                     style={[s.checkout, { backgroundColor: colors.primary }]}
-                    onPress={() =>
-                      Alert.alert(
-                        'Thanh toán',
-                        `Xác nhận thanh toán ${formatPrice(total)}. Chức năng tích hợp cổng thanh toán (VNPay/Momo) sẽ được hỗ trợ!`,
-                        [{ text: 'Đóng' }]
-                      )
-                    }
+                    onPress={handleProceedCheckout}
                   >
                     <Text style={s.checkoutText}>Tiến hành thanh toán</Text>
                   </Pressable>
@@ -206,7 +353,7 @@ export default function BookingsScreen() {
         </>
       )}
 
-      {/* TAB 2: WISHLIST (DANH SÁCH YÊU THÍCH) */}
+      {/* TAB 2: WISHLIST */}
       {activeTab === 'wishlist' && (
         <>
           {savedHomestays.length === 0 ? (
@@ -227,54 +374,52 @@ export default function BookingsScreen() {
               contentContainerStyle={s.contentList}
               showsVerticalScrollIndicator={false}
               renderItem={({ item: homestay }) => (
-                <Pressable
-                  style={[s.wishlistCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}
-                  onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}
-                >
-                  <ProductImage
-                    uri={homestay.images[0]}
-                    style={s.wishlistImage}
-                    containerStyle={s.wishlistImage}
-                  />
-                  <View style={s.info}>
-                    <View style={s.itemTopRow}>
-                      <Text numberOfLines={1} style={[s.name, { color: colors.text }]}>{homestay.name}</Text>
-                      <Pressable
-                        hitSlop={8}
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          removeSaved(homestay.id);
-                        }}
-                      >
-                        <Ionicons name="heart" size={20} color="#EF4444" />
-                      </Pressable>
-                    </View>
+                <View style={[s.wishlistCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+                  <Pressable
+                    style={s.cardTouchable}
+                    onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}
+                  >
+                    <ProductImage
+                      uri={homestay.images[0]}
+                      style={s.wishlistImage}
+                      containerStyle={s.wishlistImage}
+                    />
+                    <View style={s.info}>
+                      <View style={s.itemTopRow}>
+                        <Text numberOfLines={1} style={[s.name, { color: colors.text }]}>{homestay.name}</Text>
+                      </View>
 
-                    <Text style={s.location}>📍 by {homestay.location} • {homestay.type}</Text>
+                      <Text style={s.location}>📍 by {homestay.location} • {homestay.type}</Text>
 
-                    <View style={s.ratingRow}>
-                      <Ionicons name="star" size={13} color="#F59E0B" />
-                      <Text style={s.ratingText}>
-                        {homestay.rating} ({homestay.reviewCount} đánh giá)
-                      </Text>
-                    </View>
+                      <View style={s.ratingRow}>
+                        <Ionicons name="star" size={13} color="#F59E0B" />
+                        <Text style={s.ratingText}>
+                          {homestay.rating} ({homestay.reviewCount} đánh giá)
+                        </Text>
+                      </View>
 
-                    <View style={s.wishlistBottomRow}>
-                      <Text style={s.priceLabel}>
-                        price: <Text style={[s.priceValue, isDark && { color: '#38BDF8' }]}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} Đ</Text>
-                      </Text>
-                      <Pressable
-                        style={[s.bookNowSmallBtn, { backgroundColor: colors.primary }]}
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } });
-                        }}
-                      >
-                        <Text style={s.bookNowSmallText}>Đặt ngay</Text>
-                      </Pressable>
+                      <View style={s.wishlistBottomRow}>
+                        <Text style={s.priceLabel}>
+                          price: <Text style={[s.priceValue, isDark && { color: '#38BDF8' }]}>{new Intl.NumberFormat('vi-VN').format(homestay.price)} Đ</Text>
+                        </Text>
+                        <Pressable
+                          style={[s.bookNowSmallBtn, { backgroundColor: colors.primary }]}
+                          onPress={() => router.push({ pathname: '/homestay/[id]' as any, params: { id: homestay.id } })}
+                        >
+                          <Text style={s.bookNowSmallText}>Đặt ngay</Text>
+                        </Pressable>
+                      </View>
                     </View>
-                  </View>
-                </Pressable>
+                  </Pressable>
+
+                  <Pressable
+                    style={s.trashBtnCorner}
+                    hitSlop={10}
+                    onPress={() => removeSaved(homestay.id)}
+                  >
+                    <Ionicons name="heart" size={20} color="#EF4444" />
+                  </Pressable>
+                </View>
               )}
             />
           )}
@@ -295,7 +440,7 @@ export default function BookingsScreen() {
               <View>
                 <Text style={[s.detailModalTitle, { color: colors.text }]}>Chi tiết đơn đặt phòng</Text>
                 <Text style={[s.detailModalSubtitle, { color: colors.primary }]}>
-                  Mã đơn: {selectedBookingDetail?.bookingCode || 'BK2026' + selectedBookingDetail?.id}
+                  Mã đơn: {selectedBookingDetail?.bookingCode || 'BK' + selectedBookingDetail?.id}
                 </Text>
               </View>
               <Pressable onPress={() => setSelectedBookingDetail(null)} hitSlop={8}>
@@ -314,11 +459,32 @@ export default function BookingsScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={[s.detailHsName, { color: colors.text }]}>{selectedBookingDetail?.name}</Text>
                   <Text style={s.detailHsMeta}>📍 {selectedBookingDetail?.location} • {selectedBookingDetail?.type}</Text>
-                  <View style={s.statusBadge}>
-                    <Ionicons name="shield-checkmark" size={12} color="#15803D" />
-                    <Text style={s.statusBadgeText}>
-                      {selectedBookingDetail?.status === 'confirmed' ? 'Đã xác nhận đặt phòng' : 'Chờ xác nhận'}
-                    </Text>
+
+                  {/* Status Badges in Modal */}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 4 }}>
+                    {selectedBookingDetail?.paymentStatus === 'completed' ? (
+                      <View style={s.paidBadge}>
+                        <Ionicons name="checkmark-circle" size={11} color="#15803D" />
+                        <Text style={s.paidBadgeText}>Đã thanh toán CK</Text>
+                      </View>
+                    ) : (
+                      <View style={s.unpaidBadge}>
+                        <Ionicons name="card-outline" size={11} color="#D97706" />
+                        <Text style={s.unpaidBadgeText}>Chưa thanh toán</Text>
+                      </View>
+                    )}
+
+                    {selectedBookingDetail?.status === 'confirmed' ? (
+                      <View style={s.confirmedBadge}>
+                        <Ionicons name="shield-checkmark" size={11} color="#0284C7" />
+                        <Text style={s.confirmedBadgeText}>Đặt phòng thành công</Text>
+                      </View>
+                    ) : (
+                      <View style={s.pendingBadge}>
+                        <Ionicons name="time-outline" size={11} color="#D97706" />
+                        <Text style={s.pendingBadgeText}>Chờ Web Admin duyệt</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               </View>
@@ -349,10 +515,34 @@ export default function BookingsScreen() {
                   </Text>
                 </View>
               </View>
+
+              {/* Notice regarding approval */}
+              <View style={[s.approvalNoticeBox, { backgroundColor: isDark ? '#1C2541' : '#FEF3C7', borderColor: '#F59E0B' }]}>
+                <Ionicons name="information-circle" size={16} color="#D97706" />
+                <Text style={[s.approvalNoticeText, { color: isDark ? '#FDE68A' : '#92400E' }]}>
+                  Chỉ cần chuyển khoản & upload biên lai là thanh toán thành công. Sau đó Web Admin sẽ chấp nhận duyệt phòng để chuyển trạng thái sang "Đặt phòng thành công".
+                </Text>
+              </View>
             </ScrollView>
 
             {/* Modal Actions */}
             <View style={s.detailModalActions}>
+              {selectedBookingDetail?.paymentStatus !== 'completed' && (
+                <Pressable
+                  style={[s.payInDetailBtn, { backgroundColor: colors.primary }]}
+                  onPress={() => {
+                    const item = selectedBookingDetail;
+                    setSelectedBookingDetail(null);
+                    setPaymentBooking(item);
+                    setProofImage(null);
+                    setTransactionCode('');
+                  }}
+                >
+                  <Ionicons name="card" size={15} color="#FFFFFF" />
+                  <Text style={s.payInDetailText}>Thanh toán ngay</Text>
+                </Pressable>
+              )}
+
               <Pressable
                 style={[s.viewHomestayBtn, { backgroundColor: isDark ? '#0B132B' : '#E0F2FE' }]}
                 onPress={() => {
@@ -371,47 +561,134 @@ export default function BookingsScreen() {
                 style={s.cancelBookingBtn}
                 onPress={() => {
                   if (selectedBookingDetail) {
-                    setBookingToCancel(selectedBookingDetail);
+                    const item = selectedBookingDetail;
+                    setSelectedBookingDetail(null);
+                    setTimeout(() => {
+                      handlePromptCancel(item);
+                    }, 350);
                   }
                 }}
               >
                 <Ionicons name="trash-outline" size={16} color="#FFFFFF" />
-                <Text style={s.cancelBookingText}>Hủy đặt phòng</Text>
+                <Text style={s.cancelBookingText}>Hủy phòng</Text>
               </Pressable>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* MODAL 2: XÁC NHẬN HỦY ĐƠN ĐẶT PHÒNG */}
+      {/* MODAL 2: TIẾN HÀNH THANH TOÁN (UPLOAD BIÊN LAI / MINH CHỨNG CHUYỂN KHOẢN) */}
       <Modal
-        visible={!!bookingToCancel}
+        visible={!!paymentBooking}
         transparent
-        animationType="fade"
-        onRequestClose={() => setBookingToCancel(null)}
+        animationType="slide"
+        onRequestClose={() => setPaymentBooking(null)}
       >
-        <Pressable style={s.modalOverlay} onPress={() => setBookingToCancel(null)}>
-          <Pressable style={[s.confirmCancelBox, { backgroundColor: isDark ? '#1C2541' : '#FFFFFF' }]} onPress={(e) => e.stopPropagation()}>
-            <View style={s.cancelWarningIcon}>
-              <Ionicons name="alert-circle" size={36} color="#DC2626" />
-            </View>
-
-            <Text style={[s.cancelWarningTitle, { color: colors.text }]}>Xác nhận hủy đặt phòng?</Text>
-            <Text style={s.cancelWarningDesc}>
-              Bạn có chắc chắn muốn hủy đơn đặt phòng tại <Text style={{ fontWeight: '700', color: colors.text }}>"{bookingToCancel?.name}"</Text> không? Sau khi hủy, đơn phòng sẽ được cập nhật vào CSDL.
-            </Text>
-
-            <View style={s.confirmActions}>
-              <Pressable style={s.closeCancelBtn} onPress={() => setBookingToCancel(null)}>
-                <Text style={s.closeCancelText}>Giữ lại</Text>
-              </Pressable>
-
-              <Pressable style={s.confirmCancelActionBtn} onPress={handleConfirmCancelBooking}>
-                <Text style={s.confirmCancelActionText}>Hủy đơn</Text>
+        <View style={s.modalOverlay}>
+          <View style={[s.paymentModalCard, { backgroundColor: isDark ? '#1C2541' : '#FFFFFF' }]}>
+            {/* Payment Header */}
+            <View style={[s.detailModalHeader, { borderBottomColor: colors.cardBorder }]}>
+              <View>
+                <Text style={[s.detailModalTitle, { color: colors.text }]}>Thanh toán chuyển khoản</Text>
+                <Text style={[s.detailModalSubtitle, { color: colors.primary }]}>
+                  Đơn phòng: {paymentBooking?.bookingCode}
+                </Text>
+              </View>
+              <Pressable onPress={() => setPaymentBooking(null)} hitSlop={8}>
+                <Ionicons name="close-circle" size={24} color="#94A3B8" />
               </Pressable>
             </View>
-          </Pressable>
-        </Pressable>
+
+            <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
+              {/* QR Code Section */}
+              <View style={[s.qrBox, { backgroundColor: isDark ? '#0B132B' : '#F8FAFC', borderColor: colors.cardBorder }]}>
+                <Text style={[s.qrTitle, { color: colors.text }]}>Quét mã VietQR chuyển khoản</Text>
+                <Image
+                  source={{
+                    uri: `https://img.vietqr.io/image/mbbank-0988888888-compact2.png?amount=${paymentBooking?.totalPrice || 0}&addInfo=${paymentBooking?.bookingCode || 'DATPHONG'}&accountName=HOMESTAY%20BOOKING%20VN`,
+                  }}
+                  style={s.qrImage}
+                  resizeMode="contain"
+                />
+                <Text style={s.qrHint}>Tự động nhận diện số tài khoản & số tiền chuyển khoản</Text>
+              </View>
+
+              {/* Bank Account Details */}
+              <View style={[s.bankInfoBox, { backgroundColor: isDark ? '#0F172A' : '#EFF6FF', borderColor: '#BFDBFE' }]}>
+                <BankLine label="Ngân hàng" value="MB Bank (Quân Đội)" isDark={isDark} />
+                <BankLine label="Số tài khoản" value="0988 888 888" isDark={isDark} isCopyable />
+                <BankLine label="Chủ tài khoản" value="HOMESTAY BOOKING VN" isDark={isDark} />
+                <BankLine label="Số tiền cần chuyển" value={formatPrice(paymentBooking?.totalPrice || 0)} isDark={isDark} isHighlight />
+                <BankLine label="Nội dung CK" value={paymentBooking?.bookingCode || ''} isDark={isDark} isCopyable />
+              </View>
+
+              {/* Upload Proof of Payment */}
+              <View style={[s.uploadSection, { borderColor: colors.cardBorder }]}>
+                <Text style={[s.uploadTitle, { color: colors.text }]}>
+                  📸 Minh chứng chuyển khoản (Bắt buộc)
+                </Text>
+                <Text style={s.uploadDesc}>
+                  Chụp màn hình giao dịch chuyển khoản thành công và tải lên đây để hoàn tất thanh toán.
+                </Text>
+
+                {proofImage ? (
+                  <View style={s.proofPreviewContainer}>
+                    <Image source={{ uri: proofImage }} style={s.proofPreviewImage} resizeMode="cover" />
+                    <Pressable style={s.removeProofBtn} onPress={() => setProofImage(null)}>
+                      <Ionicons name="trash" size={14} color="#FFFFFF" />
+                      <Text style={s.removeProofText}>Chọn ảnh khác</Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <View style={s.uploadButtonsRow}>
+                    <Pressable style={[s.chooseImageBtn, { backgroundColor: colors.primary }]} onPress={handlePickProofImage}>
+                      <Ionicons name="images-outline" size={16} color="#FFFFFF" />
+                      <Text style={s.chooseImageText}>Chọn từ thư viện</Text>
+                    </Pressable>
+
+                    <Pressable
+                      style={[s.demoMockBtn, { backgroundColor: isDark ? '#0B132B' : '#E0F2FE' }]}
+                      onPress={handleUseMockBill}
+                    >
+                      <Ionicons name="flash-outline" size={14} color={colors.primary} />
+                      <Text style={[s.demoMockText, { color: colors.primary }]}>Dùng ảnh mẫu (Demo)</Text>
+                    </Pressable>
+                  </View>
+                )}
+
+                {/* Optional Transaction Code */}
+                <View style={{ marginTop: 10 }}>
+                  <Text style={[s.inputLabel, { color: colors.textSecondary }]}>Mã giao dịch ngân hàng (tùy chọn):</Text>
+                  <TextInput
+                    value={transactionCode}
+                    onChangeText={setTransactionCode}
+                    placeholder="VD: FT260918001"
+                    placeholderTextColor="#94A3B8"
+                    style={[s.inputBox, { backgroundColor: colors.inputBg, color: colors.text, borderColor: colors.cardBorder }]}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Confirm Submit Button */}
+            <View style={s.paymentModalActions}>
+              <Pressable
+                style={[s.submitProofBtn, { backgroundColor: colors.primary }, (!proofImage || isSubmittingProof) && { opacity: 0.7 }]}
+                onPress={handleSubmitPaymentProof}
+                disabled={!proofImage || isSubmittingProof}
+              >
+                {isSubmittingProof ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="cloud-upload" size={16} color="#FFFFFF" />
+                    <Text style={s.submitProofText}>Xác nhận thanh toán</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -443,6 +720,40 @@ function DetailLine({
       <Text style={[s.detailLineValue, isDark && { color: '#F8FAFC' }, isGreen && { color: '#16A34A', fontWeight: '700' }]}>
         {value}
       </Text>
+    </View>
+  );
+}
+
+function BankLine({
+  label,
+  value,
+  isDark,
+  isHighlight,
+  isCopyable,
+}: {
+  label: string;
+  value: string;
+  isDark?: boolean;
+  isHighlight?: boolean;
+  isCopyable?: boolean;
+}) {
+  return (
+    <View style={s.bankLine}>
+      <Text style={s.bankLineLabel}>{label}:</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <Text
+          style={[
+            s.bankLineValue,
+            isDark && { color: '#F8FAFC' },
+            isHighlight && { color: '#2563EB', fontWeight: '800', fontSize: 13 },
+          ]}
+        >
+          {value}
+        </Text>
+        {isCopyable && (
+          <Ionicons name="copy-outline" size={12} color="#64748B" />
+        )}
+      </View>
     </View>
   );
 }
@@ -504,10 +815,9 @@ const s = StyleSheet.create({
   },
   continueText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
   bookingCard: {
+    position: 'relative',
     borderRadius: 14,
     padding: 10,
-    flexDirection: 'row',
-    gap: 10,
     marginBottom: 10,
     borderWidth: 1.5,
     shadowColor: '#0284C7',
@@ -517,10 +827,9 @@ const s = StyleSheet.create({
     elevation: 1,
   },
   wishlistCard: {
+    position: 'relative',
     borderRadius: 14,
     padding: 10,
-    flexDirection: 'row',
-    gap: 10,
     marginBottom: 10,
     borderWidth: 1.5,
     shadowColor: '#0284C7',
@@ -529,14 +838,74 @@ const s = StyleSheet.create({
     shadowRadius: 4,
     elevation: 1,
   },
-  bookingImage: { width: 74, height: 74, borderRadius: 8 },
+  cardTouchable: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  trashBtnCorner: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    padding: 6,
+    zIndex: 10,
+  },
+  bookingImage: { width: 78, height: 86, borderRadius: 8 },
   wishlistImage: { width: 80, height: 80, borderRadius: 8 },
-  info: { flex: 1, justifyContent: 'space-between' },
+  info: { flex: 1, justifyContent: 'space-between', paddingRight: 24 },
   itemTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  name: { fontSize: 14, fontWeight: '700', flex: 1, marginRight: 6 },
+  name: { fontSize: 14, fontWeight: '700', flex: 1 },
   location: { fontSize: 11, color: '#64748B', marginTop: 1 },
   dates: { fontSize: 10, color: '#64748B', marginTop: 2 },
   voucherApplied: { fontSize: 10, color: '#0284C7', fontWeight: '600', marginTop: 2 },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  paidBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  paidBadgeText: { fontSize: 9, fontWeight: '700', color: '#15803D' },
+  unpaidBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  unpaidBadgeText: { fontSize: 9, fontWeight: '700', color: '#B45309' },
+  confirmedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  confirmedBadgeText: { fontSize: 9, fontWeight: '700', color: '#0369A1' },
+  pendingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  pendingBadgeText: { fontSize: 9, fontWeight: '700', color: '#D97706' },
   itemBottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -553,14 +922,23 @@ const s = StyleSheet.create({
   ratingText: { fontSize: 11, color: '#475569', fontWeight: '500' },
   priceLabel: { fontSize: 11, color: '#475569' },
   priceValue: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
+  payNowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  payNowText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
   reviewBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
     backgroundColor: '#FEF3C7',
     paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   reviewBtnText: { fontSize: 10, fontWeight: '700', color: '#B45309' },
   bookNowSmallBtn: {
@@ -596,7 +974,6 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   checkoutText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
-  // Modal Overlay & Detail Card
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.6)',
@@ -607,6 +984,17 @@ const s = StyleSheet.create({
   detailModalCard: {
     width: '100%',
     maxWidth: 380,
+    borderRadius: 20,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  paymentModalCard: {
+    width: '100%',
+    maxWidth: 400,
     borderRadius: 20,
     padding: 18,
     shadowColor: '#000',
@@ -654,22 +1042,6 @@ const s = StyleSheet.create({
     color: '#64748B',
     marginTop: 2,
   },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginTop: 4,
-    alignSelf: 'flex-start',
-  },
-  statusBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#15803D',
-  },
   receiptBox: {
     padding: 12,
     borderRadius: 12,
@@ -707,17 +1079,46 @@ const s = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
+  approvalNoticeBox: {
+    flexDirection: 'row',
+    gap: 8,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  approvalNoticeText: {
+    flex: 1,
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: '600',
+  },
   detailModalActions: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     marginTop: 14,
+  },
+  payInDetailBtn: {
+    flex: 1.2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  payInDetailText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   viewHomestayBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 5,
     paddingVertical: 10,
     borderRadius: 12,
   },
@@ -730,7 +1131,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: '#DC2626',
     paddingVertical: 10,
     borderRadius: 12,
@@ -740,61 +1141,147 @@ const s = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  // Confirm Cancel Dialog
-  confirmCancelBox: {
-    width: '100%',
-    maxWidth: 340,
-    borderRadius: 20,
-    padding: 20,
+  // QR & Payment Modal
+  qrBox: {
     alignItems: 'center',
-    elevation: 8,
-  },
-  cancelWarningIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#FEF2F2',
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
     marginBottom: 10,
   },
-  cancelWarningTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 6,
-  },
-  cancelWarningDesc: {
-    fontSize: 12,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 16,
-  },
-  confirmActions: {
-    flexDirection: 'row',
-    gap: 10,
-    width: '100%',
-  },
-  closeCancelBtn: {
-    flex: 1,
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  closeCancelText: {
+  qrTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#475569',
+    marginBottom: 8,
   },
-  confirmCancelActionBtn: {
-    flex: 1,
-    backgroundColor: '#DC2626',
-    paddingVertical: 10,
+  qrImage: {
+    width: 190,
+    height: 190,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  qrHint: {
+    fontSize: 10,
+    color: '#64748B',
+    marginTop: 6,
+  },
+  bankInfoBox: {
+    padding: 12,
     borderRadius: 12,
+    borderWidth: 1,
+    gap: 6,
+    marginBottom: 12,
+  },
+  bankLine: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  confirmCancelActionText: {
+  bankLineLabel: {
+    fontSize: 11,
+    color: '#475569',
+    fontWeight: '500',
+  },
+  bankLineValue: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  uploadSection: {
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginBottom: 10,
+  },
+  uploadTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  uploadDesc: {
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 16,
+    marginBottom: 10,
+  },
+  uploadButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  chooseImageBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  chooseImageText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  demoMockBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  demoMockText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  proofPreviewContainer: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  proofPreviewImage: {
+    width: '100%',
+    height: 160,
+    borderRadius: 10,
+  },
+  removeProofBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  removeProofText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  inputLabel: {
+    fontSize: 11,
+    marginBottom: 4,
+  },
+  inputBox: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    fontSize: 12,
+  },
+  paymentModalActions: {
+    marginTop: 10,
+  },
+  submitProofBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  submitProofText: {
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',

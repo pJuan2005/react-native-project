@@ -32,6 +32,34 @@ const verifyAuth = async (req, res, next) => {
 };
 
 /**
+ * Optional Authentication Middleware
+ * Tự động trích xuất user nếu có Bearer token, không chặn nếu không có
+ */
+const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.replace('Bearer ', '').trim();
+      const parts = token.split('_');
+      const userId = parts[1];
+      if (userId) {
+        try {
+          const user = await UserModel.findById(userId);
+          if (user && user.is_active) {
+            req.user = user;
+          } else {
+            req.user = { id: userId, role: 'customer' };
+          }
+        } catch (_) {
+          req.user = { id: userId, role: 'customer' };
+        }
+      }
+    }
+  } catch (_) {}
+  next();
+};
+
+/**
  * Role-based Authorization Middleware (Admin only)
  */
 const verifyAdmin = async (req, res, next) => {
@@ -61,5 +89,6 @@ const verifyAdmin = async (req, res, next) => {
 
 module.exports = {
   verifyAuth,
+  optionalAuth,
   verifyAdmin,
 };
