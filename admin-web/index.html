@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Homestay Admin Portal - Quản Trị Hệ Thống</title>
+  <title>Homestay Admin & Host Portal - Quản Trị Hệ Thống & Chủ Nhà</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
@@ -14,6 +14,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .badge-online { background-color: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+    .badge-direct { background-color: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex min-h-screen">
@@ -27,45 +29,83 @@
           <i class="fa-solid fa-hotel text-lg"></i>
         </div>
         <div>
-          <h1 class="font-bold text-base leading-tight">Homestay Admin</h1>
-          <span class="text-xs text-blue-400 font-medium">Bảng điều khiển v1.0</span>
+          <h1 class="font-bold text-base leading-tight">Homestay Portal</h1>
+          <span id="role-subtitle" class="text-xs text-blue-400 font-medium">Chủ Web App (Admin)</span>
         </div>
       </div>
 
-      <!-- Nav Items -->
-      <nav class="p-4 space-y-1.5">
-        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition bg-blue-600 text-white shadow-md shadow-blue-600/20">
+      <!-- WORKSPACE SWITCHER -->
+      <div class="p-3 bg-slate-800/60 m-3 rounded-xl border border-slate-700/60">
+        <label class="block text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1.5">Giao diện làm việc:</label>
+        <div class="grid grid-cols-2 gap-1 bg-slate-900 p-1 rounded-lg">
+          <button onclick="switchRoleMode('admin')" id="role-btn-admin" class="py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white transition flex items-center justify-center gap-1.5 shadow-xs">
+            <i class="fa-solid fa-crown text-[10px]"></i>
+            <span>Chủ Web</span>
+          </button>
+          <button onclick="switchRoleMode('host')" id="role-btn-host" class="py-1.5 text-xs font-bold rounded-md text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-house-user text-[10px]"></i>
+            <span>Chủ Homestay</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- NAV ITEMS: ADMIN MODE -->
+      <nav id="nav-admin-group" class="p-3 space-y-1.5">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition bg-blue-600 text-white shadow-md shadow-blue-600/20">
           <i class="fa-solid fa-chart-pie text-base w-5"></i>
-          <span>Tổng quan</span>
+          <span>Tổng quan nền tảng</span>
         </button>
 
-        <button onclick="switchTab('bookings')" id="nav-bookings" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+        <button onclick="switchTab('bookings')" id="nav-bookings" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
           <i class="fa-solid fa-calendar-check text-base w-5"></i>
           <span>Quản lý Đặt phòng</span>
           <span id="pending-badge" class="ml-auto bg-amber-500/20 text-amber-400 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
         </button>
 
-        <button onclick="switchTab('homestays')" id="nav-homestays" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+        <button onclick="switchTab('homestays')" id="nav-homestays" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
           <i class="fa-solid fa-house-chimney text-base w-5"></i>
           <span>Quản lý Homestay</span>
         </button>
 
-        <button onclick="switchTab('promotions')" id="nav-promotions" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+        <button onclick="switchTab('hosts')" id="nav-hosts" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+          <i class="fa-solid fa-users text-base w-5"></i>
+          <span>Chủ Homestay & Hoa hồng</span>
+        </button>
+
+        <button onclick="switchTab('promotions')" id="nav-promotions" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
           <i class="fa-solid fa-ticket text-base w-5"></i>
-          <span>Mã giảm giá & Voucher</span>
+          <span>Voucher & Cấu hình</span>
+        </button>
+      </nav>
+
+      <!-- NAV ITEMS: HOST MODE -->
+      <nav id="nav-host-group" class="p-3 space-y-1.5 hidden">
+        <button onclick="switchTab('host-workspace')" id="nav-host-workspace" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition bg-emerald-600 text-white shadow-md shadow-emerald-600/20">
+          <i class="fa-solid fa-calendar-plus text-base w-5"></i>
+          <span>Đặt phòng tại quầy</span>
+        </button>
+
+        <button onclick="switchTab('host-bookings')" id="nav-host-bookings" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+          <i class="fa-solid fa-list-check text-base w-5"></i>
+          <span>Đơn phòng của Homestay</span>
+        </button>
+
+        <button onclick="switchTab('host-revenue')" id="nav-host-revenue" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition">
+          <i class="fa-solid fa-wallet text-base w-5"></i>
+          <span>Doanh thu & Thực nhận</span>
         </button>
       </nav>
     </div>
 
     <!-- User Footer -->
     <div class="p-4 border-t border-slate-800 flex items-center gap-3">
-      <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full border-2 border-blue-500 object-cover" alt="Admin Avatar">
+      <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=150&q=80" class="w-10 h-10 rounded-full border-2 border-blue-500 object-cover" alt="Avatar">
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-bold truncate">Admin Hệ Thống</p>
-        <p class="text-xs text-slate-400 truncate">admin@homestay.com</p>
+        <p id="user-display-name" class="text-sm font-bold truncate">Quản Trị Viên (Admin)</p>
+        <p id="user-display-role" class="text-xs text-slate-400 truncate">admin@homestay.com</p>
       </div>
-      <button onclick="alert('Đăng xuất thành công')" class="text-slate-400 hover:text-red-400 transition" title="Đăng xuất">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+      <button onclick="alert('Đã đồng bộ phiên làm việc')" class="text-slate-400 hover:text-blue-400 transition" title="Làm mới phiên">
+        <i class="fa-solid fa-rotate"></i>
       </button>
     </div>
   </aside>
@@ -75,17 +115,23 @@
     <!-- Header -->
     <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-10 shadow-xs">
       <div class="flex items-center gap-3">
-        <h2 id="page-title" class="text-lg font-bold text-slate-900">Bảng điều khiển Tổng quan</h2>
+        <h2 id="page-title" class="text-lg font-bold text-slate-900">Bảng điều khiển Tổng quan Nền tảng</h2>
       </div>
 
       <div class="flex items-center gap-4">
+        <!-- Mode indicator tag -->
+        <span id="header-mode-tag" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Chế độ: Quản trị Platform</span>
+        </span>
+
         <!-- Live Status indicator -->
         <div class="flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-semibold">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Database MySQL Kết nối OK</span>
+          <span>MySQL & Mobile API OK</span>
         </div>
 
-        <button onclick="fetchDashboardData(); fetchBookingsData();" class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Làm mới dữ liệu">
+        <button onclick="refreshCurrentTab()" class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Làm mới dữ liệu">
           <i class="fa-solid fa-rotate text-sm"></i>
         </button>
       </div>
@@ -95,38 +141,52 @@
     <main class="p-6 flex-1 overflow-y-auto">
 
       <!-- ============================================== -->
-      <!-- TAB 1: DASHBOARD -->
+      <!-- TAB 1: ADMIN DASHBOARD -->
       <!-- ============================================== -->
       <section id="tab-dashboard" class="space-y-6">
         <!-- 4 KPI CARDS -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          <!-- Card 1: Doanh thu -->
+          <!-- Card 1: Doanh thu tổng -->
           <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng doanh thu</span>
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng doanh thu phòng</span>
               <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                 <i class="fa-solid fa-coins text-lg"></i>
               </div>
             </div>
             <p id="kpi-revenue" class="text-2xl font-extrabold text-slate-900 mt-3">0 ₫</p>
             <p class="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-              <i class="fa-solid fa-arrow-trend-up"></i> Tăng trưởng 18.5% so với tháng trước
+              <i class="fa-solid fa-chart-line"></i> Toàn bộ hệ thống Mobile & Web
             </p>
           </div>
 
-          <!-- Card 2: Đơn đặt phòng -->
+          <!-- Card 2: Hoa hồng nền tảng (10%) -->
+          <div class="bg-white p-5 rounded-2xl border border-blue-100 bg-gradient-to-br from-white to-blue-50/40 shadow-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Hoa hồng nền tảng thu</span>
+              <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+                <i class="fa-solid fa-percent text-lg"></i>
+              </div>
+            </div>
+            <p id="kpi-commission" class="text-2xl font-extrabold text-blue-600 mt-3">0 ₫</p>
+            <p class="text-xs text-slate-500 font-semibold mt-1">
+              Thu nhập thực của chủ App (10%)
+            </p>
+          </div>
+
+          <!-- Card 3: Đơn đặt phòng (Online & Tại quầy) -->
           <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng đơn đặt phòng</span>
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng đơn phòng</span>
               <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                 <i class="fa-solid fa-calendar-days text-lg"></i>
               </div>
             </div>
             <p id="kpi-bookings" class="text-2xl font-extrabold text-slate-900 mt-3">0</p>
-            <p class="text-xs text-slate-500 font-medium mt-1">Bao gồm tất cả các trạng thái</p>
+            <p id="kpi-sources" class="text-xs text-slate-500 font-medium mt-1">App: 0 • Tại quầy: 0</p>
           </div>
 
-          <!-- Card 3: Đơn chờ duyệt -->
+          <!-- Card 4: Đơn chờ duyệt -->
           <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Đơn chờ duyệt</span>
@@ -135,19 +195,7 @@
               </div>
             </div>
             <p id="kpi-pending" class="text-2xl font-extrabold text-amber-600 mt-3">0</p>
-            <p class="text-xs text-amber-600 font-medium mt-1">Cần Admin xử lý duyệt phòng</p>
-          </div>
-
-          <!-- Card 4: Homestay đang mở -->
-          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Homestay hoạt động</span>
-              <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                <i class="fa-solid fa-bed text-lg"></i>
-              </div>
-            </div>
-            <p id="kpi-homestays" class="text-2xl font-extrabold text-slate-900 mt-3">0</p>
-            <p id="kpi-customers" class="text-xs text-slate-500 font-medium mt-1">0 khách hàng đăng ký</p>
+            <p class="text-xs text-amber-600 font-medium mt-1">Cần Admin xác nhận biên lai</p>
           </div>
         </div>
 
@@ -156,8 +204,12 @@
           <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-xs">
             <div class="flex items-center justify-between mb-4">
               <div>
-                <h3 class="font-bold text-slate-900 text-base">Biểu đồ Doanh thu (Tháng)</h3>
-                <p class="text-xs text-slate-400">Thống kê doanh thu từ các đơn đặt phòng thành công</p>
+                <h3 class="font-bold text-slate-900 text-base">Doanh thu & Hoa hồng nền tảng (Tháng)</h3>
+                <p class="text-xs text-slate-400">Thống kê doanh số phòng và dòng tiền hoa hồng thực nhận</p>
+              </div>
+              <div class="flex items-center gap-4 text-xs font-bold">
+                <span class="flex items-center gap-1.5 text-blue-600"><span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span> Doanh thu tổng</span>
+                <span class="flex items-center gap-1.5 text-emerald-600"><span class="w-3 h-3 rounded-full bg-emerald-600 inline-block"></span> Hoa hồng sàn</span>
               </div>
             </div>
             <div class="h-64">
@@ -165,11 +217,24 @@
             </div>
           </div>
 
-          <!-- Quick Actions & System Info -->
+          <!-- Quick Actions & Mode Switcher -->
           <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs space-y-4">
-            <h3 class="font-bold text-slate-900 text-base">Hệ thống & Tác vụ nhanh</h3>
+            <h3 class="font-bold text-slate-900 text-base">Tác vụ Quản trị nhanh</h3>
 
             <div class="space-y-3">
+              <button onclick="switchRoleMode('host')" class="w-full flex items-center justify-between p-3.5 rounded-xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-left transition group">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs shadow-xs">
+                    <i class="fa-solid fa-house-user"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold text-emerald-900">Vào Portal Chủ Homestay</p>
+                    <p class="text-[11px] text-emerald-600">Tạo đơn đặt trực tiếp tại quầy</p>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-emerald-600"></i>
+              </button>
+
               <button onclick="switchTab('bookings')" class="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-100 text-left transition group">
                 <div class="flex items-center gap-3">
                   <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs">
@@ -177,60 +242,51 @@
                   </div>
                   <div>
                     <p class="text-xs font-bold text-slate-800 group-hover:text-blue-600">Duyệt đơn đặt phòng</p>
-                    <p class="text-[11px] text-slate-400">Xem và xác nhận các đơn chờ</p>
+                    <p class="text-[11px] text-slate-400">Xem biên lai chuyển khoản của khách</p>
                   </div>
                 </div>
                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
               </button>
 
-              <button onclick="openAddHomestayModal()" class="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-100 text-left transition group">
+              <button onclick="openAddHomestayModal()" class="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-100 text-left transition group">
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs">
+                  <div class="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center text-xs">
                     <i class="fa-solid fa-plus"></i>
                   </div>
                   <div>
-                    <p class="text-xs font-bold text-slate-800 group-hover:text-emerald-600">Thêm Homestay Mới</p>
-                    <p class="text-[11px] text-slate-400">Đăng tải homestay lên ứng dụng</p>
+                    <p class="text-xs font-bold text-slate-800 group-hover:text-purple-600">Thêm Homestay Mới</p>
+                    <p class="text-[11px] text-slate-400">Mở bán homestay lên ứng dụng mobile</p>
                   </div>
                 </div>
                 <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
               </button>
-            </div>
-
-            <div class="pt-4 border-t border-slate-100">
-              <p class="text-xs font-bold text-slate-600 mb-2">Thông tin kết nối:</p>
-              <p class="text-xs text-slate-500 font-mono">📡 API: <span class="text-blue-600 font-bold">http://localhost:3000/api</span></p>
-              <p class="text-xs text-slate-500 font-mono mt-1">🗄️ Database: <span class="text-emerald-600 font-bold">homestay_db</span></p>
             </div>
           </div>
         </div>
 
-        <!-- RECENT BOOKINGS TABLE -->
+        <!-- RECENT BOOKINGS PREVIEW -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
           <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-            <div>
-              <h3 class="font-bold text-slate-900 text-base">Đơn đặt phòng gần đây</h3>
-              <p class="text-xs text-slate-400">Danh sách các lượt booking mới nhất từ ứng dụng di động</p>
-            </div>
-            <button onclick="switchTab('bookings')" class="text-xs font-bold text-blue-600 hover:underline">
-              Xem tất cả đơn ➔
-            </button>
+            <h3 class="font-bold text-slate-900 text-base">Đơn đặt phòng gần đây nhất</h3>
+            <button onclick="switchTab('bookings')" class="text-xs font-bold text-blue-600 hover:underline">Xem tất cả</button>
           </div>
 
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-100">
                 <tr>
-                  <th class="py-3.5 px-4">Mã đơn</th>
-                  <th class="py-3.5 px-4">Khách hàng</th>
-                  <th class="py-3.5 px-4">Homestay</th>
-                  <th class="py-3.5 px-4">Thời gian lưu trú</th>
-                  <th class="py-3.5 px-4">Tổng tiền</th>
-                  <th class="py-3.5 px-4">Trạng thái</th>
+                  <th class="py-3 px-4">Mã đơn</th>
+                  <th class="py-3 px-4">Nguồn đơn</th>
+                  <th class="py-3 px-4">Khách hàng</th>
+                  <th class="py-3 px-4">Homestay</th>
+                  <th class="py-3 px-4">Ngày lưu trú</th>
+                  <th class="py-3 px-4">Tổng tiền</th>
+                  <th class="py-3 px-4">Hoa hồng (10%)</th>
+                  <th class="py-3 px-4">Trạng thái</th>
                 </tr>
               </thead>
               <tbody id="recent-bookings-body" class="divide-y divide-slate-100 text-slate-700">
-                <tr><td colspan="6" class="text-center py-6 text-slate-400">Đang tải dữ liệu...</td></tr>
+                <tr><td colspan="8" class="text-center py-6 text-slate-400">Đang tải danh sách...</td></tr>
               </tbody>
             </table>
           </div>
@@ -238,25 +294,33 @@
       </section>
 
       <!-- ============================================== -->
-      <!-- TAB 2: MANAGE BOOKINGS -->
+      <!-- TAB 2: ADMIN BOOKING MANAGEMENT -->
       <!-- ============================================== -->
       <section id="tab-bookings" class="hidden space-y-6">
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs">
-          <!-- Filters & Search -->
-          <div class="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+          <!-- Search & Filter Header -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <!-- Search -->
             <div class="relative flex-1 max-w-md">
-              <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-              <input type="text" id="booking-search" oninput="fetchBookingsData()" placeholder="Tìm theo mã đơn, tên khách, homestay..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+              <input type="text" id="booking-search" oninput="fetchBookingsData()" placeholder="Tìm theo mã đơn, tên khách, số điện thoại, homestay..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition">
             </div>
 
-            <!-- Status Filter -->
+            <!-- Filters -->
             <div class="flex items-center gap-2 overflow-x-auto">
-              <button onclick="setBookingFilter('all')" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white" data-status="all">Tất cả</button>
-              <button onclick="setBookingFilter('pending')" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200" data-status="pending">Chờ duyệt</button>
-              <button onclick="setBookingFilter('confirmed')" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200" data-status="confirmed">Đã xác nhận</button>
-              <button onclick="setBookingFilter('completed')" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200" data-status="completed">Hoàn thành</button>
-              <button onclick="setBookingFilter('cancelled')" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200" data-status="cancelled">Đã hủy</button>
+              <!-- Source Filter -->
+              <select id="booking-source-filter" onchange="fetchBookingsData()" class="px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-700 focus:outline-none">
+                <option value="all">Tất cả nguồn</option>
+                <option value="guest_online">📱 App Mobile</option>
+                <option value="host_direct">🏨 Tại quầy Host</option>
+              </select>
+
+              <!-- Status Filters -->
+              <button onclick="setBookingFilter('all')" class="filter-btn px-3 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white" data-status="all">Tất cả</button>
+              <button onclick="setBookingFilter('pending')" class="filter-btn px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200" data-status="pending">Chờ duyệt</button>
+              <button onclick="setBookingFilter('confirmed')" class="filter-btn px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200" data-status="confirmed">Đã xác nhận</button>
+              <button onclick="setBookingFilter('completed')" class="filter-btn px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200" data-status="completed">Hoàn thành</button>
+              <button onclick="setBookingFilter('cancelled')" class="filter-btn px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200" data-status="cancelled">Đã hủy</button>
             </div>
           </div>
 
@@ -266,16 +330,18 @@
               <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-100">
                 <tr>
                   <th class="py-3.5 px-4">Mã đơn</th>
+                  <th class="py-3.5 px-4">Nguồn</th>
                   <th class="py-3.5 px-4">Khách hàng</th>
                   <th class="py-3.5 px-4">Homestay & Địa điểm</th>
                   <th class="py-3.5 px-4">Check-in / Out</th>
                   <th class="py-3.5 px-4">Thanh toán</th>
+                  <th class="py-3.5 px-4">Phân bổ tài chính</th>
                   <th class="py-3.5 px-4">Trạng thái</th>
-                  <th class="py-3.5 px-4 text-center">Thao tác duyệt</th>
+                  <th class="py-3.5 px-4 text-center">Thao tác</th>
                 </tr>
               </thead>
               <tbody id="all-bookings-body" class="divide-y divide-slate-100 text-slate-700">
-                <tr><td colspan="7" class="text-center py-6 text-slate-400">Đang tải danh sách đơn...</td></tr>
+                <tr><td colspan="9" class="text-center py-6 text-slate-400">Đang tải danh sách đơn...</td></tr>
               </tbody>
             </table>
           </div>
@@ -283,13 +349,13 @@
       </section>
 
       <!-- ============================================== -->
-      <!-- TAB 3: MANAGE HOMESTAYS -->
+      <!-- TAB 3: ADMIN HOMESTAY MANAGEMENT -->
       <!-- ============================================== -->
       <section id="tab-homestays" class="hidden space-y-6">
         <div class="flex items-center justify-between">
           <div>
-            <h3 class="font-bold text-slate-900 text-lg">Danh sách Homestay</h3>
-            <p class="text-xs text-slate-500">Quản lý và cập nhật thông tin phòng nghỉ hiển thị trên mobile</p>
+            <h3 class="font-bold text-slate-900 text-lg">Danh sách Homestay Toàn hệ thống</h3>
+            <p class="text-xs text-slate-500">Quản lý, cấp token truy cập nhanh và gán chủ homestay</p>
           </div>
           <button onclick="openAddHomestayModal()" class="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-md shadow-blue-500/20 transition">
             <i class="fa-solid fa-plus"></i>
@@ -303,14 +369,102 @@
       </section>
 
       <!-- ============================================== -->
-      <!-- TAB 4: MANAGE PROMOTIONS -->
+      <!-- TAB 4: ADMIN HOSTS & COMMISSIONS -->
+      <!-- ============================================== -->
+      <section id="tab-hosts" class="hidden space-y-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg">Danh sách Chủ Homestay (Hosts) & Đối tác</h3>
+              <p class="text-xs text-slate-500">Theo dõi danh sách chủ nhà, homestay quản lý và hoa hồng chia sẻ</p>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-100">
+                <tr>
+                  <th class="py-3.5 px-4">Tên Chủ Homestay</th>
+                  <th class="py-3.5 px-4">Liên hệ (Email / SĐT)</th>
+                  <th class="py-3.5 px-4">Địa bàn</th>
+                  <th class="py-3.5 px-4">Homestay phụ trách</th>
+                  <th class="py-3.5 px-4">Tỷ lệ hoa hồng</th>
+                  <th class="py-3.5 px-4">Trạng thái</th>
+                  <th class="py-3.5 px-4 text-center">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700">
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="py-3.5 px-4 font-bold text-slate-900 flex items-center gap-2">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80" class="w-7 h-7 rounded-full object-cover">
+                    <span>Nguyễn Văn Chủ Nhà (Host)</span>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <p class="font-semibold text-slate-800">host@homestay.vn</p>
+                    <p class="text-[11px] text-slate-400">0988 776 655</p>
+                  </td>
+                  <td class="py-3.5 px-4 font-medium text-slate-600">Đà Lạt, Lâm Đồng</td>
+                  <td class="py-3.5 px-4 font-bold text-blue-600">10 Homestays</td>
+                  <td class="py-3.5 px-4">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">10% Online / 5% Tại quầy</span>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">Đang hoạt động</span>
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <button onclick="switchRoleMode('host')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs">
+                      Mở Portal Host
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 5: ADMIN PROMOTIONS & SETTINGS -->
       <!-- ============================================== -->
       <section id="tab-promotions" class="hidden space-y-6">
+        <!-- Commission Settings Card -->
+        <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-6 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-lg">Cấu hình Tài chính & Tỷ lệ Hoa hồng Nền tảng</h3>
+              <p class="text-xs text-blue-200">Tỷ lệ chiết khấu áp dụng tự động khi phát sinh doanh thu từ đơn phòng</p>
+            </div>
+            <span class="px-3 py-1 bg-blue-500/30 border border-blue-400/40 rounded-full text-xs font-bold text-blue-200">
+              Chính sách 2026
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-900">
+            <div class="bg-white p-4 rounded-xl border border-blue-100">
+              <span class="text-xs font-bold text-slate-500 uppercase">Hoa hồng Đơn Online (App Mobile)</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-3xl font-extrabold text-blue-600">10%</span>
+                <span class="text-xs text-slate-400">/ tổng giá trị đơn</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">Chủ homestay nhận 90% doanh thu phòng khi khách đặt online.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-blue-100">
+              <span class="text-xs font-bold text-slate-500 uppercase">Hoa hồng Đơn Tại Quầy (Walk-in)</span>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-3xl font-extrabold text-emerald-600">5%</span>
+                <span class="text-xs text-slate-400">/ tổng giá trị đơn</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">Phí nền tảng quản trị nhẹ cho đơn do chính chủ nhà tự tạo tại quầy.</p>
+            </div>
+          </div>
+        </div>
+
         <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs">
           <h3 class="font-bold text-slate-900 text-lg mb-1">Danh sách Mã Giảm Giá & Voucher</h3>
           <p class="text-xs text-slate-500 mb-6">Quản lý các chương trình ưu đãi hiển thị trong Ví Voucher của ứng dụng</p>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="p-4 rounded-xl border border-blue-200 bg-blue-50/50">
               <div class="flex items-center justify-between">
                 <span class="px-2.5 py-1 rounded-md bg-blue-600 text-white text-xs font-mono font-bold">WELCOME10</span>
@@ -353,7 +507,284 @@
         </div>
       </section>
 
+      <!-- ========================================================================= -->
+      <!-- HOST PORTAL SECTION (DÀNH RIÊNG CHO CHỦ HOMESTAY & LỄ TÂN ĐẶT TRỰC TIẾP) -->
+      <!-- ========================================================================= -->
+
+      <!-- HOST TAB 1: WORKSPACE & DIRECT WALK-IN BOOKING -->
+      <section id="tab-host-workspace" class="hidden space-y-6">
+        <!-- Host Top Banner -->
+        <div class="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-6 rounded-2xl shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span class="px-3 py-1 bg-emerald-700/60 border border-emerald-400/40 rounded-full text-xs font-bold text-emerald-200">
+              🏡 Không gian làm việc Chủ Homestay
+            </span>
+            <h2 class="text-xl font-extrabold mt-2">Quản lý Lịch & Đặt phòng Trực tiếp tại Quầy</h2>
+            <p class="text-xs text-emerald-200 mt-1">Khách đến trực tiếp hoặc gọi điện? Hãy tạo đơn tại đây để đồng bộ và khóa lịch ngay trên App Mobile!</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button onclick="openDirectBookingModal()" class="flex items-center gap-2 px-5 py-3 bg-white text-emerald-900 hover:bg-emerald-50 rounded-xl text-sm font-extrabold shadow-lg shadow-black/20 transition">
+              <i class="fa-solid fa-plus-circle text-emerald-600 text-base"></i>
+              <span>Đặt phòng tại quầy (Khách Walk-in)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Homestay Selector Bar -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <label class="text-xs font-bold text-slate-700 shrink-0">Homestay đang thao tác:</label>
+            <select id="host-homestay-select" onchange="onHostHomestayChange()" class="w-full sm:w-80 px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-800 focus:outline-none focus:border-emerald-600 bg-slate-50">
+              <option value="">Đang tải danh sách homestay...</option>
+            </select>
+          </div>
+
+          <!-- Quick Token Link -->
+          <div class="flex items-center gap-2 text-xs">
+            <span class="text-slate-500 font-medium">Link quản lý nhanh (Lễ tân):</span>
+            <button onclick="copyQuickManageLink()" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold hover:bg-emerald-100 transition flex items-center gap-1">
+              <i class="fa-solid fa-link"></i>
+              <span>Sao chép Link Quầy</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Host Financial Metrics -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Doanh thu phòng thực nhận</span>
+            <p id="host-kpi-net" class="text-2xl font-extrabold text-emerald-600 mt-2">0 ₫</p>
+            <p class="text-xs text-slate-500 mt-1 font-medium">Sau khi đã trừ hoa hồng sàn</p>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hoa hồng trả cho Chủ App</span>
+            <p id="host-kpi-fee" class="text-2xl font-extrabold text-slate-700 mt-2">0 ₫</p>
+            <p class="text-xs text-slate-500 mt-1 font-medium">5% đơn tại quầy / 10% đơn mobile</p>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng đơn phòng của bạn</span>
+            <p id="host-kpi-total-bookings" class="text-2xl font-extrabold text-blue-600 mt-2">0</p>
+            <p id="host-kpi-breakdown" class="text-xs text-slate-500 mt-1 font-medium">App: 0 • Tại quầy: 0</p>
+          </div>
+        </div>
+
+        <!-- Host Bookings Table for this Homestay -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-slate-900 text-base">Lịch đón khách & Đơn phòng của Homestay</h3>
+              <p class="text-xs text-slate-500">Bao gồm cả khách đặt từ App Mobile và khách đặt trực tiếp tại quầy</p>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-100">
+                <tr>
+                  <th class="py-3 px-4">Mã đơn</th>
+                  <th class="py-3 px-4">Nguồn</th>
+                  <th class="py-3 px-4">Tên khách & SĐT</th>
+                  <th class="py-3 px-4">Thời gian lưu trú</th>
+                  <th class="py-3 px-4">Tổng tiền khách trả</th>
+                  <th class="py-3 px-4">Chủ nhà thực nhận</th>
+                  <th class="py-3 px-4">Thanh toán</th>
+                  <th class="py-3 px-4">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody id="host-bookings-body" class="divide-y divide-slate-100 text-slate-700">
+                <tr><td colspan="8" class="text-center py-6 text-slate-400">Đang tải danh sách đơn phòng của bạn...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOST TAB 2: ALL HOST BOOKINGS -->
+      <section id="tab-host-bookings" class="hidden space-y-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg">Toàn bộ đơn phòng của các Homestay bạn sở hữu</h3>
+              <p class="text-xs text-slate-500">Tra cứu nhanh lịch sử đặt phòng trên mọi cơ sở</p>
+            </div>
+            <button onclick="openDirectBookingModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs">
+              + Đặt phòng tại quầy
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-100">
+                <tr>
+                  <th class="py-3 px-4">Mã đơn</th>
+                  <th class="py-3 px-4">Homestay</th>
+                  <th class="py-3 px-4">Nguồn</th>
+                  <th class="py-3 px-4">Khách hàng</th>
+                  <th class="py-3 px-4">Check-in ➔ Check-out</th>
+                  <th class="py-3 px-4">Khách trả</th>
+                  <th class="py-3 px-4">Chủ nhà thực nhận</th>
+                  <th class="py-3 px-4">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody id="host-all-bookings-body" class="divide-y divide-slate-100 text-slate-700">
+                <tr><td colspan="8" class="text-center py-6 text-slate-400">Đang tải...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOST TAB 3: REVENUE & PAYOUT -->
+      <section id="tab-host-revenue" class="hidden space-y-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs">
+          <h3 class="font-bold text-slate-900 text-lg mb-2">Báo cáo Tài chính & Đối soát Doanh thu</h3>
+          <p class="text-xs text-slate-500 mb-6">Chi tiết tiền phòng thực nhận của Chủ nhà sau khi khấu trừ hoa hồng nền tảng</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-5 rounded-2xl bg-emerald-50 border border-emerald-200">
+              <h4 class="font-bold text-emerald-900 text-sm mb-3">Tóm tắt số dư kỳ này</h4>
+              <div class="space-y-3 text-xs">
+                <div class="flex justify-between py-1.5 border-b border-emerald-200">
+                  <span class="text-slate-600">Tổng doanh số phát sinh:</span>
+                  <span id="payout-gross" class="font-bold text-slate-900">0 ₫</span>
+                </div>
+                <div class="flex justify-between py-1.5 border-b border-emerald-200">
+                  <span class="text-slate-600">Phí hoa hồng nộp nền tảng:</span>
+                  <span id="payout-fee" class="font-bold text-red-600">-0 ₫</span>
+                </div>
+                <div class="flex justify-between py-2 text-sm font-extrabold text-emerald-900">
+                  <span>Thực nhận của bạn:</span>
+                  <span id="payout-net" class="text-emerald-700 text-base">0 ₫</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+              <h4 class="font-bold text-slate-900 text-sm mb-2">Thông tin tài khoản nhận tiền (Payout)</h4>
+              <p class="text-xs text-slate-500 mb-4">Khoản thu nhập sẽ được tự động kết chuyển định kỳ vào số tài khoản bên dưới:</p>
+              <div class="bg-white p-3.5 rounded-xl border border-slate-200 text-xs space-y-1.5">
+                <p><strong class="text-slate-700">Ngân hàng:</strong> MB Bank (Quân Đội)</p>
+                <p><strong class="text-slate-700">Số tài khoản:</strong> 0988 776 655</p>
+                <p><strong class="text-slate-700">Chủ tài khoản:</strong> NGUYEN VAN CHU NHA</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ĐẶT PHÒNG TRỰC TIẾP TẠI QUẦY (WALK-IN DIRECT BOOKING FOR HOST) -->
+  <!-- ========================================================================= -->
+  <div id="direct-booking-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-emerald-50/50">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700">🏨 Host Walk-in Booking</span>
+          <h3 class="font-bold text-slate-900 text-base">Tạo đơn đặt phòng trực tiếp tại quầy</h3>
+        </div>
+        <button onclick="closeDirectBookingModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="direct-booking-form" onsubmit="handleCreateDirectBooking(event)" class="p-5 space-y-4 max-h-[82vh] overflow-y-auto">
+        <!-- Homestay Choice -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Chỗ nghỉ (Homestay) *</label>
+          <select id="db-homestay" required onchange="calcDirectBookingPrice()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-emerald-600 bg-slate-50">
+            <!-- Loaded dynamically -->
+          </select>
+        </div>
+
+        <!-- Guest Name & Phone -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Tên khách hàng *</label>
+            <input type="text" id="db-guest-name" required placeholder="VD: Anh Tuấn" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-600">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Số điện thoại *</label>
+            <input type="tel" id="db-guest-phone" required placeholder="VD: 0912 345 678" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-600">
+          </div>
+        </div>
+
+        <!-- Dates Check-in & Check-out -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Ngày nhận phòng (Check-in) *</label>
+            <input type="date" id="db-checkin" required onchange="calcDirectBookingPrice()" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-600">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Ngày trả phòng (Check-out) *</label>
+            <input type="date" id="db-checkout" required onchange="calcDirectBookingPrice()" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-600">
+          </div>
+        </div>
+
+        <!-- Guests & Payment Method -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Số lượng khách *</label>
+            <input type="number" id="db-guests" min="1" max="20" value="2" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-600">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Hình thức thanh toán</label>
+            <select id="db-payment-method" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-600">
+              <option value="cash">Tiền mặt tại quầy</option>
+              <option value="bank_transfer">Chuyển khoản ngân hàng</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Reservation Status -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Trạng thái đặt phòng ban đầu</label>
+          <select id="db-status" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-600">
+            <option value="confirmed">Xác nhận ngay (Khách đã cọc / thanh toán)</option>
+            <option value="pending">Chờ thanh toán (Giữ chỗ tạm thời)</option>
+          </select>
+        </div>
+
+        <!-- Host Note -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Ghi chú của chủ nhà / lễ tân</label>
+          <input type="text" id="db-note" placeholder="VD: Khách đến lúc 14h, yêu cầu thêm 1 nệm phụ..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-600">
+        </div>
+
+        <!-- Live Financial Preview Box -->
+        <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs space-y-1.5">
+          <div class="flex justify-between text-slate-600">
+            <span>Thời gian lưu trú:</span>
+            <span id="db-preview-nights" class="font-bold text-slate-800">0 đêm</span>
+          </div>
+          <div class="flex justify-between text-slate-600">
+            <span>Tổng tiền khách phải trả:</span>
+            <span id="db-preview-total" class="font-extrabold text-slate-900 text-sm">0 ₫</span>
+          </div>
+          <div class="flex justify-between text-slate-500 pt-1 border-t border-emerald-200/60">
+            <span>Hoa hồng nền tảng (5%):</span>
+            <span id="db-preview-fee" class="font-bold text-red-600">0 ₫</span>
+          </div>
+          <div class="flex justify-between text-emerald-800 font-extrabold text-sm pt-1">
+            <span>Chủ nhà thực nhận (95%):</span>
+            <span id="db-preview-net" class="text-emerald-700">0 ₫</span>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end gap-3">
+          <button type="button" onclick="closeDirectBookingModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">Hủy</button>
+          <button type="submit" id="db-submit-btn" class="px-5 py-2.5 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 transition flex items-center gap-2">
+            <i class="fa-solid fa-check"></i>
+            <span>Tạo đơn & Khóa lịch ngay</span>
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- MODAL: ADD HOMESTAY -->
@@ -465,35 +896,105 @@
   <!-- JAVASCRIPT LOGIC -->
   <script>
     const API_BASE = '/api';
+    let currentRoleMode = 'admin'; // 'admin' or 'host'
+    let currentTab = 'dashboard';
     let revenueChartInstance = null;
     let currentBookingFilter = 'all';
-
-    // Switch Tabs
-    function switchTab(tabId) {
-      ['dashboard', 'bookings', 'homestays', 'promotions'].forEach(t => {
-        document.getElementById(`tab-${t}`).classList.add('hidden');
-        document.getElementById(`nav-${t}`).className = 'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition';
-      });
-
-      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-      document.getElementById(`nav-${tabId}`).className = 'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition bg-blue-600 text-white shadow-md shadow-blue-600/20';
-
-      const titles = {
-        dashboard: 'Bảng điều khiển Tổng quan',
-        bookings: 'Quản lý Đơn đặt phòng',
-        homestays: 'Quản lý Chỗ nghỉ Homestay',
-        promotions: 'Mã Giảm Giá & Voucher Khuyến Mãi'
-      };
-      document.getElementById('page-title').innerText = titles[tabId];
-
-      if (tabId === 'homestays') fetchHomestaysData();
-      if (tabId === 'bookings') fetchBookingsData();
-    }
+    let currentHomestays = [];
 
     // Format currency
     function formatMoney(amount) {
       return new Intl.NumberFormat('vi-VN').format(amount || 0) + ' ₫';
     }
+
+    // Role Mode Switcher
+    function switchRoleMode(mode) {
+      currentRoleMode = mode;
+      const btnAdmin = document.getElementById('role-btn-admin');
+      const btnHost = document.getElementById('role-btn-host');
+      const navAdmin = document.getElementById('nav-admin-group');
+      const navHost = document.getElementById('nav-host-group');
+      const subtitle = document.getElementById('role-subtitle');
+      const userDisplayName = document.getElementById('user-display-name');
+      const userDisplayRole = document.getElementById('user-display-role');
+      const modeTag = document.getElementById('header-mode-tag');
+
+      if (mode === 'admin') {
+        btnAdmin.className = 'py-1.5 text-xs font-bold rounded-md bg-blue-600 text-white transition flex items-center justify-center gap-1.5 shadow-xs';
+        btnHost.className = 'py-1.5 text-xs font-bold rounded-md text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5';
+        navAdmin.classList.remove('hidden');
+        navHost.classList.add('hidden');
+        subtitle.innerText = 'Chủ Web App (Admin)';
+        userDisplayName.innerText = 'Quản Trị Viên (Admin)';
+        userDisplayRole.innerText = 'admin@homestay.com';
+        modeTag.className = 'px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5';
+        modeTag.innerHTML = '<i class="fa-solid fa-shield-halved"></i><span>Chế độ: Quản trị Platform</span>';
+        switchTab('dashboard');
+      } else {
+        btnHost.className = 'py-1.5 text-xs font-bold rounded-md bg-emerald-600 text-white transition flex items-center justify-center gap-1.5 shadow-xs';
+        btnAdmin.className = 'py-1.5 text-xs font-bold rounded-md text-slate-400 hover:text-white transition flex items-center justify-center gap-1.5';
+        navHost.classList.remove('hidden');
+        navAdmin.classList.add('hidden');
+        subtitle.innerText = 'Chủ Homestay (Host)';
+        userDisplayName.innerText = 'Nguyễn Văn Chủ Nhà';
+        userDisplayRole.innerText = 'host@homestay.vn';
+        modeTag.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5';
+        modeTag.innerHTML = '<i class="fa-solid fa-house-user"></i><span>Chế độ: Chủ Homestay & Lễ Tân</span>';
+        switchTab('host-workspace');
+      }
+    }
+
+    // Tab Switcher
+    function switchTab(tabId) {
+      currentTab = tabId;
+      const allTabs = ['dashboard', 'bookings', 'homestays', 'hosts', 'promotions', 'host-workspace', 'host-bookings', 'host-revenue'];
+      allTabs.forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        if (el) el.classList.add('hidden');
+        const navEl = document.getElementById(`nav-${t}`);
+        if (navEl) {
+          navEl.className = 'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/80 transition';
+        }
+      });
+
+      const activeEl = document.getElementById(`tab-${tabId}`);
+      if (activeEl) activeEl.classList.remove('hidden');
+
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) {
+        activeNav.className = tabId.startsWith('host')
+          ? 'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+          : 'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition bg-blue-600 text-white shadow-md shadow-blue-600/20';
+      }
+
+      const titles = {
+        'dashboard': 'Bảng điều khiển Tổng quan Nền tảng',
+        'bookings': 'Quản lý Toàn bộ Đặt phòng',
+        'homestays': 'Quản lý Chỗ nghỉ Homestay',
+        'hosts': 'Danh sách Chủ Homestay & Đối tác',
+        'promotions': 'Mã Giảm Giá & Cấu hình Hoa hồng',
+        'host-workspace': 'Đặt phòng Trực tiếp tại Quầy (Khách Walk-in)',
+        'host-bookings': 'Đơn đặt phòng của Homestay',
+        'host-revenue': 'Báo cáo Doanh thu & Thực nhận Chủ nhà'
+      };
+      document.getElementById('page-title').innerText = titles[tabId] || 'Homestay Management';
+
+      // Load data corresponding to tab
+      if (tabId === 'dashboard') fetchDashboardData();
+      if (tabId === 'bookings') fetchBookingsData();
+      if (tabId === 'homestays') fetchHomestaysData();
+      if (tabId === 'host-workspace') initHostWorkspace();
+      if (tabId === 'host-bookings') fetchHostAllBookings();
+      if (tabId === 'host-revenue') fetchHostDashboard();
+    }
+
+    function refreshCurrentTab() {
+      switchTab(currentTab);
+    }
+
+    // ==========================================
+    // ADMIN FUNCTIONS
+    // ==========================================
 
     // Fetch Dashboard Stats
     async function fetchDashboardData() {
@@ -504,33 +1005,32 @@
           const { summary, monthlyRevenue, recentBookings } = json.data;
 
           document.getElementById('kpi-revenue').innerText = formatMoney(summary.grossRevenue);
+          document.getElementById('kpi-commission').innerText = formatMoney(summary.commissionEarned);
           document.getElementById('kpi-bookings').innerText = summary.totalBookings;
+          document.getElementById('kpi-sources').innerText = `App: ${summary.onlineCount || 0} • Tại quầy: ${summary.directCount || 0}`;
           document.getElementById('kpi-pending').innerText = summary.pendingBookings;
-          document.getElementById('kpi-homestays').innerText = summary.totalHomestays;
-          document.getElementById('kpi-customers').innerText = `${summary.totalCustomers} khách hàng đã đăng ký`;
           document.getElementById('pending-badge').innerText = summary.pendingBookings;
 
           // Render Recent Bookings
           const tbody = document.getElementById('recent-bookings-body');
-          if (recentBookings.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-slate-400">Chưa có đơn đặt phòng nào.</td></tr>';
+          if (!recentBookings || recentBookings.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-slate-400">Chưa có đơn đặt phòng nào.</td></tr>';
           } else {
             tbody.innerHTML = recentBookings.map(b => `
               <tr class="hover:bg-slate-50 transition">
-                <td class="py-3.5 px-4 font-mono font-bold text-blue-600">${b.booking_code}</td>
-                <td class="py-3.5 px-4">
-                  <p class="font-bold text-slate-900">${b.customer_name}</p>
-                  <p class="text-[11px] text-slate-400">${b.customer_phone || ''}</p>
-                </td>
-                <td class="py-3.5 px-4 font-medium">${b.homestay_name}</td>
-                <td class="py-3.5 px-4 text-slate-500">${b.check_in} ➔ ${b.check_out}</td>
-                <td class="py-3.5 px-4 font-bold text-slate-900">${formatMoney(b.total_price)}</td>
-                <td class="py-3.5 px-4">${renderStatusBadge(b.status)}</td>
+                <td class="py-3 px-4 font-mono font-bold text-blue-600">${b.booking_code}</td>
+                <td class="py-3 px-4">${renderSourceBadge(b.source)}</td>
+                <td class="py-3 px-4 font-bold text-slate-900">${b.customer_name}</td>
+                <td class="py-3 px-4 font-medium">${b.homestay_name}</td>
+                <td class="py-3 px-4 text-slate-500">${b.check_in} ➔ ${b.check_out}</td>
+                <td class="py-3 px-4 font-bold text-slate-900">${formatMoney(b.total_price)}</td>
+                <td class="py-3 px-4 font-bold text-blue-600">${formatMoney(b.commission_amount || (b.total_price * 0.10))}</td>
+                <td class="py-3 px-4">${renderStatusBadge(b.status)}</td>
               </tr>
             `).join('');
           }
 
-          // Render Chart
+          // Render Revenue Chart
           renderChart(monthlyRevenue);
         }
       } catch (err) {
@@ -538,29 +1038,43 @@
       }
     }
 
-    // Render Revenue Chart
+    // Render Revenue Chart (Dual line: Gross Revenue & Platform Commission)
     function renderChart(monthlyData) {
       const ctx = document.getElementById('revenueChart').getContext('2d');
       if (revenueChartInstance) revenueChartInstance.destroy();
 
-      const labels = monthlyData.length > 0 ? monthlyData.map(d => d.month) : ['T07/2026', 'T08/2026', 'T09/2026'];
-      const data = monthlyData.length > 0 ? monthlyData.map(d => d.revenue) : [3900000, 10200000, 14800000];
+      const labels = monthlyData && monthlyData.length > 0 ? monthlyData.map(d => d.month) : ['T07/2026', 'T08/2026', 'T09/2026'];
+      const revenueData = monthlyData && monthlyData.length > 0 ? monthlyData.map(d => d.revenue) : [3900000, 10200000, 14800000];
+      const commissionData = monthlyData && monthlyData.length > 0 ? monthlyData.map(d => d.commission_revenue || (d.revenue * 0.10)) : [390000, 1020000, 1480000];
 
       revenueChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
           labels,
-          datasets: [{
-            label: 'Doanh thu (₫)',
-            data,
-            borderColor: '#2563EB',
-            backgroundColor: 'rgba(37, 99, 235, 0.08)',
-            fill: true,
-            tension: 0.35,
-            borderWidth: 2.5,
-            pointBackgroundColor: '#2563EB',
-            pointRadius: 4,
-          }]
+          datasets: [
+            {
+              label: 'Doanh thu phòng (₫)',
+              data: revenueData,
+              borderColor: '#2563EB',
+              backgroundColor: 'rgba(37, 99, 235, 0.06)',
+              fill: true,
+              tension: 0.35,
+              borderWidth: 2.5,
+              pointBackgroundColor: '#2563EB',
+              pointRadius: 4,
+            },
+            {
+              label: 'Hoa hồng nền tảng (₫)',
+              data: commissionData,
+              borderColor: '#10B981',
+              backgroundColor: 'transparent',
+              borderDash: [5, 5],
+              tension: 0.35,
+              borderWidth: 2,
+              pointBackgroundColor: '#10B981',
+              pointRadius: 3,
+            }
+          ]
         },
         options: {
           responsive: true,
@@ -569,7 +1083,7 @@
             legend: { display: false },
             tooltip: {
               callbacks: {
-                label: (c) => ` Doanh thu: ${formatMoney(c.parsed.y)}`
+                label: (c) => ` ${c.dataset.label}: ${formatMoney(c.parsed.y)}`
               }
             }
           },
@@ -581,12 +1095,18 @@
               },
               grid: { color: '#F1F5F9' }
             },
-            x: {
-              grid: { display: false }
-            }
+            x: { grid: { display: false } }
           }
         }
       });
+    }
+
+    // Source Badge Helper
+    function renderSourceBadge(source) {
+      if (source === 'host_direct') {
+        return '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold badge-direct"><i class="fa-solid fa-house-chimney-user"></i> Tại quầy Host</span>';
+      }
+      return '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold badge-online"><i class="fa-solid fa-mobile-screen"></i> App Mobile</span>';
     }
 
     // Status Badge Helper
@@ -605,9 +1125,9 @@
       currentBookingFilter = status;
       document.querySelectorAll('.filter-btn').forEach(btn => {
         if (btn.dataset.status === status) {
-          btn.className = 'filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white';
+          btn.className = 'filter-btn px-3 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white';
         } else {
-          btn.className = 'filter-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200';
+          btn.className = 'filter-btn px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200';
         }
       });
       fetchBookingsData();
@@ -617,7 +1137,8 @@
     async function fetchBookingsData() {
       try {
         const search = document.getElementById('booking-search')?.value || '';
-        const res = await fetch(`${API_BASE}/admin/bookings?status=${currentBookingFilter}&search=${encodeURIComponent(search)}`);
+        const source = document.getElementById('booking-source-filter')?.value || 'all';
+        const res = await fetch(`${API_BASE}/admin/bookings?status=${currentBookingFilter}&source=${source}&search=${encodeURIComponent(search)}`);
         const json = await res.json();
         const tbody = document.getElementById('all-bookings-body');
 
@@ -625,6 +1146,7 @@
           tbody.innerHTML = json.data.map(b => `
             <tr class="hover:bg-slate-50 transition">
               <td class="py-3.5 px-4 font-mono font-bold text-blue-600">${b.booking_code}</td>
+              <td class="py-3.5 px-4">${renderSourceBadge(b.source)}</td>
               <td class="py-3.5 px-4">
                 <p class="font-bold text-slate-900">${b.customer_name}</p>
                 <p class="text-[11px] text-slate-400">${b.customer_phone || b.customer_email || ''}</p>
@@ -650,6 +1172,10 @@
                   ` : ''}
                 </div>
               </td>
+              <td class="py-3.5 px-4">
+                <p class="text-blue-600 font-bold text-[11px]">Sàn: +${formatMoney(b.commission_amount || (b.total_price * 0.10))}</p>
+                <p class="text-emerald-700 font-bold text-[11px]">Host: +${formatMoney(b.host_payout_amount || (b.total_price * 0.90))}</p>
+              </td>
               <td class="py-3.5 px-4">${renderStatusBadge(b.status)}</td>
               <td class="py-3.5 px-4 text-center">
                 <div class="flex items-center justify-center gap-1.5">
@@ -673,7 +1199,7 @@
             </tr>
           `).join('');
         } else {
-          tbody.innerHTML = '<tr><td colspan="7" class="text-center py-6 text-slate-400">Không tìm thấy đơn đặt phòng nào phù hợp.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-6 text-slate-400">Không tìm thấy đơn đặt phòng nào phù hợp.</td></tr>';
         }
       } catch (err) {
         console.error('Error fetching bookings:', err);
@@ -692,18 +1218,17 @@
         });
         const json = await res.json();
         if (json.success) {
-          alert(json.message);
           fetchBookingsData();
           fetchDashboardData();
         } else {
           alert('Lỗi: ' + json.message);
         }
       } catch (err) {
-        alert('Lỗi khi cập nhật trạng thái');
+        alert('Không thể cập nhật trạng thái');
       }
     }
 
-    // Fetch Homestays
+    // Fetch Homestays List
     async function fetchHomestaysData() {
       try {
         const res = await fetch(`${API_BASE}/homestays`);
@@ -711,26 +1236,44 @@
         const grid = document.getElementById('homestays-grid');
 
         if (json.success && json.data.length > 0) {
+          currentHomestays = json.data;
           grid.innerHTML = json.data.map(h => `
-            <div class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden flex flex-col">
-              <img src="${h.images && h.images[0] ? h.images[0] : 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6'}" class="w-full h-44 object-cover" alt="${h.name}">
-              <div class="p-4 flex-1 flex flex-col justify-between">
+            <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-xs hover:shadow-md transition group">
+              <div class="h-44 relative overflow-hidden bg-slate-100">
+                <img src="${h.images[0]}" alt="${h.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded-full text-xs font-bold text-slate-800 flex items-center gap-1 shadow-xs">
+                  <i class="fa-solid fa-star text-amber-500 text-xs"></i>
+                  <span>${h.rating}</span>
+                </div>
+                <div class="absolute bottom-3 left-3 bg-blue-600 text-white px-2.5 py-0.5 rounded-lg text-[11px] font-bold">
+                  Token: ${h.manage_token || 'HMTOKEN_' + h.id}
+                </div>
+              </div>
+
+              <div class="p-4 space-y-3">
                 <div>
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold text-blue-600">📍 ${h.location} • ${h.type}</span>
-                    <span class="text-xs font-bold text-amber-500">⭐ ${h.rating}</span>
-                  </div>
-                  <h4 class="font-bold text-slate-900 text-sm mt-1.5 line-clamp-1">${h.name}</h4>
-                  <p class="text-xs text-slate-500 mt-1 line-clamp-2">${h.description || ''}</p>
+                  <h4 class="font-bold text-slate-900 text-sm truncate">${h.name}</h4>
+                  <p class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>${h.location} • ${h.type}</span>
+                  </p>
                 </div>
 
-                <div class="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
-                  <div>
-                    <span class="text-sm font-extrabold text-blue-600">${formatMoney(h.price)}</span>
-                    <span class="text-[11px] text-slate-400">/đêm</span>
-                  </div>
-                  <button onclick="deleteHomestay(${h.id})" class="text-xs text-red-500 hover:text-red-700 font-semibold p-1">
-                    <i class="fa-solid fa-trash-can"></i> Ngừng bán
+                <div class="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                  <span>${h.maxGuests} khách • ${h.bedrooms} ngủ</span>
+                  <span class="font-extrabold text-blue-600 text-sm">${formatMoney(h.price)} <span class="text-[10px] font-normal text-slate-400">/đêm</span></span>
+                </div>
+
+                <div class="pt-2 flex items-center gap-2">
+                  <button onclick="openDirectBookingForHomestay('${h.id}')" class="flex-1 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Đặt tại quầy</span>
+                  </button>
+                  <button onclick="copyPropertyToken('${h.manage_token || 'HMTOKEN_' + h.id}')" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Copy Token Lễ tân">
+                    <i class="fa-solid fa-link"></i>
+                  </button>
+                  <button onclick="deleteHomestay(${h.id})" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Ngừng kinh doanh">
+                    <i class="fa-regular fa-trash-can"></i>
                   </button>
                 </div>
               </div>
@@ -742,15 +1285,235 @@
       }
     }
 
-    // Modal control
+    // ==========================================
+    // HOST WORKSPACE & WALK-IN FUNCTIONS
+    // ==========================================
+
+    async function initHostWorkspace() {
+      // 1. Fetch homestays for host
+      try {
+        const res = await fetch(`${API_BASE}/host/homestays`);
+        const json = await res.json();
+        if (json.success && json.data.length > 0) {
+          currentHomestays = json.data;
+          const select = document.getElementById('host-homestay-select');
+          select.innerHTML = json.data.map(h => `<option value="${h.id}">${h.name} (${formatMoney(h.price)}/đêm)</option>`).join('');
+
+          // Also populate direct booking modal select
+          const dbSelect = document.getElementById('db-homestay');
+          dbSelect.innerHTML = json.data.map(h => `<option value="${h.id}" data-price="${h.price}" data-guests="${h.maxGuests}">${h.name} - ${formatMoney(h.price)}/đêm (Tối đa ${h.maxGuests} khách)</option>`).join('');
+
+          onHostHomestayChange();
+        }
+      } catch (err) {
+        console.error('Error loading host homestays:', err);
+      }
+      fetchHostDashboard();
+    }
+
+    async function onHostHomestayChange() {
+      const select = document.getElementById('host-homestay-select');
+      const homestayId = select.value;
+      if (!homestayId) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/host/bookings?homestayId=${homestayId}`);
+        const json = await res.json();
+        const tbody = document.getElementById('host-bookings-body');
+
+        if (json.success && json.data.length > 0) {
+          tbody.innerHTML = json.data.map(b => `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="py-3 px-4 font-mono font-bold text-emerald-700">${b.booking_code}</td>
+              <td class="py-3 px-4">${renderSourceBadge(b.source)}</td>
+              <td class="py-3 px-4">
+                <p class="font-bold text-slate-900">${b.customer_name}</p>
+                <p class="text-[11px] text-slate-400">${b.customer_phone}</p>
+              </td>
+              <td class="py-3 px-4 text-slate-600">${b.check_in} ➔ ${b.check_out} (${b.nights} đêm)</td>
+              <td class="py-3 px-4 font-bold text-slate-900">${formatMoney(b.total_price)}</td>
+              <td class="py-3 px-4 font-extrabold text-emerald-600">${formatMoney(b.host_payout_amount || (b.total_price * 0.90))}</td>
+              <td class="py-3 px-4 uppercase text-[10px] font-bold text-slate-500">${b.payment_method}</td>
+              <td class="py-3 px-4">${renderStatusBadge(b.status)}</td>
+            </tr>
+          `).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-slate-400">Chưa có đơn đặt phòng nào cho Homestay này. Bấm nút "Đặt phòng tại quầy" bên trên để tạo đơn mới!</td></tr>';
+        }
+      } catch (err) {
+        console.error('Error loading host bookings:', err);
+      }
+    }
+
+    async function fetchHostDashboard() {
+      try {
+        const res = await fetch(`${API_BASE}/host/dashboard`);
+        const json = await res.json();
+        if (json.success) {
+          const s = json.data.stats;
+          document.getElementById('host-kpi-net').innerText = formatMoney(s.net_payout);
+          document.getElementById('host-kpi-fee').innerText = formatMoney(s.platform_commission_fee);
+          document.getElementById('host-kpi-total-bookings').innerText = s.total_bookings;
+          document.getElementById('host-kpi-breakdown').innerText = `App: ${s.online_count || 0} • Tại quầy: ${s.direct_count || 0}`;
+
+          // Update revenue tab if active
+          const pGross = document.getElementById('payout-gross');
+          const pFee = document.getElementById('payout-fee');
+          const pNet = document.getElementById('payout-net');
+          if (pGross) pGross.innerText = formatMoney(s.gross_revenue);
+          if (pFee) pFee.innerText = `-${formatMoney(s.platform_commission_fee)}`;
+          if (pNet) pNet.innerText = formatMoney(s.net_payout);
+        }
+      } catch (err) {
+        console.error('Error fetching host dashboard:', err);
+      }
+    }
+
+    async function fetchHostAllBookings() {
+      try {
+        const res = await fetch(`${API_BASE}/host/bookings`);
+        const json = await res.json();
+        const tbody = document.getElementById('host-all-bookings-body');
+        if (json.success && json.data.length > 0) {
+          tbody.innerHTML = json.data.map(b => `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="py-3 px-4 font-mono font-bold text-emerald-700">${b.booking_code}</td>
+              <td class="py-3 px-4 font-semibold text-slate-900">${b.homestay_name}</td>
+              <td class="py-3 px-4">${renderSourceBadge(b.source)}</td>
+              <td class="py-3 px-4">${b.customer_name} (${b.customer_phone || ''})</td>
+              <td class="py-3 px-4 text-slate-500">${b.check_in} ➔ ${b.check_out}</td>
+              <td class="py-3 px-4 font-bold">${formatMoney(b.total_price)}</td>
+              <td class="py-3 px-4 font-extrabold text-emerald-600">${formatMoney(b.host_payout_amount || (b.total_price * 0.90))}</td>
+              <td class="py-3 px-4">${renderStatusBadge(b.status)}</td>
+            </tr>
+          `).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center py-6 text-slate-400">Không có đơn đặt phòng nào.</td></tr>';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Direct Booking Modal Handlers
+    function openDirectBookingModal() {
+      document.getElementById('direct-booking-modal').classList.remove('hidden');
+
+      // Set default check-in today and check-out tomorrow
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+
+      const toStr = d => d.toISOString().split('T')[0];
+      document.getElementById('db-checkin').value = toStr(today);
+      document.getElementById('db-checkout').value = toStr(tomorrow);
+
+      calcDirectBookingPrice();
+    }
+
+    function openDirectBookingForHomestay(hsId) {
+      openDirectBookingModal();
+      document.getElementById('db-homestay').value = hsId;
+      calcDirectBookingPrice();
+    }
+
+    function closeDirectBookingModal() {
+      document.getElementById('direct-booking-modal').classList.add('hidden');
+    }
+
+    function calcDirectBookingPrice() {
+      const select = document.getElementById('db-homestay');
+      const opt = select.options[select.selectedIndex];
+      const price = opt ? parseFloat(opt.dataset.price || 0) : 0;
+
+      const checkInVal = document.getElementById('db-checkin').value;
+      const checkOutVal = document.getElementById('db-checkout').value;
+
+      let nights = 0;
+      if (checkInVal && checkOutVal) {
+        const diff = new Date(checkOutVal).getTime() - new Date(checkInVal).getTime();
+        nights = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+      }
+
+      const total = price * (nights || 1);
+      const fee = Math.round(total * 0.05); // 5% hoa hồng đơn tại quầy
+      const net = total - fee;
+
+      document.getElementById('db-preview-nights').innerText = `${nights} đêm`;
+      document.getElementById('db-preview-total').innerText = formatMoney(total);
+      document.getElementById('db-preview-fee').innerText = `-${formatMoney(fee)}`;
+      document.getElementById('db-preview-net').innerText = formatMoney(net);
+    }
+
+    async function handleCreateDirectBooking(e) {
+      e.preventDefault();
+      const btn = document.getElementById('db-submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+
+      const payload = {
+        homestayId: parseInt(document.getElementById('db-homestay').value, 10),
+        guestName: document.getElementById('db-guest-name').value.trim(),
+        guestPhone: document.getElementById('db-guest-phone').value.trim(),
+        checkIn: document.getElementById('db-checkin').value,
+        checkOut: document.getElementById('db-checkout').value,
+        guests: parseInt(document.getElementById('db-guests').value, 10),
+        paymentMethod: document.getElementById('db-payment-method').value,
+        status: document.getElementById('db-status').value,
+        hostNote: document.getElementById('db-note').value.trim(),
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/host/direct-booking`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const json = await res.json();
+        if (json.success) {
+          alert('Tạo đơn đặt phòng trực tiếp tại quầy thành công! Lịch phòng đã được đồng bộ và khóa ngay trên App Mobile.');
+          closeDirectBookingModal();
+          document.getElementById('direct-booking-form').reset();
+          onHostHomestayChange();
+          fetchHostDashboard();
+        } else {
+          alert('Lỗi: ' + json.message);
+        }
+      } catch (err) {
+        alert('Không thể tạo đơn đặt phòng trực tiếp');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Tạo đơn & Khóa lịch ngay</span>';
+      }
+    }
+
+    function copyQuickManageLink() {
+      const select = document.getElementById('host-homestay-select');
+      const hsId = select.value;
+      const current = currentHomestays.find(h => String(h.id) === String(hsId));
+      const token = current?.manage_token || ('HMTOKEN_' + hsId);
+      const url = `${window.location.origin}/api/quick-manage/${token}`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert(`Đã sao chép link quản lý nhanh cho lễ tân:\n${url}`);
+      });
+    }
+
+    function copyPropertyToken(token) {
+      const url = `${window.location.origin}/api/quick-manage/${token}`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert(`Đã sao chép link quản lý nhanh:\n${url}`);
+      });
+    }
+
+    // Modal Helpers
     function openAddHomestayModal() {
       document.getElementById('add-homestay-modal').classList.remove('hidden');
     }
+
     function closeAddHomestayModal() {
       document.getElementById('add-homestay-modal').classList.add('hidden');
     }
 
-    // Payment Proof Modal Handlers
     function viewProofImage(encodedUrl, bookingCode) {
       const url = decodeURIComponent(encodedUrl);
       document.getElementById('proof-img').src = url;
@@ -763,7 +1526,6 @@
       document.getElementById('proof-img').src = '';
     }
 
-    // Add Homestay Handler
     async function handleAddHomestay(e) {
       e.preventDefault();
       const payload = {
@@ -800,24 +1562,24 @@
       }
     }
 
-    // Delete Homestay
     async function deleteHomestay(id) {
-      if (!confirm('Bạn có chắc muốn ngừng kinh doanh homestay này?')) return;
+      if (!confirm('Bạn có chắc muốn tạm ngừng kinh doanh homestay này?')) return;
       try {
         const res = await fetch(`${API_BASE}/admin/homestays/${id}`, { method: 'DELETE' });
         const json = await res.json();
         if (json.success) {
-          alert(json.message);
           fetchHomestaysData();
-          fetchDashboardData();
         }
       } catch (err) {
-        alert('Lỗi khi xóa homestay');
+        alert('Không thể xóa homestay');
       }
     }
 
-    // Initial load
-    fetchDashboardData();
+    // INITIAL LOAD
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchDashboardData();
+      fetchBookingsData();
+    });
   </script>
 </body>
 </html>

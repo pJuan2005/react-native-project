@@ -11,6 +11,7 @@ const promotionRoutes = require('./promotion.routes');
 const reviewRoutes = require('./review.routes');
 const notificationRoutes = require('./notification.routes');
 const adminRoutes = require('./admin.routes');
+const hostRoutes = require('./host.routes');
 
 // Health Check
 router.get('/health', (req, res) => {
@@ -33,7 +34,9 @@ router.use('/', promotionRoutes);
 router.use('/', reviewRoutes);
 router.use('/', notificationRoutes);
 
-// Mount Admin Routes
+// Mount Admin & Host Routes
 router.use('/admin', adminRoutes);
+router.use('/host', hostRoutes);
+router.use('/', hostRoutes); // for /quick-manage/:token direct alias
 
 module.exports = router;

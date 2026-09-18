@@ -34,14 +34,14 @@ DROP TABLE IF EXISTS `locations`;
 DROP TABLE IF EXISTS `users`;
 
 -- =====================================================
--- 1. USERS TABLE (Quản lý Admin, Nhân viên & Khách hàng)
+-- 1. USERS TABLE (Quản lý Admin, Host, Nhân viên & Khách hàng)
 -- =====================================================
 CREATE TABLE `users` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NOT NULL,
   `email` VARCHAR(191) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
-  `role` ENUM('admin', 'staff', 'customer') NOT NULL DEFAULT 'customer',
+  `role` ENUM('admin', 'staff', 'customer', 'host') NOT NULL DEFAULT 'customer',
   `phone` VARCHAR(20) NULL,
   `address` VARCHAR(255) NULL,
   `birth_date` DATE NULL,
@@ -119,6 +119,7 @@ CREATE TABLE `homestays` (
   `old_price` DECIMAL(12,2) NULL,
   `location_id` BIGINT UNSIGNED NOT NULL,
   `type_id` BIGINT UNSIGNED NOT NULL,
+  `host_id` BIGINT UNSIGNED NULL,
   `rating` DECIMAL(3,2) NOT NULL DEFAULT 5.00,
   `review_count` INT UNSIGNED NOT NULL DEFAULT 0,
   `max_guests` INT UNSIGNED NOT NULL DEFAULT 1,
@@ -127,17 +128,22 @@ CREATE TABLE `homestays` (
   `is_new` TINYINT(1) NOT NULL DEFAULT 0,
   `is_featured` TINYINT(1) NOT NULL DEFAULT 0,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `approval_status` ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'approved',
+  `manage_token` VARCHAR(80) NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_homestays_manage_token` (`manage_token`),
   KEY `idx_homestays_location` (`location_id`),
   KEY `idx_homestays_type` (`type_id`),
+  KEY `idx_homestays_host` (`host_id`),
   KEY `idx_homestays_active` (`is_active`),
   KEY `idx_homestays_featured` (`is_featured`),
   KEY `idx_homestays_price` (`price`),
   KEY `idx_homestays_rating` (`rating`),
   CONSTRAINT `fk_homestays_location` FOREIGN KEY (`location_id`) REFERENCES `locations` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `fk_homestays_type` FOREIGN KEY (`type_id`) REFERENCES `homestay_types` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `fk_homestays_type` FOREIGN KEY (`type_id`) REFERENCES `homestay_types` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_homestays_host` FOREIGN KEY (`host_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
@@ -197,7 +203,9 @@ CREATE TABLE `promotions` (
 CREATE TABLE `bookings` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `booking_code` VARCHAR(30) NOT NULL,
-  `user_id` BIGINT UNSIGNED NOT NULL,
+  `user_id` BIGINT UNSIGNED NULL,
+  `guest_name` VARCHAR(120) NULL,
+  `guest_phone` VARCHAR(30) NULL,
   `homestay_id` BIGINT UNSIGNED NOT NULL,
   `check_in` DATE NOT NULL,
   `check_out` DATE NOT NULL,
@@ -207,8 +215,14 @@ CREATE TABLE `bookings` (
   `promotion_id` BIGINT UNSIGNED NULL,
   `discount_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `total_price` DECIMAL(12,2) NOT NULL,
+  `commission_rate` DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+  `commission_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `host_payout_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `status` ENUM('pending', 'confirmed', 'cancelled', 'completed') NOT NULL DEFAULT 'pending',
+  `source` ENUM('guest_online', 'host_direct', 'admin_manual') NOT NULL DEFAULT 'guest_online',
   `notes` TEXT NULL,
+  `host_note` TEXT NULL,
+  `created_by` BIGINT UNSIGNED NULL,
   `cancelled_at` TIMESTAMP NULL,
   `cancelled_reason` VARCHAR(255) NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -218,9 +232,10 @@ CREATE TABLE `bookings` (
   KEY `idx_bookings_user` (`user_id`),
   KEY `idx_bookings_homestay` (`homestay_id`),
   KEY `idx_bookings_status` (`status`),
+  KEY `idx_bookings_source` (`source`),
   KEY `idx_bookings_dates` (`check_in`, `check_out`),
   KEY `idx_bookings_promotion` (`promotion_id`),
-  CONSTRAINT `fk_bookings_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_bookings_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_bookings_homestay` FOREIGN KEY (`homestay_id`) REFERENCES `homestays` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_bookings_promotion` FOREIGN KEY (`promotion_id`) REFERENCES `promotions` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `chk_bookings_dates` CHECK (`check_out` > `check_in`),
@@ -335,6 +350,23 @@ CREATE TABLE `point_transactions` (
   KEY `idx_points_user` (`user_id`),
   CONSTRAINT `fk_point_transactions_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- 16. APP SETTINGS TABLE (Cấu hình tài chính & hoa hồng nền tảng)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS `app_settings` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `setting_key` VARCHAR(100) NOT NULL,
+  `setting_value` VARCHAR(255) NOT NULL,
+  `description` VARCHAR(255) NULL,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_app_settings_key` (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `app_settings` (`setting_key`, `setting_value`, `description`) VALUES
+('platform_commission_rate', '10', 'Tỷ lệ hoa hồng nền tảng thu từ đơn online (%)'),
+('direct_commission_rate', '5', 'Tỷ lệ hoa hồng nền tảng thu từ đơn tại quầy do chủ nhà tạo (%)');
 
 -- =====================================================
 -- VIEWS FOR MOBILE & WEB ADMIN

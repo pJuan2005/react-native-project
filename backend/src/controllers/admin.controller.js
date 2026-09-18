@@ -12,8 +12,8 @@ const getDashboardStats = async (req, res) => {
 
 const getAllBookings = async (req, res) => {
   try {
-    const { status, search } = req.query;
-    const data = await AdminService.getAllBookings({ status, search });
+    const { status, source, search } = req.query;
+    const data = await AdminService.getAllBookings({ status, source, search });
     return success(res, data, 'Lấy danh sách đơn đặt phòng thành công');
   } catch (err) {
     return error(res, 'Lỗi khi lấy danh sách đơn đặt phòng');
