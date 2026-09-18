@@ -1,11 +1,11 @@
 import { ProductImage } from '@/components/product-image';
 import { formatPrice, formatDate } from '@/constants/mockData';
-import { useBooking } from '@/contexts/BookingContext';
+import { useBooking, BookingItem } from '@/contexts/BookingContext';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
@@ -21,6 +21,9 @@ export default function BookingsScreen() {
   } = useBooking();
 
   const [activeTab, setActiveTab] = useState<'bookings' | 'wishlist'>('bookings');
+  const [selectedBookingDetail, setSelectedBookingDetail] = useState<BookingItem | null>(null);
+  const [bookingToCancel, setBookingToCancel] = useState<BookingItem | null>(null);
+
   const total = getBookingsTotal();
 
   const handleReviewAndReward = (bookingId: string, name: string) => {
@@ -38,6 +41,19 @@ export default function BookingsScreen() {
         { text: 'Để sau', style: 'cancel' },
       ]
     );
+  };
+
+  const handleConfirmCancelBooking = async () => {
+    if (!bookingToCancel) return;
+    const key = bookingToCancel.id + (bookingToCancel.checkIn || '');
+    const dbId = bookingToCancel.bookingId || bookingToCancel.id;
+
+    await removeFromBooking(key, dbId);
+    setBookingToCancel(null);
+    if (selectedBookingDetail?.id === bookingToCancel.id) {
+      setSelectedBookingDetail(null);
+    }
+    Alert.alert('Đã hủy đặt phòng', `Đơn đặt phòng "${bookingToCancel.name}" đã được hủy thành công.`);
   };
 
   return (
@@ -106,9 +122,11 @@ export default function BookingsScreen() {
               contentContainerStyle={s.contentList}
               showsVerticalScrollIndicator={false}
               renderItem={({ item: booking }) => {
-                const key = booking.id + (booking.checkIn || '');
                 return (
-                  <View style={[s.bookingCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+                  <Pressable
+                    style={[s.bookingCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}
+                    onPress={() => setSelectedBookingDetail(booking)}
+                  >
                     <ProductImage
                       uri={booking.homestayImage || booking.images[0]}
                       style={s.bookingImage}
@@ -117,8 +135,14 @@ export default function BookingsScreen() {
                     <View style={s.info}>
                       <View style={s.itemTopRow}>
                         <Text numberOfLines={1} style={[s.name, { color: colors.text }]}>{booking.name}</Text>
-                        <Pressable hitSlop={8} onPress={() => removeFromBooking(key)}>
-                          <Ionicons name="trash-outline" size={17} color="#EF4444" />
+                        <Pressable
+                          hitSlop={8}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            setBookingToCancel(booking);
+                          }}
+                        >
+                          <Ionicons name="trash-outline" size={18} color="#EF4444" />
                         </Pressable>
                       </View>
 
@@ -143,14 +167,17 @@ export default function BookingsScreen() {
 
                         <Pressable
                           style={s.reviewBtn}
-                          onPress={() => handleReviewAndReward(booking.id, booking.name)}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            handleReviewAndReward(booking.bookingId || booking.id, booking.name);
+                          }}
                         >
                           <Ionicons name="star" size={12} color="#D97706" />
                           <Text style={s.reviewBtnText}>Đánh giá +150đ</Text>
                         </Pressable>
                       </View>
                     </View>
-                  </View>
+                  </Pressable>
                 );
               }}
               ListFooterComponent={
@@ -253,6 +280,139 @@ export default function BookingsScreen() {
           )}
         </>
       )}
+
+      {/* MODAL 1: CHI TIẾT ĐƠN ĐẶT PHÒNG */}
+      <Modal
+        visible={!!selectedBookingDetail}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedBookingDetail(null)}
+      >
+        <View style={s.modalOverlay}>
+          <View style={[s.detailModalCard, { backgroundColor: isDark ? '#1C2541' : '#FFFFFF' }]}>
+            {/* Modal Header */}
+            <View style={[s.detailModalHeader, { borderBottomColor: colors.cardBorder }]}>
+              <View>
+                <Text style={[s.detailModalTitle, { color: colors.text }]}>Chi tiết đơn đặt phòng</Text>
+                <Text style={[s.detailModalSubtitle, { color: colors.primary }]}>
+                  Mã đơn: {selectedBookingDetail?.bookingCode || 'BK2026' + selectedBookingDetail?.id}
+                </Text>
+              </View>
+              <Pressable onPress={() => setSelectedBookingDetail(null)} hitSlop={8}>
+                <Ionicons name="close-circle" size={24} color="#94A3B8" />
+              </Pressable>
+            </View>
+
+            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+              {/* Homestay Card Preview */}
+              <View style={[s.detailPreviewRow, { backgroundColor: isDark ? '#0B132B' : '#F0F9FF', borderColor: colors.cardBorder }]}>
+                <ProductImage
+                  uri={selectedBookingDetail?.homestayImage || selectedBookingDetail?.images?.[0] || ''}
+                  style={s.detailThumb}
+                  containerStyle={s.detailThumb}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.detailHsName, { color: colors.text }]}>{selectedBookingDetail?.name}</Text>
+                  <Text style={s.detailHsMeta}>📍 {selectedBookingDetail?.location} • {selectedBookingDetail?.type}</Text>
+                  <View style={s.statusBadge}>
+                    <Ionicons name="shield-checkmark" size={12} color="#15803D" />
+                    <Text style={s.statusBadgeText}>
+                      {selectedBookingDetail?.status === 'confirmed' ? 'Đã xác nhận đặt phòng' : 'Chờ xác nhận'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Receipt Lines */}
+              <View style={[s.receiptBox, { backgroundColor: isDark ? '#0F172A' : '#F8FAFC', borderColor: colors.cardBorder }]}>
+                <DetailLine label="Ngày nhận phòng" value={formatDate(selectedBookingDetail?.checkIn || '')} isDark={isDark} />
+                <DetailLine label="Ngày trả phòng" value={formatDate(selectedBookingDetail?.checkOut || '')} isDark={isDark} />
+                <DetailLine label="Số đêm lưu trú" value={`${selectedBookingDetail?.nights || 1} đêm`} isDark={isDark} />
+                <DetailLine label="Số lượng khách" value={`${selectedBookingDetail?.guests || 2} người`} isDark={isDark} />
+                <DetailLine
+                  label="Giá mỗi đêm"
+                  value={formatPrice(selectedBookingDetail?.price || 0)}
+                  isDark={isDark}
+                />
+                {selectedBookingDetail?.discountAmount ? (
+                  <DetailLine
+                    label="Voucher áp dụng"
+                    value={`-${formatPrice(selectedBookingDetail.discountAmount)} (${selectedBookingDetail.voucherCode || 'Ưu đãi'})`}
+                    isGreen
+                    isDark={isDark}
+                  />
+                ) : null}
+                <View style={[s.totalRow, { borderTopColor: colors.cardBorder }]}>
+                  <Text style={[s.totalRowLabel, { color: colors.text }]}>Tổng thanh toán:</Text>
+                  <Text style={[s.totalRowValue, { color: colors.primary }]}>
+                    {formatPrice(selectedBookingDetail?.totalPrice || (selectedBookingDetail?.price || 0) * (selectedBookingDetail?.quantity || 1))}
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Modal Actions */}
+            <View style={s.detailModalActions}>
+              <Pressable
+                style={[s.viewHomestayBtn, { backgroundColor: isDark ? '#0B132B' : '#E0F2FE' }]}
+                onPress={() => {
+                  const hsId = selectedBookingDetail?.id;
+                  setSelectedBookingDetail(null);
+                  if (hsId) {
+                    router.push({ pathname: '/homestay/[id]' as any, params: { id: hsId } });
+                  }
+                }}
+              >
+                <Ionicons name="eye-outline" size={16} color={colors.primary} />
+                <Text style={[s.viewHomestayText, { color: colors.primary }]}>Xem Homestay</Text>
+              </Pressable>
+
+              <Pressable
+                style={s.cancelBookingBtn}
+                onPress={() => {
+                  if (selectedBookingDetail) {
+                    setBookingToCancel(selectedBookingDetail);
+                  }
+                }}
+              >
+                <Ionicons name="trash-outline" size={16} color="#FFFFFF" />
+                <Text style={s.cancelBookingText}>Hủy đặt phòng</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL 2: XÁC NHẬN HỦY ĐƠN ĐẶT PHÒNG */}
+      <Modal
+        visible={!!bookingToCancel}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setBookingToCancel(null)}
+      >
+        <Pressable style={s.modalOverlay} onPress={() => setBookingToCancel(null)}>
+          <Pressable style={[s.confirmCancelBox, { backgroundColor: isDark ? '#1C2541' : '#FFFFFF' }]} onPress={(e) => e.stopPropagation()}>
+            <View style={s.cancelWarningIcon}>
+              <Ionicons name="alert-circle" size={36} color="#DC2626" />
+            </View>
+
+            <Text style={[s.cancelWarningTitle, { color: colors.text }]}>Xác nhận hủy đặt phòng?</Text>
+            <Text style={s.cancelWarningDesc}>
+              Bạn có chắc chắn muốn hủy đơn đặt phòng tại <Text style={{ fontWeight: '700', color: colors.text }}>"{bookingToCancel?.name}"</Text> không? Sau khi hủy, đơn phòng sẽ được cập nhật vào CSDL.
+            </Text>
+
+            <View style={s.confirmActions}>
+              <Pressable style={s.closeCancelBtn} onPress={() => setBookingToCancel(null)}>
+                <Text style={s.closeCancelText}>Giữ lại</Text>
+              </Pressable>
+
+              <Pressable style={s.confirmCancelActionBtn} onPress={handleConfirmCancelBooking}>
+                <Text style={s.confirmCancelActionText}>Hủy đơn</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -262,6 +422,27 @@ function Line({ label, value, isDark }: { label: string; value: string; isDark?:
     <View style={s.line}>
       <Text style={s.lineLabel}>{label}</Text>
       <Text style={[s.lineValue, isDark && { color: '#F8FAFC' }]}>{value}</Text>
+    </View>
+  );
+}
+
+function DetailLine({
+  label,
+  value,
+  isGreen,
+  isDark,
+}: {
+  label: string;
+  value: string;
+  isGreen?: boolean;
+  isDark?: boolean;
+}) {
+  return (
+    <View style={s.detailLine}>
+      <Text style={s.detailLineLabel}>{label}</Text>
+      <Text style={[s.detailLineValue, isDark && { color: '#F8FAFC' }, isGreen && { color: '#16A34A', fontWeight: '700' }]}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -318,6 +499,7 @@ const s = StyleSheet.create({
     marginTop: 18,
     paddingHorizontal: 18,
     paddingVertical: 10,
+    backgroundColor: '#0284C7',
     borderRadius: 20,
   },
   continueText: { color: '#FFF', fontWeight: '700', fontSize: 13 },
@@ -414,4 +596,207 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   checkoutText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
+  // Modal Overlay & Detail Card
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  detailModalCard: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: 20,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  detailModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    marginBottom: 10,
+  },
+  detailModalTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  detailModalSubtitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  detailPreviewRow: {
+    flexDirection: 'row',
+    gap: 10,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  detailThumb: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+  },
+  detailHsName: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  detailHsMeta: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#15803D',
+  },
+  receiptBox: {
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 7,
+  },
+  detailLine: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  detailLineLabel: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  detailLineValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    paddingTop: 8,
+    marginTop: 4,
+  },
+  totalRowLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  totalRowValue: {
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  detailModalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+  },
+  viewHomestayBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  viewHomestayText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  cancelBookingBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#DC2626',
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  cancelBookingText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  // Confirm Cancel Dialog
+  confirmCancelBox: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    elevation: 8,
+  },
+  cancelWarningIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FEF2F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  cancelWarningTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  cancelWarningDesc: {
+    fontSize: 12,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  confirmActions: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  closeCancelBtn: {
+    flex: 1,
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  closeCancelText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  confirmCancelActionBtn: {
+    flex: 1,
+    backgroundColor: '#DC2626',
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  confirmCancelActionText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
 });

@@ -12,6 +12,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
 
 export type BookingItem = Homestay & {
+  bookingId?: string;
+  bookingCode?: string;
   quantity: number;
   checkIn?: string;
   checkOut?: string;
@@ -44,9 +46,9 @@ type BookingContextValue = {
       voucherCode?: string;
       discountAmount?: number;
     }
-  ) => void;
+  ) => Promise<{ success: boolean; bookingId?: string; bookingCode?: string }>;
   toggleSavedHomestay: (homestay: Homestay) => boolean;
-  removeFromBooking: (id: string) => void;
+  removeFromBooking: (id: string, bookingDbId?: string) => Promise<void>;
   removeSaved: (id: string) => void;
   clearBookings: () => void;
   getBookingsTotal: () => number;
@@ -78,35 +80,39 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   // Load user bookings and favorites from MySQL Backend API
   const fetchUserData = async (userId: string) => {
     try {
-      // 1. Fetch user bookings
+      // 1. Fetch user bookings (exclude cancelled bookings from active list)
       const bRes = await fetchWithTimeout(`${API_BASE_URL}/api/bookings/my-bookings?userId=${userId}`, {}, 3000);
       const bJson = await bRes.json();
       if (bJson.success && Array.isArray(bJson.data)) {
-        const mappedBookings = bJson.data.map((b: any) => ({
-          id: String(b.homestay_id || b.id),
-          name: b.homestay_name || 'Homestay',
-          price: parseFloat(b.price_per_night || 0),
-          location: b.location_name || '',
-          type: b.type_name || '',
-          rating: 4.9,
-          reviewCount: 100,
-          maxGuests: b.guests || 2,
-          bedrooms: 2,
-          bathrooms: 1,
-          amenities: [],
-          images: b.homestay_image ? [b.homestay_image] : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'],
-          description: '',
-          quantity: 1,
-          checkIn: b.check_in ? b.check_in.split('T')[0] : '',
-          checkOut: b.check_out ? b.check_out.split('T')[0] : '',
-          guests: b.guests,
-          nights: b.nights,
-          totalPrice: parseFloat(b.total_price || 0),
-          discountAmount: parseFloat(b.discount_amount || 0),
-          voucherCode: b.voucher_code,
-          status: b.status || 'confirmed',
-          homestayImage: b.homestay_image,
-        }));
+        const mappedBookings = bJson.data
+          .filter((b: any) => b.status !== 'cancelled')
+          .map((b: any) => ({
+            id: String(b.homestay_id || b.id),
+            bookingId: String(b.id),
+            bookingCode: b.booking_code,
+            name: b.homestay_name || 'Homestay',
+            price: parseFloat(b.price_per_night || 0),
+            location: b.location_name || '',
+            type: b.type_name || '',
+            rating: 4.9,
+            reviewCount: 100,
+            maxGuests: b.guests || 2,
+            bedrooms: 2,
+            bathrooms: 1,
+            amenities: [],
+            images: b.homestay_image ? [b.homestay_image] : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'],
+            description: '',
+            quantity: 1,
+            checkIn: b.check_in ? b.check_in.split('T')[0] : '',
+            checkOut: b.check_out ? b.check_out.split('T')[0] : '',
+            guests: b.guests,
+            nights: b.nights,
+            totalPrice: parseFloat(b.total_price || 0),
+            discountAmount: parseFloat(b.discount_amount || 0),
+            voucherCode: b.voucher_code,
+            status: b.status || 'confirmed',
+            homestayImage: b.homestay_image,
+          }));
         setBookings(mappedBookings);
       }
 
@@ -188,26 +194,16 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       voucherCode?: string;
       discountAmount?: number;
     }
-  ) => {
+  ): Promise<{ success: boolean; bookingId?: string; bookingCode?: string }> => {
     const currentUserId = userProfile.id || '1';
 
     if (bookingDetails) {
-      // 1. Update local state immediately for instant UI response
-      setBookings((items) => {
-        const existing = items.find(
-          (item) =>
-            item.id === homestay.id &&
-            item.checkIn === bookingDetails.checkIn &&
-            item.checkOut === bookingDetails.checkOut
-        );
-        if (existing) return items;
-        return [...items, { ...homestay, quantity: 1, ...bookingDetails, status: 'confirmed' }];
-      });
-      addRewardPoints(100, `Đặt phòng thành công: ${homestay.name}`);
+      let createdBookingId: string | undefined;
+      let createdBookingCode: string | undefined;
 
-      // 2. Call Backend API to save into MySQL Database
+      // 1. Call Backend API to save into MySQL Database
       try {
-        await fetchWithTimeout(
+        const res = await fetchWithTimeout(
           `${API_BASE_URL}/api/bookings`,
           {
             method: 'POST',
@@ -224,12 +220,47 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           },
           4000
         );
+        const json = await res.json();
+        if (json.success && json.data) {
+          createdBookingId = String(json.data.id);
+          createdBookingCode = json.data.bookingCode;
+        }
       } catch (err) {
-        console.warn('API POST booking failed, saved to local state:', err);
+        console.warn('API POST booking failed, saving to local state:', err);
       }
+
+      // 2. Update local state
+      setBookings((items) => {
+        const existing = items.find(
+          (item) =>
+            item.id === homestay.id &&
+            item.checkIn === bookingDetails.checkIn &&
+            item.checkOut === bookingDetails.checkOut
+        );
+        if (existing) return items;
+        return [
+          ...items,
+          {
+            ...homestay,
+            quantity: 1,
+            ...bookingDetails,
+            bookingId: createdBookingId,
+            bookingCode: createdBookingCode,
+            status: 'confirmed',
+          },
+        ];
+      });
+      addRewardPoints(100, `Đặt phòng thành công: ${homestay.name}`);
+
+      return {
+        success: true,
+        bookingId: createdBookingId,
+        bookingCode: createdBookingCode,
+      };
     } else {
       // This is saving to wishlist
       toggleSavedHomestay(homestay);
+      return { success: true };
     }
   };
 
@@ -265,8 +296,39 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     return nowSaved;
   };
 
-  const removeFromBooking = async (id: string) => {
-    setBookings((items) => items.filter((item) => item.id !== id && item.id + (item.checkIn || '') !== id));
+  const removeFromBooking = async (id: string, bookingDbId?: string) => {
+    const currentUserId = userProfile.id || '1';
+    // 1. Remove from local state immediately
+    setBookings((items) =>
+      items.filter(
+        (item) =>
+          item.id !== id &&
+          item.id + (item.checkIn || '') !== id &&
+          item.bookingId !== id &&
+          item.bookingId !== bookingDbId
+      )
+    );
+
+    // 2. Call backend API to cancel in MySQL database
+    const targetId = bookingDbId || id;
+    if (targetId) {
+      try {
+        await fetchWithTimeout(
+          `${API_BASE_URL}/api/bookings/${targetId}/cancel`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: parseInt(currentUserId, 10) || 1,
+              reason: 'Khách hủy đơn phòng trên ứng dụng',
+            }),
+          },
+          3000
+        );
+      } catch (err) {
+        console.warn('API cancel booking failed:', err);
+      }
+    }
   };
 
   const removeSaved = (id: string) => {
@@ -332,7 +394,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
   const completeStayAndReward = (bookingId: string) => {
     setBookings((items) =>
-      items.map((b) => (b.id === bookingId ? { ...b, status: 'completed' } : b))
+      items.map((b) => (b.id === bookingId || b.bookingId === bookingId ? { ...b, status: 'completed' } : b))
     );
     addRewardPoints(150, 'Hoàn thành chuyến đi & Đánh giá dịch vụ 5★');
   };
