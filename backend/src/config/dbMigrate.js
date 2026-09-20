@@ -71,7 +71,22 @@ async function migrateDatabase() {
       }
     } catch (_) {}
 
-    // 5. Tạo bảng app_settings (Cấu hình hoa hồng nền tảng)
+    // 5. Bổ sung các cột trong bảng payments nếu chưa có
+    try {
+      const [pCols] = await db.query("SHOW COLUMNS FROM payments LIKE 'proof_image_url'");
+      if (pCols.length === 0) {
+        await db.query("ALTER TABLE payments ADD COLUMN proof_image_url VARCHAR(500) NULL AFTER amount");
+      }
+    } catch (_) {}
+
+    try {
+      const [tCols] = await db.query("SHOW COLUMNS FROM payments LIKE 'transaction_code'");
+      if (tCols.length === 0) {
+        await db.query("ALTER TABLE payments ADD COLUMN transaction_code VARCHAR(100) NULL AFTER payment_method");
+      }
+    } catch (_) {}
+
+    // 6. Tạo bảng app_settings (Cấu hình hoa hồng nền tảng)
     await db.query(`
       CREATE TABLE IF NOT EXISTS app_settings (
         id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -89,7 +104,7 @@ async function migrateDatabase() {
       ('direct_commission_rate', '5', 'Tỷ lệ hoa hồng nền tảng thu từ đơn tại quầy do chủ nhà tạo (%)')
     `);
 
-    // 6. Đảm bảo có ít nhất 1 tài khoản Chủ Homestay (Host) mẫu
+    // 7. Đảm bảo có ít nhất 1 tài khoản Chủ Homestay (Host) mẫu
     const [hostUsers] = await db.query("SELECT id FROM users WHERE role = 'host' LIMIT 1");
     let hostId = hostUsers[0]?.id;
     if (!hostId) {
