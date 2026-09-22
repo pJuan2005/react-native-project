@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
+import { API_BASE_URL, fetchWithTimeout } from '@/config/api';
 import { useResponsive } from '@/utils/responsive';
 
 export default function HomestaysScreen() {

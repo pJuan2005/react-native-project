@@ -39,9 +39,8 @@ export function Navbar() {
 
   // Guest dropdown menu items
   const guestMenuItems = [
-    { icon: <LayoutDashboard size={15} />, label: "Dashboard", path: "/dashboard" },
-    { icon: <CalendarDays size={15} />, label: "My Bookings", path: "/dashboard" },
-    { icon: <UserCircle size={15} />, label: "Profile", path: "/dashboard" },
+    { icon: <Building2 size={15} />, label: "Host Dashboard", path: "/host/dashboard" },
+    { icon: <Shield size={15} />, label: "Admin Dashboard", path: "/admin/dashboard" },
   ];
 
   // Host dropdown menu items

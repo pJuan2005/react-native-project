@@ -9,7 +9,7 @@ import {
   initialPointTransactions,
 } from '@/constants/mockData';
 import { useAuth } from '@/contexts/AuthContext';
-import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
+import { API_BASE_URL, fetchWithTimeout } from '@/config/api';
 
 export type BookingItem = Homestay & {
   bookingId?: string;

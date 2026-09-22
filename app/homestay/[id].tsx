@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
+import { API_BASE_URL, fetchWithTimeout } from '@/config/api';
 import { useResponsive } from '@/utils/responsive';
 
 const DAYS_OF_WEEK = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];

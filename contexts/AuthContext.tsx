@@ -1,7 +1,7 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CustomerProfile, mockUser } from '@/constants/mockData';
-import { API_BASE_URL, fetchWithTimeout } from '@/src/config/api';
+import { API_BASE_URL, fetchWithTimeout } from '@/config/api';
 
 type AuthContextValue = {
   user: CustomerProfile | null;
