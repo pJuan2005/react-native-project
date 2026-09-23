@@ -12,6 +12,8 @@ const reviewRoutes = require('./review.routes');
 const notificationRoutes = require('./notification.routes');
 const adminRoutes = require('./admin.routes');
 const hostRoutes = require('./host.routes');
+const disputeRoutes = require('./dispute.routes');
+const hostVerificationRoutes = require('./host-verification.routes');
 
 // Health Check
 router.get('/health', (req, res) => {
@@ -33,6 +35,8 @@ router.use('/', favoriteRoutes);
 router.use('/', promotionRoutes);
 router.use('/', reviewRoutes);
 router.use('/', notificationRoutes);
+router.use('/', disputeRoutes);
+router.use('/', hostVerificationRoutes);
 
 // Mount Admin & Host Routes
 router.use('/admin', adminRoutes);

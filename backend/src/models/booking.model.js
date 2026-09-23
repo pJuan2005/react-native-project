@@ -180,7 +180,7 @@ class BookingModel {
     return rows;
   }
 
-  // Khách đặt phòng từ Mobile App (Online)
+  // Khách đặt phòng từ Mobile App (Online) - Concurrency Safe với MySQL Transaction & Row Locking (FOR UPDATE)
   static async createBooking({
     userId,
     homestayId,
@@ -191,164 +191,189 @@ class BookingModel {
     paymentMethod = 'cash',
     notes = '',
   }) {
-    // 1. Get Homestay
-    const [hRows] = await db.query(
-      'SELECT id, name, price, max_guests, is_active, host_id FROM homestays WHERE id = ?',
-      [homestayId]
-    );
-    if (hRows.length === 0 || !hRows[0].is_active) {
-      throw new Error('Homestay không tồn tại hoặc đã ngừng kinh doanh');
+    let conn;
+    try {
+      conn = await db.getConnection();
+      await conn.beginTransaction();
+    } catch (_) {
+      conn = null;
     }
-    const homestay = hRows[0];
+    const runner = conn || db;
 
-    if (guests > homestay.max_guests) {
-      throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${homestay.max_guests} người)`);
-    }
-
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
-    if (checkOutDate <= checkInDate) {
-      throw new Error('Ngày trả phòng phải sau ngày nhận phòng');
-    }
-
-    // 2. Check Overbooking (Chống trùng lịch với cả đơn online và đơn tại quầy)
-    const [conflicts] = await db.query(
-      `SELECT COUNT(*) AS conflict_count
-       FROM bookings
-       WHERE homestay_id = ?
-         AND status IN ('pending', 'confirmed')
-         AND check_in < ?
-         AND check_out > ?`,
-      [homestayId, checkOut, checkIn]
-    );
-
-    if (conflicts[0].conflict_count > 0) {
-      throw new Error('Homestay đã có khách đặt trong khoảng thời gian này');
-    }
-
-    // 3. Compute Nights and Raw Total
-    const nights = Math.max(1, Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)));
-    const pricePerNight = parseFloat(homestay.price);
-    const rawTotal = pricePerNight * nights;
-    let discountAmount = 0;
-
-    // 4. Calculate Promotion Discount
-    if (promotionId) {
-      const [promoRows] = await db.query(
-        'SELECT id, code, discount_type, discount_value, max_discount_amount, min_booking_amount FROM promotions WHERE id = ? AND is_active = 1 AND NOW() BETWEEN start_date AND end_date',
-        [promotionId]
+    try {
+      // 1. Get Homestay with row lock
+      const [hRows] = await runner.query(
+        'SELECT id, name, price, max_guests, is_active, host_id FROM homestays WHERE id = ? FOR UPDATE',
+        [homestayId]
       );
-      if (promoRows.length > 0) {
-        const promo = promoRows[0];
-        if (rawTotal >= parseFloat(promo.min_booking_amount || 0)) {
-          if (promo.discount_type === 'percent') {
-            discountAmount = (rawTotal * parseFloat(promo.discount_value)) / 100;
-            if (promo.max_discount_amount && discountAmount > parseFloat(promo.max_discount_amount)) {
-              discountAmount = parseFloat(promo.max_discount_amount);
+      if (hRows.length === 0 || !hRows[0].is_active) {
+        throw new Error('Homestay không tồn tại hoặc đã ngừng kinh doanh');
+      }
+      const homestay = hRows[0];
+
+      if (guests > homestay.max_guests) {
+        throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${homestay.max_guests} người)`);
+      }
+
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+      if (checkOutDate <= checkInDate) {
+        throw new Error('Ngày trả phòng phải sau ngày nhận phòng');
+      }
+
+      // 2. Check Overbooking (Chống trùng lịch với cả đơn online và đơn tại quầy) với row lock FOR UPDATE
+      const [conflicts] = await runner.query(
+        `SELECT COUNT(*) AS conflict_count
+         FROM bookings
+         WHERE homestay_id = ?
+           AND status IN ('pending', 'confirmed')
+           AND check_in < ?
+           AND check_out > ?
+         FOR UPDATE`,
+        [homestayId, checkOut, checkIn]
+      );
+
+      if (conflicts[0].conflict_count > 0) {
+        throw new Error('Homestay đã có khách đặt trong khoảng thời gian này');
+      }
+
+      // 3. Compute Nights and Raw Total
+      const nights = Math.max(1, Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)));
+      const pricePerNight = parseFloat(homestay.price);
+      const rawTotal = pricePerNight * nights;
+      let discountAmount = 0;
+
+      // 4. Calculate Promotion Discount
+      if (promotionId) {
+        const [promoRows] = await runner.query(
+          'SELECT id, code, discount_type, discount_value, max_discount_amount, min_booking_amount FROM promotions WHERE id = ? AND is_active = 1 AND NOW() BETWEEN start_date AND end_date',
+          [promotionId]
+        );
+        if (promoRows.length > 0) {
+          const promo = promoRows[0];
+          if (rawTotal >= parseFloat(promo.min_booking_amount || 0)) {
+            if (promo.discount_type === 'percent') {
+              discountAmount = (rawTotal * parseFloat(promo.discount_value)) / 100;
+              if (promo.max_discount_amount && discountAmount > parseFloat(promo.max_discount_amount)) {
+                discountAmount = parseFloat(promo.max_discount_amount);
+              }
+            } else {
+              discountAmount = parseFloat(promo.discount_value);
             }
-          } else {
-            discountAmount = parseFloat(promo.discount_value);
+            await runner.query('UPDATE promotions SET used_count = used_count + 1 WHERE id = ?', [promo.id]);
           }
-          await db.query('UPDATE promotions SET used_count = used_count + 1 WHERE id = ?', [promo.id]);
         }
       }
-    }
 
-    const finalTotal = Math.max(0, rawTotal - discountAmount);
+      const finalTotal = Math.max(0, rawTotal - discountAmount);
 
-    // Tính hoa hồng nền tảng (Online: 10%)
-    let commissionRate = 10.00;
-    try {
-      const [settingRows] = await db.query(
-        "SELECT setting_value FROM app_settings WHERE setting_key = 'platform_commission_rate'"
+      // Tính hoa hồng nền tảng (Online: 10%)
+      let commissionRate = 10.00;
+      try {
+        const [settingRows] = await runner.query(
+          "SELECT setting_value FROM app_settings WHERE setting_key = 'platform_commission_rate'"
+        );
+        if (settingRows.length > 0) {
+          commissionRate = parseFloat(settingRows[0].setting_value) || 10.00;
+        }
+      } catch (_) {}
+
+      const commissionAmount = Math.round((finalTotal * commissionRate) / 100);
+      const hostPayoutAmount = finalTotal - commissionAmount;
+
+      const bookingCode = `BK${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(1000 + Math.random() * 9000)}`;
+
+      // 5. Insert Booking
+      const [result] = await runner.query(
+        `INSERT INTO bookings (
+          booking_code, user_id, homestay_id, check_in, check_out,
+          guests, nights, price_per_night, promotion_id, discount_amount,
+          total_price, commission_rate, commission_amount, host_payout_amount,
+          status, source, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'guest_online', ?)`,
+        [
+          bookingCode,
+          userId,
+          homestayId,
+          checkIn,
+          checkOut,
+          guests || 1,
+          nights,
+          pricePerNight,
+          promotionId || null,
+          discountAmount,
+          finalTotal,
+          commissionRate,
+          commissionAmount,
+          hostPayoutAmount,
+          notes || '',
+        ]
       );
-      if (settingRows.length > 0) {
-        commissionRate = parseFloat(settingRows[0].setting_value) || 10.00;
+
+      const bookingId = result.insertId;
+
+      // 6. Insert Payment Record
+      await runner.query(
+        `INSERT INTO payments (booking_id, payment_method, amount, status, paid_at)
+         VALUES (?, ?, ?, 'pending', NULL)`,
+        [bookingId, paymentMethod || 'cash', finalTotal]
+      );
+
+      // 7. Reward Points (+100)
+      if (userId) {
+        await runner.query('UPDATE users SET reward_points = reward_points + 100 WHERE id = ?', [userId]);
+        await runner.query(
+          'INSERT INTO point_transactions (user_id, title, points, type, reference_id) VALUES (?, ?, 100, "earn", ?)',
+          [userId, `Thưởng đặt phòng ${bookingCode} (${homestay.name})`, bookingId]
+        );
+
+        // 8. In-App Notification
+        await runner.query(
+          `INSERT INTO notifications (user_id, title, content, type, reference_id)
+           VALUES (?, 'Đã tạo đơn đặt phòng! ⏳', ?, 'booking_status', ?)`,
+          [
+            userId,
+            `Đơn đặt phòng ${bookingCode} tại ${homestay.name} đã được ghi nhận. Vui lòng thanh toán để Admin duyệt đơn.`,
+            bookingId,
+          ]
+        );
       }
-    } catch (_) {}
 
-    const commissionAmount = Math.round((finalTotal * commissionRate) / 100);
-    const hostPayoutAmount = finalTotal - commissionAmount;
+      if (conn) {
+        await conn.commit();
+      }
 
-    const bookingCode = `BK${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(1000 + Math.random() * 9000)}`;
-
-    // 5. Insert Booking
-    const [result] = await db.query(
-      `INSERT INTO bookings (
-        booking_code, user_id, homestay_id, check_in, check_out,
-        guests, nights, price_per_night, promotion_id, discount_amount,
-        total_price, commission_rate, commission_amount, host_payout_amount,
-        status, source, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'guest_online', ?)`,
-      [
+      return {
+        id: String(bookingId),
         bookingCode,
-        userId,
-        homestayId,
+        homestayName: homestay.name,
         checkIn,
         checkOut,
-        guests || 1,
+        guests,
         nights,
         pricePerNight,
-        promotionId || null,
         discountAmount,
-        finalTotal,
+        totalPrice: finalTotal,
         commissionRate,
         commissionAmount,
         hostPayoutAmount,
-        notes || '',
-      ]
-    );
-
-    const bookingId = result.insertId;
-
-    // 6. Insert Payment Record
-    await db.query(
-      `INSERT INTO payments (booking_id, payment_method, amount, status, paid_at)
-       VALUES (?, ?, ?, 'pending', NULL)`,
-      [bookingId, paymentMethod || 'cash', finalTotal]
-    );
-
-    // 7. Reward Points (+100)
-    if (userId) {
-      await db.query('UPDATE users SET reward_points = reward_points + 100 WHERE id = ?', [userId]);
-      await db.query(
-        'INSERT INTO point_transactions (user_id, title, points, type, reference_id) VALUES (?, ?, 100, "earn", ?)',
-        [userId, `Thưởng đặt phòng ${bookingCode} (${homestay.name})`, bookingId]
-      );
-
-      // 8. In-App Notification
-      await db.query(
-        `INSERT INTO notifications (user_id, title, content, type, reference_id)
-         VALUES (?, 'Đã tạo đơn đặt phòng! ⏳', ?, 'booking_status', ?)`,
-        [
-          userId,
-          `Đơn đặt phòng ${bookingCode} tại ${homestay.name} đã được ghi nhận. Vui lòng thanh toán để Admin duyệt đơn.`,
-          bookingId,
-        ]
-      );
+        status: 'pending',
+        source: 'guest_online',
+        paymentMethod,
+      };
+    } catch (err) {
+      if (conn) {
+        await conn.rollback();
+      }
+      throw err;
+    } finally {
+      if (conn) {
+        conn.release();
+      }
     }
-
-    return {
-      id: String(bookingId),
-      bookingCode,
-      homestayName: homestay.name,
-      checkIn,
-      checkOut,
-      guests,
-      nights,
-      pricePerNight,
-      discountAmount,
-      totalPrice: finalTotal,
-      commissionRate,
-      commissionAmount,
-      hostPayoutAmount,
-      status: 'pending',
-      source: 'guest_online',
-      paymentMethod,
-    };
   }
 
-  // Chủ Homestay tạo đơn đặt phòng trực tiếp tại quầy (Walk-in Direct Booking)
+  // Chủ Homestay tạo đơn đặt phòng trực tiếp tại quầy (Walk-in Direct Booking) - Concurrency Safe
   static async createDirectBooking({
     homestayId,
     guestName,
@@ -371,126 +396,151 @@ class BookingModel {
       throw new Error('Vui lòng chọn ngày nhận phòng và trả phòng');
     }
 
-    // 1. Get Homestay
-    const [hRows] = await db.query(
-      'SELECT id, name, price, max_guests, is_active, host_id FROM homestays WHERE id = ?',
-      [homestayId]
-    );
-    if (hRows.length === 0 || !hRows[0].is_active) {
-      throw new Error('Homestay không tồn tại hoặc đã ngừng kinh doanh');
-    }
-    const homestay = hRows[0];
-
-    if (guests > homestay.max_guests) {
-      throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${homestay.max_guests} người)`);
-    }
-
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
-    if (checkOutDate <= checkInDate) {
-      throw new Error('Ngày trả phòng phải sau ngày nhận phòng');
-    }
-
-    // 2. Check Overbooking
-    const [conflicts] = await db.query(
-      `SELECT COUNT(*) AS conflict_count
-       FROM bookings
-       WHERE homestay_id = ?
-         AND status IN ('pending', 'confirmed')
-         AND check_in < ?
-         AND check_out > ?`,
-      [homestayId, checkOut, checkIn]
-    );
-
-    if (conflicts[0].conflict_count > 0) {
-      throw new Error('Homestay đã có khách đặt trong khoảng thời gian này. Vui lòng chọn ngày khác.');
-    }
-
-    // 3. Compute nights & amounts
-    const nights = Math.max(1, Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)));
-    const pricePerNight = parseFloat(homestay.price);
-    const totalPrice = pricePerNight * nights;
-
-    // Hoa hồng cho đơn tại quầy (Mặc định 5%)
-    let directCommissionRate = 5.00;
+    let conn;
     try {
-      const [settingRows] = await db.query(
-        "SELECT setting_value FROM app_settings WHERE setting_key = 'direct_commission_rate'"
+      conn = await db.getConnection();
+      await conn.beginTransaction();
+    } catch (_) {
+      conn = null;
+    }
+    const runner = conn || db;
+
+    try {
+      // 1. Get Homestay with row lock
+      const [hRows] = await runner.query(
+        'SELECT id, name, price, max_guests, is_active, host_id FROM homestays WHERE id = ? FOR UPDATE',
+        [homestayId]
       );
-      if (settingRows.length > 0) {
-        directCommissionRate = parseFloat(settingRows[0].setting_value) || 5.00;
+      if (hRows.length === 0 || !hRows[0].is_active) {
+        throw new Error('Homestay không tồn tại hoặc đã ngừng kinh doanh');
       }
-    } catch (_) {}
+      const homestay = hRows[0];
 
-    const commissionAmount = Math.round((totalPrice * directCommissionRate) / 100);
-    const hostPayoutAmount = totalPrice - commissionAmount;
+      if (guests > homestay.max_guests) {
+        throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${homestay.max_guests} người)`);
+      }
 
-    const bookingCode = `HD${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(1000 + Math.random() * 9000)}`;
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+      if (checkOutDate <= checkInDate) {
+        throw new Error('Ngày trả phòng phải sau ngày nhận phòng');
+      }
 
-    // 4. Insert Booking
-    const [result] = await db.query(
-      `INSERT INTO bookings (
-        booking_code, user_id, guest_name, guest_phone, homestay_id, check_in, check_out,
-        guests, nights, price_per_night, discount_amount, total_price,
-        commission_rate, commission_amount, host_payout_amount,
-        status, source, notes, host_note, created_by
-      ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, 0.00, ?, ?, ?, ?, ?, 'host_direct', 'Khách đặt trực tiếp tại quầy homestay', ?, ?)`,
-      [
+      // 2. Check Overbooking with row lock
+      const [conflicts] = await runner.query(
+        `SELECT COUNT(*) AS conflict_count
+         FROM bookings
+         WHERE homestay_id = ?
+           AND status IN ('pending', 'confirmed')
+           AND check_in < ?
+           AND check_out > ?
+         FOR UPDATE`,
+        [homestayId, checkOut, checkIn]
+      );
+
+      if (conflicts[0].conflict_count > 0) {
+        throw new Error('Homestay đã có khách đặt trong khoảng thời gian này. Vui lòng chọn ngày khác.');
+      }
+
+      // 3. Compute nights & amounts
+      const nights = Math.max(1, Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)));
+      const pricePerNight = parseFloat(homestay.price);
+      const totalPrice = pricePerNight * nights;
+
+      // Hoa hồng cho đơn tại quầy (Mặc định 5%)
+      let directCommissionRate = 5.00;
+      try {
+        const [settingRows] = await runner.query(
+          "SELECT setting_value FROM app_settings WHERE setting_key = 'direct_commission_rate'"
+        );
+        if (settingRows.length > 0) {
+          directCommissionRate = parseFloat(settingRows[0].setting_value) || 5.00;
+        }
+      } catch (_) {}
+
+      const commissionAmount = Math.round((totalPrice * directCommissionRate) / 100);
+      const hostPayoutAmount = totalPrice - commissionAmount;
+
+      const bookingCode = `HD${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(1000 + Math.random() * 9000)}`;
+
+      // 4. Insert Booking
+      const [result] = await runner.query(
+        `INSERT INTO bookings (
+          booking_code, user_id, guest_name, guest_phone, homestay_id, check_in, check_out,
+          guests, nights, price_per_night, discount_amount, total_price,
+          commission_rate, commission_amount, host_payout_amount,
+          status, source, notes, host_note, created_by
+        ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, 0.00, ?, ?, ?, ?, ?, 'host_direct', 'Khách đặt trực tiếp tại quầy homestay', ?, ?)`,
+        [
+          bookingCode,
+          guestName.trim(),
+          guestPhone.trim(),
+          homestayId,
+          checkIn,
+          checkOut,
+          guests,
+          nights,
+          pricePerNight,
+          totalPrice,
+          directCommissionRate,
+          commissionAmount,
+          hostPayoutAmount,
+          status || 'confirmed',
+          hostNote || '',
+          createdBy || homestay.host_id || null,
+        ]
+      );
+
+      const bookingId = result.insertId;
+
+      // 5. Insert Payment
+      const paymentStatus = status === 'confirmed' ? 'completed' : 'pending';
+      await runner.query(
+        `INSERT INTO payments (booking_id, payment_method, amount, status, paid_at)
+         VALUES (?, ?, ?, ?, ?)`,
+        [
+          bookingId,
+          paymentMethod || 'cash',
+          totalPrice,
+          paymentStatus,
+          paymentStatus === 'completed' ? new Date() : null,
+        ]
+      );
+
+      if (conn) {
+        await conn.commit();
+      }
+
+      return {
+        id: String(bookingId),
         bookingCode,
-        guestName.trim(),
-        guestPhone.trim(),
-        homestayId,
+        homestayName: homestay.name,
+        guestName,
+        guestPhone,
         checkIn,
         checkOut,
         guests,
         nights,
         pricePerNight,
         totalPrice,
-        directCommissionRate,
+        commissionRate: directCommissionRate,
         commissionAmount,
         hostPayoutAmount,
-        status || 'confirmed',
-        hostNote || '',
-        createdBy || homestay.host_id || null,
-      ]
-    );
-
-    const bookingId = result.insertId;
-
-    // 5. Insert Payment
-    const paymentStatus = status === 'confirmed' ? 'completed' : 'pending';
-    await db.query(
-      `INSERT INTO payments (booking_id, payment_method, amount, status, paid_at)
-       VALUES (?, ?, ?, ?, ?)`,
-      [
-        bookingId,
-        paymentMethod || 'cash',
-        totalPrice,
+        status,
+        source: 'host_direct',
+        paymentMethod,
         paymentStatus,
-        paymentStatus === 'completed' ? new Date() : null,
-      ]
-    );
-
-    return {
-      id: String(bookingId),
-      bookingCode,
-      homestayName: homestay.name,
-      guestName,
-      guestPhone,
-      checkIn,
-      checkOut,
-      guests,
-      nights,
-      pricePerNight,
-      totalPrice,
-      commissionRate: directCommissionRate,
-      commissionAmount,
-      hostPayoutAmount,
-      status,
-      source: 'host_direct',
-      paymentMethod,
-      paymentStatus,
-    };
+      };
+    } catch (err) {
+      if (conn) {
+        await conn.rollback();
+      }
+      throw err;
+    } finally {
+      if (conn) {
+        conn.release();
+      }
+    }
   }
 
   static async uploadPaymentProof(bookingId, userId, proofImageUrl, transactionCode = null) {

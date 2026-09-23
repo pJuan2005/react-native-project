@@ -7,6 +7,7 @@ const routes = require('./routes');
 const webRoutes = require('./web/routes');
 const webAuthRouter = require('./web/routes/auth.route');
 const loadUser = require('./web/middlewares/loadUser.middleware');
+const { authLimiter, bookingLimiter, generalApiLimiter } = require('./middlewares/rate-limit.middleware');
 const { notFoundHandler, errorHandler } = require('./middlewares/error.middleware');
 
 const app = express();
@@ -43,6 +44,12 @@ app.use(
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(cookieParser());
+
+// Apply rate limiting to sensitive routes
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/bookings', bookingLimiter);
+app.use('/api/host/direct-booking', bookingLimiter);
 
 // Session Middleware for Web Admin & Host
 app.use(

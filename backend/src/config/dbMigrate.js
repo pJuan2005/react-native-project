@@ -245,7 +245,91 @@ async function migrateDatabase() {
       `);
     } catch (_) {}
 
-    // 9. Đồng bộ bookings: cập nhật property_id, guest_id, snapshot
+    // 9. Bổ sung tọa độ latitude, longitude cho homestays & properties
+    try {
+      const [latCols] = await db.query("SHOW COLUMNS FROM homestays LIKE 'latitude'");
+      if (latCols.length === 0) {
+        await db.query('ALTER TABLE homestays ADD COLUMN latitude DECIMAL(10,8) NULL AFTER max_guests');
+        await db.query('ALTER TABLE homestays ADD COLUMN longitude DECIMAL(11,8) NULL AFTER latitude');
+      }
+    } catch (_) {}
+
+    try {
+      const [pLatCols] = await db.query("SHOW COLUMNS FROM properties LIKE 'latitude'");
+      if (pLatCols.length === 0) {
+        await db.query('ALTER TABLE properties ADD COLUMN latitude DECIMAL(10,8) NULL AFTER max_guests');
+        await db.query('ALTER TABLE properties ADD COLUMN longitude DECIMAL(11,8) NULL AFTER latitude');
+      }
+    } catch (_) {}
+
+    // Bổ sung is_verified cho users
+    try {
+      const [vCols] = await db.query("SHOW COLUMNS FROM users LIKE 'is_verified'");
+      if (vCols.length === 0) {
+        await db.query('ALTER TABLE users ADD COLUMN is_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active');
+      }
+    } catch (_) {}
+
+    // 10. Tạo bảng host_verifications
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS host_verifications (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        host_id BIGINT UNSIGNED NOT NULL UNIQUE,
+        id_card_number VARCHAR(50) NOT NULL,
+        id_card_front_url VARCHAR(500) NOT NULL,
+        id_card_back_url VARCHAR(500) NOT NULL,
+        business_license_url VARCHAR(500) NULL,
+        status ENUM('draft', 'pending', 'approved', 'rejected') NOT NULL DEFAULT 'draft',
+        rejection_reason TEXT NULL,
+        reviewed_by BIGINT UNSIGNED NULL,
+        reviewed_at DATETIME NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_hv_status (status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // 11. Tạo bảng disputes (Báo cáo & Khiếu nại)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS disputes (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        reporter_id BIGINT UNSIGNED NOT NULL,
+        reporter_role ENUM('guest', 'host') NOT NULL DEFAULT 'guest',
+        target_type ENUM('property', 'host', 'booking') NOT NULL,
+        target_id BIGINT UNSIGNED NOT NULL,
+        booking_id BIGINT UNSIGNED NULL,
+        reason VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        evidence_url VARCHAR(500) NULL,
+        status ENUM('pending', 'investigating', 'resolved', 'dismissed') NOT NULL DEFAULT 'pending',
+        admin_note TEXT NULL,
+        resolution_action ENUM('none', 'refund', 'suspend_host', 'suspend_property', 'warning') NOT NULL DEFAULT 'none',
+        resolved_by BIGINT UNSIGNED NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        resolved_at DATETIME NULL,
+        KEY idx_disputes_status (status),
+        KEY idx_disputes_target (target_type, target_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // 12. Tạo bảng audit_logs
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        actor_id BIGINT UNSIGNED NULL,
+        actor_role VARCHAR(50) NULL,
+        action VARCHAR(100) NOT NULL,
+        entity_type VARCHAR(100) NOT NULL,
+        entity_id BIGINT UNSIGNED NOT NULL,
+        metadata TEXT NULL,
+        ip_address VARCHAR(100) NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_audit_entity (entity_type, entity_id),
+        KEY idx_audit_actor (actor_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // 13. Đồng bộ bookings: cập nhật property_id, guest_id, snapshot
     try {
       await db.query(`
         UPDATE bookings
