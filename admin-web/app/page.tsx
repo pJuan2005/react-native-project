@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -14,20 +14,15 @@ import {
   Search,
   Shield,
   Star,
-  Users,
   Sparkles,
   Building2,
   CalendarPlus,
-  KeyRound,
-  CheckCircle2,
-  Hotel,
 } from "lucide-react";
 import { destinations } from "@/lib/destinations";
 import { PropertyCard } from "@/components/shared/PropertyCard";
 import { getProperties, type PropertySummary } from "@/services/propertyService";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { useAuth } from "@/components/context/AuthContext";
 
 const QUICK_SEARCH_TAGS = [
   "Đà Lạt",
@@ -42,7 +37,6 @@ const QUICK_SEARCH_TAGS = [
 
 export default function GuestWebHomePage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
 
   const [searchForm, setSearchForm] = useState({
     location: "",
@@ -94,7 +88,7 @@ export default function GuestWebHomePage() {
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
       {/* Top Banner: Role Gateway Switcher Bar */}
       <div className="bg-slate-900 text-slate-200 text-xs py-2 px-4 border-b border-slate-800">
-        <div className="container max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span className="font-medium text-slate-300">
@@ -133,26 +127,37 @@ export default function GuestWebHomePage() {
 
       <main className="flex-1">
         {/* HERO SECTION WITH SEARCH WIDGET */}
-        <section className="relative bg-gradient-to-br from-blue-900 via-sky-900 to-indigo-950 text-white py-16 sm:py-24 overflow-hidden">
+        <section
+          className="bg-gradient-to-br from-blue-900 via-sky-900 to-indigo-950 text-white py-14 sm:py-20"
+          style={{ position: "relative", overflow: "hidden" }}
+        >
           {/* Background Decorative Image */}
-          <div className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none">
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: 0.25,
+              mixBlendMode: "overlay",
+              pointerEvents: "none",
+            }}
+          >
             <Image
               src="/img/banner-home.jpg"
               alt="Homestay Hero"
               fill
-              className="object-cover"
               priority
+              style={{ objectFit: "cover" }}
             />
           </div>
 
-          <div className="container max-w-7xl mx-auto px-4 relative z-10">
+          <div className="max-w-7xl mx-auto px-4" style={{ position: "relative", zIndex: 10 }}>
             <div className="text-center max-w-3xl mx-auto mb-10">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-semibold mb-4">
                 <Sparkles size={14} />
                 <span>Trải nghiệm nghỉ dưỡng xanh & sang trọng trên toàn quốc</span>
               </div>
               <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight text-white">
-                Tìm & Đặt Homestay, Villa Hoàn Hảo Cho Kỳ Nghỉ
+                Tìm & Đặt Homestay, Villa Cho Kỳ Nghỉ
               </h1>
               <p className="text-sm sm:text-base text-blue-100/90 mt-3 max-w-2xl mx-auto">
                 Hơn 500+ chỗ nghỉ nguyên căn độc đáo, view núi săn mây, sát biển và phố cổ. Đặt phòng nhanh chóng và thanh toán tiện lợi qua VietQR.
@@ -252,7 +257,7 @@ export default function GuestWebHomePage() {
 
         {/* SECTION 1: POPULAR DESTINATIONS */}
         <section className="py-14 bg-white">
-          <div className="container max-w-7xl mx-auto px-4">
+          <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-end justify-between mb-8">
               <div>
                 <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600">
@@ -276,17 +281,37 @@ export default function GuestWebHomePage() {
                 <Link
                   key={dest.name}
                   href={`/listings?location=${encodeURIComponent(dest.name)}`}
-                  className="group relative rounded-2xl overflow-hidden aspect-4/5 shadow-xs hover:shadow-lg transition block"
+                  className="group rounded-2xl overflow-hidden shadow-xs hover:shadow-lg transition block"
+                  style={{
+                    position: "relative",
+                    minHeight: 220,
+                    height: 220,
+                    display: "block",
+                  }}
                 >
                   <Image
                     src={dest.image}
                     alt={dest.name}
                     fill
-                    className="object-cover group-hover:scale-110 transition duration-300"
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
+                    className="group-hover:scale-110 transition duration-300"
+                    style={{ objectFit: "cover" }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent flex flex-col justify-end p-3.5 text-white">
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background: "linear-gradient(to top, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.1) 60%)",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "flex-end",
+                      padding: "14px 12px",
+                      color: "#fff",
+                      zIndex: 2,
+                    }}
+                  >
                     <h3 className="font-extrabold text-sm">{dest.name}</h3>
-                    <p className="text-[11px] text-slate-300">Khám phá ngay</p>
+                    <p className="text-[11px] text-slate-300">{dest.properties} chỗ nghỉ</p>
                   </div>
                 </Link>
               ))}
@@ -296,7 +321,7 @@ export default function GuestWebHomePage() {
 
         {/* SECTION 2: FEATURED HOMESTAYS (GUEST WEB RICH GRID) */}
         <section className="py-14 bg-slate-50 border-t border-slate-200/60">
-          <div className="container max-w-7xl mx-auto px-4">
+          <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-end justify-between mb-8">
               <div>
                 <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600">
@@ -314,7 +339,7 @@ export default function GuestWebHomePage() {
                 href="/listings"
                 className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-xs flex items-center gap-1.5"
               >
-                <span>Xem tất cả ({featuredProperties.length}+)</span>
+                <span>Xem tất cả chỗ nghỉ</span>
                 <ArrowRight size={13} />
               </Link>
             </div>
@@ -335,7 +360,7 @@ export default function GuestWebHomePage() {
 
         {/* SECTION 3: WHY CHOOSE HOMESTAY PLATFORM */}
         <section className="py-16 bg-white border-t border-slate-100">
-          <div className="container max-w-7xl mx-auto px-4">
+          <div className="max-w-7xl mx-auto px-4">
             <div className="text-center max-w-2xl mx-auto mb-12">
               <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600">
                 Cam kết chất lượng
