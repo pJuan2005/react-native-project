@@ -85,45 +85,6 @@ export default function GuestWebHomePage() {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f8fafc" }}>
-      {/* Top Banner: Role Gateway Switcher Bar */}
-      <div className="hs-topbar">
-        <div className="container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", display: "inline-block" }}></span>
-            <span style={{ fontWeight: 500, color: "#cbd5e1" }}>
-              Nền tảng Homestay Đa Phân Hệ — Đồng bộ thời gian thực với Mobile App
-            </span>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Link
-              href="/admin/dashboard"
-              className="hs-topbar-link"
-              style={{ background: "rgba(37, 99, 235, 0.25)", color: "#93c5fd", border: "1px solid rgba(59, 130, 246, 0.3)" }}
-            >
-              <Shield size={12} />
-              <span>👑 Cổng Admin</span>
-            </Link>
-            <Link
-              href="/host/dashboard"
-              className="hs-topbar-link"
-              style={{ background: "rgba(16, 185, 129, 0.25)", color: "#6ee7b7", border: "1px solid rgba(16, 185, 129, 0.3)" }}
-            >
-              <Building2 size={12} />
-              <span>🏡 Cổng Chủ Nhà</span>
-            </Link>
-            <Link
-              href="/quick-manage/HMTOKEN_0001"
-              className="hs-topbar-link"
-              style={{ background: "rgba(245, 158, 11, 0.25)", color: "#fcd34d", border: "1px solid rgba(245, 158, 11, 0.3)" }}
-            >
-              <CalendarPlus size={12} />
-              <span>🏨 Lễ tân Quầy</span>
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Guest Web Navbar */}
       <Navbar />
 

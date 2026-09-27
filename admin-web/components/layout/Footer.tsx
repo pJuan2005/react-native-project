@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import {
   Facebook,
   Home,
@@ -8,6 +8,8 @@ import {
   Phone,
   Twitter,
   Youtube,
+  Shield,
+  Building2,
 } from "lucide-react";
 
 const socialLinks = [
@@ -25,8 +27,9 @@ export function Footer() {
   return (
     <footer className="hs-footer">
       <div className="container">
-        <div className="row g-4">
-          <div className="col-lg-4 col-md-6">
+        <div className="row g-4" style={{ display: "flex", flexWrap: "wrap" }}>
+          {/* Brand Info */}
+          <div className="col-lg-4 col-md-6" style={{ flex: "1 1 300px", marginBottom: 24 }}>
             <div
               style={{
                 display: "flex",
@@ -44,13 +47,14 @@ export function Footer() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  color: "#fff",
                 }}
               >
                 <Home size={18} color="#fff" />
               </div>
               <span
                 style={{
-                  color: "#f1f5f9",
+                  color: "#f8fafc",
                   fontWeight: 800,
                   fontSize: "1.3rem",
                   letterSpacing: -0.5,
@@ -65,11 +69,10 @@ export function Footer() {
                 lineHeight: 1.75,
                 color: "#94a3b8",
                 marginBottom: 20,
-                maxWidth: 320,
+                maxWidth: 340,
               }}
             >
-              Find your ideal stay with a booking flow designed for real trips,
-              trusted communication, and a smoother hosting experience.
+              Hệ sinh thái du lịch & nghỉ dưỡng xanh. Kết nối du khách với những homestay, villa đẹp và độc đáo nhất trên toàn quốc.
             </p>
             <div className="hs-footer-socials">
               {socialLinks.map((item) => (
@@ -81,71 +84,70 @@ export function Footer() {
                   target={item.href.startsWith("http") ? "_blank" : undefined}
                   rel={item.href.startsWith("http") ? "noreferrer" : undefined}
                 >
-                  <span className="hs-social-icon">{item.icon}</span>
+                  {item.icon}
                 </a>
               ))}
             </div>
           </div>
 
-          <div className="col-lg-2 col-md-6 col-6">
-            <h5>Explore</h5>
-            <Link href="/">Home</Link>
-            <Link href="/listings">Explore Stays</Link>
-            <Link href="/about">About Us</Link>
-            <Link href="/contact">Contact</Link>
-            <a href="#!">How It Works</a>
+          {/* Explore Column */}
+          <div className="col-lg-2 col-md-6 col-6" style={{ flex: "1 1 140px", marginBottom: 24 }}>
+            <h5 className="hs-footer-title">Khám phá</h5>
+            <div className="hs-footer-col">
+              <Link href="/">Trang chủ</Link>
+              <Link href="/listings">Khám phá Homestay</Link>
+              <Link href="/about">Về chúng tôi</Link>
+              <Link href="/contact">Liên hệ</Link>
+            </div>
           </div>
 
-          <div className="col-lg-2 col-md-6 col-6">
-            <h5>Hosting</h5>
-            <Link href="/auth/register">Become a Host</Link>
-            <Link href="/auth/login">Host Login</Link>
-            <a href="#!">Hosting Guide</a>
-            <a href="#!">Policies</a>
-            <a href="#!">Community</a>
+          {/* Hosting Column */}
+          <div className="col-lg-2 col-md-6 col-6" style={{ flex: "1 1 140px", marginBottom: 24 }}>
+            <h5 className="hs-footer-title">Dành cho Chủ nhà</h5>
+            <div className="hs-footer-col">
+              <Link href="/auth/register">Đăng ký Chủ Homestay</Link>
+              <Link href="/auth/login">Đăng nhập Quản lý</Link>
+              <Link href="/host/dashboard">Host Dashboard</Link>
+              <Link href="/host/my-properties">Quản lý phòng nghỉ</Link>
+            </div>
           </div>
 
-          <div className="col-lg-2 col-md-6 col-6">
-            <h5>Support</h5>
-            <a href="#!">Help Center</a>
-            <a href="#!">Safety</a>
-            <a href="#!">Privacy Policy</a>
-            <a href="#!">Terms of Service</a>
-            <a href="#!">Cookie Policy</a>
+          {/* Management Portal Column */}
+          <div className="col-lg-2 col-md-6 col-6" style={{ flex: "1 1 140px", marginBottom: 24 }}>
+            <h5 className="hs-footer-title">Quản trị viên</h5>
+            <div className="hs-footer-col">
+              <Link href="/admin/dashboard">Admin Dashboard</Link>
+              <Link href="/admin/manage-booking">Duyệt đặt phòng</Link>
+              <Link href="/admin/property-approvals">Phê duyệt chỗ nghỉ</Link>
+              <Link href="/admin/manage-reports">Báo cáo tài chính</Link>
+            </div>
           </div>
 
-          <div className="col-lg-2 col-md-6 col-6">
-            <h5>Contact</h5>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* Contact Column */}
+          <div className="col-lg-2 col-md-6 col-6" style={{ flex: "1 1 180px", marginBottom: 24 }}>
+            <h5 className="hs-footer-title">Liên hệ</h5>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                 <MapPin
-                  size={14}
-                  style={{ flexShrink: 0, marginTop: 3, color: "#2563EB" }}
+                  size={15}
+                  style={{ flexShrink: 0, marginTop: 3, color: "#38BDF8" }}
                 />
-                <span
-                  style={{
-                    fontSize: "0.87rem",
-                    lineHeight: 1.6,
-                    color: "#94a3b8",
-                  }}
-                >
-                  Bình Giang,
-                  <br />
-                  Hải Phòng, Việt Nam
+                <span style={{ fontSize: "0.87rem", lineHeight: 1.6, color: "#94a3b8" }}>
+                  Bình Giang, Hải Phòng, Việt Nam
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Mail size={14} style={{ color: "#2563EB", flexShrink: 0 }} />
+                <Mail size={15} style={{ color: "#38BDF8", flexShrink: 0 }} />
                 <a
                   href="mailto:phamchuan2608@gmail.com"
-                  style={{ fontSize: "0.87rem" }}
+                  style={{ fontSize: "0.87rem", color: "#94a3b8", textDecoration: "none" }}
                 >
                   phamchuan2608@gmail.com
                 </a>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Phone size={14} style={{ color: "#2563EB", flexShrink: 0 }} />
-                <a href="tel:0362111527" style={{ fontSize: "0.87rem" }}>
+                <Phone size={15} style={{ color: "#38BDF8", flexShrink: 0 }} />
+                <a href="tel:0362111527" style={{ fontSize: "0.87rem", color: "#94a3b8", textDecoration: "none" }}>
                   0362111527
                 </a>
               </div>
@@ -165,22 +167,15 @@ export function Footer() {
           }}
         >
           <p style={{ margin: 0, fontSize: "0.83rem", color: "#64748b" }}>
-            © 2026 HomeStay. All rights reserved.
+            © 2026 HomeStay Booking Platform. All rights reserved.
           </p>
           <div style={{ display: "flex", gap: 16 }}>
-            <a href="#!" style={{ fontSize: "0.83rem", color: "#64748b" }}>
-              Privacy
-            </a>
-            <a href="#!" style={{ fontSize: "0.83rem", color: "#64748b" }}>
-              Terms
-            </a>
-            <a href="#!" style={{ fontSize: "0.83rem", color: "#64748b" }}>
-              Cookies
-            </a>
+            <span style={{ fontSize: "0.83rem", color: "#64748b" }}>Chính sách bảo mật</span>
+            <span style={{ fontSize: "0.83rem", color: "#64748b" }}>Điều khoản dịch vụ</span>
+            <span style={{ fontSize: "0.83rem", color: "#64748b" }}>Bảo vệ quyền lợi khách hàng</span>
           </div>
         </div>
       </div>
     </footer>
   );
 }
-

@@ -206,15 +206,25 @@ body {
   background-color: var(--hs-primary-light);
 }
 
+@media (max-width: 768px) {
+  .hs-nav-links-desktop,
+  .hs-nav-auth-desktop {
+    display: none !important;
+  }
+  .hs-mobile-toggle {
+    display: block !important;
+  }
+}
+
 /* ── Hero Search Widget ── */
 .hs-hero {
   position: relative;
-  min-height: 520px;
+  min-height: 500px;
   display: flex;
   align-items: center;
   background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #172554 100%);
   overflow: hidden;
-  padding: 60px 0;
+  padding: 50px 0;
 }
 .hs-hero-overlay {
   position: absolute; inset: 0;
@@ -232,7 +242,7 @@ body {
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.22);
   padding: 24px 28px;
-  margin-top: 32px;
+  margin-top: 28px;
   text-align: left;
 }
 
@@ -291,23 +301,63 @@ body {
   .hs-properties-grid { grid-template-columns: 1fr; }
 }
 
-/* ── Topbar Role Gateway ── */
-.hs-topbar {
+/* ── Footer ── */
+.hs-footer {
   background: #0f172a;
-  color: #e2e8f0;
-  padding: 8px 0;
-  font-size: 0.78rem;
-  border-bottom: 1px solid #1e293b;
+  color: #94a3b8;
+  padding: 60px 0 28px;
+  border-top: 1px solid #1e293b;
+  margin-top: auto;
 }
-.hs-topbar-link {
+.hs-footer-title {
+  color: #f8fafc;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+.hs-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hs-footer-col a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: color 0.15s ease;
+  display: block;
+}
+.hs-footer-col a:hover {
+  color: #38bdf8;
+}
+.hs-footer-socials {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+.hs-social-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #1e293b;
+  border: 1px solid #334155;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-weight: 700;
+  justify-content: center;
+  color: #94a3b8 !important;
   text-decoration: none;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
+}
+.hs-social-btn:hover {
+  background: #2563eb;
+  color: #fff !important;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+}
+.hs-footer-divider {
+  border: 0;
+  border-top: 1px solid #1e293b;
+  margin: 36px 0 20px;
 }
 
 /* ── Host Sidebar Layout ── */

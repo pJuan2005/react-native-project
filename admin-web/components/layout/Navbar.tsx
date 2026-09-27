@@ -71,7 +71,7 @@ export function Navbar() {
         onClick={() => setDropdownOpen(!dropdownOpen)}
         style={{
           display: "flex", alignItems: "center", gap: 8,
-          background: "none", border: "1.5px solid #e2e8f0",
+          background: "#fff", border: "1.5px solid #e2e8f0",
           borderRadius: 100, padding: "5px 12px 5px 5px",
           cursor: "pointer", transition: "all 0.15s"
         }}
@@ -80,13 +80,15 @@ export function Navbar() {
           width: 30, height: 30, borderRadius: "50%",
           background: user?.role === "Host"
             ? "linear-gradient(135deg, #7c3aed, #6d28d9)"
+            : user?.role === "Admin"
+            ? "linear-gradient(135deg, #0f172a, #1e293b)"
             : "linear-gradient(135deg, #2563EB, #1d4ed8)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: "0.75rem", fontWeight: 700, color: "#fff", flexShrink: 0
         }}>
           {user ? getUserInitials(user.name) : <User size={14} />}
         </div>
-        <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1e293b", maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1e293b", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {user?.name.split(" ")[0]}
         </span>
         <ChevronDown size={13} color="#64748b" style={{ transition: "transform 0.15s", transform: dropdownOpen ? "rotate(180deg)" : "rotate(0)" }} />
@@ -106,10 +108,10 @@ export function Navbar() {
             <span style={{
               display: "inline-flex", marginTop: 5,
               padding: "2px 8px", borderRadius: 20, fontSize: "0.7rem", fontWeight: 700,
-              background: user?.role === "Host" ? "#f3e8ff" : "#e0f2fe",
-              color: user?.role === "Host" ? "#6b21a8" : "#0c4a6e"
+              background: user?.role === "Host" ? "#f3e8ff" : user?.role === "Admin" ? "#fef3c7" : "#e0f2fe",
+              color: user?.role === "Host" ? "#6b21a8" : user?.role === "Admin" ? "#92400e" : "#0c4a6e"
             }}>
-              {user?.role}
+              {user?.role === "Admin" ? "Quản trị viên" : user?.role === "Host" ? "Chủ Homestay" : "Khách hàng"}
             </span>
           </div>
 
@@ -127,7 +129,7 @@ export function Navbar() {
                 transition: "all 0.12s"
               }}
             >
-              <span style={{ color: "#94a3b8" }}>{item.icon}</span>
+              <span style={{ color: "#2563EB" }}>{item.icon}</span>
               {item.label}
             </Link>
           ))}
@@ -144,7 +146,7 @@ export function Navbar() {
               }}
             >
               <LogOut size={15} />
-              Logout
+              Đăng xuất
             </button>
           </div>
         </div>
@@ -156,50 +158,65 @@ export function Navbar() {
     <nav className="hs-navbar">
       <div className="container">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          {/* Brand */}
-          <Link href="/" className="hs-navbar-brand" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Brand Logo */}
+          <Link href="/" className="hs-navbar-brand" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <div style={{
-              width: 34, height: 34, borderRadius: 10,
+              width: 38, height: 38, borderRadius: 10,
               background: "linear-gradient(135deg, #2563EB, #1d4ed8)",
-              display: "flex", alignItems: "center", justifyContent: "center"
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#fff", flexShrink: 0,
+              boxShadow: "0 4px 10px rgba(37,99,235,0.25)"
             }}>
-              <Home size={17} color="#fff" />
+              <Home size={19} color="#fff" />
             </div>
-            HomeStay
+            <span style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0f172a", letterSpacing: -0.5 }}>
+              Home<span style={{ color: "#2563EB" }}>Stay</span>
+            </span>
           </Link>
 
           {/* Desktop Nav Links */}
-          <div style={{ display: "flex", alignItems: "center", gap: 2 }} className="d-none d-md-flex">
-            <Link href="/" className={`hs-nav-link ${isActive("/") ? "active" : ""}`}>Home</Link>
-            <Link href="/listings" className={`hs-nav-link ${isActive("/listings") ? "active" : ""}`}>Explore</Link>
-            <Link href="/about" className={`hs-nav-link ${isActive("/about") ? "active" : ""}`}>About</Link>
-            <Link href="/contact" className={`hs-nav-link ${isActive("/contact") ? "active" : ""}`}>Contact</Link>
+          <div className="hs-nav-links-desktop" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <Link href="/" className={`hs-nav-link ${isActive("/") ? "active" : ""}`}>Trang chủ</Link>
+            <Link href="/listings" className={`hs-nav-link ${isActive("/listings") ? "active" : ""}`}>Khám phá</Link>
+            <Link href="/about" className={`hs-nav-link ${isActive("/about") ? "active" : ""}`}>Giới thiệu</Link>
+            <Link href="/contact" className={`hs-nav-link ${isActive("/contact") ? "active" : ""}`}>Liên hệ</Link>
           </div>
 
           {/* Auth Section — Desktop */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }} className="d-none d-md-flex">
+          <div className="hs-nav-auth-desktop" style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {isInitializing ? null : isAuthenticated && user ? (
               user.role === "Admin" ? (
-                /* Admin: show go-to-panel button */
-                <Link href="/admin/dashboard">
-                  <button className="btn-primary-hs" style={{ fontSize: "0.88rem", padding: "8px 18px", display: "flex", alignItems: "center", gap: 6 }}>
-                    <Shield size={14} /> Admin Panel
-                  </button>
-                </Link>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Link href="/admin/dashboard">
+                    <button className="btn-primary-hs" style={{ fontSize: "0.85rem", padding: "8px 16px" }}>
+                      <Shield size={14} /> Admin Dashboard
+                    </button>
+                  </Link>
+                  <AvatarDropdown />
+                </div>
+              ) : user.role === "Host" ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Link href="/host/dashboard">
+                    <button className="btn-primary-hs" style={{ fontSize: "0.85rem", padding: "8px 16px", background: "#059669" }}>
+                      <Building2 size={14} /> Host Portal
+                    </button>
+                  </Link>
+                  <AvatarDropdown />
+                </div>
               ) : (
                 <AvatarDropdown />
               )
             ) : (
               <>
-                <Link href="/auth/login">
-                  <button className="btn-outline-hs" style={{ fontSize: "0.88rem", padding: "8px 18px" }}>
-                    <LogIn size={14} style={{ marginRight: 6, verticalAlign: "middle" }} />
-                    Log In
+                <Link href="/auth/login" style={{ textDecoration: "none" }}>
+                  <button className="btn-outline-hs" style={{ fontSize: "0.85rem", padding: "7px 16px" }}>
+                    <LogIn size={14} />
+                    <span>Đăng nhập</span>
                   </button>
                 </Link>
-                <Link href="/auth/register">
-                  <button className="btn-primary-hs" style={{ fontSize: "0.88rem", padding: "8px 18px" }}>
-                    Get Started
+                <Link href="/auth/register" style={{ textDecoration: "none" }}>
+                  <button className="btn-primary-hs" style={{ fontSize: "0.85rem", padding: "7px 16px" }}>
+                    <span>Đăng ký</span>
                   </button>
                 </Link>
               </>
@@ -208,27 +225,26 @@ export function Navbar() {
 
           {/* Mobile Hamburger */}
           <button
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 6, borderRadius: 8 }}
-            className="d-md-none"
+            style={{ background: "none", border: "1px solid #e2e8f0", cursor: "pointer", padding: 6, borderRadius: 8, display: "none" }}
+            className="hs-mobile-toggle"
             onClick={() => setMenuOpen(!menuOpen)}
           >
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
+            {menuOpen ? <X size={20} color="#1e293b" /> : <Menu size={20} color="#1e293b" />}
           </button>
         </div>
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <div style={{ padding: "12px 0 4px", borderTop: "1px solid #e2e8f0", marginTop: 10 }} className="d-md-none">
-            <Link href="/" className="hs-nav-link" style={{ display: "block", marginBottom: 4 }} onClick={() => setMenuOpen(false)}>Home</Link>
-            <Link href="/listings" className="hs-nav-link" style={{ display: "block", marginBottom: 4 }} onClick={() => setMenuOpen(false)}>Explore</Link>
-            <Link href="/about" className="hs-nav-link" style={{ display: "block", marginBottom: 4 }} onClick={() => setMenuOpen(false)}>About</Link>
-            <Link href="/contact" className="hs-nav-link" style={{ display: "block", marginBottom: 4 }} onClick={() => setMenuOpen(false)}>Contact</Link>
+          <div style={{ padding: "12px 0 4px", borderTop: "1px solid #e2e8f0", marginTop: 10 }}>
+            <Link href="/" className="hs-nav-link" style={{ display: "block", marginBottom: 4 }} onClick={() => setMenuOpen(false)}>Trang chủ</Link>
+            <Link href="/listings" className="hs-nav-link" style={{ display: "block", marginBottom: 4 }} onClick={() => setMenuOpen(false)}>Khám phá</Link>
+            <Link href="/about" className="hs-nav-link" style={{ display: "block", marginBottom: 4 }} onClick={() => setMenuOpen(false)}>Giới thiệu</Link>
+            <Link href="/contact" className="hs-nav-link" style={{ display: "block", marginBottom: 4 }} onClick={() => setMenuOpen(false)}>Liên hệ</Link>
 
-            <hr style={{ margin: "10px 0" }} />
+            <hr style={{ margin: "10px 0", border: 0, borderTop: "1px solid #f1f5f9" }} />
 
             {isInitializing ? null : isAuthenticated && user ? (
               <>
-                {/* Logged in mobile user info */}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", borderRadius: 10, marginBottom: 8 }}>
                   <div style={{
                     width: 34, height: 34, borderRadius: "50%",
@@ -244,17 +260,11 @@ export function Navbar() {
                   </div>
                 </div>
 
-                {user.role === "Admin" ? (
-                  <Link href="/admin/dashboard" className="hs-nav-link" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }} onClick={() => setMenuOpen(false)}>
-                    <Shield size={14} /> Admin Panel
+                {menuItems.map((item, i) => (
+                  <Link key={i} href={item.path} className="hs-nav-link" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }} onClick={() => setMenuOpen(false)}>
+                    {item.icon} {item.label}
                   </Link>
-                ) : (
-                  menuItems.map((item, i) => (
-                    <Link key={i} href={item.path} className="hs-nav-link" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }} onClick={() => setMenuOpen(false)}>
-                      {item.icon} {item.label}
-                    </Link>
-                  ))
-                )}
+                ))}
 
                 <button
                   onClick={handleLogout}
@@ -262,19 +272,19 @@ export function Navbar() {
                     display: "flex", alignItems: "center", gap: 8, width: "100%",
                     padding: "0.5rem 0.85rem", borderRadius: 6, border: "none",
                     background: "none", color: "#dc2626", fontWeight: 600,
-                    fontSize: "0.9rem", cursor: "pointer", marginTop: 4
+                    fontSize: "0.9rem", cursor: "pointer", marginTop: 4, textAlign: "left"
                   }}
                 >
-                  <LogOut size={14} /> Logout
+                  <LogOut size={14} /> Đăng xuất
                 </button>
               </>
             ) : (
               <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
-                <Link href="/auth/login" style={{ flex: 1 }} onClick={() => setMenuOpen(false)}>
-                  <button className="btn-outline-hs" style={{ width: "100%", fontSize: "0.88rem" }}>Log In</button>
+                <Link href="/auth/login" style={{ flex: 1, textDecoration: "none" }} onClick={() => setMenuOpen(false)}>
+                  <button className="btn-outline-hs" style={{ width: "100%", fontSize: "0.85rem" }}>Đăng nhập</button>
                 </Link>
-                <Link href="/auth/register" style={{ flex: 1 }} onClick={() => setMenuOpen(false)}>
-                  <button className="btn-primary-hs" style={{ width: "100%", fontSize: "0.88rem" }}>Register</button>
+                <Link href="/auth/register" style={{ flex: 1, textDecoration: "none" }} onClick={() => setMenuOpen(false)}>
+                  <button className="btn-primary-hs" style={{ width: "100%", fontSize: "0.85rem" }}>Đăng ký</button>
                 </Link>
               </div>
             )}
