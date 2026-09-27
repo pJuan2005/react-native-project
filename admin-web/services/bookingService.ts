@@ -33,7 +33,7 @@ export interface BookingRecord {
   nights: number;
   guests: number;
   totalPrice: number;
-  status: "pending" | "confirmed" | "cancelled";
+  status: "pending" | "confirmed" | "cancelled" | "completed";
   source: string;
   createdBy: number | null;
   paymentMethod: string;

@@ -39,24 +39,24 @@ export function Navbar() {
 
   // Guest dropdown menu items
   const guestMenuItems = [
-    { icon: <Building2 size={15} />, label: "Host Dashboard", path: "/host/dashboard" },
-    { icon: <Shield size={15} />, label: "Admin Dashboard", path: "/admin/dashboard" },
+    { icon: <CalendarDays size={15} />, label: "Chuyến đi của tôi", path: "/dashboard" },
+    { icon: <UserCircle size={15} />, label: "Hồ sơ & Cài đặt", path: "/dashboard" },
   ];
 
   // Host dropdown menu items
   const hostMenuItems = [
     { icon: <LayoutDashboard size={15} />, label: "Host Dashboard", path: "/host/dashboard" },
-    { icon: <Building2 size={15} />, label: "My Properties", path: "/host/my-properties" },
-    { icon: <CalendarDays size={15} />, label: "Bookings", path: "/host/manage-booking" },
-    { icon: <UserCircle size={15} />, label: "Profile", path: "/host/profile" },
+    { icon: <Building2 size={15} />, label: "Homestay của tôi", path: "/host/my-properties" },
+    { icon: <CalendarDays size={15} />, label: "Đơn đặt phòng", path: "/host/manage-booking" },
+    { icon: <UserCircle size={15} />, label: "Hồ sơ chủ nhà", path: "/host/profile" },
   ];
 
   // Admin dropdown menu items
   const adminMenuItems = [
     { icon: <Shield size={15} />, label: "Admin Dashboard", path: "/admin/dashboard" },
-    { icon: <Building2 size={15} />, label: "Manage Properties", path: "/admin/properties-manage" },
-    { icon: <CalendarDays size={15} />, label: "Manage Bookings", path: "/admin/manage-booking" },
-    { icon: <UserCircle size={15} />, label: "Profile", path: "/admin/profile" },
+    { icon: <Building2 size={15} />, label: "Quản lý Homestay", path: "/admin/properties-manage" },
+    { icon: <CalendarDays size={15} />, label: "Quản lý Đặt phòng", path: "/admin/manage-booking" },
+    { icon: <UserCircle size={15} />, label: "Hồ sơ Admin", path: "/admin/profile" },
   ];
 
   const menuItems = user?.role === "Admin"
