@@ -13,7 +13,6 @@ import {
   MapPin,
   Search,
   Shield,
-  Star,
   Sparkles,
   Building2,
   CalendarPlus,
@@ -85,35 +84,38 @@ export default function GuestWebHomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f8fafc" }}>
       {/* Top Banner: Role Gateway Switcher Bar */}
-      <div className="bg-slate-900 text-slate-200 text-xs py-2 px-4 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="font-medium text-slate-300">
+      <div className="hs-topbar">
+        <div className="container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", display: "inline-block" }}></span>
+            <span style={{ fontWeight: 500, color: "#cbd5e1" }}>
               Nền tảng Homestay Đa Phân Hệ — Đồng bộ thời gian thực với Mobile App
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Link
               href="/admin/dashboard"
-              className="px-2.5 py-1 rounded-md bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white font-bold transition flex items-center gap-1 border border-blue-500/30"
+              className="hs-topbar-link"
+              style={{ background: "rgba(37, 99, 235, 0.25)", color: "#93c5fd", border: "1px solid rgba(59, 130, 246, 0.3)" }}
             >
               <Shield size={12} />
               <span>👑 Cổng Admin</span>
             </Link>
             <Link
               href="/host/dashboard"
-              className="px-2.5 py-1 rounded-md bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white font-bold transition flex items-center gap-1 border border-emerald-500/30"
+              className="hs-topbar-link"
+              style={{ background: "rgba(16, 185, 129, 0.25)", color: "#6ee7b7", border: "1px solid rgba(16, 185, 129, 0.3)" }}
             >
               <Building2 size={12} />
               <span>🏡 Cổng Chủ Nhà</span>
             </Link>
             <Link
               href="/quick-manage/HMTOKEN_0001"
-              className="px-2.5 py-1 rounded-md bg-amber-600/30 hover:bg-amber-600 text-amber-300 hover:text-white font-bold transition flex items-center gap-1 border border-amber-500/30"
+              className="hs-topbar-link"
+              style={{ background: "rgba(245, 158, 11, 0.25)", color: "#fcd34d", border: "1px solid rgba(245, 158, 11, 0.3)" }}
             >
               <CalendarPlus size={12} />
               <span>🏨 Lễ tân Quầy</span>
@@ -125,193 +127,172 @@ export default function GuestWebHomePage() {
       {/* Guest Web Navbar */}
       <Navbar />
 
-      <main className="flex-1">
+      <main style={{ flex: 1 }}>
         {/* HERO SECTION WITH SEARCH WIDGET */}
-        <section
-          className="bg-gradient-to-br from-blue-900 via-sky-900 to-indigo-950 text-white py-14 sm:py-20"
-          style={{ position: "relative", overflow: "hidden" }}
-        >
+        <section className="hs-hero">
           {/* Background Decorative Image */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              opacity: 0.25,
-              mixBlendMode: "overlay",
-              pointerEvents: "none",
-            }}
-          >
-            <Image
-              src="/img/banner-home.jpg"
-              alt="Homestay Hero"
-              fill
-              priority
-              style={{ objectFit: "cover" }}
-            />
-          </div>
+          <div className="hs-hero-overlay"></div>
 
-          <div className="max-w-7xl mx-auto px-4" style={{ position: "relative", zIndex: 10 }}>
-            <div className="text-center max-w-3xl mx-auto mb-10">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-semibold mb-4">
-                <Sparkles size={14} />
+          <div className="container" style={{ position: "relative", zIndex: 2 }}>
+            <div className="hs-hero-content">
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "6px 16px", borderRadius: 20,
+                background: "rgba(37,99,235,0.25)", border: "1px solid rgba(147,197,253,0.3)",
+                color: "#bfdbfe", fontSize: "0.82rem", fontWeight: 600, marginBottom: 16
+              }}>
+                <Sparkles size={14} color="#60a5fa" />
                 <span>Trải nghiệm nghỉ dưỡng xanh & sang trọng trên toàn quốc</span>
               </div>
-              <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight text-white">
-                Tìm & Đặt Homestay, Villa Cho Kỳ Nghỉ
+
+              <h1 style={{
+                fontSize: "2.8rem", fontWeight: 800, color: "#fff",
+                lineHeight: 1.15, letterSpacing: "-0.8px", margin: "0 0 12px"
+              }}>
+                Tìm & Đặt Homestay Hoàn Hảo Cho Kỳ Nghỉ
               </h1>
-              <p className="text-sm sm:text-base text-blue-100/90 mt-3 max-w-2xl mx-auto">
+
+              <p style={{
+                fontSize: "1.05rem", color: "#e0f2fe", margin: "0 auto",
+                maxWidth: 680, lineHeight: 1.6
+              }}>
                 Hơn 500+ chỗ nghỉ nguyên căn độc đáo, view núi săn mây, sát biển và phố cổ. Đặt phòng nhanh chóng và thanh toán tiện lợi qua VietQR.
               </p>
-            </div>
 
-            {/* MAIN SEARCH WIDGET FOR DESKTOP & WEB */}
-            <div className="max-w-4xl mx-auto bg-white rounded-3xl p-4 sm:p-5 shadow-2xl border border-slate-100 text-slate-800">
-              <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-                {/* Destination */}
-                <div className="sm:col-span-4 p-2.5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-blue-400 transition">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
-                    Địa điểm / Tên homestay
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <MapPin size={16} className="text-blue-600 shrink-0" />
-                    <input
-                      type="text"
-                      placeholder="Bạn muốn đi đâu? (Đà Lạt, Sa Pa...)"
-                      value={searchForm.location}
-                      onChange={(e) => setSearchForm({ ...searchForm, location: e.target.value })}
-                      className="w-full bg-transparent text-sm font-semibold text-slate-900 focus:outline-none placeholder:text-slate-400"
-                    />
+              {/* MAIN SEARCH WIDGET FOR DESKTOP & WEB */}
+              <div className="hs-search-card">
+                <form onSubmit={handleSearchSubmit}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 120px", gap: 12, alignItems: "center" }}>
+                    {/* Destination */}
+                    <div style={{ padding: "8px 14px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: 2 }}>
+                        Địa điểm / Homestay
+                      </label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <MapPin size={15} color="#2563EB" style={{ flexShrink: 0 }} />
+                        <input
+                          type="text"
+                          placeholder="Bạn muốn đi đâu? (Đà Lạt...)"
+                          value={searchForm.location}
+                          onChange={(e) => setSearchForm({ ...searchForm, location: e.target.value })}
+                          style={{ border: "none", background: "transparent", width: "100%", outline: "none", fontSize: "0.9rem", fontWeight: 600, color: "#0f172a" }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Check-in */}
+                    <div style={{ padding: "8px 14px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: 2 }}>
+                        Nhận phòng
+                      </label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <Calendar size={15} color="#2563EB" style={{ flexShrink: 0 }} />
+                        <input
+                          type="date"
+                          value={searchForm.checkIn}
+                          onChange={(e) => setSearchForm({ ...searchForm, checkIn: e.target.value })}
+                          style={{ border: "none", background: "transparent", width: "100%", outline: "none", fontSize: "0.85rem", fontWeight: 600, color: "#0f172a", cursor: "pointer" }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Check-out */}
+                    <div style={{ padding: "8px 14px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: 2 }}>
+                        Trả phòng
+                      </label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <Calendar size={15} color="#2563EB" style={{ flexShrink: 0 }} />
+                        <input
+                          type="date"
+                          value={searchForm.checkOut}
+                          onChange={(e) => setSearchForm({ ...searchForm, checkOut: e.target.value })}
+                          style={{ border: "none", background: "transparent", width: "100%", outline: "none", fontSize: "0.85rem", fontWeight: 600, color: "#0f172a", cursor: "pointer" }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div>
+                      <button
+                        type="submit"
+                        className="btn-primary-hs"
+                        style={{ width: "100%", height: 50, borderRadius: 12, fontSize: "0.92rem", fontWeight: 700 }}
+                      >
+                        <Search size={16} />
+                        <span>Tìm</span>
+                      </button>
+                    </div>
                   </div>
+                </form>
+
+                {searchError && (
+                  <p style={{ color: "#dc2626", fontSize: "0.82rem", fontWeight: 600, margin: "10px 0 0", textAlign: "center" }}>
+                    ⚠️ {searchError}
+                  </p>
+                )}
+
+                {/* Quick Search Tag Chips */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, paddingTop: 14, borderTop: "1px solid #f1f5f9", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 500 }}>Gợi ý nhanh:</span>
+                  {QUICK_SEARCH_TAGS.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        setSearchForm({ ...searchForm, location: tag });
+                        router.push(`/listings?location=${encodeURIComponent(tag)}`);
+                      }}
+                      style={{
+                        padding: "4px 10px", borderRadius: 8, fontSize: "0.78rem", fontWeight: 600,
+                        background: "#f1f5f9", border: "none", color: "#475569", cursor: "pointer", transition: "all 0.15s"
+                      }}
+                    >
+                      {tag}
+                    </button>
+                  ))}
                 </div>
-
-                {/* Check-in */}
-                <div className="sm:col-span-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-blue-400 transition">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
-                    Nhận phòng
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Calendar size={16} className="text-blue-600 shrink-0" />
-                    <input
-                      type="date"
-                      value={searchForm.checkIn}
-                      onChange={(e) => setSearchForm({ ...searchForm, checkIn: e.target.value })}
-                      className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer"
-                    />
-                  </div>
-                </div>
-
-                {/* Check-out */}
-                <div className="sm:col-span-3 p-2.5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-blue-400 transition">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
-                    Trả phòng
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Calendar size={16} className="text-blue-600 shrink-0" />
-                    <input
-                      type="date"
-                      value={searchForm.checkOut}
-                      onChange={(e) => setSearchForm({ ...searchForm, checkOut: e.target.value })}
-                      className="w-full bg-transparent text-xs sm:text-sm font-semibold text-slate-900 focus:outline-none cursor-pointer"
-                    />
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <div className="sm:col-span-2">
-                  <button
-                    type="submit"
-                    className="w-full h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-md shadow-blue-500/30 transition flex items-center justify-center gap-2"
-                  >
-                    <Search size={16} />
-                    <span>Tìm kiếm</span>
-                  </button>
-                </div>
-              </form>
-
-              {searchError && (
-                <p className="text-xs text-red-600 font-semibold mt-2 text-center">
-                  ⚠️ {searchError}
-                </p>
-              )}
-
-              {/* Quick Search Tag Chips */}
-              <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 flex-wrap">
-                <span className="text-xs text-slate-400 font-medium">Gợi ý nhanh:</span>
-                {QUICK_SEARCH_TAGS.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => {
-                      setSearchForm({ ...searchForm, location: tag });
-                      router.push(`/listings?location=${encodeURIComponent(tag)}`);
-                    }}
-                    className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition"
-                  >
-                    {tag}
-                  </button>
-                ))}
               </div>
             </div>
           </div>
         </section>
 
         {/* SECTION 1: POPULAR DESTINATIONS */}
-        <section className="py-14 bg-white">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-end justify-between mb-8">
+        <section style={{ padding: "60px 0", background: "#fff" }}>
+          <div className="container">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
               <div>
-                <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600">
+                <span style={{ fontSize: "0.78rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "#2563EB", display: "block", marginBottom: 4 }}>
                   Địa điểm du lịch
                 </span>
-                <h2 className="text-2xl font-extrabold text-slate-900 mt-1">
+                <h2 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
                   Khám Phá Các Miền Đất Đẹp Nhất Việt Nam
                 </h2>
               </div>
               <Link
                 href="/listings"
-                className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                style={{ fontSize: "0.88rem", fontWeight: 700, color: "#2563EB", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}
               >
                 <span>Xem tất cả chỗ nghỉ</span>
-                <ChevronRight size={14} />
+                <ChevronRight size={15} />
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="hs-dest-grid">
               {destinations.map((dest) => (
                 <Link
                   key={dest.name}
                   href={`/listings?location=${encodeURIComponent(dest.name)}`}
-                  className="group rounded-2xl overflow-hidden shadow-xs hover:shadow-lg transition block"
-                  style={{
-                    position: "relative",
-                    minHeight: 220,
-                    height: 220,
-                    display: "block",
-                  }}
+                  className="hs-dest-card"
                 >
-                  <Image
+                  <img
                     src={dest.image}
                     alt={dest.name}
-                    fill
-                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 16vw"
-                    className="group-hover:scale-110 transition duration-300"
-                    style={{ objectFit: "cover" }}
+                    className="hs-dest-img"
                   />
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      background: "linear-gradient(to top, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.1) 60%)",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "flex-end",
-                      padding: "14px 12px",
-                      color: "#fff",
-                      zIndex: 2,
-                    }}
-                  >
-                    <h3 className="font-extrabold text-sm">{dest.name}</h3>
-                    <p className="text-[11px] text-slate-300">{dest.properties} chỗ nghỉ</p>
+                  <div className="hs-dest-overlay">
+                    <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#fff" }}>{dest.name}</h3>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#cbd5e1" }}>{dest.properties} chỗ nghỉ</p>
                   </div>
                 </Link>
               ))}
@@ -319,37 +300,38 @@ export default function GuestWebHomePage() {
           </div>
         </section>
 
-        {/* SECTION 2: FEATURED HOMESTAYS (GUEST WEB RICH GRID) */}
-        <section className="py-14 bg-slate-50 border-t border-slate-200/60">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-end justify-between mb-8">
+        {/* SECTION 2: FEATURED HOMESTAYS */}
+        <section style={{ padding: "60px 0", background: "#f8fafc", borderTop: "1px solid #e2e8f0" }}>
+          <div className="container">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
               <div>
-                <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600">
+                <span style={{ fontSize: "0.78rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "#2563EB", display: "block", marginBottom: 4 }}>
                   Đề xuất nổi bật
                 </span>
-                <h2 className="text-2xl font-extrabold text-slate-900 mt-1">
+                <h2 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
                   Chỗ Nghỉ Đẹp Được Yêu Thích Nhất
                 </h2>
-                <p className="text-xs text-slate-500 mt-1">
+                <p style={{ fontSize: "0.9rem", color: "#64748b", margin: "4px 0 0" }}>
                   Được đánh giá cao bởi cộng đồng du khách với đầy đủ tiện nghi và mức giá ưu đãi
                 </p>
               </div>
 
               <Link
                 href="/listings"
-                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-xs flex items-center gap-1.5"
+                className="btn-outline-hs"
+                style={{ fontSize: "0.85rem", padding: "8px 16px" }}
               >
-                <span>Xem tất cả chỗ nghỉ</span>
-                <ArrowRight size={13} />
+                <span>Xem tất cả ({featuredProperties.length}+)</span>
+                <ArrowRight size={14} />
               </Link>
             </div>
 
             {isLoadingFeatured ? (
-              <div className="p-12 text-center text-slate-400 text-sm">
+              <div style={{ padding: 60, textAlign: "center", color: "#94a3b8", fontSize: "0.95rem" }}>
                 Đang tải danh sách homestay nổi bật...
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="hs-properties-grid">
                 {featuredProperties.map((property) => (
                   <PropertyCard key={property.id} property={property} />
                 ))}
@@ -359,50 +341,50 @@ export default function GuestWebHomePage() {
         </section>
 
         {/* SECTION 3: WHY CHOOSE HOMESTAY PLATFORM */}
-        <section className="py-16 bg-white border-t border-slate-100">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center max-w-2xl mx-auto mb-12">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600">
+        <section style={{ padding: "64px 0", background: "#fff", borderTop: "1px solid #e2e8f0" }}>
+          <div className="container">
+            <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "#2563EB", display: "block", marginBottom: 4 }}>
                 Cam kết chất lượng
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
+              <h2 style={{ fontSize: "1.85rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
                 Tại Sao Du Khách Lựa Chọn Homestay Booking?
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-3xl bg-blue-50/50 border border-blue-100 flex flex-col items-start text-left">
-                <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center mb-4 shadow-md shadow-blue-500/20">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
+              <div style={{ padding: "28px 24px", borderRadius: 16, background: "#eff6ff", border: "1px solid #dbeafe" }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: "#2563EB", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
                   <Shield size={22} />
                 </div>
-                <h3 className="font-extrabold text-base text-slate-900 mb-1.5">
+                <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", margin: "0 0 8px" }}>
                   100% Chủ Nhà Xác Minh Danh Tính
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p style={{ fontSize: "0.85rem", color: "#475569", lineHeight: 1.6, margin: 0 }}>
                   Tất cả homestay trên sàn đều được ban quản trị kiểm duyệt chặt chẽ hình ảnh thực tế và xác minh CCCD/giấy phép kinh doanh của chủ nhà.
                 </p>
               </div>
 
-              <div className="p-6 rounded-3xl bg-emerald-50/50 border border-emerald-100 flex flex-col items-start text-left">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center mb-4 shadow-md shadow-emerald-500/20">
+              <div style={{ padding: "28px 24px", borderRadius: 16, background: "#f0fdf4", border: "1px solid #dcfce7" }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: "#16a34a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
                   <Award size={22} />
                 </div>
-                <h3 className="font-extrabold text-base text-slate-900 mb-1.5">
+                <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", margin: "0 0 8px" }}>
                   Giá Tốt Nhất & Không Phí Ẩn
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p style={{ fontSize: "0.85rem", color: "#475569", lineHeight: 1.6, margin: 0 }}>
                   Giá phòng niêm yết minh bạch, hỗ trợ thanh toán VietQR quét mã chuyển khoản tức thì và tự động tích lũy điểm thưởng đổi voucher cho kỳ nghỉ sau.
                 </p>
               </div>
 
-              <div className="p-6 rounded-3xl bg-purple-50/50 border border-purple-100 flex flex-col items-start text-left">
-                <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center mb-4 shadow-md shadow-purple-500/20">
+              <div style={{ padding: "28px 24px", borderRadius: 16, background: "#faf5ff", border: "1px solid #f3e8ff" }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: "#9333ea", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
                   <Clock size={22} />
                 </div>
-                <h3 className="font-extrabold text-base text-slate-900 mb-1.5">
+                <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", margin: "0 0 8px" }}>
                   Đồng Bộ Hai Chiều & Chống Overbooking
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p style={{ fontSize: "0.85rem", color: "#475569", lineHeight: 1.6, margin: 0 }}>
                   Hệ thống kết nối trực tiếp với Mobile App và Lễ tân tại quầy homestay, khóa phòng thời gian thực, đảm bảo không bao giờ bị bán trùng phòng.
                 </p>
               </div>
