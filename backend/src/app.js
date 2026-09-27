@@ -82,6 +82,36 @@ app.use(
   })
 );
 
+// Web browser friendly redirects to Next.js Web Portal on port 3001
+app.get(['/', '/admin', '/admin/*', '/host', '/host/*'], (req, res) => {
+  const targetUrl = `http://localhost:3001${req.originalUrl}`;
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+      <meta charset="UTF-8">
+      <title>Chuyển hướng đến Homestay Web Portal</title>
+      <meta http-equiv="refresh" content="1;url=${targetUrl}">
+      <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #0F172A; color: #F8FAFC; text-align: center; }
+        .card { background: #1E293B; padding: 32px; border-radius: 16px; border: 1px solid #334155; max-width: 500px; }
+        h2 { color: #38BDF8; margin-top: 0; }
+        a { color: #38BDF8; text-decoration: underline; font-weight: bold; }
+        .btn { display: inline-block; margin-top: 16px; padding: 10px 20px; background: #0284C7; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <h2>🚀 Đang chuyển hướng sang Web Portal (Port 3001)...</h2>
+        <p>Web Admin & Host Portal hiện đang chạy độc lập trên <strong>Next.js (Port 3001)</strong>.</p>
+        <p>Nếu trình duyệt không tự chuyển, vui lòng bấm vào nút bên dưới:</p>
+        <a href="${targetUrl}" class="btn">Mở Web Portal (${targetUrl})</a>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
 // Web Admin & Host Portal API Routes
 app.use('/api/auth', webAuthRouter);
 app.use('/api', webRoutes);

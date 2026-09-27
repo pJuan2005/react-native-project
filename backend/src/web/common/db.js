@@ -12,15 +12,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 15,
   queueLimit: 0,
-});
-
-pool.getConnection(function (err, conn) {
-  if (err) {
-    console.log("⚠️ Web DB pool connection notice:", err.message);
-  } else {
-    console.log("✅ Web DB pool connected successfully to database:", config.DB.NAME);
-    conn.release();
-  }
+  connectTimeout: 2000,
 });
 
 module.exports = pool;

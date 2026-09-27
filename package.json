@@ -4,9 +4,12 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
+    "mobile": "expo start",
+    "backend": "cd backend && npm run dev",
+    "web": "cd admin-web && npm run dev",
+    "test:system": "node backend/test-system.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web",
     "lint": "expo lint"
   },
   "dependencies": {
