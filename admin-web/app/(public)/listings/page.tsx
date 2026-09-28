@@ -14,24 +14,25 @@ import { PaginationControls } from "@/components/shared/PaginationControls";
 const PROPERTY_TYPES = [
   "All",
   "Villa",
-  "Apartment",
+  "Homestay",
+  "Resort",
   "Cabin",
-  "Cottage",
-  "Studio",
-  "House",
-  "Penthouse",
-  "Condo",
-  "Bungalow",
+  "Eco Homestay",
+  "Apartment",
 ];
 
 const ITEMS_PER_PAGE = 6;
+
+function formatPrice(amount: number) {
+  return new Intl.NumberFormat("vi-VN").format(amount || 0) + " ₫";
+}
 
 function ListingContent() {
   const searchParams = useSearchParams();
   const [properties, setProperties] = useState<PropertySummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [priceMax, setPriceMax] = useState(500);
+  const [priceMax, setPriceMax] = useState(10000000);
   const [selectedType, setSelectedType] = useState("All");
   const [selectedRating, setSelectedRating] = useState(0);
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
@@ -135,7 +136,7 @@ function ListingContent() {
 
   function clearFilters() {
     setSearchQuery("");
-    setPriceMax(500);
+    setPriceMax(10000000);
     setSelectedType("All");
     setSelectedRating(0);
     setSelectedCities([]);
@@ -145,22 +146,22 @@ function ListingContent() {
     const parts: string[] = [];
 
     if (locationQuery) {
-      parts.push(`in ${locationQuery}`);
+      parts.push(`tại ${locationQuery}`);
     }
 
     if (hasGuestQuery) {
       parts.push(
         requiredGuests > 1
-          ? `for ${requiredGuests} guests`
-          : "for 1 guest",
+          ? `cho ${requiredGuests} khách`
+          : "cho 1 khách",
       );
     }
 
     if (checkInQuery && checkOutQuery) {
-      parts.push(`from ${checkInQuery} to ${checkOutQuery}`);
+      parts.push(`từ ${checkInQuery} đến ${checkOutQuery}`);
     }
 
-    return parts.length > 0 ? `Showing stays ${parts.join(" ")}` : "";
+    return parts.length > 0 ? `Kết quả tìm kiếm ${parts.join(" ")}` : "";
   }, [checkInQuery, checkOutQuery, hasGuestQuery, locationQuery, requiredGuests]);
 
   function FilterSidebar() {
@@ -168,20 +169,22 @@ function ListingContent() {
       <div
         style={{
           background: "#fff",
-          padding: 16,
-          borderRadius: 12,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+          padding: 20,
+          borderRadius: 16,
+          boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+          border: "1px solid #e2e8f0",
         }}
       >
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            marginBottom: 18,
+            alignItems: "center",
+            marginBottom: 20,
           }}
         >
-          <h5 style={{ fontWeight: 700, fontSize: "1rem", margin: 0 }}>
-            <SlidersHorizontal size={16} /> Filters
+          <h5 style={{ fontWeight: 800, fontSize: "0.95rem", margin: 0, display: "flex", alignItems: "center", gap: 6, color: "#0f172a" }}>
+            <SlidersHorizontal size={16} color="#2563EB" /> Bộ lọc tìm kiếm
           </h5>
           <button
             onClick={clearFilters}
@@ -190,74 +193,86 @@ function ListingContent() {
               background: "none",
               color: "#2563EB",
               cursor: "pointer",
-              fontWeight: 600,
-              fontSize: "0.8rem",
+              fontWeight: 700,
+              fontSize: "0.78rem",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
             }}
           >
-            <X size={13} /> Clear
+            <X size={13} /> Xóa lọc
           </button>
         </div>
 
+        {/* Price Slider */}
         <div style={{ marginBottom: 22 }}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <label>Price</label>
-            <span style={{ color: "#2563EB", fontWeight: 600 }}>${priceMax}</span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+            <label style={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155" }}>Mức giá tối đa</label>
+            <span style={{ color: "#2563EB", fontWeight: 800, fontSize: "0.88rem" }}>{formatPrice(priceMax)}</span>
           </div>
           <input
             type="range"
-            min={30}
-            max={500}
-            step={10}
+            min={500000}
+            max={10000000}
+            step={250000}
             value={priceMax}
             onChange={(event) => setPriceMax(Number(event.target.value))}
-            style={{ width: "100%" }}
+            style={{ width: "100%", accentColor: "#2563EB", cursor: "pointer" }}
           />
         </div>
 
+        {/* Property Type */}
         <div style={{ marginBottom: 22 }}>
-          <label>Type</label>
+          <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: 8 }}>Loại hình chỗ nghỉ</label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {PROPERTY_TYPES.map((type) => (
               <button
                 key={type}
                 onClick={() => setSelectedType(type)}
                 style={{
-                  padding: "6px 12px",
+                  padding: "5px 12px",
                   borderRadius: 20,
                   border:
                     selectedType === type
-                      ? "1px solid #2563EB"
-                      : "1px solid #ddd",
+                      ? "1.5px solid #2563EB"
+                      : "1px solid #e2e8f0",
                   background: selectedType === type ? "#eff6ff" : "#fff",
-                  color: selectedType === type ? "#2563EB" : "#333",
+                  color: selectedType === type ? "#2563EB" : "#475569",
+                  fontWeight: selectedType === type ? 700 : 500,
                   cursor: "pointer",
-                  fontSize: "0.8rem",
+                  fontSize: "0.78rem",
+                  transition: "all 0.15s",
                 }}
               >
-                {type}
+                {type === "All" ? "Tất cả" : type}
               </button>
             ))}
           </div>
         </div>
 
-        <div style={{ marginBottom: 22 }}>
-          <label>City</label>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {cityOptions.map((city) => (
-              <label key={city} style={{ fontSize: "0.85rem" }}>
-                <input
-                  type="checkbox"
-                  checked={selectedCities.includes(city)}
-                  onChange={() => toggleCity(city)}
-                />{" "}
-                {city}
-              </label>
-            ))}
+        {/* City Options */}
+        {cityOptions.length > 0 && (
+          <div style={{ marginBottom: 22 }}>
+            <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: 8 }}>Địa điểm / Thành phố</label>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {cityOptions.map((city) => (
+                <label key={city} style={{ fontSize: "0.84rem", color: "#475569", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedCities.includes(city)}
+                    onChange={() => toggleCity(city)}
+                    style={{ accentColor: "#2563EB", width: 15, height: 15 }}
+                  />
+                  <span>{city}</span>
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
+        {/* Rating Filter */}
         <div>
-          <label>Rating</label>
+          <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: 8 }}>Đánh giá sao</label>
           <div style={{ display: "flex", gap: 6 }}>
             {[0, 4, 4.5, 4.8].map((rating) => (
               <button
@@ -265,18 +280,21 @@ function ListingContent() {
                 onClick={() => setSelectedRating(rating)}
                 style={{
                   flex: 1,
-                  padding: "6px",
-                  borderRadius: 6,
+                  padding: "6px 0",
+                  borderRadius: 8,
                   border:
                     selectedRating === rating
-                      ? "1px solid #2563EB"
-                      : "1px solid #ddd",
+                      ? "1.5px solid #2563EB"
+                      : "1px solid #e2e8f0",
                   background: selectedRating === rating ? "#eff6ff" : "#fff",
+                  color: selectedRating === rating ? "#2563EB" : "#475569",
+                  fontWeight: selectedRating === rating ? 700 : 500,
                   cursor: "pointer",
-                  fontSize: "0.75rem",
+                  fontSize: "0.78rem",
+                  transition: "all 0.15s",
                 }}
               >
-                {rating === 0 ? "Any" : `${rating}+`}
+                {rating === 0 ? "Tất cả" : `${rating}★+`}
               </button>
             ))}
           </div>
@@ -286,11 +304,16 @@ function ListingContent() {
   }
 
   if (loading) {
-    return <div style={{ padding: 40 }}>Loading listings...</div>;
+    return (
+      <div style={{ padding: 60, textAlign: "center", color: "#64748b", fontSize: "0.95rem" }}>
+        Đang tải danh sách homestay...
+      </div>
+    );
   }
 
   return (
     <div style={{ background: "#f8fafc", minHeight: "100vh" }}>
+      {/* Page Title Bar */}
       <div
         style={{
           background: "#fff",
@@ -303,31 +326,40 @@ function ListingContent() {
             style={{
               display: "flex",
               justifyContent: "space-between",
+              alignItems: "center",
               gap: 16,
               flexWrap: "wrap",
             }}
           >
             <div>
-              <h1 style={{ fontWeight: 800 }}>Explore Homestays</h1>
-              <p style={{ color: "#64748b" }}>
-                {tripSummary || `${filteredProperties.length} properties available`}
+              <h1 style={{ fontWeight: 800, fontSize: "1.75rem", color: "#0f172a", margin: 0 }}>
+                Khám Phá Homestay & Villa
+              </h1>
+              <p style={{ color: "#64748b", fontSize: "0.88rem", margin: "4px 0 0" }}>
+                {tripSummary || `Tìm thấy ${filteredProperties.length} chỗ nghỉ sẵn sàng đón khách`}
               </p>
             </div>
 
+            {/* Keyword Search Input */}
             <div style={{ position: "relative" }}>
               <Search
-                size={15}
-                style={{ position: "absolute", left: 10, top: 10 }}
+                size={16}
+                color="#94a3b8"
+                style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }}
               />
               <input
-                placeholder="Search by title or city..."
+                placeholder="Tìm theo tên homestay, địa điểm..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 style={{
-                  padding: "8px 10px 8px 30px",
-                  borderRadius: 6,
-                  border: "1px solid #ddd",
-                  minWidth: 240,
+                  padding: "9px 12px 9px 36px",
+                  borderRadius: 12,
+                  border: "1.5px solid #e2e8f0",
+                  minWidth: 280,
+                  fontSize: "0.88rem",
+                  outline: "none",
+                  color: "#0f172a",
+                  background: "#fff",
                 }}
               />
             </div>
@@ -335,52 +367,83 @@ function ListingContent() {
         </div>
       </div>
 
-      <div className="container" style={{ padding: 28 }}>
-        <div className="row g-4">
-          <div className="col-lg-3 d-none d-lg-block">
+      {/* Main Content Area */}
+      <div className="container" style={{ padding: "32px 20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 28, alignItems: "start" }}>
+          {/* Left Sidebar Filters */}
+          <div style={{ position: "sticky", top: 80 }}>
             <FilterSidebar />
           </div>
 
-          <div className="col-lg-9">
+          {/* Right Properties Grid */}
+          <div>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                marginBottom: 18,
+                marginBottom: 20,
                 color: "#64748b",
-                fontSize: "0.9rem",
+                fontSize: "0.85rem",
               }}
             >
-              <Filter size={15} />
-              Refine the list by price, stay type, city, rating, and guest capacity.
+              <Filter size={15} color="#2563EB" />
+              <span>
+                Hiển thị <strong>{paginatedProperties.length}</strong> / <strong>{filteredProperties.length}</strong> homestay phù hợp với tiêu chí
+              </span>
             </div>
 
             {paginatedProperties.length === 0 ? (
-              <div style={{ textAlign: "center", padding: 60 }}>
-                No properties found
+              <div
+                style={{
+                  background: "#fff",
+                  padding: "60px 20px",
+                  borderRadius: 16,
+                  textAlign: "center",
+                  border: "1px solid #e2e8f0",
+                }}
+              >
+                <div style={{ width: 50, height: 50, borderRadius: 25, background: "#f1f5f9", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                  <Search size={24} color="#94a3b8" />
+                </div>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#0f172a", margin: "0 0 6px" }}>
+                  Không tìm thấy homestay phù hợp
+                </h3>
+                <p style={{ color: "#64748b", fontSize: "0.85rem", margin: "0 0 16px" }}>
+                  Hãy thử mở rộng bộ lọc giá, đổi địa điểm hoặc bỏ chọn bộ lọc để xem thêm chỗ nghỉ khác.
+                </p>
+                <button
+                  onClick={clearFilters}
+                  className="btn-primary-hs"
+                  style={{ fontSize: "0.85rem", padding: "8px 20px" }}
+                >
+                  Đặt lại bộ lọc
+                </button>
               </div>
             ) : (
               <>
-                <div className="row g-4">
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                    gap: 20,
+                  }}
+                >
                   {paginatedProperties.map((property) => (
-                    <div
-                      key={property.id}
-                      className="col-xl-4 col-lg-6 col-md-6 col-sm-12"
-                    >
-                      <PropertyCard property={property} />
-                    </div>
+                    <PropertyCard key={property.id} property={property} />
                   ))}
                 </div>
 
-                <PaginationControls
-                  currentPage={safeCurrentPage}
-                  totalPages={totalPages}
-                  totalItems={filteredProperties.length}
-                  pageSize={ITEMS_PER_PAGE}
-                  itemLabel="properties"
-                  onPageChange={setCurrentPage}
-                />
+                <div style={{ marginTop: 28 }}>
+                  <PaginationControls
+                    currentPage={safeCurrentPage}
+                    totalPages={totalPages}
+                    totalItems={filteredProperties.length}
+                    pageSize={ITEMS_PER_PAGE}
+                    itemLabel="chỗ nghỉ"
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
               </>
             )}
           </div>
@@ -392,7 +455,7 @@ function ListingContent() {
 
 export default function ListingPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Loading listings...</div>}>
+    <Suspense fallback={<div style={{ padding: 60, textAlign: "center", color: "#64748b" }}>Đang tải danh sách homestay...</div>}>
       <ListingContent />
     </Suspense>
   );

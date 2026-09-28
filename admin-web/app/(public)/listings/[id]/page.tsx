@@ -58,8 +58,8 @@ function StarDisplay({ rating, size = 14 }: { rating: number; size?: number }) {
   );
 }
 
-function formatUsd(amount: number) {
-  return `$${Number(amount || 0).toFixed(2)}`;
+function formatPrice(amount: number) {
+  return new Intl.NumberFormat("vi-VN").format(amount || 0) + " ₫";
 }
 
 function parseLocalDate(dateString: string) {
@@ -663,8 +663,8 @@ export default function DetailPage() {
               <div className="hs-card" style={{ padding: "24px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
                   <div>
-                    <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b" }}>${property.price}</span>
-                    <span style={{ color: "#94a3b8", fontSize: "0.85rem" }}> / night</span>
+                    <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b" }}>{formatPrice(property.price)}</span>
+                    <span style={{ color: "#94a3b8", fontSize: "0.85rem" }}> / đêm</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <Star size={13} fill="#f59e0b" color="#f59e0b" />
@@ -918,12 +918,12 @@ export default function DetailPage() {
                     {nights > 0 && (
                       <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 14 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.88rem", color: "#475569", marginBottom: 8 }}>
-                          <span>{formatUsd(property.price)} × {nights} nights</span>
-                          <span>{formatUsd(subtotal)}</span>
+                          <span>{formatPrice(property.price)} × {nights} đêm</span>
+                          <span>{formatPrice(subtotal)}</span>
                         </div>
                         <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#1e293b", paddingTop: 10, borderTop: "1px solid #e2e8f0" }}>
-                          <span>Total</span>
-                          <span>{formatUsd(total)}</span>
+                          <span>Tổng cộng</span>
+                          <span>{formatPrice(total)}</span>
                         </div>
                       </div>
                     )}

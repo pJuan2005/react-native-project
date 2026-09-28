@@ -20,14 +20,18 @@ interface PropertyCardProps {
   property: Property;
 }
 
+function formatPrice(amount: number) {
+  return new Intl.NumberFormat("vi-VN").format(amount || 0) + " ₫";
+}
+
 export function PropertyCard({ property }: PropertyCardProps) {
   return (
     <Link href={`/listings/${property.id}`} style={{ textDecoration: "none" }}>
       <div
         className="hs-card hs-property-card"
-        style={{ cursor: "pointer", height: "100%" }}
+        style={{ cursor: "pointer", height: "100%", display: "flex", flexDirection: "column" }}
       >
-        <div style={{ overflow: "hidden", position: "relative", aspectRatio: "16 / 10" }}>
+        <div style={{ overflow: "hidden", position: "relative", aspectRatio: "16 / 10", background: "#f1f5f9" }}>
           <Image
             src={property.image}
             alt={property.title}
@@ -39,71 +43,75 @@ export function PropertyCard({ property }: PropertyCardProps) {
           />
         </div>
 
-        <div style={{ padding: "16px 18px" }}>
-          {/* TYPE */}
-          <div style={{ marginBottom: 8 }}>
-            <span
+        <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
+          <div>
+            {/* TYPE */}
+            <div style={{ marginBottom: 8 }}>
+              <span
+                style={{
+                  background: "#eff6ff",
+                  color: "#2563EB",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  padding: "3px 10px",
+                  borderRadius: 20,
+                  border: "1px solid #dbeafe",
+                }}
+              >
+                {property.type}
+              </span>
+            </div>
+
+            {/* TITLE */}
+            <h3
               style={{
-                background: "#eff6ff",
-                color: "#2563EB",
-                fontSize: "0.72rem",
                 fontWeight: 700,
-                padding: "3px 10px",
-                borderRadius: 20,
+                color: "#0f172a",
+                fontSize: "0.95rem",
+                marginBottom: 6,
+                lineHeight: 1.4,
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                minHeight: 40,
               }}
             >
-              {property.type}
-            </span>
-          </div>
+              {property.title}
+            </h3>
 
-          {/* TITLE */}
-          <h3
-            style={{
-              fontWeight: 700,
-              color: "#1e293b",
-              fontSize: "0.95rem",
-              marginBottom: 6,
-              lineHeight: 1.35,
-              overflow: "hidden",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-            }}
-          >
-            {property.title}
-          </h3>
+            {/* LOCATION */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                marginBottom: 10,
+              }}
+            >
+              <MapPin size={13} color="#64748b" style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: "0.8rem", color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {property.location}
+              </span>
+            </div>
 
-          {/* LOCATION */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              marginBottom: 10,
-            }}
-          >
-            <MapPin size={12} color="#94a3b8" />
-            <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-              {property.location}
-            </span>
-          </div>
-
-          {/* INFO */}
-          <div
-            style={{
-              display: "flex",
-              gap: 14,
-              marginBottom: 14,
-              fontSize: "0.8rem",
-              color: "#64748b",
-            }}
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-              <Users size={12} color="#94a3b8" /> {property.maxGuests} guests
-            </span>
-            <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
-              <Bed size={12} color="#94a3b8" /> {property.bedrooms} beds
-            </span>
+            {/* INFO */}
+            <div
+              style={{
+                display: "flex",
+                gap: 14,
+                marginBottom: 14,
+                fontSize: "0.8rem",
+                color: "#64748b",
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <Users size={13} color="#2563EB" /> {property.maxGuests} khách
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <Bed size={13} color="#2563EB" /> {property.bedrooms} phòng ngủ
+              </span>
+            </div>
           </div>
 
           {/* FOOTER */}
@@ -117,11 +125,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <Star size={13} fill="#f59e0b" color="#f59e0b" />
-              <span style={{ fontWeight: 700, fontSize: "0.87rem" }}>
+              <Star size={14} fill="#f59e0b" color="#f59e0b" />
+              <span style={{ fontWeight: 800, fontSize: "0.88rem", color: "#0f172a" }}>
                 {property.rating}
               </span>
-              <span style={{ color: "#94a3b8", fontSize: "0.78rem" }}>
+              <span style={{ color: "#94a3b8", fontSize: "0.76rem" }}>
                 ({property.reviews})
               </span>
             </div>
@@ -131,13 +139,13 @@ export function PropertyCard({ property }: PropertyCardProps) {
                 style={{
                   fontWeight: 800,
                   fontSize: "1.05rem",
-                  color: "#1e293b",
+                  color: "#2563EB",
                 }}
               >
-                ${property.price}
+                {formatPrice(property.price)}
               </span>
               <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
-                /night
+                {" "}/ đêm
               </span>
             </div>
           </div>
