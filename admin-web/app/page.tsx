@@ -5,23 +5,24 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Award,
   ArrowRight,
+  Building2,
   Calendar,
   ChevronRight,
-  Clock,
+  Compass,
+  Heart,
   MapPin,
   Search,
-  Shield,
-  Star,
+  ShieldCheck,
   Sparkles,
-  Building2,
+  Star,
+  Users,
   CalendarDays,
-  Compass,
   CheckCircle2,
-  Heart,
-  Quote,
-  Hotel,
+  TreePine,
+  Coffee,
+  KeyRound,
+  SlidersHorizontal,
 } from "lucide-react";
 import { destinations } from "@/lib/destinations";
 import { PropertyCard } from "@/components/shared/PropertyCard";
@@ -40,51 +41,96 @@ const QUICK_SEARCH_TAGS = [
   "Nha Trang",
   "Ninh Bình",
   "Villa",
-  "Homestay",
+  "Cabin",
 ];
 
-const TESTIMONIALS = [
+const HOSPITALITY_VALUES = [
   {
-    name: "Hoàng Minh Tuấn",
+    icon: <TreePine size={24} color="#16a34a" />,
+    title: "Chỗ nghỉ độc đáo giữa thiên nhiên",
+    description:
+      "Tuyển chọn những căn villa, homestay gỗ nguyên căn có kiến trúc ấn tượng, view đồi núi săn mây hoặc sát bờ biển riêng tư.",
+  },
+  {
+    icon: <ShieldCheck size={24} color="#2563EB" />,
+    title: "Chủ nhà tận tâm & Đã xác minh",
+    description:
+      "100% cơ sở lưu trú được kiểm duyệt kỹ lưỡng về hình ảnh thực tế và xác minh danh tính chủ nhà, bảo đảm an tâm tuyệt đối.",
+  },
+  {
+    icon: <Coffee size={24} color="#d97706" />,
+    title: "Trải nghiệm bản địa sâu sắc",
+    description:
+      "Không chỉ là nơi dừng chân, mỗi chuyến đi là một trải nghiệm văn hóa địa phương ấm cúng và đầy ắp kỷ niệm đáng nhớ.",
+  },
+  {
+    icon: <Sparkles size={24} color="#9333ea" />,
+    title: "Đặt phòng & VietQR tức thì",
+    description:
+      "Thao tác đặt phòng mượt mà, đồng bộ lịch chống overbooking thời gian thực và thanh toán quét mã VietQR tiện lợi.",
+  },
+];
+
+const HOW_IT_WORKS_STEPS = [
+  {
+    step: "01",
+    title: "Discover",
+    subtitle: "Khám phá",
+    description: "Tìm kiếm chỗ nghỉ phù hợp với sở thích, phong cách du lịch và ngân sách của bạn.",
+  },
+  {
+    step: "02",
+    title: "Book",
+    subtitle: "Đặt chỗ",
+    description: "Chọn ngày nhận/trả phòng và hoàn tất thanh toán chuyển khoản VietQR nhanh chóng.",
+  },
+  {
+    step: "03",
+    title: "Enjoy",
+    subtitle: "Trải nghiệm",
+    description: "Nhận phòng thảnh thơi, tận hưởng kỳ nghỉ trọn vẹn và tích lũy điểm thưởng thành viên.",
+  },
+];
+
+const EDITORIAL_TESTIMONIALS = [
+  {
+    quote:
+      "Không gian homestay thật sự yên bình đúng như trên ảnh. Sáng sớm thức dậy ngắm biển mây Sa Pa tràn qua thung lũng, nhâm nhi tách trà nóng là cảm giác khó quên nhất năm nay của gia đình mình.",
+    author: "Nguyễn Thùy Linh",
     location: "Hà Nội",
-    avatar: "T",
-    homestay: "Villa Lavender Dream Đà Lạt",
+    stayedAt: "Cloud Nine Homestay • Sa Pa",
     rating: 5,
-    comment:
-      "Chuyến đi nghỉ dưỡng của gia đình mình thật sự tuyệt vời! Homestay view đồi thông cực chill, phòng ốc sạch sẽ tinh tươm. Thanh toán quét mã VietQR rất nhanh gọn.",
-    date: "Tháng 9, 2026",
+    avatarChar: "L",
   },
   {
-    name: "Nguyễn Thùy Linh",
+    quote:
+      "Villa sát biển với hồ bơi vô cực riêng tư. Mọi thứ từ khâu đặt phòng, thanh toán VietQR đến đón tiếp của chủ nhà đều cực kỳ chu đáo và chuyên nghiệp. Chắc chắn sẽ quay lại!",
+    author: "Trần Đức Nam",
     location: "TP. Hồ Chí Minh",
-    avatar: "L",
-    homestay: "Homestay Cloud Nine Sa Pa",
+    stayedAt: "Ocean Breeze Villa • Phú Quốc",
     rating: 5,
-    comment:
-      "Sáng thức dậy săn mây ngay ban công ngắm trọn thung lũng Mường Hoa. Chủ nhà cực kỳ thân thiện và nhiệt tình hỗ trợ. Đặt phòng qua app xác nhận rất nhanh!",
-    date: "Tháng 9, 2026",
+    avatarChar: "N",
   },
   {
-    name: "Trần Đức Nam",
+    quote:
+      "Một căn nhà gỗ thông ấm cúng giữa sườn đồi Đà Lạt. Giá niêm yết rõ ràng không phụ phí ẩn, tích điểm thưởng chuyến này được đổi luôn voucher giảm giá cho chuyến sau. Rất hài lòng.",
+    author: "Lê Hoàng Yến",
     location: "Đà Nẵng",
-    avatar: "N",
-    homestay: "Ocean Breeze Villa Phú Quốc",
+    stayedAt: "Pine Hill Cabin • Đà Lạt",
     rating: 5,
-    comment:
-      "Villa sát biển với hồ bơi vô cực riêng tư. Giá niêm yết minh bạch không có phí ẩn, tích điểm đổi voucher được giảm thêm 200k đơn sau. Rất hài lòng!",
-    date: "Tháng 8, 2026",
+    avatarChar: "Y",
   },
 ];
 
-export default function HomePage() {
+export default function LandingHomePage() {
   const router = useRouter();
-  const { user, isAuthenticated, isInitializing } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const [searchForm, setSearchForm] = useState({
     location: "",
     checkIn: "",
     checkOut: "",
-    guests: "1",
+    guests: "2",
   });
   const [searchError, setSearchError] = useState("");
   const [featuredProperties, setFeaturedProperties] = useState<PropertySummary[]>([]);
@@ -103,7 +149,7 @@ export default function HomePage() {
         setIsLoadingFeatured(false);
       }
 
-      // If user is authenticated, load their most recent booking
+      // If user is logged in, fetch their most recent active booking
       if (isAuthenticated) {
         try {
           const bookings = await getMyBookings();
@@ -138,40 +184,43 @@ export default function HomePage() {
   };
 
   const scrollToSearch = () => {
-    const el = document.getElementById("search-section");
+    const el = document.getElementById("booking-search-widget");
     if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
     } else {
       router.push("/listings");
     }
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f8fafc" }}>
-      {/* SECTION 1: NAVBAR */}
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#fcfbf9", color: "#1e293b" }}>
+      {/* 1. NAVBAR */}
       <Navbar />
 
       <main style={{ flex: 1 }}>
-        {/* SECTION 2: HERO SECTION WITH THREE.JS 3D SHOWCASE */}
+        {/* 2. HERO SECTION WITH THREE.JS 3D SHOWCASE */}
         <section
           style={{
             position: "relative",
-            background: "linear-gradient(135deg, #090e17 0%, #0f172a 40%, #1e3a8a 100%)",
+            minHeight: "88vh",
+            display: "flex",
+            alignItems: "center",
+            background: "linear-gradient(145deg, #090e17 0%, #0f172a 45%, #172554 100%)",
             color: "#fff",
             overflow: "hidden",
-            padding: "50px 0 60px",
+            padding: "40px 0 70px",
           }}
         >
-          {/* Subtle ambient gradient orb */}
+          {/* Subtle Ambient Lighting Aura */}
           <div
             style={{
               position: "absolute",
-              top: "-15%",
-              right: "-5%",
-              width: "550px",
-              height: "550px",
+              top: "-20%",
+              right: "-10%",
+              width: "600px",
+              height: "600px",
               borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(56, 189, 248, 0.18) 0%, rgba(37, 99, 235, 0.05) 60%, transparent 80%)",
+              background: "radial-gradient(circle, rgba(56, 189, 248, 0.16) 0%, rgba(37, 99, 235, 0.04) 60%, transparent 80%)",
               pointerEvents: "none",
               zIndex: 1,
             }}
@@ -181,17 +230,16 @@ export default function HomePage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1.1fr 0.9fr",
-                gap: 32,
+                gridTemplateColumns: "1.05fr 0.95fr",
+                gap: 36,
                 alignItems: "center",
               }}
               className="hs-hero-grid"
             >
-              {/* Left Column: Headline & Action */}
-              <div style={{ paddingRight: 10 }}>
-                {/* Auth State Switcher in Hero */}
+              {/* Left Column: Editorial Headline & Actions */}
+              <div>
                 {isAuthenticated && user ? (
-                  /* AUTHENTICATED USER GREETING */
+                  /* AUTHENTICATED USER HERO */
                   <div>
                     <div
                       style={{
@@ -200,7 +248,7 @@ export default function HomePage() {
                         gap: 8,
                         padding: "6px 14px",
                         borderRadius: 20,
-                        background: "rgba(16, 185, 129, 0.2)",
+                        background: "rgba(16, 185, 129, 0.18)",
                         border: "1px solid rgba(52, 211, 153, 0.35)",
                         color: "#6ee7b7",
                         fontSize: "0.82rem",
@@ -214,10 +262,10 @@ export default function HomePage() {
 
                     <h1
                       style={{
-                        fontSize: "2.8rem",
+                        fontSize: "3rem",
                         fontWeight: 800,
                         color: "#fff",
-                        lineHeight: 1.18,
+                        lineHeight: 1.15,
                         letterSpacing: "-0.8px",
                         margin: "0 0 16px",
                       }}
@@ -236,17 +284,17 @@ export default function HomePage() {
 
                     <p
                       style={{
-                        fontSize: "1.02rem",
+                        fontSize: "1.05rem",
                         color: "#cbd5e1",
                         lineHeight: 1.65,
                         margin: "0 0 24px",
-                        maxWidth: 540,
+                        maxWidth: 520,
                       }}
                     >
                       Khám phá những căn homestay và villa độc đáo nhất, tận hưởng kỳ nghỉ yên bình cùng gia đình và bạn bè với mức giá ưu đãi đặc quyền.
                     </p>
 
-                    {/* Upcoming Stay Card (If any) */}
+                    {/* Upcoming Stay Card (If any active booking exists) */}
                     {recentBooking && recentBooking.status !== "cancelled" && (
                       <div
                         style={{
@@ -256,7 +304,7 @@ export default function HomePage() {
                           borderRadius: 16,
                           padding: "14px 18px",
                           marginBottom: 24,
-                          maxWidth: 500,
+                          maxWidth: 480,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "space-between",
@@ -295,7 +343,7 @@ export default function HomePage() {
                         <Link
                           href="/dashboard"
                           style={{
-                            padding: "6px 12px",
+                            padding: "7px 14px",
                             borderRadius: 8,
                             background: "#2563EB",
                             color: "#fff",
@@ -305,17 +353,16 @@ export default function HomePage() {
                             flexShrink: 0,
                           }}
                         >
-                          Chi tiết
+                          Xem đơn
                         </Link>
                       </div>
                     )}
 
-                    {/* CTA Actions for Logged in user */}
                     <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                       <button
                         onClick={scrollToSearch}
                         className="btn-primary-hs"
-                        style={{ padding: "12px 26px", fontSize: "0.95rem", borderRadius: 12 }}
+                        style={{ padding: "13px 28px", fontSize: "0.95rem", borderRadius: 12 }}
                       >
                         <Search size={16} />
                         <span>Tìm chỗ nghỉ mới</span>
@@ -325,7 +372,7 @@ export default function HomePage() {
                         <button
                           className="btn-outline-hs"
                           style={{
-                            padding: "11px 22px",
+                            padding: "12px 24px",
                             fontSize: "0.95rem",
                             borderRadius: 12,
                             borderColor: "rgba(255,255,255,0.3)",
@@ -341,82 +388,88 @@ export default function HomePage() {
                 ) : (
                   /* PUBLIC GUEST HERO CONTENT */
                   <div>
+                    {/* Eyebrow */}
                     <div
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: 6,
+                        gap: 7,
                         padding: "6px 14px",
                         borderRadius: 20,
-                        background: "rgba(37, 99, 235, 0.25)",
+                        background: "rgba(37, 99, 235, 0.22)",
                         border: "1px solid rgba(147, 197, 253, 0.3)",
                         color: "#bfdbfe",
-                        fontSize: "0.82rem",
-                        fontWeight: 600,
-                        marginBottom: 16,
+                        fontSize: "0.8rem",
+                        fontWeight: 700,
+                        letterSpacing: "0.5px",
+                        textTransform: "uppercase",
+                        marginBottom: 18,
                       }}
                     >
-                      <Sparkles size={14} color="#60a5fa" />
-                      <span>Trải nghiệm nghỉ dưỡng xanh & sang trọng trên toàn quốc</span>
+                      <Sparkles size={13} color="#60a5fa" />
+                      <span>Stay somewhere special</span>
                     </div>
 
+                    {/* Headline */}
                     <h1
                       style={{
-                        fontSize: "2.9rem",
+                        fontSize: "3.2rem",
                         fontWeight: 800,
                         color: "#fff",
-                        lineHeight: 1.15,
-                        letterSpacing: "-0.8px",
-                        margin: "0 0 16px",
+                        lineHeight: 1.12,
+                        letterSpacing: "-1px",
+                        margin: "0 0 18px",
                       }}
                     >
-                      Tìm Nơi Trú Ẩn <br />
+                      Find your perfect <br />
                       <span
                         style={{
-                          background: "linear-gradient(90deg, #38bdf8, #818cf8, #34d399)",
+                          background: "linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #34d399 100%)",
                           WebkitBackgroundClip: "text",
                           WebkitTextFillColor: "transparent",
                         }}
                       >
-                        Bình Yên Cho Tâm Hồn
+                        nature getaway.
                       </span>
                     </h1>
 
+                    {/* Subheadline */}
                     <p
                       style={{
-                        fontSize: "1.05rem",
+                        fontSize: "1.08rem",
                         color: "#cbd5e1",
                         lineHeight: 1.65,
-                        margin: "0 0 26px",
-                        maxWidth: 540,
+                        margin: "0 0 28px",
+                        maxWidth: 520,
                       }}
                     >
-                      Khám phá hơn 500+ homestay, villa nghỉ dưỡng cao cấp giữa thiên nhiên Đà Lạt, Sa Pa, Phú Quốc... Giá niêm yết minh bạch, đồng bộ chống overbooking và thanh toán quét mã VietQR tiện lợi.
+                      Khám phá những căn homestay và villa độc đáo giữa rừng thông Đà Lạt, thung lũng mây Sa Pa hay biển xanh Phú Quốc. Nơi trú ẩn bình yên giúp bạn thư giãn và tái tạo năng lượng.
                     </p>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 28 }}>
+                    {/* CTA Actions */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", marginBottom: 30 }}>
                       <button
                         onClick={scrollToSearch}
                         className="btn-primary-hs"
-                        style={{ padding: "13px 28px", fontSize: "0.98rem", borderRadius: 12 }}
+                        style={{ padding: "14px 30px", fontSize: "0.98rem", borderRadius: 12, fontWeight: 700 }}
                       >
                         <Compass size={17} />
-                        <span>Khám phá ngay</span>
+                        <span>Khám phá chỗ nghỉ</span>
                       </button>
 
-                      <Link href="/auth/register" style={{ textDecoration: "none" }}>
+                      <Link href="/listings" style={{ textDecoration: "none" }}>
                         <button
                           className="btn-outline-hs"
                           style={{
-                            padding: "12px 22px",
+                            padding: "13px 24px",
                             fontSize: "0.95rem",
                             borderRadius: 12,
                             borderColor: "rgba(255,255,255,0.3)",
                             color: "#fff",
                           }}
                         >
-                          <Building2 size={16} />
-                          <span>Dành cho Chủ nhà</span>
+                          <span>Xem tất cả homestay</span>
+                          <ArrowRight size={15} />
                         </button>
                       </Link>
                     </div>
@@ -433,7 +486,7 @@ export default function HomePage() {
                       </span>
                       <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <CheckCircle2 size={15} color="#34d399" />
-                        <span>VietQR tiện lợi</span>
+                        <span>Thanh toán VietQR tiện lợi</span>
                       </span>
                     </div>
                   </div>
@@ -445,12 +498,12 @@ export default function HomePage() {
                 style={{
                   position: "relative",
                   width: "100%",
-                  height: "460px",
+                  height: "470px",
                   borderRadius: 24,
                   overflow: "hidden",
-                  background: "radial-gradient(circle at center, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.8) 100%)",
+                  background: "radial-gradient(circle at center, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.85) 100%)",
                   border: "1px solid rgba(255, 255, 255, 0.12)",
-                  boxShadow: "0 20px 50px rgba(0, 0, 0, 0.4)",
+                  boxShadow: "0 24px 60px rgba(0, 0, 0, 0.45)",
                 }}
               >
                 <HeroScene3D />
@@ -459,21 +512,21 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* SECTION 3: SEARCH BAR WIDGET */}
+        {/* 3. BOOKING SEARCH WIDGET (Prominent Overlapping Search Bar) */}
         <section
-          id="search-section"
+          id="booking-search-widget"
           style={{
             position: "relative",
-            zIndex: 10,
+            zIndex: 20,
             marginTop: "-34px",
-            paddingBottom: "20px",
+            paddingBottom: "24px",
           }}
         >
           <div className="container">
             <div className="hs-search-card" style={{ margin: "0 auto", maxWidth: 960 }}>
               <form onSubmit={handleSearchSubmit}>
                 <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 120px", gap: 12, alignItems: "center" }}>
-                  {/* Destination */}
+                  {/* Where / Destination */}
                   <div style={{ padding: "8px 14px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: 2 }}>
                       Địa điểm / Homestay
@@ -482,7 +535,7 @@ export default function HomePage() {
                       <MapPin size={15} color="#2563EB" style={{ flexShrink: 0 }} />
                       <input
                         type="text"
-                        placeholder="Bạn muốn đi đâu? (Đà Lạt...)"
+                        placeholder="Bạn muốn đi đâu? (Đà Lạt, Sa Pa...)"
                         value={searchForm.location}
                         onChange={(e) => setSearchForm({ ...searchForm, location: e.target.value })}
                         style={{ border: "none", background: "transparent", width: "100%", outline: "none", fontSize: "0.9rem", fontWeight: 600, color: "#0f172a" }}
@@ -522,7 +575,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Submit Button */}
+                  {/* Search CTA */}
                   <div>
                     <button
                       type="submit"
@@ -573,23 +626,63 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* SECTION 4: POPULAR DESTINATIONS */}
+        {/* 4. FEATURED HOMESTAYS ("Stay somewhere you'll remember") */}
         <section style={{ padding: "50px 0 60px", background: "#fff" }}>
           <div className="container">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 26, flexWrap: "wrap", gap: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
               <div>
                 <span style={{ fontSize: "0.78rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "#2563EB", display: "block", marginBottom: 4 }}>
-                  Địa điểm du lịch
+                  Curated Collection
                 </span>
-                <h2 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
-                  Khám Phá Các Miền Đất Đẹp Nhất Việt Nam
+                <h2 style={{ fontSize: "1.85rem", fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.4px" }}>
+                  Stay somewhere you&apos;ll remember.
+                </h2>
+                <p style={{ fontSize: "0.9rem", color: "#64748b", margin: "4px 0 0" }}>
+                  Tuyển chọn những chỗ nghỉ độc đáo được yêu thích nhất với điểm đánh giá xuất sắc từ cộng đồng du khách
+                </p>
+              </div>
+
+              <Link
+                href="/listings"
+                className="btn-outline-hs"
+                style={{ fontSize: "0.85rem", padding: "8px 18px" }}
+              >
+                <span>Xem tất cả chỗ nghỉ</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+
+            {isLoadingFeatured ? (
+              <div style={{ padding: 60, textAlign: "center", color: "#94a3b8", fontSize: "0.95rem" }}>
+                Đang tải danh sách homestay nổi bật...
+              </div>
+            ) : (
+              <div className="hs-properties-grid">
+                {featuredProperties.map((property) => (
+                  <PropertyCard key={property.id} property={property} />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 5. POPULAR DESTINATIONS */}
+        <section style={{ padding: "60px 0", background: "#f8fafc", borderTop: "1px solid #e2e8f0" }}>
+          <div className="container">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <span style={{ fontSize: "0.78rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "#2563EB", display: "block", marginBottom: 4 }}>
+                  Inspiring Getaways
+                </span>
+                <h2 style={{ fontSize: "1.85rem", fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.4px" }}>
+                  Khám phá các miền đất đẹp nhất Việt Nam
                 </h2>
               </div>
               <Link
                 href="/listings"
                 style={{ fontSize: "0.88rem", fontWeight: 700, color: "#2563EB", textDecoration: "none", display: "flex", alignItems: "center", gap: 4 }}
               >
-                <span>Xem tất cả chỗ nghỉ</span>
+                <span>Tất cả điểm đến</span>
                 <ChevronRight size={15} />
               </Link>
             </div>
@@ -616,156 +709,53 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* SECTION 5: FEATURED HOMESTAYS */}
-        <section style={{ padding: "60px 0", background: "#f8fafc", borderTop: "1px solid #e2e8f0" }}>
+        {/* 6. HOSPITALITY EXPERIENCE ("More than a place to stay") */}
+        <section style={{ padding: "70px 0", background: "#fff", borderTop: "1px solid #e2e8f0" }}>
           <div className="container">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
-              <div>
-                <span style={{ fontSize: "0.78rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "#2563EB", display: "block", marginBottom: 4 }}>
-                  Đề xuất nổi bật
-                </span>
-                <h2 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
-                  Chỗ Nghỉ Đẹp Được Yêu Thích Nhất
-                </h2>
-                <p style={{ fontSize: "0.9rem", color: "#64748b", margin: "4px 0 0" }}>
-                  Được đánh giá cao bởi cộng đồng du khách với đầy đủ tiện nghi và mức giá ưu đãi
-                </p>
-              </div>
-
-              <Link
-                href="/listings"
-                className="btn-outline-hs"
-                style={{ fontSize: "0.85rem", padding: "8px 16px" }}
-              >
-                <span>Xem tất cả ({featuredProperties.length}+)</span>
-                <ArrowRight size={14} />
-              </Link>
-            </div>
-
-            {isLoadingFeatured ? (
-              <div style={{ padding: 60, textAlign: "center", color: "#94a3b8", fontSize: "0.95rem" }}>
-                Đang tải danh sách homestay nổi bật...
-              </div>
-            ) : (
-              <div className="hs-properties-grid">
-                {featuredProperties.map((property) => (
-                  <PropertyCard key={property.id} property={property} />
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* SECTION 6: WHY CHOOSE US (CAM KẾT GIÁ TRỊ) */}
-        <section style={{ padding: "64px 0", background: "#fff", borderTop: "1px solid #e2e8f0" }}>
-          <div className="container">
-            <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
+            <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 50px" }}>
               <span style={{ fontSize: "0.78rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "#2563EB", display: "block", marginBottom: 4 }}>
-                Cam kết chất lượng
+                Hospitality Standard
               </span>
-              <h2 style={{ fontSize: "1.85rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
-                Tại Sao Du Khách Lựa Chọn Homestay Booking?
+              <h2 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.5px" }}>
+                More than a place to stay.
               </h2>
+              <p style={{ fontSize: "0.92rem", color: "#64748b", margin: "6px 0 0" }}>
+                Chúng tôi mang đến giải pháp nghỉ dưỡng trọn vẹn, kết hợp hài hòa giữa sự tiện nghi cao cấp và vẻ đẹp thiên nhiên thuần khiết.
+              </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20 }}>
-              <div style={{ padding: "26px 22px", borderRadius: 16, background: "#eff6ff", border: "1px solid #dbeafe" }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: "#2563EB", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-                  <Shield size={20} />
-                </div>
-                <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a", margin: "0 0 6px" }}>
-                  100% Chủ Nhà Xác Minh
-                </h3>
-                <p style={{ fontSize: "0.84rem", color: "#475569", lineHeight: 1.6, margin: 0 }}>
-                  Tất cả homestay trên sàn đều được ban quản trị kiểm duyệt chặt chẽ hình ảnh thực tế và xác minh CCCD/giấy phép kinh doanh của chủ nhà.
-                </p>
-              </div>
-
-              <div style={{ padding: "26px 22px", borderRadius: 16, background: "#f0fdf4", border: "1px solid #dcfce7" }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: "#16a34a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-                  <Award size={20} />
-                </div>
-                <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a", margin: "0 0 6px" }}>
-                  Giá Minh Bạch & VietQR
-                </h3>
-                <p style={{ fontSize: "0.84rem", color: "#475569", lineHeight: 1.6, margin: 0 }}>
-                  Giá phòng niêm yết rõ ràng không có phụ phí ẩn, hỗ trợ thanh toán VietQR quét mã chuyển khoản tức thì qua ứng dụng ngân hàng.
-                </p>
-              </div>
-
-              <div style={{ padding: "26px 22px", borderRadius: 16, background: "#faf5ff", border: "1px solid #f3e8ff" }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: "#9333ea", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-                  <Clock size={20} />
-                </div>
-                <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a", margin: "0 0 6px" }}>
-                  Chống Overbooking 100%
-                </h3>
-                <p style={{ fontSize: "0.84rem", color: "#475569", lineHeight: 1.6, margin: 0 }}>
-                  Hệ thống kết nối trực tiếp với Mobile App và Lễ tân tại quầy homestay, khóa phòng thời gian thực, đảm bảo không bao giờ bị bán trùng phòng.
-                </p>
-              </div>
-
-              <div style={{ padding: "26px 22px", borderRadius: 16, background: "#fffbeb", border: "1px solid #fef3c7" }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: "#d97706", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-                  <Star size={20} />
-                </div>
-                <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a", margin: "0 0 6px" }}>
-                  Tích Lũy Điểm Thưởng Đổi Quà
-                </h3>
-                <p style={{ fontSize: "0.84rem", color: "#475569", lineHeight: 1.6, margin: 0 }}>
-                  Tặng ngay +100 điểm khi đặt phòng và +150 điểm khi đánh giá 5★ để quy đổi các voucher giảm giá giá trị cao cho chuyến đi tiếp theo.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION 7: HOW IT WORKS (QUY TRÌNH 4 BƯỚC) */}
-        <section style={{ padding: "64px 0", background: "#f8fafc", borderTop: "1px solid #e2e8f0" }}>
-          <div className="container">
-            <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
-              <span style={{ fontSize: "0.78rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "#2563EB", display: "block", marginBottom: 4 }}>
-                Quy trình đặt chỗ
-              </span>
-              <h2 style={{ fontSize: "1.85rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
-                Trải Nghiệm Đặt Homestay Trong 4 Bước
-              </h2>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 20 }}>
-              {[
-                { step: "01", title: "Khám phá", desc: "Tìm kiếm homestay theo địa điểm, mức giá, tiện nghi và số lượng khách." },
-                { step: "02", title: "Chọn ngày", desc: "Kiểm tra lịch phòng trống thời gian thực và chọn thời gian lưu trú." },
-                { step: "03", title: "Đặt & Thanh toán", desc: "Xác nhận đặt chỗ và quét mã VietQR chuyển khoản nhanh gọn." },
-                { step: "04", title: "Nhận phòng", desc: "Thảnh thơi tận hưởng kỳ nghỉ và tích lũy điểm thưởng thành viên." },
-              ].map((item, idx) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24 }}>
+              {HOSPITALITY_VALUES.map((item, idx) => (
                 <div
                   key={idx}
                   style={{
-                    background: "#fff",
-                    padding: "26px 20px",
-                    borderRadius: 16,
+                    padding: "30px 24px",
+                    borderRadius: 18,
+                    background: "#f8fafc",
                     border: "1px solid #e2e8f0",
-                    position: "relative",
+                    transition: "all 0.2s ease",
                   }}
                 >
-                  <span
+                  <div
                     style={{
-                      fontSize: "2.4rem",
-                      fontWeight: 900,
-                      color: "#e2e8f0",
-                      lineHeight: 1,
-                      display: "block",
-                      marginBottom: 10,
+                      width: 50,
+                      height: 50,
+                      borderRadius: 14,
+                      background: "#fff",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: 18,
                     }}
                   >
-                    {item.step}
-                  </span>
-                  <h4 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", margin: "0 0 6px" }}>
+                    {item.icon}
+                  </div>
+                  <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", margin: "0 0 8px" }}>
                     {item.title}
-                  </h4>
-                  <p style={{ fontSize: "0.84rem", color: "#64748b", lineHeight: 1.6, margin: 0 }}>
-                    {item.desc}
+                  </h3>
+                  <p style={{ fontSize: "0.85rem", color: "#475569", lineHeight: 1.65, margin: 0 }}>
+                    {item.description}
                   </p>
                 </div>
               ))}
@@ -773,26 +763,79 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* SECTION 8: TESTIMONIALS */}
-        <section style={{ padding: "64px 0", background: "#fff", borderTop: "1px solid #e2e8f0" }}>
+        {/* 7. HOW IT WORKS (Minimal 3 Steps) */}
+        <section style={{ padding: "70px 0", background: "#f8fafc", borderTop: "1px solid #e2e8f0" }}>
           <div className="container">
-            <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
+            <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 50px" }}>
               <span style={{ fontSize: "0.78rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "#2563EB", display: "block", marginBottom: 4 }}>
-                Đánh giá từ khách hàng
+                Simple & Seamless
               </span>
-              <h2 style={{ fontSize: "1.85rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
-                Những Trải Nghiệm Khó Quên
+              <h2 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.5px" }}>
+                How HomeStay Works
               </h2>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24 }}>
-              {TESTIMONIALS.map((t, idx) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
+              {HOW_IT_WORKS_STEPS.map((item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    background: "#fff",
+                    padding: "32px 26px",
+                    borderRadius: 20,
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "2.5rem",
+                      fontWeight: 900,
+                      color: "#e2e8f0",
+                      lineHeight: 1,
+                      display: "block",
+                      marginBottom: 14,
+                    }}
+                  >
+                    {item.step}
+                  </span>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
+                    <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
+                      {item.title}
+                    </h3>
+                    <span style={{ fontSize: "0.82rem", color: "#2563EB", fontWeight: 700 }}>
+                      ({item.subtitle})
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "0.88rem", color: "#64748b", lineHeight: 1.65, margin: 0 }}>
+                    {item.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 8. TESTIMONIALS (Editorial Guest Stories) */}
+        <section style={{ padding: "70px 0", background: "#fff", borderTop: "1px solid #e2e8f0" }}>
+          <div className="container">
+            <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 50px" }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px", color: "#2563EB", display: "block", marginBottom: 4 }}>
+                Guest Stories
+              </span>
+              <h2 style={{ fontSize: "2rem", fontWeight: 800, color: "#0f172a", margin: 0, letterSpacing: "-0.5px" }}>
+                Được tin yêu bởi hơn 1,200+ du khách
+              </h2>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 26 }}>
+              {EDITORIAL_TESTIMONIALS.map((t, idx) => (
                 <div
                   key={idx}
                   style={{
                     background: "#f8fafc",
-                    padding: "26px",
-                    borderRadius: 18,
+                    padding: "30px 26px",
+                    borderRadius: 20,
                     border: "1px solid #e2e8f0",
                     display: "flex",
                     flexDirection: "column",
@@ -801,38 +844,39 @@ export default function HomePage() {
                 >
                   <div>
                     {/* Stars */}
-                    <div style={{ display: "flex", gap: 3, marginBottom: 12 }}>
+                    <div style={{ display: "flex", gap: 3, marginBottom: 14 }}>
                       {Array.from({ length: t.rating }).map((_, i) => (
                         <Star key={i} size={15} fill="#f59e0b" color="#f59e0b" />
                       ))}
                     </div>
 
-                    <p style={{ fontSize: "0.88rem", color: "#334155", lineHeight: 1.7, fontStyle: "italic", margin: "0 0 18px" }}>
-                      &ldquo;{t.comment}&rdquo;
+                    <p style={{ fontSize: "0.92rem", color: "#334155", lineHeight: 1.75, fontStyle: "italic", margin: "0 0 20px" }}>
+                      &ldquo;{t.quote}&rdquo;
                     </p>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 14, borderTop: "1px solid #e2e8f0" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 16, borderTop: "1px solid #e2e8f0" }}>
                     <div
                       style={{
-                        width: 38,
-                        height: 38,
+                        width: 40,
+                        height: 40,
                         borderRadius: "50%",
                         background: "linear-gradient(135deg, #2563EB, #7c3aed)",
                         color: "#fff",
                         fontWeight: 800,
-                        fontSize: "0.9rem",
+                        fontSize: "0.95rem",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        flexShrink: 0,
                       }}
                     >
-                      {t.avatar}
+                      {t.avatarChar}
                     </div>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "#0f172a" }}>{t.name}</div>
-                      <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
-                        {t.location} • {t.homestay}
+                      <div style={{ fontWeight: 700, fontSize: "0.92rem", color: "#0f172a" }}>{t.author}</div>
+                      <div style={{ fontSize: "0.78rem", color: "#64748b" }}>
+                        {t.location} • <strong style={{ color: "#2563EB" }}>{t.stayedAt}</strong>
                       </div>
                     </div>
                   </div>
@@ -842,18 +886,20 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* SECTION 9: FINAL CALL TO ACTION (CTA) */}
+        {/* 9. FINAL CALL TO ACTION (CTA) */}
         <section style={{ padding: "60px 0 80px", background: "#f8fafc" }}>
           <div className="container">
             <div
               style={{
-                background: "linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%)",
-                borderRadius: 24,
-                padding: "48px 36px",
+                background: "linear-gradient(135deg, #090e17 0%, #0f172a 40%, #1e3a8a 100%)",
+                borderRadius: 28,
+                padding: "54px 36px",
                 color: "#fff",
                 textAlign: "center",
-                boxShadow: "0 20px 40px rgba(15, 23, 42, 0.15)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                boxShadow: "0 24px 50px rgba(15, 23, 42, 0.2)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                position: "relative",
+                overflow: "hidden",
               }}
             >
               <div
@@ -861,51 +907,51 @@ export default function HomePage() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
-                  padding: "5px 14px",
+                  padding: "6px 16px",
                   borderRadius: 20,
                   background: "rgba(56, 189, 248, 0.15)",
                   border: "1px solid rgba(56, 189, 248, 0.3)",
                   color: "#7dd3fc",
-                  fontSize: "0.8rem",
+                  fontSize: "0.82rem",
                   fontWeight: 700,
-                  marginBottom: 14,
+                  marginBottom: 16,
                 }}
               >
-                <Sparkles size={13} />
-                <span>Khởi đầu chuyến đi của bạn</span>
+                <Sparkles size={14} />
+                <span>Your next stay is waiting</span>
               </div>
 
-              <h2 style={{ fontSize: "2.2rem", fontWeight: 800, color: "#fff", margin: "0 0 12px", letterSpacing: "-0.5px" }}>
-                Kỳ Nghỉ Trong Mơ Của Bạn Đang Chờ Đón
+              <h2 style={{ fontSize: "2.5rem", fontWeight: 800, color: "#fff", margin: "0 0 14px", letterSpacing: "-0.6px" }}>
+                Kỳ nghỉ trong mơ của bạn đang chờ đón.
               </h2>
 
-              <p style={{ fontSize: "0.95rem", color: "#cbd5e1", maxWidth: 600, margin: "0 auto 28px", lineHeight: 1.6 }}>
-                Đặt chỗ ngay hôm nay để nhận ưu đãi giảm giá và trải nghiệm những khoảnh khắc nghỉ dưỡng trọn vẹn nhất.
+              <p style={{ fontSize: "1rem", color: "#cbd5e1", maxWidth: 620, margin: "0 auto 32px", lineHeight: 1.65 }}>
+                Khám phá ngay bộ sưu tập homestay nguyên căn độc đáo, tận hưởng kỳ nghỉ yên bình cùng gia đình và bạn bè.
               </p>
 
               <div style={{ display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
                 <button
                   onClick={scrollToSearch}
                   className="btn-primary-hs"
-                  style={{ padding: "13px 30px", fontSize: "0.95rem", borderRadius: 12 }}
+                  style={{ padding: "14px 32px", fontSize: "0.98rem", borderRadius: 12, fontWeight: 700 }}
                 >
                   <Search size={16} />
-                  <span>Tìm homestay ngay</span>
+                  <span>Khám phá chỗ nghỉ ngay</span>
                 </button>
 
                 <Link href="/auth/register" style={{ textDecoration: "none" }}>
                   <button
                     className="btn-outline-hs"
                     style={{
-                      padding: "12px 24px",
+                      padding: "13px 26px",
                       fontSize: "0.95rem",
                       borderRadius: 12,
-                      borderColor: "rgba(255,255,255,0.3)",
+                      borderColor: "rgba(255,255,255,0.35)",
                       color: "#fff",
                     }}
                   >
                     <Building2 size={16} />
-                    <span>Trở thành Chủ nhà</span>
+                    <span>Trở thành Chủ nhà (Host)</span>
                   </button>
                 </Link>
               </div>
@@ -914,7 +960,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* SECTION 10: FOOTER */}
+      {/* 10. FOOTER */}
       <Footer />
     </div>
   );
