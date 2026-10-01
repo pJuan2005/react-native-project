@@ -216,6 +216,20 @@ body {
   }
 }
 
+/* ── Hero Grid Responsive ── */
+.hs-hero-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 36px;
+  align-items: center;
+}
+@media (max-width: 992px) {
+  .hs-hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 28px;
+  }
+}
+
 /* ── Hero Search Widget ── */
 .hs-hero {
   position: relative;

@@ -6,23 +6,21 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowRight,
-  Building2,
   Calendar,
   ChevronRight,
   Compass,
-  Heart,
   MapPin,
   Search,
   ShieldCheck,
   Sparkles,
   Star,
-  Users,
   CalendarDays,
   CheckCircle2,
   TreePine,
   Coffee,
-  KeyRound,
-  SlidersHorizontal,
+  Building2,
+  Bed,
+  Users,
 } from "lucide-react";
 import { destinations } from "@/lib/destinations";
 import { PropertyCard } from "@/components/shared/PropertyCard";
@@ -198,29 +196,29 @@ export default function LandingHomePage() {
       <Navbar />
 
       <main style={{ flex: 1 }}>
-        {/* 2. HERO SECTION WITH THREE.JS 3D SHOWCASE */}
+        {/* 2. HERO SECTION WITH LUXURY 3D VILLA DIORAMA */}
         <section
           style={{
             position: "relative",
-            minHeight: "88vh",
+            minHeight: "86vh",
             display: "flex",
             alignItems: "center",
-            background: "linear-gradient(145deg, #090e17 0%, #0f172a 45%, #172554 100%)",
+            background: "linear-gradient(135deg, #09121d 0%, #0f2137 40%, #163654 100%)",
             color: "#fff",
             overflow: "hidden",
             padding: "40px 0 70px",
           }}
         >
-          {/* Subtle Ambient Lighting Aura */}
+          {/* Subtle Ambient Golden Radial Glow */}
           <div
             style={{
               position: "absolute",
-              top: "-20%",
-              right: "-10%",
-              width: "600px",
-              height: "600px",
+              top: "-15%",
+              right: "-8%",
+              width: "650px",
+              height: "650px",
               borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(56, 189, 248, 0.16) 0%, rgba(37, 99, 235, 0.04) 60%, transparent 80%)",
+              background: "radial-gradient(circle, rgba(56, 189, 248, 0.18) 0%, rgba(37, 99, 235, 0.05) 55%, transparent 75%)",
               pointerEvents: "none",
               zIndex: 1,
             }}
@@ -388,12 +386,12 @@ export default function LandingHomePage() {
                 ) : (
                   /* PUBLIC GUEST HERO CONTENT */
                   <div>
-                    {/* Eyebrow */}
+                    {/* Eyebrow badge */}
                     <div
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: 7,
+                        gap: 8,
                         padding: "6px 14px",
                         borderRadius: 20,
                         background: "rgba(37, 99, 235, 0.22)",
@@ -421,7 +419,7 @@ export default function LandingHomePage() {
                         margin: "0 0 18px",
                       }}
                     >
-                      Find your perfect <br />
+                      Exclusive Luxury Villas for <br />
                       <span
                         style={{
                           background: "linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #34d399 100%)",
@@ -429,7 +427,7 @@ export default function LandingHomePage() {
                           WebkitTextFillColor: "transparent",
                         }}
                       >
-                        nature getaway.
+                        Unforgettable Escapes.
                       </span>
                     </h1>
 
@@ -498,7 +496,7 @@ export default function LandingHomePage() {
                 style={{
                   position: "relative",
                   width: "100%",
-                  height: "470px",
+                  height: "480px",
                   borderRadius: 24,
                   overflow: "hidden",
                   background: "radial-gradient(circle at center, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.85) 100%)",
@@ -891,7 +889,7 @@ export default function LandingHomePage() {
           <div className="container">
             <div
               style={{
-                background: "linear-gradient(135deg, #090e17 0%, #0f172a 40%, #1e3a8a 100%)",
+                background: "linear-gradient(135deg, #09121d 0%, #0f2137 45%, #163654 100%)",
                 borderRadius: 28,
                 padding: "54px 36px",
                 color: "#fff",
