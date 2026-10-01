@@ -29,7 +29,7 @@ import { getMyBookings, type BookingRecord } from "@/services/bookingService";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { useAuth } from "@/components/context/AuthContext";
-import { HeroScene3D } from "@/components/landing/HeroScene3D";
+import { HeroScene3D } from "@/components/guest/HeroScene3D";
 
 const QUICK_SEARCH_TAGS = [
   "Đà Lạt",
