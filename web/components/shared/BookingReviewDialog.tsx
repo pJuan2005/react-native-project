@@ -23,7 +23,7 @@ interface BookingReviewDialogProps {
 export function BookingReviewDialog({
   booking,
   title,
-  submitLabel = "Save review",
+  submitLabel = "Lưu kết quả duyệt",
   isSubmitting = false,
   onClose,
   onSubmit,
@@ -34,7 +34,7 @@ export function BookingReviewDialog({
   const [rejectionReason, setRejectionReason] = useState("");
   const isReviewable =
     booking?.status === "pending" && booking?.paymentStatus === "proof_uploaded";
-  const amountInVnd = booking?.paymentInfo?.amountVnd || 0;
+  const amountInVnd = booking?.paymentInfo?.amountVnd || (booking?.totalPrice && booking?.totalPrice > 1000 ? booking?.totalPrice : 0);
 
   useEffect(() => {
     if (!booking) {
@@ -108,19 +108,17 @@ export function BookingReviewDialog({
             <p style={{ margin: 0, color: "#64748b", fontSize: "0.86rem" }}>
               {isReviewable ? (
                 <>
-                  Review booking <strong>{booking.bookingCode}</strong> before
-                  updating the payment result.
+                  Kiểm tra đơn đặt phòng <strong>{booking.bookingCode}</strong> trước khi cập nhật kết quả xác nhận.
                 </>
               ) : (
                 <>
-                  Booking <strong>{booking.bookingCode}</strong> has already
-                  been processed and can no longer be edited.
+                  Đơn đặt phòng <strong>{booking.bookingCode}</strong> đã được xử lý và không thể chỉnh sửa lại.
                 </>
               )}
             </p>
           </div>
           <button type="button" className="btn-outline-hs" onClick={onClose}>
-            Close
+            Đóng
           </button>
         </div>
 
@@ -190,7 +188,7 @@ export function BookingReviewDialog({
                 }}
               >
                 <User size={15} color="#2563EB" />
-                Guest and payment summary
+                Thông tin khách & Thanh toán
               </div>
               <div
                 style={{
@@ -209,22 +207,22 @@ export function BookingReviewDialog({
                     color="#2563EB"
                     style={{ marginRight: 6, verticalAlign: "middle" }}
                   />
-                  {booking.checkIn} to {booking.checkOut} • {booking.nights} nights
+                  {booking.checkIn} đến {booking.checkOut} • {booking.nights} đêm
                 </div>
                 <div style={{ color: "#475569" }}>
-                  Booking total:{" "}
+                  Tổng tiền đặt phòng:{" "}
                   <strong style={{ color: "#1e293b" }}>
-                    ${booking.totalPrice.toFixed(2)}
+                    {new Intl.NumberFormat("vi-VN").format(booking.totalPrice)} ₫
                   </strong>
                 </div>
                 <div style={{ color: "#475569" }}>
-                  Transfer amount:{" "}
+                  Số tiền chuyển khoản:{" "}
                   <strong style={{ color: "#1e293b" }}>
-                    {amountInVnd.toLocaleString("vi-VN")} VND
+                    {new Intl.NumberFormat("vi-VN").format(amountInVnd || booking.totalPrice)} ₫
                   </strong>
                 </div>
                 <div style={{ color: "#475569" }}>
-                  Transfer content:{" "}
+                  Nội dung chuyển khoản:{" "}
                   <strong style={{ color: "#1e293b" }}>
                     {booking.paymentInfo.transferContent}
                   </strong>
@@ -253,12 +251,12 @@ export function BookingReviewDialog({
                 }}
               >
                 <ImageIcon size={15} color="#2563EB" />
-                Payment proof
+                Ảnh chụp biên lai chuyển khoản
               </div>
               {booking.paymentProofImage ? (
                 <img
                   src={booking.paymentProofImage}
-                  alt="Payment proof"
+                  alt="Biên lai thanh toán"
                   style={{
                     width: "100%",
                     maxHeight: 320,
@@ -278,7 +276,7 @@ export function BookingReviewDialog({
                     color: "#94a3b8",
                   }}
                 >
-                  No payment proof uploaded yet.
+                  Chưa có ảnh biên lai nào được gửi lên.
                 </div>
               )}
             </div>
@@ -286,7 +284,7 @@ export function BookingReviewDialog({
             {isReviewable ? (
               <div className="row g-3">
                 <div className="col-12">
-                  <label className="hs-form-label">Decision</label>
+                  <label className="hs-form-label">Quyết định xử lý</label>
                   <select
                     className="hs-form-control"
                     value={decision}
@@ -296,23 +294,23 @@ export function BookingReviewDialog({
                       )
                     }
                   >
-                    <option value="approve">Approve and confirm booking</option>
-                    <option value="reject">Reject payment proof</option>
+                    <option value="approve">Duyệt biên lai & Xác nhận đặt phòng thành công</option>
+                    <option value="reject">Từ chối biên lai thanh toán</option>
                   </select>
                 </div>
                 <div className="col-12">
-                  <label className="hs-form-label">Host note</label>
+                  <label className="hs-form-label">Ghi chú của chủ nhà / quản trị</label>
                   <textarea
                     className="hs-form-control"
                     rows={3}
                     value={hostNote}
                     onChange={(event) => setHostNote(event.target.value)}
-                    placeholder="Add a note for the guest..."
+                    placeholder="Nhập ghi chú gửi cho khách..."
                   />
                 </div>
                 {decision === "approve" && (
                   <div className="col-12">
-                    <label className="hs-form-label">Check-in instructions</label>
+                    <label className="hs-form-label">Hướng dẫn nhận phòng</label>
                     <textarea
                       className="hs-form-control"
                       rows={3}
@@ -320,19 +318,19 @@ export function BookingReviewDialog({
                       onChange={(event) =>
                         setCheckinInstructions(event.target.value)
                       }
-                      placeholder="Share the check-in process, key handover, door code..."
+                      placeholder="Hướng dẫn quy trình nhận phòng, giao chìa khóa, mật khẩu cửa..."
                     />
                   </div>
                 )}
                 {decision === "reject" && (
                   <div className="col-12">
-                    <label className="hs-form-label">Rejection reason</label>
+                    <label className="hs-form-label">Lý do từ chối</label>
                     <textarea
                       className="hs-form-control"
                       rows={3}
                       value={rejectionReason}
                       onChange={(event) => setRejectionReason(event.target.value)}
-                      placeholder="Explain why the payment proof is rejected..."
+                      placeholder="Giải thích rõ lý do từ chối (VD: sai số tiền, sai nội dung CK, ảnh giả mạo)..."
                     />
                   </div>
                 )}
@@ -350,15 +348,15 @@ export function BookingReviewDialog({
               >
                 {booking.confirmedAt && (
                   <div style={{ color: "#475569", fontSize: "0.84rem" }}>
-                    Processed at{" "}
+                    Xử lý vào lúc:{" "}
                     <strong style={{ color: "#1e293b" }}>
-                      {new Date(booking.confirmedAt).toLocaleString("en-GB")}
+                      {new Date(booking.confirmedAt).toLocaleString("vi-VN")}
                     </strong>
                   </div>
                 )}
                 {booking.confirmedByName && (
                   <div style={{ color: "#475569", fontSize: "0.84rem" }}>
-                    Reviewed by{" "}
+                    Người kiểm duyệt:{" "}
                     <strong style={{ color: "#1e293b" }}>
                       {booking.confirmedByName}
                     </strong>
@@ -366,7 +364,7 @@ export function BookingReviewDialog({
                 )}
                 {booking.hostNote && (
                   <div>
-                    <div className="hs-form-label">Host note</div>
+                    <div className="hs-form-label">Ghi chú phản hồi</div>
                     <div
                       style={{
                         border: "1px solid #e2e8f0",
@@ -384,7 +382,7 @@ export function BookingReviewDialog({
                 )}
                 {booking.checkinInstructions && (
                   <div>
-                    <div className="hs-form-label">Check-in instructions</div>
+                    <div className="hs-form-label">Hướng dẫn nhận phòng</div>
                     <div
                       style={{
                         border: "1px solid #e2e8f0",
@@ -402,7 +400,7 @@ export function BookingReviewDialog({
                 )}
                 {booking.rejectionReason && (
                   <div>
-                    <div className="hs-form-label">Rejection reason</div>
+                    <div className="hs-form-label">Lý do từ chối</div>
                     <div
                       style={{
                         border: "1px solid #fecaca",
@@ -431,21 +429,21 @@ export function BookingReviewDialog({
                   flexWrap: "wrap",
                 }}
               >
-              <button
-                className="btn-primary-hs"
-                disabled={isSubmitting}
-                onClick={() =>
-                  onSubmit({
-                    decision,
-                    hostNote,
-                    checkinInstructions:
-                      decision === "approve" ? checkinInstructions : "",
-                    rejectionReason,
-                  })
-                }
-              >
-                {isSubmitting ? "Saving..." : submitLabel}
-              </button>
+                <button
+                  className="btn-primary-hs"
+                  disabled={isSubmitting}
+                  onClick={() =>
+                    onSubmit({
+                      decision,
+                      hostNote,
+                      checkinInstructions:
+                        decision === "approve" ? checkinInstructions : "",
+                      rejectionReason,
+                    })
+                  }
+                >
+                  {isSubmitting ? "Đang xử lý..." : submitLabel}
+                </button>
               </div>
             )}
           </div>

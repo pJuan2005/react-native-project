@@ -26,6 +26,11 @@ type AdminPropertyDetail = Awaited<ReturnType<typeof getAdminPropertyById>>;
 const PENDING_ITEMS_PER_PAGE = 8;
 const HANDLED_ITEMS_PER_PAGE = 5;
 
+function formatCurrency(value: number | string | undefined) {
+  const amount = Number(value || 0);
+  return `${amount.toLocaleString("vi-VN")} ₫`;
+}
+
 export default function PropertyApprovalsPage() {
   const [properties, setProperties] = useState<PropertySummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +55,7 @@ export default function PropertyApprovalsPage() {
       const data = await getAdminProperties();
       setProperties(data);
     } catch (_error) {
-      setErrorMessage("Unable to load pending properties.");
+      setErrorMessage("Không thể tải danh sách chỗ nghỉ chờ phê duyệt lúc này.");
     } finally {
       setLoading(false);
     }
@@ -100,7 +105,7 @@ export default function PropertyApprovalsPage() {
       const data = await getAdminPropertyById(id);
       setSelectedProperty(data);
     } catch (_error) {
-      setNotice("Unable to load the property details.");
+      setNotice("Không thể tải chi tiết chỗ nghỉ.");
     } finally {
       setIsDetailLoading(false);
     }
@@ -122,11 +127,11 @@ export default function PropertyApprovalsPage() {
 
       setNotice(
         status === "approved"
-          ? "Property approved successfully."
-          : "Property rejected successfully.",
+          ? "Đã phê duyệt chỗ nghỉ thành công."
+          : "Đã từ chối chỗ nghỉ.",
       );
     } catch (_error) {
-      setNotice("Unable to update the property status.");
+      setNotice("Không thể cập nhật trạng thái chỗ nghỉ.");
     } finally {
       setProcessingPropertyId(null);
     }
@@ -160,10 +165,10 @@ export default function PropertyApprovalsPage() {
             fontSize: "1.5rem",
           }}
         >
-          Property Approvals
+          Phê duyệt Chỗ nghỉ
         </h1>
         <p style={{ color: "#64748b", margin: 0 }}>
-          Review and approve new property submissions from hosts.
+          Kiểm tra thông tin pháp lý, chất lượng hình ảnh và duyệt chỗ nghỉ mới từ chủ homestay.
         </p>
       </div>
 
@@ -200,25 +205,25 @@ export default function PropertyApprovalsPage() {
       <div className="row g-3 mb-4">
         {[
           {
-            label: "Pending",
+            label: "Chờ phê duyệt",
             value: pending.length,
             color: "#d97706",
             bg: "#fef3c7",
           },
           {
-            label: "Approved",
+            label: "Đã phê duyệt",
             value: properties.filter((property) => property.status === "approved").length,
             color: "#16a34a",
             bg: "#dcfce7",
           },
           {
-            label: "Rejected",
+            label: "Đã từ chối",
             value: properties.filter((property) => property.status === "rejected").length,
             color: "#dc2626",
             bg: "#fee2e2",
           },
           {
-            label: "Total",
+            label: "Tổng hồ sơ",
             value: properties.length,
             color: "#2563eb",
             bg: "#eff6ff",
@@ -282,22 +287,22 @@ export default function PropertyApprovalsPage() {
               fontSize: "1rem",
             }}
           >
-            Pending submissions ({pending.length})
+            Hồ sơ chỗ nghỉ đang chờ duyệt ({pending.length})
           </h3>
         </div>
 
         {loading ? (
           <div style={{ textAlign: "center", padding: "48px", color: "#64748b" }}>
-            Loading data...
+            Đang tải dữ liệu kiểm duyệt...
           </div>
         ) : pending.length === 0 ? (
           <div style={{ textAlign: "center", padding: "48px", color: "#64748b" }}>
             <CheckCircle size={40} color="#16a34a" style={{ marginBottom: 12 }} />
             <div style={{ fontWeight: 700, color: "#1e293b" }}>
-              No properties are waiting for approval.
+              Hiện không có chỗ nghỉ nào chờ phê duyệt.
             </div>
-            <div style={{ fontSize: "0.87rem" }}>
-              All recent submissions have already been handled.
+            <div style={{ fontSize: "0.87rem", marginTop: 4 }}>
+              Tất cả các hồ sơ đăng ký gần đây đã được xử lý hoàn tất.
             </div>
           </div>
         ) : (
@@ -305,14 +310,14 @@ export default function PropertyApprovalsPage() {
             <table className="hs-table">
               <thead>
                 <tr>
-                  <th>Property</th>
-                  <th>Host</th>
-                  <th>Location</th>
-                  <th>Type</th>
-                  <th>Price</th>
-                  <th>Capacity</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>Chỗ nghỉ</th>
+                  <th>Chủ nhà</th>
+                  <th>Địa điểm</th>
+                  <th>Loại hình</th>
+                  <th>Giá / đêm</th>
+                  <th>Sức chứa</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -350,7 +355,7 @@ export default function PropertyApprovalsPage() {
                             {property.title}
                           </div>
                           <div style={{ color: "#94a3b8", fontSize: "0.75rem" }}>
-                            ID #{property.id}
+                            Mã #{property.id}
                           </div>
                         </div>
                       </div>
@@ -387,20 +392,11 @@ export default function PropertyApprovalsPage() {
                       </span>
                     </td>
                     <td style={{ fontWeight: 700, color: "#1e293b" }}>
-                      ${property.price}
-                      <span
-                        style={{
-                          color: "#94a3b8",
-                          fontWeight: 400,
-                          fontSize: "0.78rem",
-                        }}
-                      >
-                        /night
-                      </span>
+                      {formatCurrency(property.price)}
                     </td>
                     <td style={{ fontSize: "0.85rem", color: "#64748b" }}>
-                      <div>{property.maxGuests} guests</div>
-                      <div>{property.bedrooms} bedrooms</div>
+                      <div>{property.maxGuests} khách</div>
+                      <div>{property.bedrooms} phòng ngủ</div>
                     </td>
                     <td>
                       <StatusBadge status={property.status} />
@@ -424,7 +420,7 @@ export default function PropertyApprovalsPage() {
                           }}
                         >
                           <Eye size={13} />
-                          View
+                          Xem chi tiết
                         </button>
                         <button
                           onClick={() => approveProperty(property.id)}
@@ -445,7 +441,7 @@ export default function PropertyApprovalsPage() {
                           }}
                         >
                           <CheckCircle size={13} />
-                          Approve
+                          Phê duyệt
                         </button>
                         <button
                           onClick={() => setRejectingProperty(property)}
@@ -466,7 +462,7 @@ export default function PropertyApprovalsPage() {
                           }}
                         >
                           <XCircle size={13} />
-                          Reject
+                          Từ chối
                         </button>
                       </div>
                     </td>
@@ -483,7 +479,7 @@ export default function PropertyApprovalsPage() {
             totalPages={pendingTotalPages}
             totalItems={pending.length}
             pageSize={PENDING_ITEMS_PER_PAGE}
-            itemLabel="pending properties"
+            itemLabel="chỗ nghỉ chờ duyệt"
             onPageChange={setPendingPage}
           />
         </div>
@@ -499,25 +495,25 @@ export default function PropertyApprovalsPage() {
               fontSize: "1rem",
             }}
           >
-            Recently handled
+            Hồ sơ đã xử lý gần đây
           </h3>
         </div>
         <div style={{ overflowX: "auto" }}>
           <table className="hs-table">
             <thead>
               <tr>
-                <th>Property</th>
-                <th>Host</th>
-                <th>Type</th>
-                <th>Price</th>
-                <th>Status</th>
+                <th>Chỗ nghỉ</th>
+                <th>Chủ nhà</th>
+                <th>Loại hình</th>
+                <th>Giá / đêm</th>
+                <th>Trạng thái</th>
               </tr>
             </thead>
             <tbody>
               {recentlyHandled.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: "center", color: "#94a3b8" }}>
-                    No processed properties yet.
+                  <td colSpan={5} style={{ textAlign: "center", color: "#94a3b8", padding: "24px" }}>
+                    Chưa có chỗ nghỉ nào được xử lý gần đây.
                   </td>
                 </tr>
               ) : (
@@ -568,7 +564,7 @@ export default function PropertyApprovalsPage() {
                       </span>
                     </td>
                     <td style={{ fontWeight: 700, color: "#1e293b" }}>
-                      ${property.price}/night
+                      {formatCurrency(property.price)}
                     </td>
                     <td>
                       <StatusBadge status={property.status} />
@@ -586,7 +582,7 @@ export default function PropertyApprovalsPage() {
             totalPages={handledTotalPages}
             totalItems={recentlyHandled.length}
             pageSize={HANDLED_ITEMS_PER_PAGE}
-            itemLabel="processed properties"
+            itemLabel="chỗ nghỉ đã xử lý"
             onPageChange={setHandledPage}
           />
         </div>
@@ -625,7 +621,7 @@ export default function PropertyApprovalsPage() {
               }}
             >
               <h3 style={{ fontWeight: 700, color: "#1e293b", margin: 0 }}>
-                Property details
+                Chi tiết hồ sơ chỗ nghỉ
               </h3>
               <button
                 onClick={() => setSelectedProperty(null)}
@@ -637,7 +633,7 @@ export default function PropertyApprovalsPage() {
 
             {isDetailLoading ? (
               <div style={{ padding: "24px", color: "#64748b" }}>
-                Loading details...
+                Đang tải chi tiết chỗ nghỉ...
               </div>
             ) : (
               <div style={{ padding: "24px" }}>
@@ -726,7 +722,7 @@ export default function PropertyApprovalsPage() {
                     }}
                   >
                     <Users size={14} />
-                    {selectedProperty.maxGuests} guests
+                    Tối đa {selectedProperty.maxGuests} khách
                   </div>
                   <div
                     style={{
@@ -738,7 +734,7 @@ export default function PropertyApprovalsPage() {
                     }}
                   >
                     <Bed size={14} />
-                    {selectedProperty.bedrooms} bedrooms
+                    {selectedProperty.bedrooms} phòng ngủ
                   </div>
                   <div
                     style={{
@@ -750,7 +746,7 @@ export default function PropertyApprovalsPage() {
                     }}
                   >
                     <Bath size={14} />
-                    {selectedProperty.bathrooms} bathrooms
+                    {selectedProperty.bathrooms} phòng tắm
                   </div>
                 </div>
 
@@ -768,7 +764,7 @@ export default function PropertyApprovalsPage() {
                     {selectedProperty.type}
                   </span>
                   <span style={{ fontWeight: 800, color: "#1e293b", fontSize: "1rem" }}>
-                    ${selectedProperty.price}/night
+                    {formatCurrency(selectedProperty.price)} / đêm
                   </span>
                   <StatusBadge status={selectedProperty.status} />
                 </div>
@@ -793,7 +789,7 @@ export default function PropertyApprovalsPage() {
                       fontSize: "0.9rem",
                     }}
                   >
-                    Amenities:
+                    Tiện nghi chỗ nghỉ:
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {selectedProperty.amenities.map((amenity) => (
@@ -821,7 +817,7 @@ export default function PropertyApprovalsPage() {
                     marginBottom: 18,
                   }}
                 >
-                  Hosted by: {selectedProperty.hostName}
+                  Chủ nhà phụ trách: {selectedProperty.hostName}
                 </div>
 
                 <div style={{ display: "flex", gap: 10 }}>
@@ -839,7 +835,7 @@ export default function PropertyApprovalsPage() {
                     }}
                   >
                     <CheckCircle size={16} />
-                    Approve property
+                    Phê duyệt chỗ nghỉ
                   </button>
                   <button
                     onClick={() => {
@@ -862,7 +858,7 @@ export default function PropertyApprovalsPage() {
                     }}
                   >
                     <XCircle size={16} />
-                    Reject
+                    Từ chối
                   </button>
                 </div>
               </div>
@@ -895,7 +891,7 @@ export default function PropertyApprovalsPage() {
               }}
             >
               <h3 style={{ fontWeight: 700, color: "#1e293b", margin: 0 }}>
-                Reject property
+                Từ chối phê duyệt chỗ nghỉ
               </h3>
               <button
                 onClick={() => setRejectingProperty(null)}
@@ -906,13 +902,13 @@ export default function PropertyApprovalsPage() {
             </div>
             <div style={{ padding: "24px" }}>
               <p style={{ color: "#64748b", fontSize: "0.9rem", marginBottom: 16 }}>
-                Add an internal note before rejecting{" "}
+                Ghi chú lý do từ chối cho chỗ nghỉ{" "}
                 <strong>&quot;{rejectingProperty.title}&quot;</strong>.
               </p>
               <textarea
                 className="hs-form-control"
                 rows={4}
-                placeholder="Example: photos are unclear or the description is incomplete..."
+                placeholder="Ví dụ: Hình ảnh chưa rõ nét, mô tả phòng thiếu thông tin tiện ích hoặc vi phạm chính sách..."
                 value={rejectionReason}
                 onChange={(event) => setRejectionReason(event.target.value)}
                 style={{ marginBottom: 16, resize: "vertical" }}
@@ -931,14 +927,14 @@ export default function PropertyApprovalsPage() {
                     cursor: "pointer",
                   }}
                 >
-                  Confirm rejection
+                  Xác nhận từ chối
                 </button>
                 <button
                   onClick={() => setRejectingProperty(null)}
                   className="btn-outline-hs"
                   style={{ flex: 1 }}
                 >
-                  Close
+                  Đóng
                 </button>
               </div>
             </div>

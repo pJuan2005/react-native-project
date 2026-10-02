@@ -45,7 +45,7 @@ export function Navbar() {
 
   // Host dropdown menu items
   const hostMenuItems = [
-    { icon: <LayoutDashboard size={15} />, label: "Host Dashboard", path: "/host/dashboard" },
+    { icon: <LayoutDashboard size={15} />, label: "Bảng điều khiển Chủ nhà", path: "/host/dashboard" },
     { icon: <Building2 size={15} />, label: "Homestay của tôi", path: "/host/my-properties" },
     { icon: <CalendarDays size={15} />, label: "Đơn đặt phòng", path: "/host/manage-booking" },
     { icon: <UserCircle size={15} />, label: "Hồ sơ chủ nhà", path: "/host/profile" },
@@ -53,10 +53,10 @@ export function Navbar() {
 
   // Admin dropdown menu items
   const adminMenuItems = [
-    { icon: <Shield size={15} />, label: "Admin Dashboard", path: "/admin/dashboard" },
+    { icon: <Shield size={15} />, label: "Bảng điều khiển Quản trị", path: "/admin/dashboard" },
     { icon: <Building2 size={15} />, label: "Quản lý Homestay", path: "/admin/properties-manage" },
     { icon: <CalendarDays size={15} />, label: "Quản lý Đặt phòng", path: "/admin/manage-booking" },
-    { icon: <UserCircle size={15} />, label: "Hồ sơ Admin", path: "/admin/profile" },
+    { icon: <UserCircle size={15} />, label: "Hồ sơ Quản trị", path: "/admin/profile" },
   ];
 
   const menuItems = user?.role === "Admin"
@@ -189,7 +189,7 @@ export function Navbar() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <Link href="/admin/dashboard">
                     <button className="btn-primary-hs" style={{ fontSize: "0.85rem", padding: "8px 16px" }}>
-                      <Shield size={14} /> Admin Dashboard
+                      <Shield size={14} /> Cổng Quản trị
                     </button>
                   </Link>
                   <AvatarDropdown />
@@ -198,7 +198,7 @@ export function Navbar() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <Link href="/host/dashboard">
                     <button className="btn-primary-hs" style={{ fontSize: "0.85rem", padding: "8px 16px", background: "#059669" }}>
-                      <Building2 size={14} /> Host Portal
+                      <Building2 size={14} /> Cổng Chủ nhà
                     </button>
                   </Link>
                   <AvatarDropdown />
@@ -256,7 +256,9 @@ export function Navbar() {
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, color: "#1e293b", fontSize: "0.87rem" }}>{user.name}</div>
-                    <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>{user.role}</div>
+                    <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
+                      {user.role === "Admin" ? "Quản trị viên" : user.role === "Host" ? "Chủ Homestay" : "Khách hàng"}
+                    </div>
                   </div>
                 </div>
 

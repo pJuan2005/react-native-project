@@ -41,7 +41,7 @@ function getEditHref(mode: InternalPreviewMode, propertyId: number) {
 }
 
 function formatCurrency(value: number) {
-  return `$${Number(value || 0).toLocaleString()}/night`;
+  return `${Number(value || 0).toLocaleString("vi-VN")} ₫ / đêm`;
 }
 
 export function InternalPropertyPreview({
@@ -69,7 +69,7 @@ export function InternalPropertyPreview({
         const propertyId = Number(params.id);
 
         if (!Number.isFinite(propertyId) || propertyId <= 0) {
-          throw new Error("Invalid property id.");
+          throw new Error("Mã chỗ nghỉ không hợp lệ.");
         }
 
         const response =
@@ -91,7 +91,7 @@ export function InternalPropertyPreview({
         setPageError(
           error instanceof Error
             ? error.message
-            : "Unable to load this property preview.",
+            : "Không thể tải thông tin xem trước chỗ nghỉ này.",
         );
       } finally {
         if (isMounted) {
@@ -112,8 +112,20 @@ export function InternalPropertyPreview({
       return [];
     }
 
-    const images = [property.image, ...(property.images || [])].filter(Boolean);
-    return Array.from(new Set(images));
+    const set = new Set<string>();
+
+    if (property.coverImageOriginal) {
+      set.add(property.coverImageOriginal);
+    }
+
+    if (property.image) {
+      set.add(property.image);
+    }
+
+    (property.originalImages || []).forEach((img) => set.add(img));
+    (property.images || []).forEach((img) => set.add(img));
+
+    return Array.from(set).filter(Boolean);
   }, [property]);
 
   useEffect(() => {
@@ -122,57 +134,48 @@ export function InternalPropertyPreview({
     }
   }, [galleryImages]);
 
-  if (isInitializing || isLoading) {
+  if (isLoading) {
     return (
       <div
         style={{
-          minHeight: "70vh",
+          padding: 30,
+          textAlign: "center",
+          color: "#64748b",
+          minHeight: "50vh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#64748b",
         }}
       >
-        Loading property preview...
+        Đang tải thông tin chỗ nghỉ...
       </div>
     );
   }
 
-  if (!property) {
+  if (pageError || !property) {
     return (
-      <div style={{ padding: "28px" }}>
+      <div style={{ padding: "30px 24px" }}>
         <div
           className="hs-card"
-          style={{
-            maxWidth: 760,
-            margin: "0 auto",
-            padding: "32px 28px",
-            textAlign: "center",
-          }}
+          style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px", textAlign: "center" }}
         >
-          <ShieldAlert size={36} color="#d97706" style={{ marginBottom: 14 }} />
-          <h1
-            style={{
-              fontWeight: 800,
-              color: "#1e293b",
-              marginBottom: 10,
-              fontSize: "1.55rem",
-            }}
-          >
-            Property preview unavailable
-          </h1>
-          <p style={{ color: "#64748b", marginBottom: 18 }}>
-            {pageError || "We could not open this property preview right now."}
+          <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#1e293b", marginBottom: 8 }}>
+            Không thể xem trước chỗ nghỉ
+          </h2>
+          <p style={{ color: "#64748b", marginBottom: 20 }}>
+            {pageError || "Chỗ nghỉ không tồn tại hoặc đã bị xóa."}
           </p>
           <Link href={getBackHref(mode)}>
-            <button className="btn-primary-hs">Back to property list</button>
+            <button className="btn-primary-hs">Quay lại danh sách</button>
           </Link>
         </div>
       </div>
     );
   }
 
-  const reviews = (property.reviews || []) as PropertyReview[];
+  const reviews: PropertyReview[] = Array.isArray(property.reviews)
+    ? (property.reviews as any)
+    : [];
   const showInternalNote = property.status !== "approved";
 
   return (
@@ -181,75 +184,55 @@ export function InternalPropertyPreview({
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 22,
+          alignItems: "flex-start",
+          gap: 16,
+          marginBottom: 20,
           flexWrap: "wrap",
         }}
       >
         <div>
-          <div
+          <Link
+            href={getBackHref(mode)}
             style={{
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              gap: 8,
-              marginBottom: 8,
+              gap: 6,
               color: "#64748b",
+              textDecoration: "none",
+              fontSize: "0.85rem",
               fontWeight: 600,
-              fontSize: "0.86rem",
+              marginBottom: 10,
             }}
           >
-            <Link
-              href={getBackHref(mode)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                textDecoration: "none",
-                color: "#2563eb",
-              }}
-            >
-              <ArrowLeft size={15} />
-              Back
-            </Link>
-            <span>•</span>
-            <span>
-              {mode === "admin" ? "Admin property preview" : "Host property preview"}
-            </span>
+            <ArrowLeft size={14} />
+            <span>Quay lại danh sách</span>
+          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <h1 style={{ fontWeight: 800, color: "#1e293b", fontSize: "1.6rem", margin: 0 }}>
+              {property.title}
+            </h1>
+            <StatusBadge status={property.status} />
           </div>
-          <h1
-            style={{
-              fontWeight: 800,
-              color: "#1e293b",
-              marginBottom: 4,
-              fontSize: "1.75rem",
-            }}
-          >
-            {property.title}
-          </h1>
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: 8,
-              flexWrap: "wrap",
               color: "#64748b",
+              fontSize: "0.88rem",
+              marginTop: 6,
             }}
           >
-            <StatusBadge status={property.status} />
-            <span
-              style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
-            >
-              <MapPin size={14} />
-              {property.location}
-            </span>
-            <span>{property.hostName}</span>
+            <MapPin size={14} color="#2563eb" />
+            <span>{property.location}</span>
+            <span>•</span>
+            <span>Chủ nhà: <strong>{property.hostName}</strong></span>
           </div>
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <Link href={getEditHref(mode, property.id)}>
-            <button className="btn-primary-hs">Edit Property</button>
+            <button className="btn-primary-hs">Chỉnh sửa chỗ nghỉ</button>
           </Link>
           {mode === "host" &&
             property.status === "approved" &&
@@ -275,7 +258,7 @@ export function InternalPropertyPreview({
                 }}
               >
                 <ExternalLink size={15} />
-                Quick Manage
+                Quản lý tại quầy
               </button>
             </Link>
           )}
@@ -296,7 +279,7 @@ export function InternalPropertyPreview({
                 }}
               >
                 <ExternalLink size={15} />
-                Open Public Listing
+                Xem trang công khai
               </button>
             </Link>
           )}
@@ -320,8 +303,7 @@ export function InternalPropertyPreview({
         >
           <ShieldAlert size={18} style={{ flexShrink: 0, marginTop: 1 }} />
           <div>
-            This property is not public yet. You are viewing the internal preview
-            that remains available for host and admin management.
+            Chỗ nghỉ này chưa được mở bán công khai. Bạn đang ở chế độ xem trước nội bộ dành riêng cho Chủ nhà và Quản trị viên.
           </div>
         </div>
       )}
@@ -401,7 +383,7 @@ export function InternalPropertyPreview({
                 fontSize: "1.15rem",
               }}
             >
-              About this property
+              Mô tả chỗ nghỉ
             </h3>
             <p
               style={{
@@ -411,7 +393,7 @@ export function InternalPropertyPreview({
                 whiteSpace: "pre-line",
               }}
             >
-              {property.description || "No description has been added yet."}
+              {property.description || "Chưa có mô tả nào được thêm vào."}
             </p>
           </div>
 
@@ -424,7 +406,7 @@ export function InternalPropertyPreview({
                 fontSize: "1.15rem",
               }}
             >
-              Amenities
+              Tiện nghi chỗ nghỉ
             </h3>
             {property.amenities.length > 0 ? (
               <div
@@ -452,7 +434,7 @@ export function InternalPropertyPreview({
               </div>
             ) : (
               <p style={{ margin: 0, color: "#94a3b8" }}>
-                No amenities have been configured yet.
+                Chưa có tiện nghi nào được thiết lập.
               </p>
             )}
           </div>
@@ -466,7 +448,7 @@ export function InternalPropertyPreview({
                 fontSize: "1.15rem",
               }}
             >
-              Reviews
+              Đánh giá từ khách hàng
             </h3>
             {reviews.length > 0 ? (
               <div style={{ display: "grid", gap: 14 }}>
@@ -513,7 +495,7 @@ export function InternalPropertyPreview({
               </div>
             ) : (
               <p style={{ margin: 0, color: "#94a3b8" }}>
-                This property does not have any reviews yet.
+                Chỗ nghỉ này chưa có đánh giá nào.
               </p>
             )}
           </div>
@@ -549,9 +531,9 @@ export function InternalPropertyPreview({
               >
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                   <Users size={16} color="#2563eb" />
-                  Guests
+                  Sức chứa
                 </span>
-                <strong>{property.maxGuests}</strong>
+                <strong>{property.maxGuests} khách</strong>
               </div>
               <div
                 style={{
@@ -564,9 +546,9 @@ export function InternalPropertyPreview({
               >
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                   <BedDouble size={16} color="#2563eb" />
-                  Bedrooms
+                  Phòng ngủ
                 </span>
-                <strong>{property.bedrooms}</strong>
+                <strong>{property.bedrooms} phòng</strong>
               </div>
               <div
                 style={{
@@ -579,9 +561,9 @@ export function InternalPropertyPreview({
               >
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                   <Bath size={16} color="#2563eb" />
-                  Bathrooms
+                  Phòng tắm
                 </span>
-                <strong>{property.bathrooms}</strong>
+                <strong>{property.bathrooms} phòng</strong>
               </div>
               <div
                 style={{
@@ -594,10 +576,10 @@ export function InternalPropertyPreview({
               >
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                   <Star size={16} color="#f59e0b" />
-                  Rating
+                  Đánh giá
                 </span>
                 <strong>
-                  {property.rating.toFixed(1)} ({property.reviewCount})
+                  {property.rating.toFixed(1)} ({property.reviewCount} đánh giá)
                 </strong>
               </div>
             </div>

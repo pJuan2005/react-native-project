@@ -272,7 +272,7 @@ export default function DetailPage() {
           <svg style={{ animation: "spin 1s linear infinite", width: 36, height: 36, marginBottom: 16 }} viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2">
             <path d="M21 12a9 9 0 11-6.219-8.56" />
           </svg>
-          <p style={{ color: "#64748b" }}>Loading property details...</p>
+          <p style={{ color: "#64748b" }}>Đang tải thông tin chỗ nghỉ...</p>
         </div>
       </div>
     );
@@ -284,10 +284,10 @@ export default function DetailPage() {
       <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
         <div>
           <div style={{ fontSize: "1rem", marginBottom: 16, color: "#64748b" }}>
-            Listing unavailable
+            Chỗ nghỉ không khả dụng
           </div>
-          <h2 style={{ color: "#1e293b", fontWeight: 700 }}>Property not found</h2>
-          <Link href="/listings"><button className="btn-primary-hs" style={{ marginTop: 16 }}>Back to Listings</button></Link>
+          <h2 style={{ color: "#1e293b", fontWeight: 700 }}>Không tìm thấy chỗ nghỉ</h2>
+          <Link href="/listings"><button className="btn-primary-hs" style={{ marginTop: 16 }}>Quay lại danh sách</button></Link>
         </div>
       </div>
     );
@@ -502,10 +502,10 @@ export default function DetailPage() {
             <div className="hs-card" style={{ padding: "20px 24px", marginBottom: 20 }}>
               <div className="row g-3">
                 {[
-                  { icon: <Users size={17} color="#2563EB" />, label: `Up to ${property.maxGuests} Guests` },
-                  { icon: <Bed size={17} color="#2563EB" />, label: `${property.bedrooms} Bedrooms` },
-                  { icon: <Bath size={17} color="#2563EB" />, label: `${property.bathrooms} Bathrooms` },
-                  { icon: <Star size={17} color="#f59e0b" />, label: `${avgRating > 0 ? avgRating.toFixed(1) : "New"} Rating` },
+                  { icon: <Users size={17} color="#2563EB" />, label: `Tối đa ${property.maxGuests} khách` },
+                  { icon: <Bed size={17} color="#2563EB" />, label: `${property.bedrooms} phòng ngủ` },
+                  { icon: <Bath size={17} color="#2563EB" />, label: `${property.bathrooms} phòng tắm` },
+                  { icon: <Star size={17} color="#f59e0b" />, label: `${avgRating > 0 ? avgRating.toFixed(1) + "★" : "Mới"}` },
                 ].map((item, i) => (
                   <div key={i} className="col-6 col-md-3">
                     <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0" }}>
@@ -525,22 +525,22 @@ export default function DetailPage() {
                 </span>
               </div>
               <div>
-                <div style={{ fontWeight: 700, color: "#1e293b" }}>Hosted by {property.hostName}</div>
-                <div style={{ color: "#64748b", fontSize: "0.83rem" }}>Superhost • Verified</div>
+                <div style={{ fontWeight: 700, color: "#1e293b" }}>Chủ nhà: {property.hostName}</div>
+                <div style={{ color: "#16a34a", fontSize: "0.83rem", fontWeight: 600 }}>Chủ nhà tận tâm • Đã xác minh danh tính</div>
               </div>
             </div>
 
             {/* Description */}
             <div className="hs-card" style={{ padding: "20px 24px", marginBottom: 20 }}>
-              <h2 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 12, fontSize: "1.1rem" }}>About This Property</h2>
+              <h2 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 12, fontSize: "1.1rem" }}>Giới thiệu chỗ nghỉ</h2>
               <p style={{ color: "#475569", lineHeight: 1.75, fontSize: "0.92rem", margin: 0 }}>
-                {property.description || "A beautiful property perfect for your next stay. Enjoy wonderful amenities and a great location."}
+                {property.description || "Chỗ nghỉ lý tưởng cho kỳ nghỉ dưỡng trọn vẹn của bạn. Không gian yên bình, đầy đủ tiện nghi và vị trí thuận lợi."}
               </p>
             </div>
 
             {/* Amenities */}
             <div className="hs-card" style={{ padding: "20px 24px", marginBottom: 20 }}>
-              <h2 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 16, fontSize: "1.1rem" }}>Amenities</h2>
+              <h2 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 16, fontSize: "1.1rem" }}>Tiện nghi chỗ nghỉ</h2>
               <div className="row g-2">
                 {property.amenities?.map((a: string, i: number) => (
                   <div key={i} className="col-6 col-md-4">
@@ -559,18 +559,18 @@ export default function DetailPage() {
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
                 <div>
                   <h2 style={{ fontWeight: 700, color: "#1e293b", margin: 0, fontSize: "1.1rem", marginBottom: 4 }}>
-                    Guest Reviews
+                    Đánh giá từ khách lưu trú
                   </h2>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <Star size={20} fill="#f59e0b" color="#f59e0b" />
                       <span style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b" }}>
-                        {avgRating > 0 ? avgRating.toFixed(1) : "New"}
+                        {avgRating > 0 ? avgRating.toFixed(1) : "Mới"}
                       </span>
                     </div>
                     <div>
                       <div style={{ fontWeight: 600, color: "#475569", fontSize: "0.85rem" }}>
-                        {propertyReviews.length} total reviews
+                        {propertyReviews.length} lượt đánh giá
                       </div>
                     </div>
                   </div>
@@ -580,7 +580,7 @@ export default function DetailPage() {
                 {propertyReviews.length > 0 && (
                   <div style={{ minWidth: 200 }}>
                     <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#94a3b8", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 8, display: "flex", alignItems: "center", gap: 4 }}>
-                      <TrendingUp size={11} /> Breakdown
+                      <TrendingUp size={11} /> Thống kê sao
                     </div>
                     {ratingBreakdown.map(({ stars, count }) => (
                       <div key={stars} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -625,7 +625,7 @@ export default function DetailPage() {
                           <div>
                             <div style={{ fontWeight: 700, color: "#1e293b", fontSize: "0.9rem" }}>{review.authorName}</div>
                             <div style={{ color: "#94a3b8", fontSize: "0.75rem", marginTop: 1 }}>
-                              {new Date(review.date).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                              {new Date(review.date).toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
                             </div>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -644,13 +644,13 @@ export default function DetailPage() {
                       {review.comment}
                     </p>
                     <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 5, color: "#16a34a", fontSize: "0.75rem", fontWeight: 600 }}>
-                      <CheckCircle size={11} /> Verified Stay
+                      <CheckCircle size={11} /> Đã lưu trú thực tế
                     </div>
                   </div>
                 )) : (
                   <div style={{ textAlign: "center", padding: "32px 0 8px", color: "#94a3b8" }}>
                     <MessageSquare size={32} color="#e2e8f0" style={{ marginBottom: 8 }} />
-                    <p style={{ margin: 0, fontSize: "0.87rem" }}>No reviews yet. Be the first to review this property!</p>
+                    <p style={{ margin: 0, fontSize: "0.87rem" }}>Chưa có đánh giá nào. Hãy là người đầu tiên trải nghiệm chỗ nghỉ này!</p>
                   </div>
                 )}
               </div>
@@ -668,7 +668,7 @@ export default function DetailPage() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <Star size={13} fill="#f59e0b" color="#f59e0b" />
-                    <span style={{ fontWeight: 700, fontSize: "0.85rem" }}>{avgRating > 0 ? avgRating.toFixed(1) : "New"}</span>
+                    <span style={{ fontWeight: 700, fontSize: "0.85rem" }}>{avgRating > 0 ? avgRating.toFixed(1) : "Mới"}</span>
                     <span style={{ color: "#94a3b8", fontSize: "0.78rem" }}>({propertyReviews.length})</span>
                   </div>
                 </div>
@@ -692,7 +692,7 @@ export default function DetailPage() {
                           marginBottom: 4,
                         }}
                       >
-                        Booking request created
+                        Đã gửi yêu cầu đặt phòng
                       </div>
                       <p
                         style={{
@@ -702,8 +702,7 @@ export default function DetailPage() {
                           lineHeight: 1.7,
                         }}
                       >
-                        Complete the transfer, upload your payment proof, and wait
-                        for the host or admin to confirm the booking.
+                        Vui lòng quét mã VietQR chuyển khoản và tải lên ảnh biên lai để chủ nhà hoặc quản trị viên duyệt đơn.
                       </p>
                       <p
                         style={{
@@ -714,8 +713,7 @@ export default function DetailPage() {
                           fontWeight: 600,
                         }}
                       >
-                        Standard check-in is after 2:00 PM and check-out is
-                        before 12:00 PM.
+                        Quy định nhận phòng sau 14:00 và trả phòng trước 12:00.
                       </p>
                     </div>
 
@@ -725,11 +723,11 @@ export default function DetailPage() {
                         style={{ width: "100%" }}
                         onClick={() => setIsPaymentModalOpen(true)}
                       >
-                        View payment instructions
+                        Xem hướng dẫn thanh toán & mã QR
                       </button>
                       <Link href="/dashboard" style={{ width: "100%" }}>
                         <button className="btn-outline-hs" style={{ width: "100%" }}>
-                          Go to dashboard
+                          Đến Chuyến đi của tôi
                         </button>
                       </Link>
                     </div>
@@ -744,7 +742,7 @@ export default function DetailPage() {
                         setBookingError("");
                       }}
                     >
-                      Create another request
+                      Đặt phòng khác
                     </button>
                   </div>
                 ) : (
@@ -752,7 +750,7 @@ export default function DetailPage() {
                     <div style={{ border: "1.5px solid #e2e8f0", borderRadius: 10, overflow: "hidden", marginBottom: 12 }}>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderBottom: "1px solid #e2e8f0" }}>
                         <div style={{ padding: "12px 14px", borderRight: "1px solid #e2e8f0" }}>
-                          <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1e293b", letterSpacing: 0.5, textTransform: "uppercase" }}>Check-in</div>
+                          <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1e293b", letterSpacing: 0.5, textTransform: "uppercase" }}>Nhận phòng</div>
                           <DatePicker
                             selected={selectedCheckInDate}
                             onChange={(selectedDate: Date | null) => {
@@ -789,7 +787,7 @@ export default function DetailPage() {
                           />
                         </div>
                         <div style={{ padding: "12px 14px" }}>
-                          <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1e293b", letterSpacing: 0.5, textTransform: "uppercase" }}>Check-out</div>
+                          <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1e293b", letterSpacing: 0.5, textTransform: "uppercase" }}>Trả phòng</div>
                           <DatePicker
                             selected={selectedCheckOutDate}
                             onChange={(selectedDate: Date | null) =>
@@ -805,7 +803,7 @@ export default function DetailPage() {
                             placeholderText={
                               selectedCheckInDate
                                 ? "dd/mm/yyyy"
-                                : "Select check-in first"
+                                : "Chọn ngày nhận phòng trước"
                             }
                             dateFormat="dd/MM/yyyy"
                             className="hs-datepicker-input"
@@ -817,14 +815,14 @@ export default function DetailPage() {
                         </div>
                       </div>
                       <div style={{ padding: "12px 14px" }}>
-                        <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1e293b", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 }}>Guests</div>
+                        <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1e293b", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 }}>Số lượng khách</div>
                         <select
                           style={{ border: "none", outline: "none", width: "100%", fontSize: "0.87rem", color: "#475569", padding: 0, background: "transparent" }}
                           value={bookingForm.guests}
                           onChange={e => setBookingForm({ ...bookingForm, guests: e.target.value })}
                         >
                           {Array.from({ length: property.maxGuests || 4 }, (_, i) => i + 1).map(n => (
-                            <option key={n} value={n}>{n} Guest{n > 1 ? "s" : ""}</option>
+                            <option key={n} value={n}>{n} Khách</option>
                           ))}
                         </select>
                       </div>
@@ -844,20 +842,20 @@ export default function DetailPage() {
                     >
                       <Calendar size={16} style={{ marginRight: 6, verticalAlign: "middle" }} />
                       {isSubmittingBooking
-                        ? "Submitting request..."
+                        ? "Đang gửi yêu cầu..."
                         : availabilityState.isChecking
-                        ? "Checking availability..."
+                        ? "Đang kiểm tra lịch trống..."
                         : availabilityState.isAvailable === false
-                        ? "Dates unavailable"
-                        : "Request booking"}
+                        ? "Khoảng ngày đã kín phòng"
+                        : "Yêu cầu đặt phòng ngay"}
                     </button>
 
                     <p style={{ textAlign: "center", color: "#94a3b8", fontSize: "0.78rem", margin: "0 0 14px" }}>
-                      We will create a pending booking and show the transfer details next.
+                      Hệ thống sẽ tạo đơn phòng chờ duyệt và hiển thị thông tin chuyển khoản VietQR ở bước tiếp theo.
                     </p>
 
                     <p style={{ textAlign: "center", color: "#64748b", fontSize: "0.78rem", margin: "0 0 14px" }}>
-                      Busy dates are locked in the calendar so you can spot unavailable periods before submitting.
+                      Các ngày đã có khách đặt được khóa trên lịch để bạn dễ dàng nhận biết.
                     </p>
 
                     <p
@@ -869,8 +867,7 @@ export default function DetailPage() {
                         fontWeight: 600,
                       }}
                     >
-                      Standard check-in is after 2:00 PM and check-out is
-                      before 12:00 PM.
+                      Quy định nhận phòng sau 14:00 và trả phòng trước 12:00.
                     </p>
 
                     {availabilityState.message && !bookingError && (
@@ -979,11 +976,10 @@ export default function DetailPage() {
                     marginBottom: 4,
                   }}
                 >
-                  Complete your transfer
+                  Hoàn tất chuyển khoản thanh toán
                 </div>
                 <div style={{ color: "#64748b", fontSize: "0.84rem" }}>
-                  The QR below is larger so it is easier to scan right after
-                  your booking request is created.
+                  Mã QR VietQR hiển thị đầy đủ số tiền và nội dung chuyển khoản để bạn quét mã nhanh chóng.
                 </div>
                 <div
                   style={{
@@ -993,15 +989,14 @@ export default function DetailPage() {
                     marginTop: 6,
                   }}
                 >
-                  Standard check-in is after 2:00 PM and check-out is before
-                  12:00 PM.
+                  Quy định nhận phòng sau 14:00 và trả phòng trước 12:00.
                 </div>
               </div>
               <button
                 className="btn-outline-hs"
                 onClick={() => setIsPaymentModalOpen(false)}
               >
-                Close
+                Đóng
               </button>
             </div>
 

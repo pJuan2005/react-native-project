@@ -107,7 +107,7 @@ export function Footer() {
             <div className="hs-footer-col">
               <Link href="/auth/register">Đăng ký Chủ Homestay</Link>
               <Link href="/auth/login">Đăng nhập Quản lý</Link>
-              <Link href="/host/dashboard">Host Dashboard</Link>
+              <Link href="/host/dashboard">Cổng Chủ nhà</Link>
               <Link href="/host/my-properties">Quản lý phòng nghỉ</Link>
             </div>
           </div>
@@ -116,7 +116,7 @@ export function Footer() {
           <div className="col-lg-2 col-md-6 col-6" style={{ flex: "1 1 140px", marginBottom: 24 }}>
             <h5 className="hs-footer-title">Quản trị viên</h5>
             <div className="hs-footer-col">
-              <Link href="/admin/dashboard">Admin Dashboard</Link>
+              <Link href="/admin/dashboard">Cổng Quản trị</Link>
               <Link href="/admin/manage-booking">Duyệt đặt phòng</Link>
               <Link href="/admin/property-approvals">Phê duyệt chỗ nghỉ</Link>
               <Link href="/admin/manage-reports">Báo cáo tài chính</Link>
@@ -167,7 +167,7 @@ export function Footer() {
           }}
         >
           <p style={{ margin: 0, fontSize: "0.83rem", color: "#64748b" }}>
-            © 2026 HomeStay Booking Platform. All rights reserved.
+            © 2026 Nền tảng Đặt phòng HomeStay. Bảo lưu mọi quyền.
           </p>
           <div style={{ display: "flex", gap: 16 }}>
             <span style={{ fontSize: "0.83rem", color: "#64748b" }}>Chính sách bảo mật</span>

@@ -17,6 +17,11 @@ import { isBackendUploadImage } from "@/lib/image";
 
 const ITEMS_PER_PAGE = 8;
 
+function formatCurrency(value: number | string | undefined) {
+  const amount = Number(value || 0);
+  return `${amount.toLocaleString("vi-VN")} ₫`;
+}
+
 export default function ManageBookingsPage() {
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +45,7 @@ export default function ManageBookingsPage() {
       setError(
         loadError instanceof Error
           ? loadError.message
-          : "Unable to load the booking list right now.",
+          : "Không thể tải danh sách đơn đặt phòng lúc này.",
       );
     } finally {
       setIsLoading(false);
@@ -81,10 +86,10 @@ export default function ManageBookingsPage() {
   );
 
   const summary = [
-    { label: "Total Bookings", value: bookings.length, color: "#2563EB", bg: "#eff6ff" },
-    { label: "Confirmed", value: bookings.filter((booking) => booking.status === "confirmed").length, color: "#16a34a", bg: "#dcfce7" },
-    { label: "Pending", value: bookings.filter((booking) => booking.status === "pending").length, color: "#d97706", bg: "#fef3c7" },
-    { label: "Awaiting Review", value: bookings.filter((booking) => booking.paymentStatus === "proof_uploaded").length, color: "#7c3aed", bg: "#f3e8ff" },
+    { label: "Tổng đơn phòng", value: bookings.length, color: "#2563EB", bg: "#eff6ff" },
+    { label: "Đã xác nhận", value: bookings.filter((booking) => booking.status === "confirmed").length, color: "#16a34a", bg: "#dcfce7" },
+    { label: "Đang chờ duyệt", value: bookings.filter((booking) => booking.status === "pending").length, color: "#d97706", bg: "#fef3c7" },
+    { label: "Chờ kiểm tra biên lai", value: bookings.filter((booking) => booking.paymentStatus === "proof_uploaded").length, color: "#7c3aed", bg: "#f3e8ff" },
   ];
 
   const totalRevenue = bookings
@@ -122,7 +127,7 @@ export default function ManageBookingsPage() {
       setError(
         reviewError instanceof Error
           ? reviewError.message
-          : "Unable to review this booking right now.",
+          : "Không thể phê duyệt đơn đặt phòng lúc này.",
       );
     } finally {
       setIsSubmitting(false);
@@ -133,10 +138,10 @@ export default function ManageBookingsPage() {
     <div style={{ padding: "28px" }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontWeight: 800, color: "#1e293b", marginBottom: 4, fontSize: "1.5rem" }}>
-          Manage Bookings
+          Quản lý Đặt phòng
         </h1>
         <p style={{ color: "#64748b", margin: 0 }}>
-          Supervise payment proofs and confirm platform bookings from one screen.
+          Kiểm tra biên lai thanh toán VietQR và xác nhận đơn đặt phòng trên toàn hệ thống.
         </p>
       </div>
 
@@ -165,14 +170,14 @@ export default function ManageBookingsPage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <div>
             <div style={{ color: "#94a3b8", fontSize: "0.74rem", fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase" }}>
-              Confirmed Revenue
+              Tổng doanh số đơn đã xác nhận
             </div>
             <div style={{ color: "#1e293b", fontSize: "1.35rem", fontWeight: 800 }}>
-              ${totalRevenue.toFixed(2)}
+              {formatCurrency(totalRevenue)}
             </div>
           </div>
           <div style={{ color: "#64748b", fontSize: "0.84rem" }}>
-            Gross booking revenue is based on confirmed bookings only.
+            Doanh số ghi nhận trực tiếp từ các đơn đặt phòng đã thanh toán và xác nhận thành công.
           </div>
         </div>
       </div>
@@ -180,13 +185,18 @@ export default function ManageBookingsPage() {
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
           <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
-          <input className="hs-form-control" placeholder="Search guest, host, property, or booking code..." style={{ paddingLeft: 36 }} value={search} onChange={(event) => setSearch(event.target.value)} />
+          <input className="hs-form-control" placeholder="Tìm kiếm theo khách hàng, chủ nhà, chỗ nghỉ, mã đơn..." style={{ paddingLeft: 36 }} value={search} onChange={(event) => setSearch(event.target.value)} />
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <Filter size={14} color="#64748b" />
-          {["all", "pending", "confirmed", "cancelled"].map((status) => (
-            <button key={status} onClick={() => setStatusFilter(status)} style={{ padding: "6px 12px", borderRadius: 20, fontSize: "0.8rem", border: `1.5px solid ${statusFilter === status ? "#2563EB" : "#e2e8f0"}`, background: statusFilter === status ? "#eff6ff" : "#fff", color: statusFilter === status ? "#2563EB" : "#64748b", fontWeight: statusFilter === status ? 700 : 500, cursor: "pointer" }}>
-              {status === "all" ? "All" : status.charAt(0).toUpperCase() + status.slice(1)}
+          {[
+            { key: "all", label: "Tất cả" },
+            { key: "pending", label: "Chờ xử lý" },
+            { key: "confirmed", label: "Đã xác nhận" },
+            { key: "cancelled", label: "Đã hủy" },
+          ].map((item) => (
+            <button key={item.key} onClick={() => setStatusFilter(item.key)} style={{ padding: "6px 12px", borderRadius: 20, fontSize: "0.8rem", border: `1.5px solid ${statusFilter === item.key ? "#2563EB" : "#e2e8f0"}`, background: statusFilter === item.key ? "#eff6ff" : "#fff", color: statusFilter === item.key ? "#2563EB" : "#64748b", fontWeight: statusFilter === item.key ? 700 : 500, cursor: "pointer" }}>
+              {item.label}
             </button>
           ))}
         </div>
@@ -194,33 +204,33 @@ export default function ManageBookingsPage() {
 
       <div className="hs-card" style={{ overflow: "hidden" }}>
         <div style={{ padding: "12px 20px", borderBottom: "1px solid #e2e8f0", fontSize: "0.85rem", color: "#64748b" }}>
-          Showing {filteredBookings.length} of {bookings.length} bookings
+          Hiển thị {filteredBookings.length} trên tổng số {bookings.length} đơn đặt phòng
         </div>
         <div style={{ overflowX: "auto" }}>
           <table className="hs-table">
             <thead>
               <tr>
-                <th>Booking</th>
-                <th>Guest</th>
-                <th>Host</th>
-                <th>Property</th>
-                <th>Total</th>
-                <th>Booking Status</th>
-                <th>Payment</th>
-                <th>Actions</th>
+                <th>Mã đơn phòng</th>
+                <th>Khách hàng</th>
+                <th>Chủ nhà</th>
+                <th>Chỗ nghỉ</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái đơn</th>
+                <th>Thanh toán</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
                   <td colSpan={8} style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
-                    Loading bookings...
+                    Đang tải danh sách đặt phòng...
                   </td>
                 </tr>
               ) : filteredBookings.length === 0 ? (
                 <tr>
                   <td colSpan={8} style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
-                    No bookings found
+                    Không tìm thấy đơn đặt phòng nào phù hợp
                   </td>
                 </tr>
               ) : (
@@ -255,14 +265,14 @@ export default function ManageBookingsPage() {
                         </span>
                       </div>
                     </td>
-                    <td style={{ fontWeight: 800, color: "#1e293b" }}>${booking.totalPrice.toFixed(2)}</td>
+                    <td style={{ fontWeight: 800, color: "#1e293b" }}>{formatCurrency(booking.totalPrice)}</td>
                     <td><StatusBadge status={booking.status} /></td>
                     <td><PaymentStatusBadge status={booking.paymentStatus} /></td>
                     <td>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {canReviewBooking(booking) && (
-                          <button onClick={() => { setSelectedBooking(booking); setError(""); setMessage(""); }} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "6px 10px", borderRadius: 7, border: "1.5px solid #e2e8f0", background: "#fff", color: "#64748b", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>
-                            Review
+                          <button onClick={() => { setSelectedBooking(booking); setError(""); setMessage(""); }} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "6px 10px", borderRadius: 7, border: "1.5px solid #2563EB", background: "#eff6ff", color: "#2563EB", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}>
+                            Kiểm tra biên lai
                           </button>
                         )}
                         {booking.status === "confirmed" && (
@@ -284,7 +294,7 @@ export default function ManageBookingsPage() {
                             }}
                           >
                             <MessageCircle size={13} />
-                            Chat
+                            Trò chuyện
                           </button>
                         )}
                       </div>
@@ -302,7 +312,7 @@ export default function ManageBookingsPage() {
             totalPages={totalPages}
             totalItems={filteredBookings.length}
             pageSize={ITEMS_PER_PAGE}
-            itemLabel="bookings"
+            itemLabel="đơn đặt phòng"
             onPageChange={setCurrentPage}
           />
         </div>
@@ -310,8 +320,8 @@ export default function ManageBookingsPage() {
 
       <BookingReviewDialog
         booking={selectedBooking}
-        title="Review booking payment"
-        submitLabel="Save review"
+        title="Kiểm tra & duyệt thanh toán đơn đặt phòng"
+        submitLabel="Lưu kết quả duyệt"
         isSubmitting={isSubmitting}
         onClose={() => setSelectedBooking(null)}
         onSubmit={handleReview}
@@ -320,7 +330,7 @@ export default function ManageBookingsPage() {
       <BookingChatDialog
         booking={chatBooking}
         scope="admin"
-        title="Booking Chat"
+        title="Trò chuyện hỗ trợ đơn phòng"
         onClose={() => setChatBooking(null)}
       />
     </div>

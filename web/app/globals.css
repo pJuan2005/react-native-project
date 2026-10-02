@@ -426,3 +426,15 @@ body {
   text-transform: uppercase; letter-spacing: 0.6px;
   padding: 8px 14px 4px;
 }
+
+/* ── Landing Page Responsive Utilities ── */
+@media (max-width: 768px) {
+  .hs-hero-title {
+    font-size: 2.2rem !important;
+    line-height: 1.2 !important;
+  }
+  .hs-search-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+

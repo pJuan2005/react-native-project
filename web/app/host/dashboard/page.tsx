@@ -21,7 +21,7 @@ import { isBackendUploadImage } from "@/lib/image";
 import { getHostProperties, type PropertySummary } from "@/services/propertyService";
 
 function formatCurrency(value: number) {
-  return `$${value.toLocaleString()}`;
+  return `${Number(value || 0).toLocaleString("vi-VN")} ₫`;
 }
 
 function getQuickManageUrl(token: string) {
@@ -43,7 +43,7 @@ function downloadExcelCompatibleCsv(rows: string[][], filename: string) {
   };
 
   const content = rows.map((row) => row.map(escapeCell).join(",")).join("\r\n");
-  const blob = new Blob([`\uFEFF${content}`], {
+  const blob = new Blob([`﻿${content}`], {
     type: "text/csv;charset=utf-8;",
   });
   const objectUrl = URL.createObjectURL(blob);
@@ -85,7 +85,7 @@ export default function HostDashboardPage() {
         setPageError(
           error instanceof Error
             ? error.message
-            : "Unable to load the host dashboard right now.",
+            : "Không thể tải bảng điều khiển chủ nhà lúc này.",
         );
       } finally {
         setIsLoading(false);
@@ -106,12 +106,12 @@ export default function HostDashboardPage() {
           color: "#64748b",
         }}
       >
-        Loading host dashboard...
+        Đang tải bảng điều khiển chủ nhà...
       </div>
     );
   }
 
-  const displayName = user.name || "Host";
+  const displayName = user.name || "Chủ Homestay";
   const firstName = displayName.split(" ")[0] || displayName;
   const summary = dashboard?.summary || {
     propertyCount: 0,
@@ -137,10 +137,10 @@ export default function HostDashboardPage() {
   function handleExportQuickLinks() {
     const rows = [
       [
-        "Property ID",
-        "Property Title",
-        "Location",
-        "Quick Link URL",
+        "Mã chỗ nghỉ",
+        "Tên chỗ nghỉ",
+        "Địa điểm",
+        "Đường dẫn quản lý nhanh",
       ],
       ...exportableQuickLinks.map((property) => [
         String(property.id),
@@ -150,37 +150,37 @@ export default function HostDashboardPage() {
       ]),
     ];
 
-    downloadExcelCompatibleCsv(rows, "host-quick-manage-links.csv");
+    downloadExcelCompatibleCsv(rows, "danh-sach-lien-ket-quan-ly-host.csv");
   }
 
   const stats = [
     {
       icon: <Building2 size={22} color="#2563EB" />,
       bg: "#eff6ff",
-      label: "My Properties",
+      label: "Chỗ nghỉ của tôi",
       value: summary.propertyCount,
-      change: `${summary.propertiesThisMonth} added this month`,
+      change: `${summary.propertiesThisMonth} chỗ nghỉ thêm mới tháng này`,
     },
     {
       icon: <CalendarDays size={22} color="#16a34a" />,
       bg: "#dcfce7",
-      label: "Total Bookings",
+      label: "Tổng đơn đặt phòng",
       value: summary.bookingCount,
-      change: `${summary.bookingsThisWeek} new this week`,
+      change: `${summary.bookingsThisWeek} đơn mới trong tuần này`,
     },
     {
       icon: <DollarSign size={22} color="#d97706" />,
       bg: "#fef3c7",
-      label: "Host Payout",
+      label: "Thực nhận của bạn",
       value: formatCurrency(summary.totalRevenue),
-      change: `Gross ${formatCurrency(summary.grossRevenue)} · Platform fee ${formatCurrency(summary.platformFeeAmount)}`,
+      change: `Tổng doanh số: ${formatCurrency(summary.grossRevenue)} · Phí sàn: ${formatCurrency(summary.platformFeeAmount)}`,
     },
     {
       icon: <TrendingUp size={22} color="#7c3aed" />,
       bg: "#f3e8ff",
-      label: "Average Rating",
+      label: "Điểm đánh giá trung bình",
       value: `${summary.averageRating.toFixed(1)} / 5`,
-      change: `Based on ${summary.reviewCount} reviews`,
+      change: `Dựa trên ${summary.reviewCount} lượt đánh giá`,
     },
   ];
 
@@ -205,10 +205,10 @@ export default function HostDashboardPage() {
               fontSize: "1.5rem",
             }}
           >
-            Welcome back, {firstName}
+            Chào mừng trở lại, {firstName} 👋
           </h1>
           <p style={{ color: "#64748b", margin: 0 }}>
-            Here is a live overview of your hosting activity.
+            Tổng quan hiệu quả kinh doanh và tình hình đặt phòng homestay của bạn.
           </p>
         </div>
 
@@ -222,7 +222,7 @@ export default function HostDashboardPage() {
           }}
         >
           <Link href="/host/my-properties">
-            <button className="btn-outline-hs">Manage Quick Links</button>
+            <button className="btn-outline-hs">Quản lý Liên kết tại quầy</button>
           </Link>
           <button
             type="button"
@@ -231,7 +231,7 @@ export default function HostDashboardPage() {
             style={{ opacity: exportableQuickLinks.length ? 1 : 0.6 }}
             disabled={!exportableQuickLinks.length}
           >
-            Export Quick Links
+            Xuất liên kết ra Excel
           </button>
         </div>
       </div>
@@ -317,7 +317,7 @@ export default function HostDashboardPage() {
                   fontSize: "1rem",
                 }}
               >
-                Recent Bookings
+                Đơn đặt phòng gần đây
               </h3>
               <Link href="/host/manage-booking">
                 <button
@@ -333,7 +333,7 @@ export default function HostDashboardPage() {
                     gap: 4,
                   }}
                 >
-                  View All <ArrowRight size={13} />
+                  Xem tất cả <ArrowRight size={13} />
                 </button>
               </Link>
             </div>
@@ -342,18 +342,18 @@ export default function HostDashboardPage() {
               <table className="hs-table">
                 <thead>
                   <tr>
-                    <th>Guest</th>
-                    <th>Property</th>
-                    <th>Dates</th>
-                    <th>Total</th>
-                    <th>Status</th>
+                    <th>Khách hàng</th>
+                    <th>Chỗ nghỉ</th>
+                    <th>Thời gian lưu trú</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody>
                   {isLoading ? (
                     <tr>
                       <td colSpan={5} style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
-                        Loading bookings...
+                        Đang tải danh sách đơn phòng...
                       </td>
                     </tr>
                   ) : dashboard?.recentBookings.length ? (
@@ -393,7 +393,7 @@ export default function HostDashboardPage() {
                                 {booking.guestName}
                               </div>
                               <div style={{ color: "#94a3b8", fontSize: "0.76rem" }}>
-                                {booking.guests} guests
+                                {booking.guests} khách
                               </div>
                             </div>
                           </div>
@@ -410,7 +410,7 @@ export default function HostDashboardPage() {
                           </div>
                         </td>
                         <td style={{ fontSize: "0.82rem", color: "#64748b" }}>
-                          {booking.checkIn} to {booking.checkOut}
+                          {booking.checkIn} đến {booking.checkOut}
                         </td>
                         <td>
                           <strong style={{ color: "#1e293b" }}>
@@ -425,7 +425,7 @@ export default function HostDashboardPage() {
                   ) : (
                     <tr>
                       <td colSpan={5} style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
-                        No bookings have been created for your listings yet.
+                        Chưa có đơn đặt phòng nào cho các chỗ nghỉ của bạn.
                       </td>
                     </tr>
                   )}
@@ -454,7 +454,7 @@ export default function HostDashboardPage() {
                   fontSize: "1rem",
                 }}
               >
-                My Properties
+                Chỗ nghỉ của tôi
               </h3>
               <Link href="/host/my-properties">
                 <button
@@ -470,7 +470,7 @@ export default function HostDashboardPage() {
                     gap: 4,
                   }}
                 >
-                  View All <ArrowRight size={13} />
+                  Xem tất cả <ArrowRight size={13} />
                 </button>
               </Link>
             </div>
@@ -478,7 +478,7 @@ export default function HostDashboardPage() {
             <div>
               {isLoading ? (
                 <div style={{ padding: "24px 18px", color: "#94a3b8", fontSize: "0.84rem" }}>
-                  Loading properties...
+                  Đang tải danh sách chỗ nghỉ...
                 </div>
               ) : dashboard?.properties.length ? (
                 dashboard.properties.map((property) => (
@@ -488,63 +488,63 @@ export default function HostDashboardPage() {
                     style={{ textDecoration: "none" }}
                   >
                     <div
-                    style={{
-                      padding: "12px 18px",
-                      borderBottom: "1px solid #f1f5f9",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Image
-                      src={property.image}
-                      alt={property.title}
-                      width={46}
-                      height={46}
-                      sizes="46px"
-                      unoptimized={isBackendUploadImage(property.image)}
                       style={{
-                        width: 46,
-                        height: 46,
-                        borderRadius: 8,
-                        objectFit: "cover",
+                        padding: "12px 18px",
+                        borderBottom: "1px solid #f1f5f9",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        cursor: "pointer",
                       }}
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
+                    >
+                      <Image
+                        src={property.image}
+                        alt={property.title}
+                        width={46}
+                        height={46}
+                        sizes="46px"
+                        unoptimized={isBackendUploadImage(property.image)}
                         style={{
-                          fontWeight: 700,
-                          color: "#1e293b",
-                          fontSize: "0.85rem",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          width: 46,
+                          height: 46,
+                          borderRadius: 8,
+                          objectFit: "cover",
                         }}
-                      >
-                        {property.title}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontWeight: 700,
+                            color: "#1e293b",
+                            fontSize: "0.85rem",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {property.title}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            marginTop: 3,
+                          }}
+                        >
+                          <Star size={11} fill="#f59e0b" color="#f59e0b" />
+                          <span style={{ fontSize: "0.77rem", color: "#64748b" }}>
+                            {property.rating.toFixed(1)} · {formatCurrency(property.price)}/đêm
+                          </span>
+                        </div>
                       </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                          marginTop: 3,
-                        }}
-                      >
-                        <Star size={11} fill="#f59e0b" color="#f59e0b" />
-                        <span style={{ fontSize: "0.77rem", color: "#64748b" }}>
-                          {property.rating.toFixed(1)} · {formatCurrency(property.price)}/night
-                        </span>
-                      </div>
-                    </div>
-                    <StatusBadge status={property.status} />
+                      <StatusBadge status={property.status} />
                     </div>
                   </Link>
                 ))
               ) : (
                 <div style={{ padding: "24px 18px", color: "#94a3b8", fontSize: "0.84rem" }}>
-                  You have not created any properties yet.
+                  Bạn chưa đăng chỗ nghỉ nào.
                 </div>
               )}
 
@@ -554,45 +554,11 @@ export default function HostDashboardPage() {
                     className="btn-primary-hs"
                     style={{ width: "100%", fontSize: "0.85rem" }}
                   >
-                    Add New Property
+                    Đăng chỗ nghỉ mới
                   </button>
                 </Link>
               </div>
             </div>
-          </div>
-
-          <div
-            style={{
-              marginTop: 16,
-              padding: "16px 18px",
-              background: "#eff6ff",
-              borderRadius: 12,
-              border: "1px solid #bfdbfe",
-            }}
-          >
-            <div
-              style={{
-                fontWeight: 700,
-                color: "#1e293b",
-                marginBottom: 6,
-                fontSize: "0.9rem",
-              }}
-            >
-              Hosting Focus
-            </div>
-            <ul
-              style={{
-                margin: 0,
-                padding: "0 0 0 16px",
-                color: "#475569",
-                fontSize: "0.82rem",
-                lineHeight: 1.9,
-              }}
-            >
-              <li>{summary.pendingProofCount} bookings are waiting for payment review.</li>
-              <li>Keep your instructions updated for smoother check-in.</li>
-              <li>Fresh photos and fast replies help maintain strong ratings.</li>
-            </ul>
           </div>
         </div>
       </div>

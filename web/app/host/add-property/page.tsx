@@ -80,7 +80,7 @@ export default function AddPropertyPage() {
     event.preventDefault();
 
     if (!hostId) {
-      setGeneralError("Host session is invalid. Please sign in again.");
+      setGeneralError("Phiên đăng nhập chủ nhà không hợp lệ. Vui lòng đăng nhập lại.");
       return;
     }
 
@@ -91,7 +91,7 @@ export default function AddPropertyPage() {
 
     if (Object.keys(validateErrors).length > 0) {
       setErrors(validateErrors);
-      setGeneralError("Please review the property information before submitting.");
+      setGeneralError("Vui lòng kiểm tra lại thông tin chỗ nghỉ trước khi gửi phê duyệt.");
       return;
     }
 
@@ -113,7 +113,7 @@ export default function AddPropertyPage() {
       setGeneralError(
         error instanceof Error
           ? error.message
-          : "Unable to create a new property. Please try again.",
+          : "Không thể đăng chỗ nghỉ mới. Vui lòng thử lại.",
       );
     } finally {
       setIsSubmitting(false);
@@ -139,11 +139,11 @@ export default function AddPropertyPage() {
             <CheckCircle size={40} color="#16a34a" />
           </div>
           <h2 style={{ fontWeight: 800, color: "#1e293b", marginBottom: 10 }}>
-            Property created successfully
+            Đăng ký chỗ nghỉ thành công! 🎉
           </h2>
           <p style={{ color: "#64748b", lineHeight: 1.7, marginBottom: 24 }}>
-            <strong>{createdProperty.title}</strong> has been submitted to the system
-            and is currently in <strong>{createdProperty.status}</strong> status.
+            Chỗ nghỉ <strong>{createdProperty.title}</strong> đã được gửi lên hệ thống
+            và đang ở trạng thái <strong>Chờ quản trị viên phê duyệt</strong>.
           </p>
 
           <div
@@ -163,11 +163,10 @@ export default function AddPropertyPage() {
                 marginBottom: 4,
               }}
             >
-              Current status: pending approval
+              Trạng thái hiện tại: Đang chờ duyệt
             </div>
             <div style={{ color: "#92400e", fontSize: "0.82rem" }}>
-              You can review this property in the host dashboard or open the
-              public detail page after it has been approved by an admin.
+              Ban quản trị sẽ kiểm tra thông tin và mở bán chỗ nghỉ trên trang khám phá công khai trong vòng 24 giờ.
             </div>
           </div>
 
@@ -176,7 +175,7 @@ export default function AddPropertyPage() {
               className="btn-primary-hs"
               onClick={() => router.push("/host/my-properties")}
             >
-              Back to property list
+              Về danh sách chỗ nghỉ
             </button>
             <button
               className="btn-outline-hs"
@@ -187,7 +186,7 @@ export default function AddPropertyPage() {
                 setDetailImages([]);
               }}
             >
-              Create another property
+              Đăng thêm chỗ nghỉ khác
             </button>
           </div>
         </div>
@@ -196,7 +195,7 @@ export default function AddPropertyPage() {
   }
 
   if (isInitializing || !user) {
-    return <PageState message="Checking host session..." />;
+    return <PageState message="Đang kiểm tra phiên đăng nhập chủ nhà..." />;
   }
 
   return (
@@ -220,14 +219,14 @@ export default function AddPropertyPage() {
               fontSize: "1.5rem",
             }}
           >
-            Add New Property
+            Đăng Chỗ Nghỉ Mới
           </h1>
           <p style={{ color: "#64748b", margin: 0 }}>
-            Complete all details before submitting your property to the platform.
+            Điền đầy đủ thông tin để gửi hồ sơ chỗ nghỉ của bạn lên hệ thống duyệt.
           </p>
         </div>
         <Link href="/host/my-properties" className="btn-outline-hs">
-          Back to list
+          Quay lại danh sách
         </Link>
       </div>
 
@@ -250,22 +249,22 @@ export default function AddPropertyPage() {
         <div className="col-lg-8">
           <div className="hs-card" style={{ padding: "24px", marginBottom: 20 }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 18 }}>
-              Basic information
+              Thông tin cơ bản
             </h3>
             <div className="row g-3">
               <div className="col-12">
-                <label className="hs-form-label">Property title</label>
+                <label className="hs-form-label">Tên chỗ nghỉ / Homestay *</label>
                 <input
                   className="hs-form-control"
                   value={form.title}
                   onChange={(event) => updateField("title", event.target.value)}
-                  placeholder="Example: Sunset Villa Da Nang"
+                  placeholder="Ví dụ: Hoàng Hôn Homestay & Coffee Đà Lạt"
                 />
                 {errors.title && <ErrorText message={errors.title} />}
               </div>
 
               <div className="col-md-6">
-                <label className="hs-form-label">Property type</label>
+                <label className="hs-form-label">Loại hình chỗ nghỉ *</label>
                 <select
                   className="hs-form-control"
                   value={form.type}
@@ -281,20 +280,20 @@ export default function AddPropertyPage() {
               </div>
 
               <div className="col-md-6">
-                <label className="hs-form-label">Price per night</label>
+                <label className="hs-form-label">Giá thuê mỗi đêm (VNĐ) *</label>
                 <input
                   type="number"
                   min="1"
                   className="hs-form-control"
                   value={form.price}
                   onChange={(event) => updateField("price", event.target.value)}
-                  placeholder="200"
+                  placeholder="Ví dụ: 1200000"
                 />
                 {errors.price && <ErrorText message={errors.price} />}
               </div>
 
               <div className="col-12">
-                <label className="hs-form-label">Address</label>
+                <label className="hs-form-label">Địa chỉ cụ thể *</label>
                 <div style={{ position: "relative" }}>
                   <MapPin
                     size={15}
@@ -311,30 +310,30 @@ export default function AddPropertyPage() {
                     style={{ paddingLeft: 34 }}
                     value={form.address}
                     onChange={(event) => updateField("address", event.target.value)}
-                    placeholder="123 Beach Road"
+                    placeholder="Ví dụ: 12/4 Đường Khe Sanh, Phường 10"
                   />
                 </div>
                 {errors.address && <ErrorText message={errors.address} />}
               </div>
 
               <div className="col-md-6">
-                <label className="hs-form-label">City</label>
+                <label className="hs-form-label">Tỉnh / Thành phố *</label>
                 <input
                   className="hs-form-control"
                   value={form.city}
                   onChange={(event) => updateField("city", event.target.value)}
-                  placeholder="Da Nang"
+                  placeholder="Ví dụ: Đà Lạt, Lâm Đồng"
                 />
                 {errors.city && <ErrorText message={errors.city} />}
               </div>
 
               <div className="col-md-6">
-                <label className="hs-form-label">Country</label>
+                <label className="hs-form-label">Quốc gia</label>
                 <input
                   className="hs-form-control"
                   value={form.country}
                   onChange={(event) => updateField("country", event.target.value)}
-                  placeholder="Vietnam"
+                  placeholder="Việt Nam"
                 />
                 {errors.country && <ErrorText message={errors.country} />}
               </div>
@@ -343,11 +342,11 @@ export default function AddPropertyPage() {
 
           <div className="hs-card" style={{ padding: "24px", marginBottom: 20 }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 18 }}>
-              Capacity details
+              Sức chứa & Không gian
             </h3>
             <div className="row g-3">
               <div className="col-md-4">
-                <label className="hs-form-label">Maximum guests</label>
+                <label className="hs-form-label">Số khách tối đa *</label>
                 <div style={{ position: "relative" }}>
                   <Users
                     size={15}
@@ -372,7 +371,7 @@ export default function AddPropertyPage() {
               </div>
 
               <div className="col-md-4">
-                <label className="hs-form-label">Bedrooms</label>
+                <label className="hs-form-label">Số phòng ngủ *</label>
                 <input
                   type="number"
                   min="0"
@@ -384,7 +383,7 @@ export default function AddPropertyPage() {
               </div>
 
               <div className="col-md-4">
-                <label className="hs-form-label">Bathrooms</label>
+                <label className="hs-form-label">Số phòng tắm *</label>
                 <input
                   type="number"
                   min="0"
@@ -397,13 +396,13 @@ export default function AddPropertyPage() {
               </div>
 
               <div className="col-12">
-                <label className="hs-form-label">Description</label>
+                <label className="hs-form-label">Mô tả chỗ nghỉ *</label>
                 <textarea
                   className="hs-form-control"
                   rows={6}
                   value={form.description}
                   onChange={(event) => updateField("description", event.target.value)}
-                  placeholder="Describe the style, location, and standout amenities..."
+                  placeholder="Mô tả phong cách kiến trúc, tầm nhìn cảnh quan, không gian xung quanh và các điểm nhấn nổi bật..."
                   style={{ resize: "vertical" }}
                 />
                 {errors.description && <ErrorText message={errors.description} />}
@@ -413,10 +412,10 @@ export default function AddPropertyPage() {
 
           <div className="hs-card" style={{ padding: "24px", marginBottom: 20 }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>
-              Amenities
+              Tiện nghi chỗ nghỉ
             </h3>
             <p style={{ color: "#64748b", fontSize: "0.88rem", marginBottom: 16 }}>
-              Select the amenities available at this property.
+              Chọn các tiện nghi hiện có sẵn tại homestay của bạn.
             </p>
             <div
               style={{
@@ -461,7 +460,7 @@ export default function AddPropertyPage() {
         <div className="col-lg-4">
           <div className="hs-card" style={{ padding: "24px", marginBottom: 20 }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 14 }}>
-              Cover image
+              Ảnh bìa đại diện chỗ nghỉ *
             </h3>
             <label
               style={{
@@ -476,10 +475,10 @@ export default function AddPropertyPage() {
             >
               <FileImage size={26} color="#2563eb" style={{ marginBottom: 10 }} />
               <div style={{ fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>
-                Upload cover image
+                Tải lên ảnh bìa
               </div>
               <div style={{ color: "#94a3b8", fontSize: "0.82rem" }}>
-                Recommended size: 1600 x 900 or larger, up to {MAX_PROPERTY_IMAGE_SIZE_MB} MB
+                Khuyến nghị độ phân giải 1600 x 900 trở lên, tối đa {MAX_PROPERTY_IMAGE_SIZE_MB} MB
               </div>
               <input
                 type="file"
@@ -492,7 +491,7 @@ export default function AddPropertyPage() {
                     setCoverImage(null);
                     setErrors((prev) => ({
                       ...prev,
-                      coverImage: `Cover image must be ${MAX_PROPERTY_IMAGE_SIZE_MB} MB or smaller.`,
+                      coverImage: `Ảnh bìa phải nhỏ hơn hoặc bằng ${MAX_PROPERTY_IMAGE_SIZE_MB} MB.`,
                     }));
                     setGeneralError(buildImageSizeError(file));
                     return;
@@ -510,7 +509,7 @@ export default function AddPropertyPage() {
               <div style={{ marginTop: 14 }}>
                 <img
                   src={coverPreview}
-                  alt="Cover preview"
+                  alt="Ảnh xem trước"
                   style={{
                     width: "100%",
                     height: 200,
@@ -529,7 +528,7 @@ export default function AddPropertyPage() {
 
           <div className="hs-card" style={{ padding: "24px", marginBottom: 20 }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 14 }}>
-              Detail images
+              Ảnh chi tiết phòng & không gian
             </h3>
 
             <label
@@ -545,10 +544,10 @@ export default function AddPropertyPage() {
             >
               <ImagePlus size={26} color="#2563eb" style={{ marginBottom: 10 }} />
               <div style={{ fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>
-                Add detail images
+                Thêm ảnh chi tiết
               </div>
               <div style={{ color: "#94a3b8", fontSize: "0.82rem" }}>
-                Upload up to {MAX_PROPERTY_IMAGE_COUNT} images, each up to {MAX_PROPERTY_IMAGE_SIZE_MB} MB
+                Tải lên tối đa {MAX_PROPERTY_IMAGE_COUNT} ảnh, mỗi ảnh không quá {MAX_PROPERTY_IMAGE_SIZE_MB} MB
               </div>
               <input
                 type="file"
@@ -568,7 +567,7 @@ export default function AddPropertyPage() {
 
                     if (nextFiles.length > MAX_PROPERTY_IMAGE_COUNT) {
                       setGeneralError(
-                        `You can upload up to ${MAX_PROPERTY_IMAGE_COUNT} detail images.`,
+                        `Bạn chỉ có thể tải lên tối đa ${MAX_PROPERTY_IMAGE_COUNT} ảnh chi tiết.`,
                       );
                       return prev;
                     }
@@ -631,7 +630,7 @@ export default function AddPropertyPage() {
 
           <div className="hs-card" style={{ padding: "24px" }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>
-              Actions
+              Hoàn tất đăng tin
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <button
@@ -647,7 +646,7 @@ export default function AddPropertyPage() {
                 }}
               >
                 <Save size={16} />
-                {isSubmitting ? "Submitting..." : "Create property"}
+                {isSubmitting ? "Đang gửi hồ sơ..." : "Tạo & Gửi duyệt chỗ nghỉ"}
               </button>
             </div>
           </div>

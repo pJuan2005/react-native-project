@@ -19,18 +19,18 @@ export default function AdminProfilePage() {
           color: "#64748b",
         }}
       >
-        Loading admin profile...
+        Đang tải hồ sơ quản trị viên...
       </div>
     );
   }
 
   const initials = getUserInitials(user.name);
   const memberSince = user.joined
-    ? new Date(user.joined).toLocaleDateString("en-US", {
-        month: "long",
+    ? new Date(user.joined).toLocaleDateString("vi-VN", {
+        month: "2-digit",
         year: "numeric",
       })
-    : "January 2026";
+    : "Tháng 01/2026";
 
   return (
     <div style={{ padding: "28px" }}>
@@ -43,10 +43,10 @@ export default function AdminProfilePage() {
             fontSize: "1.5rem",
           }}
         >
-          Admin Profile
+          Hồ sơ Cá nhân Quản trị viên
         </h1>
         <p style={{ color: "#64748b", margin: 0 }}>
-          Update administrator information and secure your account.
+          Cập nhật thông tin định danh và bảo mật tài khoản quản trị sàn.
         </p>
       </div>
 
@@ -97,7 +97,7 @@ export default function AdminProfilePage() {
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#64748b" }}>
                 <Shield size={14} color="#2563EB" />
-                <span>Platform administrator</span>
+                <span>Quản trị viên nền tảng</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#64748b" }}>
                 <Mail size={14} color="#2563EB" />
@@ -105,11 +105,11 @@ export default function AdminProfilePage() {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#64748b" }}>
                 <MapPin size={14} color="#2563EB" />
-                <span>{user.location || "Not updated yet"}</span>
+                <span>{user.location || "Chưa cập nhật địa chỉ"}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#64748b" }}>
                 <CalendarDays size={14} color="#2563EB" />
-                <span>Member since {memberSince}</span>
+                <span>Tham gia từ {memberSince}</span>
               </div>
             </div>
           </div>
@@ -118,8 +118,8 @@ export default function AdminProfilePage() {
         <div className="col-lg-8">
           <AccountSettingsPanel
             user={user}
-            profileTitle="Administrator Information"
-            passwordTitle="Change Password"
+            profileTitle="Thông tin cá nhân quản trị"
+            passwordTitle="Đổi mật khẩu tài khoản"
           />
         </div>
       </div>

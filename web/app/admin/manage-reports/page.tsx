@@ -33,12 +33,18 @@ const STATUS_COLORS = ["#16a34a", "#d97706", "#dc2626", "#7c3aed"];
 
 function formatCurrency(value: number | string | undefined) {
   const amount = Number(value || 0);
-  return `$${amount.toLocaleString()}`;
+  return `${amount.toLocaleString("vi-VN")} ₫`;
 }
 
 function formatCompactCurrency(value: number | string | undefined) {
   const amount = Number(value || 0);
-  return `$${(amount / 1000).toFixed(0)}k`;
+  if (amount >= 1000000) {
+    return `${(amount / 1000000).toFixed(1)} Tr`;
+  }
+  if (amount >= 1000) {
+    return `${(amount / 1000).toFixed(0)}k`;
+  }
+  return String(amount);
 }
 
 function formatReportTooltip(
@@ -48,12 +54,12 @@ function formatReportTooltip(
   const label = String(name || "");
   return [
     label === "revenue" ? formatCurrency(value) : Number(value || 0),
-    label === "revenue" ? "Revenue" : "Bookings",
+    label === "revenue" ? "Doanh thu" : "Số đơn phòng",
   ] as const;
 }
 
 function formatLegendLabel(value: string | number | undefined) {
-  return String(value) === "revenue" ? "Revenue" : "Bookings";
+  return String(value) === "revenue" ? "Doanh thu" : "Đơn đặt phòng";
 }
 
 function formatPeriodLabel(period: string) {
@@ -66,8 +72,8 @@ function formatPeriodLabel(period: string) {
     return period;
   }
 
-  return date.toLocaleDateString("en-US", {
-    month: "short",
+  return date.toLocaleDateString("vi-VN", {
+    month: "2-digit",
     year: "numeric",
   });
 }
@@ -89,7 +95,7 @@ export default function AdminReportsPage() {
         setPageError(
           error instanceof Error
             ? error.message
-            : "Unable to load the reports right now.",
+            : "Không thể tải báo cáo tài chính lúc này.",
         );
       } finally {
         setIsLoading(false);
@@ -196,10 +202,10 @@ export default function AdminReportsPage() {
               fontSize: "1.5rem",
             }}
           >
-            Reports & Analytics
+            Báo cáo & Phân tích Tài chính
           </h1>
           <p style={{ color: "#64748b", margin: 0 }}>
-            Live performance insights based on your real platform data.
+            Số liệu thống kê doanh số, dòng tiền và hoa hồng nền tảng theo thời gian thực.
           </p>
         </div>
       </div>
@@ -225,30 +231,30 @@ export default function AdminReportsPage() {
           {
             icon: <DollarSign size={20} color="#2563EB" />,
             bg: "#eff6ff",
-            label: "Gross Revenue",
+            label: "Tổng doanh thu",
             value: formatCurrency(totalRevenueResolved),
-            change: "Confirmed bookings only",
+            change: "Tính trên các đơn phòng đã xác nhận",
           },
           {
             icon: <DollarSign size={20} color="#16a34a" />,
             bg: "#dcfce7",
-            label: "Platform Profit",
+            label: "Hoa hồng sàn thực thu",
             value: formatCurrency(platformRevenueResolved),
-            change: `${Math.round((summary.platformCommissionRate || 0.1) * 100)}% commission · ${activeHostsResolved} active hosts`,
+            change: `Hoa hồng ${Math.round((summary.platformCommissionRate || 0.1) * 100)}% · ${activeHostsResolved} chủ nhà hoạt động`,
           },
           {
             icon: <CalendarDays size={20} color="#d97706" />,
             bg: "#fef3c7",
-            label: "Total Bookings",
+            label: "Tổng số đơn phòng",
             value: totalBookingsResolved,
-            change: `${pendingBookingsResolved} pending · ${cancelledBookingsResolved} cancelled`,
+            change: `${pendingBookingsResolved} chờ duyệt · ${cancelledBookingsResolved} đã hủy`,
           },
           {
             icon: <TrendingUp size={20} color="#7c3aed" />,
             bg: "#f3e8ff",
-            label: "Average Confirmed Booking",
+            label: "Giá trị đơn phòng trung bình",
             value: formatCurrency(averageBookingValue),
-            change: `Host payouts ${formatCurrency(hostPayoutResolved)}`,
+            change: `Chi trả Chủ nhà: ${formatCurrency(hostPayoutResolved)}`,
           },
         ].map((kpi) => (
           <div key={kpi.label} className="col-xl-3 col-md-6">
@@ -315,10 +321,10 @@ export default function AdminReportsPage() {
                     fontSize: "1rem",
                   }}
                 >
-                  Revenue vs. Bookings
+                  Tương quan Doanh thu & Số lượng Đơn đặt phòng
                 </h3>
                 <div style={{ fontSize: "0.78rem", color: "#64748b", marginTop: 2 }}>
-                  Last {monthlyPerformance.length || 0} months comparison
+                  Đối soát theo {monthlyPerformance.length || 0} tháng gần nhất
                 </div>
               </div>
             </div>
@@ -403,7 +409,7 @@ export default function AdminReportsPage() {
                   fontSize: "1rem",
                 }}
               >
-                Booking Status
+                Cơ cấu Trạng thái Đơn
               </h3>
             </div>
             <div style={{ padding: "16px" }}>
@@ -440,7 +446,7 @@ export default function AdminReportsPage() {
                   fontSize: "1rem",
                 }}
               >
-                Property Types
+                Phân bổ Loại hình Chỗ nghỉ
               </h3>
             </div>
             <div style={{ padding: "16px" }}>
@@ -472,7 +478,7 @@ export default function AdminReportsPage() {
                   fontSize: "1rem",
                 }}
               >
-                Monthly Bookings Trend
+                Xu hướng Đơn đặt phòng theo tháng
               </h3>
             </div>
             <div style={{ padding: "20px" }}>
@@ -491,7 +497,7 @@ export default function AdminReportsPage() {
                     tickLine={false}
                   />
                   <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0" }} />
-                  <Bar dataKey="bookings" fill="#2563EB" radius={[4, 4, 0, 0]} name="Bookings" />
+                  <Bar dataKey="bookings" fill="#2563EB" radius={[4, 4, 0, 0]} name="Đơn đặt phòng" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -518,13 +524,13 @@ export default function AdminReportsPage() {
                   fontSize: "1rem",
                 }}
               >
-                Top Performing Hosts
+                Chủ Homestay Doanh số Cao nhất
               </h3>
             </div>
             <div>
               {isLoading ? (
                 <div style={{ padding: "24px 20px", color: "#94a3b8", fontSize: "0.84rem" }}>
-                  Loading host rankings...
+                  Đang tải bảng xếp hạng chủ nhà...
                 </div>
               ) : topHosts.length ? (
                 topHosts.map((host, index) => (
@@ -570,7 +576,7 @@ export default function AdminReportsPage() {
                         {host.name}
                       </div>
                       <div style={{ color: "#94a3b8", fontSize: "0.77rem" }}>
-                        {host.properties} properties · {host.bookings} bookings
+                        {host.properties} chỗ nghỉ · {host.bookings} đơn đặt phòng
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
@@ -583,13 +589,13 @@ export default function AdminReportsPage() {
                       >
                         {formatCurrency(host.revenue)}
                       </div>
-                      <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>host payout</div>
+                      <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Thực nhận chủ nhà</div>
                     </div>
                   </div>
                 ))
               ) : (
                 <div style={{ padding: "24px 20px", color: "#94a3b8", fontSize: "0.84rem" }}>
-                  No host performance data available yet.
+                  Chưa có dữ liệu xếp hạng chủ nhà.
                 </div>
               )}
             </div>
@@ -607,20 +613,20 @@ export default function AdminReportsPage() {
               fontSize: "1rem",
             }}
           >
-            Monthly Revenue Breakdown
+            Chi tiết Doanh thu theo tháng
           </h3>
         </div>
         <div style={{ overflowX: "auto" }}>
           <table className="hs-table">
             <thead>
               <tr>
-                <th>Month</th>
-                <th>Gross Revenue</th>
-                <th>Platform Profit</th>
-                <th>Host Payout</th>
-                <th>Bookings</th>
-                <th>Avg. Per Booking</th>
-                <th>Growth</th>
+                <th>Tháng</th>
+                <th>Tổng doanh thu</th>
+                <th>Hoa hồng sàn</th>
+                <th>Thực chi trả Host</th>
+                <th>Số đơn phòng</th>
+                <th>Giá trị trung bình/đơn</th>
+                <th>Tăng trưởng</th>
               </tr>
             </thead>
             <tbody>
@@ -683,13 +689,6 @@ export default function AdminReportsPage() {
                   </tr>
                 );
               })}
-              {!monthlyPerformance.length && (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "32px", color: "#94a3b8" }}>
-                    No report data available yet.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>

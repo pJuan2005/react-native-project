@@ -24,8 +24,8 @@ function formatChatTime(value: string) {
     return value;
   }
 
-  return date.toLocaleString("en-US", {
-    month: "short",
+  return date.toLocaleString("vi-VN", {
+    month: "numeric",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
@@ -40,7 +40,7 @@ function getRoleAccent(role: string) {
       color: "#7c3aed",
       background: "#f3e8ff",
       border: "#ddd6fe",
-      label: "Admin",
+      label: "Quản trị viên",
     };
   }
 
@@ -49,7 +49,7 @@ function getRoleAccent(role: string) {
       color: "#2563EB",
       background: "#eff6ff",
       border: "#bfdbfe",
-      label: "Host",
+      label: "Chủ nhà",
     };
   }
 
@@ -57,7 +57,7 @@ function getRoleAccent(role: string) {
     color: "#16a34a",
     background: "#f0fdf4",
     border: "#bbf7d0",
-    label: "Guest",
+    label: "Khách hàng",
   };
 }
 
@@ -91,18 +91,23 @@ export function BookingChatDialog({
       setPageError("");
 
       try {
-        const data = await getBookingConversation(scope, bookingId);
-        if (isActive) {
-          setConversation(data);
+        const response = await getBookingConversation(scope, bookingId);
+
+        if (!isActive) {
+          return;
         }
+
+        setConversation(response);
       } catch (error) {
-        if (isActive) {
-          setPageError(
-            error instanceof Error
-              ? error.message
-              : "Unable to load the booking chat right now.",
-          );
+        if (!isActive) {
+          return;
         }
+
+        setPageError(
+          error instanceof Error
+            ? error.message
+            : "Không thể tải cuộc trò chuyện của đơn phòng này.",
+        );
       } finally {
         if (isActive) {
           setIsLoading(false);
@@ -111,25 +116,18 @@ export function BookingChatDialog({
     }
 
     loadConversation();
-    const intervalId = window.setInterval(loadConversation, 8000);
 
     return () => {
       isActive = false;
-      window.clearInterval(intervalId);
     };
   }, [booking, scope]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [conversation?.messages.length]);
+  }, [conversation?.messages]);
 
   async function handleSendMessage() {
-    if (!booking) {
-      return;
-    }
-
-    const content = messageValue.trim();
-    if (!content) {
+    if (!booking || !messageValue.trim()) {
       return;
     }
 
@@ -137,14 +135,19 @@ export function BookingChatDialog({
     setPageError("");
 
     try {
-      const response = await sendBookingMessage(scope, booking.id, content);
+      const response = await sendBookingMessage(
+        scope,
+        booking.id,
+        messageValue.trim(),
+      );
+
       setConversation(response.data);
       setMessageValue("");
     } catch (error) {
       setPageError(
         error instanceof Error
           ? error.message
-          : "Unable to send the message right now.",
+          : "Không thể gửi tin nhắn lúc này.",
       );
     } finally {
       setIsSending(false);
@@ -171,23 +174,23 @@ export function BookingChatDialog({
       <div
         style={{
           width: "100%",
-          maxWidth: 920,
-          maxHeight: "90vh",
-          overflow: "hidden",
+          maxWidth: 960,
+          height: "88vh",
+          display: "flex",
+          flexDirection: "column",
           background: "#fff",
           borderRadius: 20,
           boxShadow: "0 30px 80px rgba(15, 23, 42, 0.25)",
-          display: "flex",
-          flexDirection: "column",
+          overflow: "hidden",
         }}
       >
         <div
           style={{
-            padding: "22px 24px 16px",
+            padding: "18px 24px",
             borderBottom: "1px solid #e2e8f0",
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "flex-start",
+            alignItems: "center",
             gap: 16,
           }}
         >
@@ -197,53 +200,48 @@ export function BookingChatDialog({
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                marginBottom: 6,
+                color: "#1e293b",
+                fontWeight: 800,
+                fontSize: "1.05rem",
               }}
             >
               <MessageCircle size={18} color="#2563EB" />
-              <h3
-                style={{
-                  margin: 0,
-                  fontWeight: 800,
-                  fontSize: "1.1rem",
-                  color: "#1e293b",
-                }}
-              >
-                {title}
-              </h3>
+              {title}
             </div>
-            <p style={{ margin: 0, color: "#64748b", fontSize: "0.85rem" }}>
-              Thread for booking <strong>{booking.bookingCode}</strong> · {booking.propertyTitle}
-            </p>
+            <div style={{ color: "#64748b", fontSize: "0.82rem", marginTop: 2 }}>
+              Trao đổi thông tin về đơn đặt phòng <strong>{booking.bookingCode}</strong>
+            </div>
           </div>
-          <button className="btn-outline-hs" type="button" onClick={onClose}>
-            Close
+          <button type="button" className="btn-outline-hs" onClick={onClose}>
+            Đóng
           </button>
         </div>
 
-        <div className="row g-0" style={{ minHeight: 0, flex: 1 }}>
+        <div className="row g-0" style={{ flex: 1, minHeight: 0 }}>
           <div
-            className="col-lg-4"
+            className="col-lg-4 d-none d-lg-block"
             style={{
               borderRight: "1px solid #e2e8f0",
               background: "#f8fafc",
               padding: 20,
+              overflowY: "auto",
             }}
           >
             <div
               style={{
-                border: "1px solid #e2e8f0",
                 borderRadius: 16,
-                overflow: "hidden",
+                border: "1px solid #e2e8f0",
                 background: "#fff",
+                overflow: "hidden",
+                marginBottom: 16,
               }}
             >
               <img
                 src={booking.propertyImage}
                 alt={booking.propertyTitle}
-                style={{ width: "100%", height: 180, objectFit: "cover" }}
+                style={{ width: "100%", height: 160, objectFit: "cover" }}
               />
-              <div style={{ padding: 16 }}>
+              <div style={{ padding: 14 }}>
                 <div
                   style={{
                     fontWeight: 800,
@@ -255,13 +253,13 @@ export function BookingChatDialog({
                   {booking.propertyTitle}
                 </div>
                 <div style={{ color: "#64748b", fontSize: "0.82rem", marginBottom: 12 }}>
-                  {booking.checkIn} to {booking.checkOut}
+                  📅 {booking.checkIn} đến {booking.checkOut}
                 </div>
                 <div style={{ display: "grid", gap: 10 }}>
                   {[
                     { name: conversation?.participants.guest.name || booking.guestName, role: "guest" },
                     { name: conversation?.participants.host.name || booking.hostName, role: "host" },
-                    { name: "Admin support", role: "admin" },
+                    { name: "Hỗ trợ quản trị sàn", role: "admin" },
                   ].map((participant) => {
                     const accent = getRoleAccent(participant.role);
                     return (
@@ -337,7 +335,7 @@ export function BookingChatDialog({
             >
               {isLoading ? (
                 <div style={{ color: "#94a3b8", fontSize: "0.84rem" }}>
-                  Loading messages...
+                  Đang tải tin nhắn...
                 </div>
               ) : conversation?.messages.length ? (
                 conversation.messages.map((message) => {
@@ -430,7 +428,7 @@ export function BookingChatDialog({
                     fontSize: "0.84rem",
                   }}
                 >
-                  No messages yet. Start the conversation for this booking.
+                  Chưa có tin nhắn nào. Bắt đầu trao đổi về đơn đặt phòng này.
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -449,7 +447,7 @@ export function BookingChatDialog({
                   rows={3}
                   value={messageValue}
                   onChange={(event) => setMessageValue(event.target.value)}
-                  placeholder="Write a message about check-in, support, or booking details..."
+                  placeholder="Nhập tin nhắn về thủ tục nhận phòng, hỗ trợ khách hoặc hướng dẫn..."
                   style={{ resize: "none" }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" && !event.shiftKey) {
@@ -473,7 +471,7 @@ export function BookingChatDialog({
                   }}
                 >
                   <Send size={14} />
-                  {isSending ? "Sending..." : "Send"}
+                  {isSending ? "Đang gửi..." : "Gửi"}
                 </button>
               </div>
             </div>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -22,8 +22,19 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { PaginationControls } from "@/components/shared/PaginationControls";
 import { isBackendUploadImage } from "@/lib/image";
 
-const STATUS_OPTIONS = ["all", "approved", "pending", "rejected"] as const;
+const STATUS_OPTIONS = [
+  { key: "all", label: "Tất cả" },
+  { key: "approved", label: "Đã duyệt" },
+  { key: "pending", label: "Chờ duyệt" },
+  { key: "rejected", label: "Từ chối" },
+] as const;
+
 const ITEMS_PER_PAGE = 8;
+
+function formatCurrency(value: number | string | undefined) {
+  const amount = Number(value || 0);
+  return `${amount.toLocaleString("vi-VN")} ₫`;
+}
 
 export default function ManagePropertiesPage() {
   const [properties, setProperties] = useState<PropertySummary[]>([]);
@@ -40,7 +51,7 @@ export default function ManagePropertiesPage() {
         const data = await getAdminProperties();
         setProperties(data);
       } catch (_error) {
-        setNotice("Unable to load the property list.");
+        setNotice("Không thể tải danh sách chỗ nghỉ lúc này.");
       } finally {
         setLoading(false);
       }
@@ -80,9 +91,9 @@ export default function ManagePropertiesPage() {
     try {
       await deleteProperty(id);
       setProperties((prev) => prev.filter((property) => property.id !== id));
-      setNotice("Property deleted successfully.");
+      setNotice("Đã xóa chỗ nghỉ thành công.");
     } catch (_error) {
-      setNotice("Unable to delete the property.");
+      setNotice("Không thể xóa chỗ nghỉ.");
     } finally {
       setDeleteConfirm(null);
     }
@@ -100,7 +111,7 @@ export default function ManagePropertiesPage() {
         }}
       >
         <div style={{ textAlign: "center", color: "#64748b" }}>
-          Loading property list...
+          Đang tải danh sách chỗ nghỉ...
         </div>
       </div>
     );
@@ -127,15 +138,15 @@ export default function ManagePropertiesPage() {
                 fontSize: "1.5rem",
               }}
             >
-              Manage Properties
+              Quản lý Chỗ nghỉ
             </h1>
             <p style={{ color: "#64748b", margin: 0 }}>
-              Monitor every property available on the platform.
+              Giám sát toàn bộ chỗ nghỉ, homestay và villa đăng ký trên nền tảng.
             </p>
           </div>
 
           <Link href="/admin/quick-manage-links">
-            <button className="btn-outline-hs">Open Quick Link Manager</button>
+            <button className="btn-outline-hs">Mở Quản lý Liên kết Nhanh</button>
           </Link>
         </div>
       </div>
@@ -157,21 +168,21 @@ export default function ManagePropertiesPage() {
 
       <div className="row g-3 mb-4">
         {[
-          { label: "Total", value: properties.length, color: "#2563eb", bg: "#eff6ff" },
+          { label: "Tổng số", value: properties.length, color: "#2563eb", bg: "#eff6ff" },
           {
-            label: "Approved",
+            label: "Đã phê duyệt",
             value: properties.filter((property) => property.status === "approved").length,
             color: "#16a34a",
             bg: "#dcfce7",
           },
           {
-            label: "Pending",
+            label: "Chờ phê duyệt",
             value: properties.filter((property) => property.status === "pending").length,
             color: "#d97706",
             bg: "#fef3c7",
           },
           {
-            label: "Rejected",
+            label: "Bị từ chối",
             value: properties.filter((property) => property.status === "rejected").length,
             color: "#dc2626",
             bg: "#fee2e2",
@@ -231,7 +242,7 @@ export default function ManagePropertiesPage() {
           />
           <input
             className="hs-form-control"
-            placeholder="Search by title, location, or host name..."
+            placeholder="Tìm theo tên homestay, địa điểm hoặc tên chủ nhà..."
             style={{ paddingLeft: 36 }}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -240,30 +251,24 @@ export default function ManagePropertiesPage() {
 
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <Filter size={14} color="#64748b" />
-          {STATUS_OPTIONS.map((status) => (
+          {STATUS_OPTIONS.map((item) => (
             <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
+              key={item.key}
+              onClick={() => setStatusFilter(item.key)}
               style={{
                 padding: "6px 12px",
                 borderRadius: 20,
                 fontSize: "0.8rem",
                 border: `1.5px solid ${
-                  statusFilter === status ? "#2563eb" : "#e2e8f0"
+                  statusFilter === item.key ? "#2563eb" : "#e2e8f0"
                 }`,
-                background: statusFilter === status ? "#eff6ff" : "#fff",
-                color: statusFilter === status ? "#2563eb" : "#64748b",
-                fontWeight: statusFilter === status ? 700 : 500,
+                background: statusFilter === item.key ? "#eff6ff" : "#fff",
+                color: statusFilter === item.key ? "#2563eb" : "#64748b",
+                fontWeight: statusFilter === item.key ? 700 : 500,
                 cursor: "pointer",
               }}
             >
-              {status === "all"
-                ? "All"
-                : status === "approved"
-                ? "Approved"
-                : status === "pending"
-                ? "Pending"
-                : "Rejected"}
+              {item.label}
             </button>
           ))}
         </div>
@@ -278,20 +283,20 @@ export default function ManagePropertiesPage() {
             color: "#64748b",
           }}
         >
-          Showing {paginatedProperties.length} of {filtered.length} filtered properties
+          Hiển thị {paginatedProperties.length} trên tổng số {filtered.length} chỗ nghỉ phù hợp
         </div>
         <div style={{ overflowX: "auto" }}>
           <table className="hs-table">
             <thead>
               <tr>
-                <th>Property</th>
-                <th>Host</th>
-                <th>Location</th>
-                <th>Type</th>
-                <th>Price</th>
-                <th>Rating</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>Chỗ nghỉ</th>
+                <th>Chủ nhà</th>
+                <th>Địa điểm</th>
+                <th>Loại hình</th>
+                <th>Giá / đêm</th>
+                <th>Đánh giá</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -301,7 +306,7 @@ export default function ManagePropertiesPage() {
                     colSpan={8}
                     style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}
                   >
-                    No matching properties found.
+                    Không tìm thấy chỗ nghỉ nào phù hợp.
                   </td>
                 </tr>
               ) : (
@@ -339,7 +344,7 @@ export default function ManagePropertiesPage() {
                             {property.title}
                           </div>
                           <div style={{ color: "#94a3b8", fontSize: "0.75rem" }}>
-                            {property.bedrooms} bedrooms • {property.maxGuests} guests
+                            {property.bedrooms} phòng ngủ • Tối đa {property.maxGuests} khách
                           </div>
                         </div>
                       </div>
@@ -376,16 +381,7 @@ export default function ManagePropertiesPage() {
                       </span>
                     </td>
                     <td style={{ fontWeight: 700, color: "#1e293b" }}>
-                      ${property.price}
-                      <span
-                        style={{
-                          color: "#94a3b8",
-                          fontWeight: 400,
-                          fontSize: "0.77rem",
-                        }}
-                      >
-                        /night
-                      </span>
+                      {formatCurrency(property.price)}
                     </td>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -403,7 +399,7 @@ export default function ManagePropertiesPage() {
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: 6 }}>
-                        <Link href={`/admin/properties/${property.id}`}>
+                        <Link href={`/admin/properties/${property.id}`} title="Xem chi tiết">
                           <button
                             style={{
                               padding: "6px 9px",
@@ -418,7 +414,7 @@ export default function ManagePropertiesPage() {
                             <Eye size={13} color="#64748b" />
                           </button>
                         </Link>
-                        <Link href={`/admin/edit-property/${property.id}`}>
+                        <Link href={`/admin/edit-property/${property.id}`} title="Chỉnh sửa chỗ nghỉ">
                           <button
                             style={{
                               padding: "6px 9px",
@@ -440,6 +436,7 @@ export default function ManagePropertiesPage() {
                             href={`/quick-manage/${property.manageToken}`}
                             target="_blank"
                             rel="noreferrer"
+                            title="Quản lý nhanh tại quầy"
                           >
                             <button
                               style={{
@@ -471,7 +468,7 @@ export default function ManagePropertiesPage() {
                                 cursor: "pointer",
                               }}
                             >
-                              Delete
+                              Xóa
                             </button>
                             <button
                               onClick={() => setDeleteConfirm(null)}
@@ -485,12 +482,13 @@ export default function ManagePropertiesPage() {
                                 cursor: "pointer",
                               }}
                             >
-                              Cancel
+                              Hủy
                             </button>
                           </div>
                         ) : (
                           <button
                             onClick={() => setDeleteConfirm(property.id)}
+                            title="Xóa chỗ nghỉ"
                             style={{
                               padding: "6px 9px",
                               borderRadius: 7,
@@ -514,15 +512,16 @@ export default function ManagePropertiesPage() {
         </div>
       </div>
 
-      <PaginationControls
-        currentPage={safeCurrentPage}
-        totalPages={totalPages}
-        totalItems={filtered.length}
-        pageSize={ITEMS_PER_PAGE}
-        itemLabel="properties"
-        onPageChange={setCurrentPage}
-      />
+      <div style={{ marginTop: 20 }}>
+        <PaginationControls
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={ITEMS_PER_PAGE}
+          itemLabel="chỗ nghỉ"
+          onPageChange={setCurrentPage}
+        />
+      </div>
     </div>
   );
 }
-

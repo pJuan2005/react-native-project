@@ -31,12 +31,18 @@ import {
 
 function formatCurrency(value: number | string | undefined) {
   const amount = Number(value || 0);
-  return `$${amount.toLocaleString()}`;
+  return `${amount.toLocaleString("vi-VN")} ₫`;
 }
 
 function formatCompactCurrency(value: number | string | undefined) {
   const amount = Number(value || 0);
-  return `$${(amount / 1000).toFixed(0)}k`;
+  if (amount >= 1000000) {
+    return `${(amount / 1000000).toFixed(1)} Tr`;
+  }
+  if (amount >= 1000) {
+    return `${(amount / 1000).toFixed(0)}k`;
+  }
+  return String(amount);
 }
 
 export default function AdminDashboardPage() {
@@ -56,7 +62,7 @@ export default function AdminDashboardPage() {
         setPageError(
           error instanceof Error
             ? error.message
-            : "Unable to load the admin dashboard right now.",
+            : "Không thể tải bảng điều khiển quản trị lúc này.",
         );
       } finally {
         setIsLoading(false);
@@ -92,33 +98,33 @@ export default function AdminDashboardPage() {
     {
       icon: <Users size={22} color="#2563EB" />,
       bg: "#eff6ff",
-      label: "Total Users",
+      label: "Tổng người dùng",
       value: summary.totalUsers,
-      sub: `${summary.totalGuests} guests on the platform`,
+      sub: `${summary.totalGuests} khách hàng đã đăng ký`,
       link: "/admin/user",
     },
     {
       icon: <Building2 size={22} color="#7c3aed" />,
       bg: "#f3e8ff",
-      label: "Total Hosts",
+      label: "Chủ Homestay",
       value: summary.totalHosts,
-      sub: `${summary.pendingProperties} properties waiting for approval`,
+      sub: `${summary.pendingProperties} chỗ nghỉ đang chờ duyệt`,
       link: "/admin/property-approvals",
     },
     {
       icon: <Building2 size={22} color="#16a34a" />,
       bg: "#dcfce7",
-      label: "Properties",
+      label: "Chỗ nghỉ hoạt động",
       value: summary.totalProperties,
-      sub: `${summary.approvedProperties} approved listings`,
+      sub: `${summary.approvedProperties} chỗ nghỉ đã được duyệt`,
       link: "/admin/properties-manage",
     },
     {
       icon: <DollarSign size={22} color="#d97706" />,
       bg: "#fef3c7",
-      label: "Gross Revenue",
+      label: "Tổng doanh thu",
       value: formatCurrency(summary.grossRevenue || summary.totalRevenue),
-      sub: `Platform profit ${formatCurrency(summary.platformRevenue)} · Host payouts ${formatCurrency(summary.hostPayoutTotal)}`,
+      sub: `Hoa hồng sàn: ${formatCurrency(summary.platformRevenue)} · Chi trả Host: ${formatCurrency(summary.hostPayoutTotal)}`,
       link: "/admin/manage-reports",
     },
   ];
@@ -134,10 +140,10 @@ export default function AdminDashboardPage() {
             fontSize: "1.5rem",
           }}
         >
-          Admin Dashboard
+          Tổng quan Quản trị Nền tảng
         </h1>
         <p style={{ color: "#64748b", margin: 0 }}>
-          Live platform overview and key metrics from your database.
+          Theo dõi các chỉ số hoạt động kinh doanh, phòng nghỉ và dòng tiền theo thời gian thực.
         </p>
       </div>
 
@@ -192,7 +198,7 @@ export default function AdminDashboardPage() {
                     </div>
                     <div
                       style={{
-                        fontSize: "1.6rem",
+                        fontSize: "1.5rem",
                         fontWeight: 800,
                         color: "#1e293b",
                       }}
@@ -232,10 +238,10 @@ export default function AdminDashboardPage() {
                     fontSize: "1rem",
                   }}
                 >
-                  Revenue Trend
+                  Xu hướng Doanh thu
                 </h3>
                 <div style={{ color: "#64748b", fontSize: "0.78rem", marginTop: 2 }}>
-                  Monthly revenue overview based on booking check-in dates
+                  Tổng doanh số phát sinh theo từng tháng
                 </div>
               </div>
               <div
@@ -256,7 +262,7 @@ export default function AdminDashboardPage() {
                     fontWeight: 700,
                   }}
                 >
-                  Last {monthlyPerformance.length || 0} months
+                  {monthlyPerformance.length || 0} tháng gần nhất
                 </span>
               </div>
             </div>
@@ -285,7 +291,7 @@ export default function AdminDashboardPage() {
                   <Tooltip
                     formatter={(value) => [
                       formatCurrency(value as number | string | undefined),
-                      "Revenue",
+                      "Doanh thu",
                     ]}
                     contentStyle={{
                       borderRadius: 8,
@@ -317,43 +323,43 @@ export default function AdminDashboardPage() {
                   fontSize: "1rem",
                 }}
               >
-                Platform Summary
+                Tổng kết Nền tảng
               </h3>
             </div>
             <div style={{ padding: "20px" }}>
               {[
                 {
-                  label: "Total Bookings",
+                  label: "Tổng số đơn phòng",
                   value: summary.totalBookings,
                   icon: <CalendarDays size={16} color="#2563EB" />,
                 },
                 {
-                  label: "Confirmed",
+                  label: "Đã xác nhận",
                   value: summary.confirmedBookings,
                   icon: <CheckCircle size={16} color="#16a34a" />,
                 },
                 {
-                  label: "Pending",
+                  label: "Chờ duyệt",
                   value: summary.pendingBookings,
                   icon: <Clock size={16} color="#d97706" />,
                 },
                 {
-                  label: "Platform Profit",
+                  label: "Hoa hồng sàn thực thu",
                   value: formatCurrency(summary.platformRevenue),
                   icon: <DollarSign size={16} color="#d97706" />,
                 },
                 {
-                  label: "Host Payouts",
+                  label: "Thực chi trả Chủ nhà",
                   value: formatCurrency(summary.hostPayoutTotal),
                   icon: <TrendingUp size={16} color="#7c3aed" />,
                 },
                 {
-                  label: "Active Users",
+                  label: "Người dùng hoạt động",
                   value: summary.activeUsers,
                   icon: <Users size={16} color="#7c3aed" />,
                 },
                 {
-                  label: "Pending Approvals",
+                  label: "Chỗ nghỉ chờ duyệt",
                   value: summary.pendingProperties,
                   icon: <Building2 size={16} color="#dc2626" />,
                 },
@@ -388,7 +394,7 @@ export default function AdminDashboardPage() {
                   className="btn-primary-hs"
                   style={{ width: "100%", marginTop: 16, fontSize: "0.85rem" }}
                 >
-                  Review Pending Approvals
+                  Xem chỗ nghỉ chờ phê duyệt
                 </button>
               </Link>
             </div>
@@ -408,7 +414,7 @@ export default function AdminDashboardPage() {
                   fontSize: "1rem",
                 }}
               >
-                Monthly Bookings
+                Số lượng Đơn đặt phòng theo tháng
               </h3>
             </div>
             <div style={{ padding: "20px" }}>
@@ -453,7 +459,7 @@ export default function AdminDashboardPage() {
                   fontSize: "1rem",
                 }}
               >
-                Recent Bookings
+                Đơn đặt phòng gần đây
               </h3>
               <Link href="/admin/manage-booking">
                 <button
@@ -469,14 +475,14 @@ export default function AdminDashboardPage() {
                     gap: 4,
                   }}
                 >
-                  View All <ArrowRight size={13} />
+                  Xem tất cả <ArrowRight size={13} />
                 </button>
               </Link>
             </div>
             <div style={{ overflow: "hidden" }}>
               {isLoading ? (
                 <div style={{ padding: "24px 18px", color: "#94a3b8", fontSize: "0.84rem" }}>
-                  Loading recent bookings...
+                  Đang tải đơn đặt phòng gần đây...
                 </div>
               ) : recentBookings.length ? (
                 recentBookings.map((booking) => (
@@ -523,7 +529,7 @@ export default function AdminDashboardPage() {
                           {booking.guestName}
                         </div>
                         <div style={{ color: "#94a3b8", fontSize: "0.75rem" }}>
-                          {booking.checkIn} to {booking.checkOut}
+                          {booking.checkIn} đến {booking.checkOut}
                         </div>
                       </div>
                     </div>
@@ -543,7 +549,7 @@ export default function AdminDashboardPage() {
                 ))
               ) : (
                 <div style={{ padding: "24px 18px", color: "#94a3b8", fontSize: "0.84rem" }}>
-                  No bookings available yet.
+                  Chưa có đơn đặt phòng nào.
                 </div>
               )}
             </div>

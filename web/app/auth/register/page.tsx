@@ -67,23 +67,23 @@ export default function RegisterPage() {
     const nextErrors: Record<string, string> = {};
 
     if (!form.fullName.trim()) {
-      nextErrors.fullName = "Full name is required";
+      nextErrors.fullName = "Vui lòng nhập họ và tên";
     }
 
     if (!form.email.includes("@")) {
-      nextErrors.email = "Email is invalid";
+      nextErrors.email = "Địa chỉ email không hợp lệ";
     }
 
     if (form.password.length < 6) {
-      nextErrors.password = "Password must be at least 6 characters";
+      nextErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
     }
 
     if (form.password !== form.confirmPassword) {
-      nextErrors.confirmPassword = "Passwords do not match";
+      nextErrors.confirmPassword = "Mật khẩu xác nhận không trùng khớp";
     }
 
     if (!form.phone.trim()) {
-      nextErrors.phone = "Phone number is required";
+      nextErrors.phone = "Vui lòng nhập số điện thoại";
     }
 
     return nextErrors;
@@ -114,7 +114,7 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (!result.success) {
-      setServerError(result.error || "Registration failed");
+      setServerError(result.error || "Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.");
       return;
     }
 
@@ -126,7 +126,7 @@ export default function RegisterPage() {
       <div className="hs-auth-page">
         <div className="hs-auth-card" style={{ maxWidth: 420, margin: "0 auto" }}>
           <div style={{ textAlign: "center", color: "#64748b" }}>
-            Preparing the registration form...
+            Đang chuẩn bị biểu mẫu đăng ký...
           </div>
         </div>
       </div>
@@ -182,10 +182,10 @@ export default function RegisterPage() {
                 fontSize: "1.6rem",
               }}
             >
-              Create your account
+              Đăng ký tài khoản
             </h1>
             <p style={{ color: "#64748b", margin: 0, fontSize: "0.9rem" }}>
-              Join HomeStay as a guest or host
+              Tham gia HomeStay với tư cách Khách hàng hoặc Chủ nhà
             </p>
           </div>
 
@@ -208,19 +208,19 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 22 }}>
-              <label className="hs-form-label">I want to join as</label>
+              <label className="hs-form-label">Tôi muốn đăng ký làm:</label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 {[
                   {
                     value: "Guest" as const,
-                    title: "Guest",
-                    description: "Browse and book stays",
+                    title: "Khách hàng",
+                    description: "Tìm kiếm & đặt phòng",
                     icon: User,
                   },
                   {
                     value: "Host" as const,
-                    title: "Host",
-                    description: "List properties and manage bookings",
+                    title: "Chủ Homestay",
+                    description: "Đăng phòng & quản lý",
                     icon: Building2,
                   },
                 ].map((option) => {
@@ -274,7 +274,7 @@ export default function RegisterPage() {
 
             <div className="row g-3">
               <div className="col-12">
-                <label className="hs-form-label">Full Name</label>
+                <label className="hs-form-label">Họ và tên</label>
                 <div style={{ position: "relative" }}>
                   <User
                     size={15}
@@ -294,7 +294,7 @@ export default function RegisterPage() {
                       paddingLeft: 38,
                       borderColor: errors.fullName ? "#dc2626" : undefined,
                     }}
-                    placeholder="John Doe"
+                    placeholder="Nguyễn Văn A"
                     value={form.fullName}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, fullName: event.target.value }))
@@ -325,7 +325,7 @@ export default function RegisterPage() {
                       paddingLeft: 38,
                       borderColor: errors.email ? "#dc2626" : undefined,
                     }}
-                    placeholder="you@example.com"
+                    placeholder="name@example.com"
                     value={form.email}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, email: event.target.value }))
@@ -336,7 +336,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="col-md-6">
-                <label className="hs-form-label">Phone Number</label>
+                <label className="hs-form-label">Số điện thoại</label>
                 <div style={{ position: "relative" }}>
                   <Phone
                     size={15}
@@ -367,7 +367,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="col-12">
-                <label className="hs-form-label">Location</label>
+                <label className="hs-form-label">Địa chỉ / Khu vực</label>
                 <div style={{ position: "relative" }}>
                   <MapPin
                     size={15}
@@ -383,7 +383,7 @@ export default function RegisterPage() {
                     type="text"
                     className="hs-form-control"
                     style={{ paddingLeft: 38 }}
-                    placeholder="City, country"
+                    placeholder="Thành phố, Tỉnh"
                     value={form.location}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, location: event.target.value }))
@@ -393,7 +393,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="col-md-6">
-                <label className="hs-form-label">Password</label>
+                <label className="hs-form-label">Mật khẩu</label>
                 <div style={{ position: "relative" }}>
                   <Lock
                     size={15}
@@ -414,7 +414,7 @@ export default function RegisterPage() {
                       paddingRight: 42,
                       borderColor: errors.password ? "#dc2626" : undefined,
                     }}
-                    placeholder="At least 6 characters"
+                    placeholder="Tối thiểu 6 ký tự"
                     value={form.password}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, password: event.target.value }))
@@ -441,7 +441,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="col-md-6">
-                <label className="hs-form-label">Confirm Password</label>
+                <label className="hs-form-label">Xác nhận mật khẩu</label>
                 <div style={{ position: "relative" }}>
                   <Lock
                     size={15}
@@ -461,7 +461,7 @@ export default function RegisterPage() {
                       paddingLeft: 38,
                       borderColor: errors.confirmPassword ? "#dc2626" : undefined,
                     }}
-                    placeholder="Repeat your password"
+                    placeholder="Nhập lại mật khẩu"
                     value={form.confirmPassword}
                     onChange={(event) =>
                       setForm((prev) => ({
@@ -502,11 +502,11 @@ export default function RegisterPage() {
                   >
                     <path d="M21 12a9 9 0 11-6.219-8.56" />
                   </svg>
-                  Creating account...
+                  Đang khởi tạo tài khoản...
                 </span>
               ) : (
                 <>
-                  Create Account <ArrowRight size={16} />
+                  Tạo tài khoản ngay <ArrowRight size={16} />
                 </>
               )}
             </button>
@@ -521,12 +521,12 @@ export default function RegisterPage() {
             }}
           >
             <p style={{ color: "#64748b", margin: 0, fontSize: "0.88rem" }}>
-              Already have an account?{" "}
+              Đã có tài khoản?{" "}
               <Link
                 href="/auth/login"
                 style={{ color: "#2563EB", fontWeight: 700, textDecoration: "none" }}
               >
-                Sign in
+                Đăng nhập
               </Link>
             </p>
           </div>
@@ -537,15 +537,18 @@ export default function RegisterPage() {
             href="/"
             style={{ color: "#64748b", fontSize: "0.83rem", textDecoration: "none" }}
           >
-            Back to Home
+            Quay lại Trang chủ
           </Link>
         </div>
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
 
 function InlineError({ message }: { message: string }) {
-  return <div style={{ color: "#dc2626", fontSize: "0.78rem", marginTop: 4 }}>{message}</div>;
+  return (
+    <div style={{ color: "#dc2626", fontSize: "0.77rem", marginTop: 4, fontWeight: 600 }}>
+      {message}
+    </div>
+  );
 }

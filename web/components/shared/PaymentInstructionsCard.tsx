@@ -17,7 +17,7 @@ interface PaymentInstructionsCardProps {
 
 export function PaymentInstructionsCard({
   booking,
-  uploadLabel = "Upload payment proof",
+  uploadLabel = "Tải lên biên lai thanh toán",
   isUploading = false,
   uploadError,
   uploadSuccess,
@@ -28,9 +28,7 @@ export function PaymentInstructionsCard({
   const canUpload =
     booking.status === "pending" &&
     ["unpaid", "rejected", "proof_uploaded"].includes(booking.paymentStatus);
-  const amountUsd = booking.paymentInfo.amountUsd || booking.paymentInfo.amount || 0;
-  const amountVnd = booking.paymentInfo.amountVnd || 0;
-  const exchangeRate = booking.paymentInfo.exchangeRate || 0;
+  const amountVnd = booking.paymentInfo.amountVnd || (booking.totalPrice && booking.totalPrice > 1000 ? booking.totalPrice : 0);
 
   const accountNumberDisplay = booking.paymentInfo.accountNumber.replace(
     /(\d{4})(?=\d)/g,
@@ -74,12 +72,11 @@ export function PaymentInstructionsCard({
                 fontSize: "1.02rem",
               }}
             >
-              Payment instructions
+              Hướng dẫn chuyển khoản
             </h3>
           </div>
           <p style={{ margin: 0, color: "#64748b", fontSize: "0.86rem" }}>
-            Scan the QR to auto-fill the transfer amount and content whenever
-            your banking app supports VietQR.
+            Quét mã VietQR để ứng dụng ngân hàng tự động điền số tiền và nội dung chuyển khoản chính xác.
           </p>
           <p
             style={{
@@ -88,7 +85,7 @@ export function PaymentInstructionsCard({
               fontSize: "0.78rem",
             }}
           >
-            All bookings are paid to the platform admin payment account.
+            Khoản thanh toán được bảo đảm và chuyển tới tài khoản ngân hàng chính thức của hệ thống.
           </p>
           <p
             style={{
@@ -98,8 +95,7 @@ export function PaymentInstructionsCard({
               fontWeight: 600,
             }}
           >
-            Standard stay policy: check-in after 2:00 PM and check-out before
-            12:00 PM.
+            Quy định lưu trú: Giờ nhận phòng sau 14:00 và giờ trả phòng trước 12:00.
           </p>
         </div>
         <PaymentStatusBadge status={booking.paymentStatus} />
@@ -116,14 +112,13 @@ export function PaymentInstructionsCard({
             }}
           >
             {[
-              ["Booking code", booking.bookingCode],
-              ["Bank", booking.paymentInfo.bankName],
-              ["Account number", accountNumberDisplay],
-              ["Account name", booking.paymentInfo.accountName],
-              ["Booking total", `$${amountUsd.toFixed(2)}`],
-              ["Transfer amount", `${amountVnd.toLocaleString("vi-VN")} VND`],
-              ["Exchange rate", `1 USD = ${exchangeRate.toLocaleString("vi-VN")} VND`],
-              ["Transfer content", booking.paymentInfo.transferContent],
+              ["Mã đặt phòng", booking.bookingCode],
+              ["Ngân hàng", booking.paymentInfo.bankName],
+              ["Số tài khoản", accountNumberDisplay],
+              ["Chủ tài khoản", booking.paymentInfo.accountName],
+              ["Tổng thanh toán", new Intl.NumberFormat("vi-VN").format(booking.totalPrice) + " ₫"],
+              ["Số tiền chuyển khoản", new Intl.NumberFormat("vi-VN").format(amountVnd || booking.totalPrice) + " ₫"],
+              ["Nội dung chuyển khoản", booking.paymentInfo.transferContent],
             ].map(([label, value]) => (
               <div
                 key={label}
@@ -133,7 +128,7 @@ export function PaymentInstructionsCard({
                   gap: 12,
                   padding: "7px 0",
                   borderBottom:
-                    label === "Transfer content"
+                    label === "Nội dung chuyển khoản"
                       ? "none"
                       : "1px solid #e2e8f0",
                 }}
@@ -168,11 +163,11 @@ export function PaymentInstructionsCard({
               border: "1px solid #e2e8f0",
               borderRadius: 14,
               padding: "16px",
-                background: "#fff",
-                textAlign: "center",
-                height: "100%",
-              }}
-            >
+              background: "#fff",
+              textAlign: "center",
+              height: "100%",
+            }}
+          >
             <div
               style={{
                 fontSize: "0.78rem",
@@ -183,11 +178,11 @@ export function PaymentInstructionsCard({
                 marginBottom: 10,
               }}
             >
-              VietQR
+              Mã QR VietQR
             </div>
             <img
               src={booking.paymentInfo.qrImageUrl}
-              alt="Payment QR"
+              alt="Mã QR thanh toán"
               style={{
                 width: "100%",
                 maxWidth: qrMaxWidth,
@@ -207,8 +202,7 @@ export function PaymentInstructionsCard({
                 lineHeight: 1.6,
               }}
             >
-              The QR is generated with the exact VND amount and transfer
-              content to reduce manual mistakes.
+              Mã QR được tạo với chính xác số tiền và nội dung chuyển khoản để hạn chế tối đa nhầm lẫn.
             </div>
           </div>
         </div>
@@ -233,9 +227,9 @@ export function PaymentInstructionsCard({
                 padding: "10px 12px",
               }}
             >
-              Payment proof submitted on{" "}
+              Biên lai thanh toán đã gửi vào ngày{" "}
               <strong style={{ color: "#1e293b" }}>
-                {new Date(booking.paymentSubmittedAt).toLocaleString("en-GB")}
+                {new Date(booking.paymentSubmittedAt).toLocaleString("vi-VN")}
               </strong>
             </div>
           )}
@@ -250,7 +244,7 @@ export function PaymentInstructionsCard({
                 border: "1px solid #fecaca",
               }}
             >
-              <strong>Review note:</strong> {booking.rejectionReason}
+              <strong>Lý do từ chối:</strong> {booking.rejectionReason}
             </div>
           )}
         </div>
@@ -284,7 +278,7 @@ export function PaymentInstructionsCard({
               }}
             >
               <ImageIcon size={16} color="#2563EB" />
-              Payment proof
+              Biên lai thanh toán
             </div>
             {canUpload && onUpload && (
               <>
@@ -316,7 +310,7 @@ export function PaymentInstructionsCard({
                   }}
                 >
                   <UploadCloud size={14} />
-                  {isUploading ? "Uploading..." : uploadLabel}
+                  {isUploading ? "Đang tải lên..." : uploadLabel}
                 </label>
               </>
             )}
@@ -325,7 +319,7 @@ export function PaymentInstructionsCard({
           {booking.paymentProofImage ? (
             <img
               src={booking.paymentProofImage}
-              alt="Payment proof"
+              alt="Biên lai thanh toán"
               style={{
                 width: "100%",
                 maxHeight: 360,
@@ -345,7 +339,7 @@ export function PaymentInstructionsCard({
                 fontSize: "0.84rem",
               }}
             >
-              No payment proof has been uploaded yet.
+              Chưa có biên lai thanh toán nào được tải lên.
             </div>
           )}
 

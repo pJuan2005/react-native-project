@@ -26,9 +26,9 @@ import {
 type AdminPropertyDetail = Awaited<ReturnType<typeof getAdminPropertyById>>;
 
 const STATUS_OPTIONS = [
-  { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
+  { value: "pending", label: "Chờ phê duyệt" },
+  { value: "approved", label: "Đã phê duyệt" },
+  { value: "rejected", label: "Từ chối" },
 ];
 
 export default function AdminEditPropertyPage() {
@@ -64,7 +64,7 @@ export default function AdminEditPropertyPage() {
         setGeneralError(
           error instanceof Error
             ? error.message
-            : "Unable to load the property details.",
+            : "Không thể tải chi tiết chỗ nghỉ lúc này.",
         );
       } finally {
         setLoading(false);
@@ -75,7 +75,7 @@ export default function AdminEditPropertyPage() {
       fetchProperty();
     } else {
       setLoading(false);
-      setGeneralError("Invalid property ID.");
+      setGeneralError("Mã chỗ nghỉ không hợp lệ.");
     }
   }, [propertyId]);
 
@@ -131,7 +131,7 @@ export default function AdminEditPropertyPage() {
 
     if (Object.keys(validateErrors).length > 0) {
       setErrors(validateErrors);
-      setGeneralError("Please review the property information before saving.");
+      setGeneralError("Vui lòng kiểm tra lại thông tin chỗ nghỉ trước khi lưu.");
       return;
     }
 
@@ -158,10 +158,10 @@ export default function AdminEditPropertyPage() {
       setDetailImages([]);
       setCoverImage(null);
       setErrors({});
-      setNotice("Property updated successfully.");
+      setNotice("Đã cập nhật thông tin chỗ nghỉ thành công.");
     } catch (error) {
       setGeneralError(
-        error instanceof Error ? error.message : "Unable to update the property.",
+        error instanceof Error ? error.message : "Không thể cập nhật chỗ nghỉ.",
       );
     } finally {
       setIsSubmitting(false);
@@ -170,7 +170,7 @@ export default function AdminEditPropertyPage() {
 
   async function handleDelete() {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this property? It will be hidden from the system.",
+      "Bạn có chắc chắn muốn xóa chỗ nghỉ này? Chỗ nghỉ sẽ bị ẩn khỏi toàn bộ hệ thống.",
     );
 
     if (!confirmed) {
@@ -183,23 +183,23 @@ export default function AdminEditPropertyPage() {
       router.push("/admin/properties-manage");
     } catch (error) {
       setGeneralError(
-        error instanceof Error ? error.message : "Unable to delete the property.",
+        error instanceof Error ? error.message : "Không thể xóa chỗ nghỉ.",
       );
       setIsDeleting(false);
     }
   }
 
   if (loading) {
-    return <PageState message="Loading property data..." />;
+    return <PageState message="Đang tải dữ liệu chỗ nghỉ..." />;
   }
 
   if (!property) {
     return (
       <PageState
-        message={generalError || "Property not found."}
+        message={generalError || "Không tìm thấy chỗ nghỉ."}
         action={
           <Link href="/admin/properties-manage" className="btn-primary-hs">
-            Back to property list
+            Quay lại danh sách chỗ nghỉ
           </Link>
         }
       />
@@ -227,14 +227,14 @@ export default function AdminEditPropertyPage() {
               fontSize: "1.5rem",
             }}
           >
-            Edit Property
+            Chỉnh sửa Chỗ nghỉ
           </h1>
           <p style={{ color: "#64748b", margin: 0 }}>
-            Hosted by <strong>{property.hostName}</strong>
+            Chủ nhà quản lý: <strong>{property.hostName}</strong>
           </p>
         </div>
         <Link href="/admin/properties-manage" className="btn-outline-hs">
-          Back
+          Quay lại danh sách
         </Link>
       </div>
 
@@ -272,11 +272,11 @@ export default function AdminEditPropertyPage() {
         <div className="col-lg-8">
           <div className="hs-card" style={{ padding: "24px", marginBottom: 20 }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 18 }}>
-              Basic information
+              Thông tin cơ bản
             </h3>
             <div className="row g-3">
               <div className="col-12">
-                <label className="hs-form-label">Property title</label>
+                <label className="hs-form-label">Tên chỗ nghỉ / Homestay</label>
                 <input
                   className="hs-form-control"
                   value={form.title}
@@ -286,7 +286,7 @@ export default function AdminEditPropertyPage() {
               </div>
 
               <div className="col-md-6">
-                <label className="hs-form-label">Property type</label>
+                <label className="hs-form-label">Loại hình chỗ nghỉ</label>
                 <select
                   className="hs-form-control"
                   value={form.type}
@@ -302,7 +302,7 @@ export default function AdminEditPropertyPage() {
               </div>
 
               <div className="col-md-6">
-                <label className="hs-form-label">Price per night</label>
+                <label className="hs-form-label">Giá thuê mỗi đêm (VNĐ)</label>
                 <input
                   type="number"
                   min="1"
@@ -314,7 +314,7 @@ export default function AdminEditPropertyPage() {
               </div>
 
               <div className="col-12">
-                <label className="hs-form-label">Address</label>
+                <label className="hs-form-label">Địa chỉ chi tiết</label>
                 <input
                   className="hs-form-control"
                   value={form.address}
@@ -324,7 +324,7 @@ export default function AdminEditPropertyPage() {
               </div>
 
               <div className="col-md-6">
-                <label className="hs-form-label">City</label>
+                <label className="hs-form-label">Thành phố / Tỉnh</label>
                 <input
                   className="hs-form-control"
                   value={form.city}
@@ -334,7 +334,7 @@ export default function AdminEditPropertyPage() {
               </div>
 
               <div className="col-md-6">
-                <label className="hs-form-label">Country</label>
+                <label className="hs-form-label">Quốc gia</label>
                 <input
                   className="hs-form-control"
                   value={form.country}
@@ -347,11 +347,11 @@ export default function AdminEditPropertyPage() {
 
           <div className="hs-card" style={{ padding: "24px", marginBottom: 20 }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 18 }}>
-              Capacity details
+              Sức chứa & Không gian
             </h3>
             <div className="row g-3">
               <div className="col-md-4">
-                <label className="hs-form-label">Maximum guests</label>
+                <label className="hs-form-label">Số khách tối đa</label>
                 <input
                   type="number"
                   min="1"
@@ -363,7 +363,7 @@ export default function AdminEditPropertyPage() {
               </div>
 
               <div className="col-md-4">
-                <label className="hs-form-label">Bedrooms</label>
+                <label className="hs-form-label">Số phòng ngủ</label>
                 <input
                   type="number"
                   min="0"
@@ -375,7 +375,7 @@ export default function AdminEditPropertyPage() {
               </div>
 
               <div className="col-md-4">
-                <label className="hs-form-label">Bathrooms</label>
+                <label className="hs-form-label">Số phòng tắm</label>
                 <input
                   type="number"
                   min="0"
@@ -388,7 +388,7 @@ export default function AdminEditPropertyPage() {
               </div>
 
               <div className="col-12">
-                <label className="hs-form-label">Description</label>
+                <label className="hs-form-label">Mô tả chi tiết</label>
                 <textarea
                   className="hs-form-control"
                   rows={6}
@@ -403,7 +403,7 @@ export default function AdminEditPropertyPage() {
 
           <div className="hs-card" style={{ padding: "24px", marginBottom: 20 }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>
-              Amenities
+              Tiện nghi chỗ nghỉ
             </h3>
             <div
               style={{
@@ -448,7 +448,7 @@ export default function AdminEditPropertyPage() {
         <div className="col-lg-4">
           <div className="hs-card" style={{ padding: "24px", marginBottom: 20 }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 14 }}>
-              Listing status
+              Trạng thái phê duyệt
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {STATUS_OPTIONS.map((item) => (
@@ -489,7 +489,7 @@ export default function AdminEditPropertyPage() {
 
           <div className="hs-card" style={{ padding: "24px", marginBottom: 20 }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 14 }}>
-              Cover image
+              Ảnh đại diện chỗ nghỉ
             </h3>
             <label
               style={{
@@ -504,10 +504,10 @@ export default function AdminEditPropertyPage() {
             >
               <FileImage size={26} color="#2563eb" style={{ marginBottom: 10 }} />
               <div style={{ fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>
-                Replace cover image
+                Thay đổi ảnh đại diện
               </div>
               <div style={{ color: "#94a3b8", fontSize: "0.82rem" }}>
-                Maximum {MAX_PROPERTY_IMAGE_SIZE_MB} MB.
+                Kích thước tối đa {MAX_PROPERTY_IMAGE_SIZE_MB} MB.
               </div>
               <input
                 type="file"
@@ -520,7 +520,7 @@ export default function AdminEditPropertyPage() {
                     setCoverImage(null);
                     setErrors((prev) => ({
                       ...prev,
-                      coverImage: `Cover image must be ${MAX_PROPERTY_IMAGE_SIZE_MB} MB or smaller.`,
+                      coverImage: `Ảnh đại diện phải nhỏ hơn hoặc bằng ${MAX_PROPERTY_IMAGE_SIZE_MB} MB.`,
                     }));
                     setGeneralError(buildImageSizeError(file));
                     return;
@@ -538,7 +538,7 @@ export default function AdminEditPropertyPage() {
               <div style={{ marginTop: 14 }}>
                 <img
                   src={coverPreview}
-                  alt="Cover preview"
+                  alt="Ảnh xem trước"
                   style={{
                     width: "100%",
                     height: 200,
@@ -552,7 +552,7 @@ export default function AdminEditPropertyPage() {
 
           <div className="hs-card" style={{ padding: "24px", marginBottom: 20 }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 14 }}>
-              Detail images
+              Ảnh chi tiết phòng & không gian
             </h3>
 
             {existingDetailImages.length > 0 && (
@@ -575,7 +575,7 @@ export default function AdminEditPropertyPage() {
                   >
                     <img
                       src={image}
-                      alt="Detail image"
+                      alt="Ảnh chi tiết"
                       style={{ width: "100%", height: 110, objectFit: "cover" }}
                     />
                     <button
@@ -617,10 +617,10 @@ export default function AdminEditPropertyPage() {
             >
               <ImagePlus size={26} color="#2563eb" style={{ marginBottom: 10 }} />
               <div style={{ fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>
-                Add new detail images
+                Thêm ảnh chi tiết mới
               </div>
               <div style={{ color: "#94a3b8", fontSize: "0.82rem" }}>
-                Upload up to {MAX_PROPERTY_IMAGE_COUNT} images, each up to {MAX_PROPERTY_IMAGE_SIZE_MB} MB
+                Tải lên tối đa {MAX_PROPERTY_IMAGE_COUNT} ảnh, mỗi ảnh không quá {MAX_PROPERTY_IMAGE_SIZE_MB} MB
               </div>
               <input
                 type="file"
@@ -643,7 +643,7 @@ export default function AdminEditPropertyPage() {
                       MAX_PROPERTY_IMAGE_COUNT
                     ) {
                       setGeneralError(
-                        `You can upload up to ${MAX_PROPERTY_IMAGE_COUNT} detail images.`,
+                        `Bạn chỉ có thể tải lên tối đa ${MAX_PROPERTY_IMAGE_COUNT} ảnh chi tiết.`,
                       );
                       return prev;
                     }
@@ -706,7 +706,7 @@ export default function AdminEditPropertyPage() {
 
           <div className="hs-card" style={{ padding: "24px" }}>
             <h3 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 10 }}>
-              Actions
+              Thao tác
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <button
@@ -722,7 +722,7 @@ export default function AdminEditPropertyPage() {
                 }}
               >
                 <Save size={16} />
-                {isSubmitting ? "Saving..." : "Save changes"}
+                {isSubmitting ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
               <button
                 type="button"
@@ -731,7 +731,7 @@ export default function AdminEditPropertyPage() {
                 disabled={isDeleting}
                 style={{ color: "#dc2626", borderColor: "#fecaca" }}
               >
-                {isDeleting ? "Deleting..." : "Delete property"}
+                {isDeleting ? "Đang xóa..." : "Xóa chỗ nghỉ"}
               </button>
             </div>
           </div>

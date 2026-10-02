@@ -23,7 +23,7 @@ import { isBackendUploadImage } from "@/lib/image";
 import { useParams } from "next/navigation";
 
 function formatCurrency(value: number) {
-  return `$${Number(value || 0).toFixed(2)}`;
+  return `${Number(value || 0).toLocaleString("vi-VN")} ₫`;
 }
 
 function getNightCount(checkIn: string, checkOut: string) {
@@ -82,7 +82,7 @@ export default function QuickManagePropertyPage() {
         setPageError(
           error instanceof Error
             ? error.message
-            : "Unable to load the quick management view.",
+            : "Không thể tải giao diện quản lý nhanh.",
         );
       } finally {
         setIsLoading(false);
@@ -114,10 +114,10 @@ export default function QuickManagePropertyPage() {
   async function handleCopyLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      setCopyMessage("Quick link copied.");
+      setCopyMessage("Đã sao chép liên kết quản lý nhanh.");
       window.setTimeout(() => setCopyMessage(""), 2200);
     } catch (_error) {
-      setCopyMessage("Unable to copy the link on this browser.");
+      setCopyMessage("Không thể sao chép liên kết trên trình duyệt này.");
       window.setTimeout(() => setCopyMessage(""), 2200);
     }
   }
@@ -146,7 +146,7 @@ export default function QuickManagePropertyPage() {
 
       const refreshed = await getQuickManageData(params.token);
       setData(refreshed);
-      setMessage(response.message);
+      setMessage(response.message || "Tạo đơn đặt phòng trực tiếp thành công!");
       setForm((current) => ({
         ...current,
         guestName: "",
@@ -159,7 +159,7 @@ export default function QuickManagePropertyPage() {
       setPageError(
         error instanceof Error
           ? error.message
-          : "Unable to create the direct booking right now.",
+          : "Không thể tạo đơn đặt phòng trực tiếp lúc này.",
       );
     } finally {
       setIsSubmitting(false);
@@ -177,7 +177,7 @@ export default function QuickManagePropertyPage() {
           color: "#64748b",
         }}
       >
-        Loading quick management view...
+        Đang tải giao diện quản lý nhanh tại quầy...
       </div>
     );
   }
@@ -191,10 +191,10 @@ export default function QuickManagePropertyPage() {
         >
           <AlertTriangle size={38} color="#d97706" style={{ marginBottom: 14 }} />
           <h1 style={{ fontWeight: 800, color: "#1e293b", fontSize: "1.7rem", marginBottom: 8 }}>
-            Quick management unavailable
+            Liên kết quản lý không khả dụng
           </h1>
           <p style={{ color: "#64748b", margin: 0 }}>
-            {pageError || "This management link is invalid or has expired."}
+            {pageError || "Liên kết quản lý này không hợp lệ hoặc đã hết hạn truy cập."}
           </p>
         </div>
       </div>
@@ -230,7 +230,7 @@ export default function QuickManagePropertyPage() {
               }}
             >
               <ShieldCheck size={15} />
-              Property Quick Manage
+              Quản lý chỗ nghỉ tại quầy
             </div>
             <h1 style={{ fontWeight: 800, color: "#1e293b", fontSize: "2rem", marginBottom: 8 }}>
               {data.property.title}
@@ -238,7 +238,7 @@ export default function QuickManagePropertyPage() {
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", color: "#64748b" }}>
               <StatusBadge status={data.property.status} />
               <span>{data.property.location}</span>
-              <span>Host: {data.property.hostName}</span>
+              <span>Chủ nhà: {data.property.hostName}</span>
             </div>
           </div>
 
@@ -261,7 +261,7 @@ export default function QuickManagePropertyPage() {
               }}
             >
               <Copy size={15} />
-              Copy Quick Link
+              Sao chép liên kết nhanh
             </button>
             {copyMessage && (
               <div style={{ fontSize: "0.82rem", color: "#16a34a", textAlign: "center" }}>
@@ -294,7 +294,7 @@ export default function QuickManagePropertyPage() {
                 <DollarSign size={22} color="#2563EB" />
               </div>
               <div style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 700, marginTop: 12 }}>
-                Price per night
+                Giá mỗi đêm
               </div>
               <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#1e293b", marginTop: 4 }}>
                 {formatCurrency(data.property.price)}
@@ -307,10 +307,10 @@ export default function QuickManagePropertyPage() {
                 <Users size={22} color="#16a34a" />
               </div>
               <div style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 700, marginTop: 12 }}>
-                Capacity
+                Sức chứa tối đa
               </div>
               <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#1e293b", marginTop: 4 }}>
-                {data.property.maxGuests} guests
+                {data.property.maxGuests} khách
               </div>
             </div>
           </div>
@@ -320,10 +320,10 @@ export default function QuickManagePropertyPage() {
                 <CalendarDays size={22} color="#d97706" />
               </div>
               <div style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 700, marginTop: 12 }}>
-                Upcoming busy periods
+                Đợt bận sắp tới
               </div>
               <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#1e293b", marginTop: 4 }}>
-                {data.unavailableRanges.length}
+                {data.unavailableRanges.length} khoảng ngày
               </div>
             </div>
           </div>
@@ -333,7 +333,7 @@ export default function QuickManagePropertyPage() {
                 <Clock3 size={22} color="#7c3aed" />
               </div>
               <div style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 700, marginTop: 12 }}>
-                Direct commission
+                Hoa hồng tại quầy
               </div>
               <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#1e293b", marginTop: 4 }}>
                 {data.settings.directCommissionPercent.toFixed(2).replace(/\.00$/, "")}%
@@ -347,42 +347,44 @@ export default function QuickManagePropertyPage() {
             <div className="hs-card" style={{ padding: 22 }}>
               <div style={{ marginBottom: 18 }}>
                 <h3 style={{ margin: 0, color: "#1e293b", fontWeight: 800, fontSize: "1.15rem" }}>
-                  Create Direct Booking
+                  Đặt phòng trực tiếp tại quầy
                 </h3>
                 <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "0.84rem" }}>
-                  Use this quick link for walk-in guests or phone reservations. Direct bookings still block the calendar and flow into admin reports.
+                  Sử dụng liên kết này cho khách vãng lai hoặc khách gọi điện đặt phòng. Đơn tại quầy tự động khóa lịch và tính toán hoa hồng.
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14 }}>
                 <div>
                   <label style={{ display: "block", marginBottom: 8, fontWeight: 700, color: "#1e293b", fontSize: "0.9rem" }}>
-                    Guest name
+                    Tên khách hàng *
                   </label>
                   <input
                     className="hs-form-control"
+                    required
                     value={form.guestName}
                     onChange={(event) =>
                       setForm((current) => ({ ...current, guestName: event.target.value }))
                     }
-                    placeholder="Nguyen Van A"
+                    placeholder="Nguyễn Văn A"
                   />
                 </div>
 
                 <div>
                   <label style={{ display: "block", marginBottom: 8, fontWeight: 700, color: "#1e293b", fontSize: "0.9rem" }}>
-                    Guest phone
+                    Số điện thoại khách *
                   </label>
                   <div style={{ position: "relative" }}>
                     <Phone size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
                     <input
                       className="hs-form-control"
+                      required
                       style={{ paddingLeft: 36 }}
                       value={form.guestPhone}
                       onChange={(event) =>
                         setForm((current) => ({ ...current, guestPhone: event.target.value }))
                       }
-                      placeholder="0900..."
+                      placeholder="0987654321"
                     />
                   </div>
                 </div>
@@ -390,10 +392,11 @@ export default function QuickManagePropertyPage() {
                 <div className="row g-3">
                   <div className="col-md-6">
                     <label style={{ display: "block", marginBottom: 8, fontWeight: 700, color: "#1e293b", fontSize: "0.9rem" }}>
-                      Check-in
+                      Ngày nhận phòng *
                     </label>
                     <input
                       type="date"
+                      required
                       className="hs-form-control"
                       value={form.checkIn}
                       onChange={(event) =>
@@ -403,10 +406,11 @@ export default function QuickManagePropertyPage() {
                   </div>
                   <div className="col-md-6">
                     <label style={{ display: "block", marginBottom: 8, fontWeight: 700, color: "#1e293b", fontSize: "0.9rem" }}>
-                      Check-out
+                      Ngày trả phòng *
                     </label>
                     <input
                       type="date"
+                      required
                       className="hs-form-control"
                       value={form.checkOut}
                       onChange={(event) =>
@@ -419,7 +423,7 @@ export default function QuickManagePropertyPage() {
                 <div className="row g-3">
                   <div className="col-md-4">
                     <label style={{ display: "block", marginBottom: 8, fontWeight: 700, color: "#1e293b", fontSize: "0.9rem" }}>
-                      Guests
+                      Số khách
                     </label>
                     <select
                       className="hs-form-control"
@@ -430,14 +434,14 @@ export default function QuickManagePropertyPage() {
                     >
                       {Array.from({ length: data.property.maxGuests }, (_, index) => (
                         <option key={index + 1} value={index + 1}>
-                          {index + 1}
+                          {index + 1} khách
                         </option>
                       ))}
                     </select>
                   </div>
                   <div className="col-md-4">
                     <label style={{ display: "block", marginBottom: 8, fontWeight: 700, color: "#1e293b", fontSize: "0.9rem" }}>
-                      Payment
+                      Thanh toán
                     </label>
                     <select
                       className="hs-form-control"
@@ -449,13 +453,13 @@ export default function QuickManagePropertyPage() {
                         }))
                       }
                     >
-                      <option value="cash">Cash at store</option>
-                      <option value="bank_transfer">Bank transfer</option>
+                      <option value="cash">Tiền mặt tại quầy</option>
+                      <option value="bank_transfer">Chuyển khoản</option>
                     </select>
                   </div>
                   <div className="col-md-4">
                     <label style={{ display: "block", marginBottom: 8, fontWeight: 700, color: "#1e293b", fontSize: "0.9rem" }}>
-                      Reservation
+                      Trạng thái
                     </label>
                     <select
                       className="hs-form-control"
@@ -467,8 +471,8 @@ export default function QuickManagePropertyPage() {
                         }))
                       }
                     >
-                      <option value="confirmed">Confirmed now</option>
-                      <option value="pending">Reserve and pay later</option>
+                      <option value="confirmed">Xác nhận ngay</option>
+                      <option value="pending">Giữ phòng tạm thời</option>
                     </select>
                   </div>
                 </div>
@@ -484,17 +488,17 @@ export default function QuickManagePropertyPage() {
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", color: "#475569", fontSize: "0.88rem" }}>
-                    <span>Total nights</span>
-                    <strong>{Math.max(nights, 0)}</strong>
+                    <span>Số đêm lưu trú:</span>
+                    <strong>{Math.max(nights, 0)} đêm</strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", color: "#475569", fontSize: "0.88rem" }}>
-                    <span>Gross booking value</span>
+                    <span>Tổng tiền khách trả:</span>
                     <strong>{formatCurrency(directSubtotal)}</strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", color: "#475569", fontSize: "0.88rem" }}>
-                    <span>Platform commission</span>
-                    <strong>
-                      {formatCurrency(
+                    <span>Hoa hồng nền tảng (5%):</span>
+                    <strong style={{ color: "#dc2626" }}>
+                      -{formatCurrency(
                         Number(
                           (directSubtotal * data.settings.directCommissionRate).toFixed(2),
                         ),
@@ -502,8 +506,8 @@ export default function QuickManagePropertyPage() {
                     </strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", color: "#1e293b", fontSize: "0.92rem", fontWeight: 800 }}>
-                    <span>Host payout</span>
-                    <span>
+                    <span>Chủ nhà thực nhận (95%):</span>
+                    <span style={{ color: "#16a34a" }}>
                       {formatCurrency(
                         Number(
                           (
@@ -527,7 +531,7 @@ export default function QuickManagePropertyPage() {
                       fontSize: "0.84rem",
                     }}
                   >
-                    These dates overlap with an existing reservation. Choose another range before saving.
+                    Khoảng ngày này bị trùng với một đơn đặt phòng khác. Vui lòng chọn khoảng ngày khác.
                   </div>
                 )}
 
@@ -541,7 +545,7 @@ export default function QuickManagePropertyPage() {
                     fontSize: "0.84rem",
                   }}
                 >
-                  Standard check-in is after 2:00 PM and check-out is before 12:00 PM.
+                  Quy định nhận phòng sau 14:00 và trả phòng trước 12:00.
                 </div>
 
                 <button
@@ -556,7 +560,7 @@ export default function QuickManagePropertyPage() {
                         : "pointer",
                   }}
                 >
-                  {isSubmitting ? "Saving booking..." : "Create Direct Booking"}
+                  {isSubmitting ? "Đang lưu đơn..." : "Tạo đơn đặt phòng tại quầy"}
                 </button>
               </form>
             </div>
@@ -587,10 +591,10 @@ export default function QuickManagePropertyPage() {
                 </div>
                 <div className="col-lg-6">
                   <h3 style={{ fontWeight: 800, color: "#1e293b", fontSize: "1.15rem", marginBottom: 10 }}>
-                    Availability snapshot
+                    Lịch phòng bận sắp tới
                   </h3>
                   <p style={{ color: "#64748b", fontSize: "0.88rem", marginBottom: 16 }}>
-                    Upcoming busy ranges are listed here so staff can avoid double-booking at the front desk.
+                    Các đợt khách đã đặt trước được liệt kê tại đây giúp lễ tân tránh đặt trùng phòng tại quầy.
                   </p>
                   <div style={{ display: "grid", gap: 10, maxHeight: 240, overflowY: "auto" }}>
                     {data.unavailableRanges.length === 0 ? (
@@ -603,7 +607,7 @@ export default function QuickManagePropertyPage() {
                           fontSize: "0.85rem",
                         }}
                       >
-                        No upcoming busy periods yet.
+                        Chưa có lịch bận nào sắp tới.
                       </div>
                     ) : (
                       data.unavailableRanges.map((range, index) => (
@@ -625,7 +629,7 @@ export default function QuickManagePropertyPage() {
                               {range.checkIn} → {range.checkOut}
                             </div>
                             <div style={{ color: "#94a3b8", fontSize: "0.76rem" }}>
-                              {range.status === "confirmed" ? "Confirmed stay" : "Pending hold"}
+                              {range.status === "confirmed" ? "Đã xác nhận ở" : "Đang giữ chỗ"}
                             </div>
                           </div>
                           <StatusBadge status={range.status} />
@@ -649,10 +653,10 @@ export default function QuickManagePropertyPage() {
               >
                 <div>
                   <h3 style={{ margin: 0, color: "#1e293b", fontWeight: 800, fontSize: "1.05rem" }}>
-                    Recent Bookings
+                    Đơn đặt phòng gần đây
                   </h3>
                   <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.8rem" }}>
-                    Includes online guests and direct reservations created from this quick link.
+                    Bao gồm cả khách đặt online từ ứng dụng và khách đặt trực tiếp tại quầy.
                   </p>
                 </div>
               </div>
@@ -661,19 +665,19 @@ export default function QuickManagePropertyPage() {
                 <table className="hs-table">
                   <thead>
                     <tr>
-                      <th>Guest</th>
-                      <th>Stay</th>
-                      <th>Source</th>
-                      <th>Total</th>
-                      <th>Status</th>
-                      <th>Payment</th>
+                      <th>Khách hàng</th>
+                      <th>Lưu trú</th>
+                      <th>Nguồn</th>
+                      <th>Tổng tiền</th>
+                      <th>Trạng thái</th>
+                      <th>Thanh toán</th>
                     </tr>
                   </thead>
                   <tbody>
                     {data.recentBookings.length === 0 ? (
                       <tr>
                         <td colSpan={6} style={{ textAlign: "center", padding: "36px", color: "#94a3b8" }}>
-                          No bookings yet for this homestay.
+                          Chưa có đơn đặt phòng nào cho homestay này.
                         </td>
                       </tr>
                     ) : (
@@ -692,7 +696,7 @@ export default function QuickManagePropertyPage() {
                               {booking.checkIn} → {booking.checkOut}
                             </div>
                             <div style={{ color: "#94a3b8", fontSize: "0.76rem" }}>
-                              {booking.nights} nights • {booking.guests} guests
+                              {booking.nights} đêm • {booking.guests} khách
                             </div>
                           </td>
                           <td>
@@ -710,7 +714,7 @@ export default function QuickManagePropertyPage() {
                                 fontWeight: 700,
                               }}
                             >
-                              {booking.source === "host_direct" ? "Direct" : "Online"}
+                              {booking.source === "host_direct" ? "Tại quầy" : "Trực tuyến"}
                             </span>
                           </td>
                           <td style={{ fontWeight: 800, color: "#1e293b" }}>

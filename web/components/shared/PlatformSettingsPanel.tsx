@@ -70,7 +70,7 @@ export function PlatformSettingsPanel() {
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : "Unable to load platform settings right now.",
+            : "Không thể tải cấu hình nền tảng lúc này.",
         );
       } finally {
         setIsLoading(false);
@@ -111,12 +111,12 @@ export function PlatformSettingsPanel() {
         paymentAccountNumber: response.settings.paymentAccountNumber,
         paymentAccountName: response.settings.paymentAccountName,
       });
-      setSuccessMessage(response.message);
+      setSuccessMessage("Cập nhật cấu hình nền tảng thành công.");
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Unable to update platform settings right now.",
+          : "Không thể cập nhật cấu hình nền tảng lúc này.",
       );
     } finally {
       setIsSaving(false);
@@ -156,11 +156,10 @@ export function PlatformSettingsPanel() {
               fontSize: "1.05rem",
             }}
           >
-            Platform Settings
+            Cấu hình nền tảng
           </h3>
           <p style={{ margin: 0, color: "#64748b", fontSize: "0.82rem" }}>
-            Adjust the exchange rate, commission rules, and the receiving bank
-            account used in QR payment instructions.
+            Điều chỉnh tỷ lệ hoa hồng trực tuyến, tỷ lệ đặt tại quầy và thông tin tài khoản ngân hàng nhận thanh toán VietQR.
           </p>
         </div>
       </div>
@@ -219,7 +218,7 @@ export function PlatformSettingsPanel() {
               >
                 <DollarSign size={18} color="#2563EB" />
                 <div style={{ fontWeight: 700, color: "#1e293b" }}>
-                  USD to VND Rate
+                  Tỷ giá quy đổi (USD / VND)
                 </div>
               </div>
               <div
@@ -230,11 +229,10 @@ export function PlatformSettingsPanel() {
                   marginBottom: 4,
                 }}
               >
-                {isLoading ? "..." : settings.usdToVndRate.toLocaleString("en-US")}
+                {isLoading ? "..." : settings.usdToVndRate.toLocaleString("vi-VN") + " ₫"}
               </div>
               <div style={{ color: "#64748b", fontSize: "0.8rem" }}>
-                Used to convert the booking total into a ready-to-pay VND QR
-                amount.
+                Áp dụng quy đổi chuẩn xác cho các giao dịch nội địa và quốc tế.
               </div>
             </div>
           </div>
@@ -259,7 +257,7 @@ export function PlatformSettingsPanel() {
               >
                 <Percent size={18} color="#7c3aed" />
                 <div style={{ fontWeight: 700, color: "#1e293b" }}>
-                  Commission Rules
+                  Quy tắc hoa hồng sàn
                 </div>
               </div>
               <div
@@ -273,8 +271,7 @@ export function PlatformSettingsPanel() {
                 {isLoading ? "..." : formatPercentValue(settings.onlineCommissionPercent)}
               </div>
               <div style={{ color: "#64748b", fontSize: "0.8rem" }}>
-                Online bookings use the marketplace commission, while direct
-                bookings can use a lower rate.
+                Đơn đặt online áp dụng tỷ lệ sàn chuẩn, đơn trực tiếp tại quầy áp dụng mức phí ưu đãi.
               </div>
               <div
                 style={{
@@ -288,11 +285,11 @@ export function PlatformSettingsPanel() {
                 }}
               >
                 <div>
-                  Direct bookings:{" "}
+                  Đơn tại quầy:{" "}
                   <strong>{isLoading ? "..." : formatPercentValue(settings.directCommissionPercent)}</strong>
                 </div>
                 <div>
-                  Host keeps online:{" "}
+                  Chủ nhà thực nhận online:{" "}
                   <strong>{formatPercentValue(100 - settings.onlineCommissionPercent)}</strong>
                 </div>
               </div>
@@ -319,7 +316,7 @@ export function PlatformSettingsPanel() {
               >
                 <CreditCard size={18} color="#16a34a" />
                 <div style={{ fontWeight: 700, color: "#1e293b" }}>
-                  Receiving Account
+                  Tài khoản nhận thanh toán
                 </div>
               </div>
               <div
@@ -349,12 +346,12 @@ export function PlatformSettingsPanel() {
                 }}
               >
                 <div>
-                  VietQR bank code:{" "}
+                  Mã ngân hàng VietQR:{" "}
                   <strong>{isLoading ? "..." : settings.paymentBankCode}</strong>
                 </div>
                 <div>
-                  Used by:{" "}
-                  <strong>guest bookings and quick-manage bank transfers</strong>
+                  Phục vụ:{" "}
+                  <strong>thanh toán đơn đặt phòng khách hàng và đơn tại quầy</strong>
                 </div>
               </div>
             </div>
@@ -374,7 +371,7 @@ export function PlatformSettingsPanel() {
                   fontSize: "0.9rem",
                 }}
               >
-                Exchange Rate
+                Tỷ giá quy đổi (1 USD tương đương VND)
               </label>
               <input
                 id="usdToVndRate"
@@ -392,7 +389,7 @@ export function PlatformSettingsPanel() {
                 style={{ minHeight: 48, borderRadius: 14 }}
               />
               <div style={{ color: "#94a3b8", fontSize: "0.77rem", marginTop: 6 }}>
-                Example: `25000` means 1 USD = 25,000 VND.
+                Ví dụ: `25000` nghĩa là 1 USD = 25.000 VNĐ.
               </div>
             </div>
 
@@ -407,7 +404,7 @@ export function PlatformSettingsPanel() {
                   fontSize: "0.9rem",
                 }}
               >
-                Online Commission (%)
+                Hoa hồng đơn đặt Online (%)
               </label>
               <input
                 id="onlineCommissionPercent"
@@ -426,7 +423,7 @@ export function PlatformSettingsPanel() {
                 style={{ minHeight: 48, borderRadius: 14 }}
               />
               <div style={{ color: "#94a3b8", fontSize: "0.77rem", marginTop: 6 }}>
-                Applied to bookings created by guests on the website.
+                Áp dụng cho các đơn đặt phòng do khách tự đặt qua website hoặc ứng dụng di động.
               </div>
             </div>
 
@@ -441,7 +438,7 @@ export function PlatformSettingsPanel() {
                   fontSize: "0.9rem",
                 }}
               >
-                Direct Booking Commission (%)
+                Hoa hồng đơn đặt trực tiếp tại quầy (%)
               </label>
               <input
                 id="directCommissionPercent"
@@ -460,7 +457,7 @@ export function PlatformSettingsPanel() {
                 style={{ minHeight: 48, borderRadius: 14 }}
               />
               <div style={{ color: "#94a3b8", fontSize: "0.77rem", marginTop: 6 }}>
-                Applied to quick direct bookings created from a homestay manage link.
+                Áp dụng cho đơn trực tiếp do chủ homestay hoặc lễ tân tự tạo tại quầy.
               </div>
             </div>
           </div>
@@ -481,11 +478,10 @@ export function PlatformSettingsPanel() {
                   marginBottom: 4,
                 }}
               >
-                Payment Receiving Account
+                Tài khoản ngân hàng nhận tiền
               </div>
               <div style={{ color: "#64748b", fontSize: "0.8rem" }}>
-                Guests will see this account in their bank transfer instructions
-                and VietQR payment image.
+                Khách hàng sẽ nhìn thấy tài khoản này trong hướng dẫn chuyển khoản và mã VietQR.
               </div>
             </div>
 
@@ -501,7 +497,7 @@ export function PlatformSettingsPanel() {
                     fontSize: "0.9rem",
                   }}
                 >
-                  Bank Code
+                  Mã ngân hàng (VietQR Bank Code)
                 </label>
                 <input
                   id="paymentBankCode"
@@ -517,7 +513,7 @@ export function PlatformSettingsPanel() {
                   style={{ minHeight: 48, borderRadius: 14, textTransform: "uppercase" }}
                 />
                 <div style={{ color: "#94a3b8", fontSize: "0.77rem", marginTop: 6 }}>
-                  Example: `TCB`, `VCB`, `MBBANK`. This code is used to generate VietQR.
+                  Ví dụ: `TCB`, `VCB`, `MBBANK`. Mã này dùng để sinh mã QR thanh toán chuẩn VietQR.
                 </div>
               </div>
 
@@ -532,7 +528,7 @@ export function PlatformSettingsPanel() {
                     fontSize: "0.9rem",
                   }}
                 >
-                  Bank Name
+                  Tên ngân hàng
                 </label>
                 <input
                   id="paymentBankName"
@@ -548,7 +544,7 @@ export function PlatformSettingsPanel() {
                   style={{ minHeight: 48, borderRadius: 14 }}
                 />
                 <div style={{ color: "#94a3b8", fontSize: "0.77rem", marginTop: 6 }}>
-                  Shown in the payment instruction card so guests know where to transfer.
+                  Hiển thị trong thẻ hướng dẫn chuyển khoản cho khách hàng.
                 </div>
               </div>
 
@@ -563,7 +559,7 @@ export function PlatformSettingsPanel() {
                     fontSize: "0.9rem",
                   }}
                 >
-                  Account Number
+                  Số tài khoản
                 </label>
                 <input
                   id="paymentAccountNumber"
@@ -579,7 +575,7 @@ export function PlatformSettingsPanel() {
                   style={{ minHeight: 48, borderRadius: 14 }}
                 />
                 <div style={{ color: "#94a3b8", fontSize: "0.77rem", marginTop: 6 }}>
-                  The generated QR and booking payment instructions will use this number.
+                  Mã QR sinh ra và hướng dẫn chuyển khoản sẽ sử dụng số tài khoản này.
                 </div>
               </div>
 
@@ -594,7 +590,7 @@ export function PlatformSettingsPanel() {
                     fontSize: "0.9rem",
                   }}
                 >
-                  Account Name
+                  Tên chủ tài khoản
                 </label>
                 <input
                   id="paymentAccountName"
@@ -610,7 +606,7 @@ export function PlatformSettingsPanel() {
                   style={{ minHeight: 48, borderRadius: 14 }}
                 />
                 <div style={{ color: "#94a3b8", fontSize: "0.77rem", marginTop: 6 }}>
-                  Enter the exact beneficiary name used by the bank account.
+                  Nhập chính xác tên thụ hưởng trên tài khoản ngân hàng (viết hoa không dấu).
                 </div>
               </div>
             </div>
@@ -634,7 +630,7 @@ export function PlatformSettingsPanel() {
               }}
             >
               <Save size={16} />
-              {isSaving ? "Saving..." : "Save Settings"}
+              {isSaving ? "Đang lưu..." : "Lưu cấu hình"}
             </button>
           </div>
         </form>

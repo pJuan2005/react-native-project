@@ -52,7 +52,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (!result.success) {
-      setError(result.error || "Login failed");
+      setError(result.error || "Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.");
       return;
     }
 
@@ -69,7 +69,7 @@ export default function LoginPage() {
       <div className="hs-auth-page">
         <div className="hs-auth-card" style={{ maxWidth: 420, margin: "0 auto" }}>
           <div style={{ textAlign: "center", color: "#64748b" }}>
-            Checking your session...
+            Đang kiểm tra phiên đăng nhập...
           </div>
         </div>
       </div>
@@ -125,10 +125,10 @@ export default function LoginPage() {
                 fontSize: "1.6rem",
               }}
             >
-              Sign in
+              Đăng nhập tài khoản
             </h1>
             <p style={{ color: "#64748b", margin: 0, fontSize: "0.92rem" }}>
-              Access your HomeStay account
+              Truy cập hệ sinh thái Homestay của bạn
             </p>
           </div>
 
@@ -171,7 +171,7 @@ export default function LoginPage() {
                   required
                   className="hs-form-control"
                   style={{ paddingLeft: 38 }}
-                  placeholder="you@example.com"
+                  placeholder="name@example.com"
                   value={form.email}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, email: event.target.value }))
@@ -181,7 +181,7 @@ export default function LoginPage() {
             </div>
 
             <div style={{ marginBottom: 18 }}>
-              <label className="hs-form-label">Password</label>
+              <label className="hs-form-label">Mật khẩu</label>
               <div style={{ position: "relative" }}>
                 <Lock
                   size={15}
@@ -198,7 +198,7 @@ export default function LoginPage() {
                   required
                   className="hs-form-control"
                   style={{ paddingLeft: 38, paddingRight: 42 }}
-                  placeholder="Enter your password"
+                  placeholder="Nhập mật khẩu của bạn"
                   value={form.password}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, password: event.target.value }))
@@ -252,7 +252,7 @@ export default function LoginPage() {
                   margin: 0,
                 }}
               >
-                Keep me signed in on this browser
+                Ghi nhớ đăng nhập trên trình duyệt này
               </label>
             </div>
 
@@ -280,12 +280,12 @@ export default function LoginPage() {
                   >
                     <path d="M21 12a9 9 0 11-6.219-8.56" />
                   </svg>
-                  Signing in...
+                  Đang đăng nhập...
                 </span>
               ) : (
                 <>
                   <LogIn size={16} />
-                  Sign In
+                  Đăng nhập
                 </>
               )}
             </button>
@@ -300,12 +300,12 @@ export default function LoginPage() {
             }}
           >
             <p style={{ color: "#64748b", margin: 0, fontSize: "0.88rem" }}>
-              Don&apos;t have an account?{" "}
+              Bạn chưa có tài khoản?{" "}
               <Link
                 href="/auth/register"
                 style={{ color: "#2563EB", fontWeight: 700, textDecoration: "none" }}
               >
-                Create one <ArrowRight size={13} style={{ verticalAlign: "middle" }} />
+                Đăng ký ngay <ArrowRight size={13} style={{ verticalAlign: "middle" }} />
               </Link>
             </p>
           </div>
@@ -316,7 +316,7 @@ export default function LoginPage() {
             href="/"
             style={{ color: "#64748b", fontSize: "0.83rem", textDecoration: "none" }}
           >
-            Back to Home
+            Quay lại Trang chủ
           </Link>
         </div>
       </div>

@@ -25,6 +25,10 @@ import {
 
 const ITEMS_PER_PAGE = 6;
 
+function formatCurrency(value: number) {
+  return `${Number(value || 0).toLocaleString("vi-VN")} ₫`;
+}
+
 export default function MyPropertiesPage() {
   const { user, isInitializing } = useAuth();
   const hostId = user?.id;
@@ -121,7 +125,7 @@ export default function MyPropertiesPage() {
           >
             <path d="M21 12a9 9 0 11-6.219-8.56" />
           </svg>
-          <p style={{ color: "#64748b" }}>Loading property list...</p>
+          <p style={{ color: "#64748b" }}>Đang tải danh sách chỗ nghỉ...</p>
         </div>
       </div>
     );
@@ -139,7 +143,7 @@ export default function MyPropertiesPage() {
           color: "#64748b",
         }}
       >
-        Checking host session...
+        Đang kiểm tra quyền chủ nhà...
       </div>
     );
   }
@@ -165,10 +169,10 @@ export default function MyPropertiesPage() {
               fontSize: "1.5rem",
             }}
           >
-            My Properties
+            Chỗ nghỉ của tôi
           </h1>
           <p style={{ color: "#64748b", margin: 0 }}>
-            {stats.total} properties under management
+            {stats.total} chỗ nghỉ đang được quản lý trên hệ thống
           </p>
         </div>
         <Link href="/host/add-property">
@@ -176,28 +180,28 @@ export default function MyPropertiesPage() {
             className="btn-primary-hs"
             style={{ display: "flex", alignItems: "center", gap: 6 }}
           >
-            <Plus size={16} /> Add New Property
+            <Plus size={16} /> Đăng chỗ nghỉ mới
           </button>
         </Link>
       </div>
 
       <div className="row g-3 mb-4">
         {[
-          { label: "Total", value: stats.total, color: "#2563EB", bg: "#eff6ff" },
+          { label: "Tổng số", value: stats.total, color: "#2563EB", bg: "#eff6ff" },
           {
-            label: "Pending Review",
+            label: "Chờ phê duyệt",
             value: stats.pending,
             color: "#d97706",
             bg: "#fef3c7",
           },
           {
-            label: "Approved",
+            label: "Đã phê duyệt",
             value: stats.approved,
             color: "#16a34a",
             bg: "#dcfce7",
           },
           {
-            label: "Rejected",
+            label: "Bị từ chối",
             value: stats.rejected,
             color: "#dc2626",
             bg: "#fee2e2",
@@ -238,13 +242,13 @@ export default function MyPropertiesPage() {
       <div className="row g-4">
         {properties.length === 0 ? (
           <div className="col-12" style={{ textAlign: "center", padding: "60px 0" }}>
-            <h3 style={{ color: "#1e293b" }}>You do not have any properties yet.</h3>
+            <h3 style={{ color: "#1e293b" }}>Bạn chưa đăng chỗ nghỉ nào.</h3>
             <p style={{ color: "#64748b" }}>
-              Start by creating your first property.
+              Bắt đầu tạo và mở bán homestay, villa đầu tiên của bạn ngay hôm nay!
             </p>
             <Link href="/host/add-property">
               <button className="btn-primary-hs" style={{ marginTop: 12 }}>
-                Add Property
+                Đăng chỗ nghỉ ngay
               </button>
             </Link>
           </div>
@@ -297,7 +301,7 @@ export default function MyPropertiesPage() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      ${property.price}
+                      {formatCurrency(property.price)}
                       <span
                         style={{
                           fontSize: "0.75rem",
@@ -305,7 +309,7 @@ export default function MyPropertiesPage() {
                           fontWeight: 400,
                         }}
                       >
-                        /night
+                        /đêm
                       </span>
                     </span>
                   </div>
@@ -338,10 +342,10 @@ export default function MyPropertiesPage() {
                       {property.rating.toFixed(1)} ({property.reviews})
                     </div>
                     <div style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                      {property.maxGuests} guests
+                      Tối đa {property.maxGuests} khách
                     </div>
                     <div style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                      {property.bedrooms} bedrooms
+                      {property.bedrooms} phòng ngủ
                     </div>
                   </div>
 
@@ -360,7 +364,7 @@ export default function MyPropertiesPage() {
                       }}
                     >
                       <AlertTriangle size={13} />
-                      This property is waiting for admin approval.
+                      Chỗ nghỉ đang đợi quản trị viên kiểm tra và phê duyệt.
                     </div>
                   )}
 
@@ -379,7 +383,7 @@ export default function MyPropertiesPage() {
                       }}
                     >
                       <AlertTriangle size={13} />
-                      This property was rejected. Please update it and submit again.
+                      Chỗ nghỉ bị từ chối. Vui lòng cập nhật lại thông tin và gửi duyệt lại.
                     </div>
                   )}
 
@@ -402,7 +406,7 @@ export default function MyPropertiesPage() {
                           gap: 5,
                         }}
                       >
-                        <Eye size={13} /> View
+                        <Eye size={13} /> Xem
                       </button>
                     </Link>
 
@@ -424,7 +428,7 @@ export default function MyPropertiesPage() {
                           gap: 5,
                         }}
                       >
-                        <Edit2 size={13} /> Edit
+                        <Edit2 size={13} /> Sửa
                       </button>
                     </Link>
 
@@ -444,7 +448,7 @@ export default function MyPropertiesPage() {
                             cursor: "pointer",
                           }}
                         >
-                          Delete
+                          Xóa
                         </button>
                         <button
                           onClick={() => setDeleteConfirm(null)}
@@ -459,12 +463,13 @@ export default function MyPropertiesPage() {
                             cursor: "pointer",
                           }}
                         >
-                          Cancel
+                          Hủy
                         </button>
                       </div>
                     ) : (
                       <button
                         onClick={() => setDeleteConfirm(property.id)}
+                        title="Xóa chỗ nghỉ"
                         style={{
                           background: "#fee2e2",
                           border: "none",
@@ -507,7 +512,7 @@ export default function MyPropertiesPage() {
                             gap: 6,
                           }}
                         >
-                          <ExternalLink size={13} /> Quick Manage Link
+                          <ExternalLink size={13} /> Quản lý lễ tân tại quầy
                         </button>
                       </Link>
                     </div>
@@ -519,14 +524,16 @@ export default function MyPropertiesPage() {
         )}
       </div>
 
-      <PaginationControls
-        currentPage={safeCurrentPage}
-        totalPages={totalPages}
-        totalItems={properties.length}
-        pageSize={ITEMS_PER_PAGE}
-        itemLabel="properties"
-        onPageChange={setCurrentPage}
-      />
+      <div style={{ marginTop: 24 }}>
+        <PaginationControls
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={properties.length}
+          pageSize={ITEMS_PER_PAGE}
+          itemLabel="chỗ nghỉ"
+          onPageChange={setCurrentPage}
+        />
+      </div>
     </div>
   );
 }

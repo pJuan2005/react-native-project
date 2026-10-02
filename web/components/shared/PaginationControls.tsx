@@ -13,7 +13,7 @@ export function PaginationControls({
   currentPage,
   totalPages,
   onPageChange,
-  itemLabel = "items",
+  itemLabel = "mục",
   totalItems,
   pageSize,
 }: PaginationControlsProps) {
@@ -52,8 +52,8 @@ export function PaginationControls({
     >
       <div style={{ color: "#64748b", fontSize: "0.85rem" }}>
         {startItem && endItem && typeof totalItems === "number"
-          ? `Showing ${startItem}-${endItem} of ${totalItems} ${itemLabel}`
-          : `Page ${currentPage} of ${totalPages}`}
+          ? `Hiển thị ${startItem} - ${endItem} trên tổng số ${totalItems} ${itemLabel}`
+          : `Trang ${currentPage} / ${totalPages}`}
       </div>
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -64,7 +64,7 @@ export function PaginationControls({
           className="btn-outline-hs"
           style={{ padding: "8px 14px", opacity: currentPage === 1 ? 0.5 : 1 }}
         >
-          Previous
+          Trước
         </button>
 
         {pages.map((page) => (
@@ -94,7 +94,7 @@ export function PaginationControls({
           className="btn-outline-hs"
           style={{ padding: "8px 14px", opacity: currentPage === totalPages ? 0.5 : 1 }}
         >
-          Next
+          Sau
         </button>
       </div>
     </div>

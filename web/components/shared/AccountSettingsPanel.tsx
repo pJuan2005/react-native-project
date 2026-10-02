@@ -48,8 +48,8 @@ function buildPasswordState(): PasswordFormState {
 
 export function AccountSettingsPanel({
   user,
-  profileTitle = "Personal Information",
-  passwordTitle = "Change Password",
+  profileTitle = "Thông tin cá nhân",
+  passwordTitle = "Đổi mật khẩu",
 }: AccountSettingsPanelProps) {
   const { updateProfile, changePassword } = useAuth();
 
@@ -107,9 +107,9 @@ export function AccountSettingsPanel({
     });
 
     if (result.success) {
-      setProfileMessage(result.message || "Profile updated successfully.");
+      setProfileMessage(result.message || "Cập nhật hồ sơ thành công.");
     } else {
-      setProfileError(result.error || "Unable to update profile right now.");
+      setProfileError(result.error || "Không thể cập nhật hồ sơ lúc này.");
     }
 
     setIsSavingProfile(false);
@@ -124,10 +124,10 @@ export function AccountSettingsPanel({
     const result = await changePassword(passwordForm);
 
     if (result.success) {
-      setPasswordMessage(result.message || "Password updated successfully.");
+      setPasswordMessage(result.message || "Đổi mật khẩu thành công.");
       setPasswordForm(buildPasswordState());
     } else {
-      setPasswordError(result.error || "Unable to update password right now.");
+      setPasswordError(result.error || "Không thể đổi mật khẩu lúc này.");
     }
 
     setIsChangingPassword(false);
@@ -155,7 +155,7 @@ export function AccountSettingsPanel({
             <div className="col-md-6">
               <label className="hs-form-label">
                 <User size={13} style={{ marginRight: 5, verticalAlign: "middle", color: "#2563EB" }} />
-                Full Name
+                Họ và tên
               </label>
               <input
                 className="hs-form-control"
@@ -168,7 +168,7 @@ export function AccountSettingsPanel({
             <div className="col-md-6">
               <label className="hs-form-label">
                 <Mail size={13} style={{ marginRight: 5, verticalAlign: "middle", color: "#2563EB" }} />
-                Email Address
+                Địa chỉ Email
               </label>
               <input
                 className="hs-form-control"
@@ -182,7 +182,7 @@ export function AccountSettingsPanel({
             <div className="col-md-6">
               <label className="hs-form-label">
                 <Phone size={13} style={{ marginRight: 5, verticalAlign: "middle", color: "#2563EB" }} />
-                Phone Number
+                Số điện thoại
               </label>
               <input
                 className="hs-form-control"
@@ -195,7 +195,7 @@ export function AccountSettingsPanel({
             <div className="col-md-6">
               <label className="hs-form-label">
                 <MapPin size={13} style={{ marginRight: 5, verticalAlign: "middle", color: "#2563EB" }} />
-                Location
+                Địa chỉ / Khu vực
               </label>
               <input
                 className="hs-form-control"
@@ -219,7 +219,7 @@ export function AccountSettingsPanel({
               />
             </div>
             <div className="col-md-6">
-              <label className="hs-form-label">Languages</label>
+              <label className="hs-form-label">Ngôn ngữ</label>
               <input
                 className="hs-form-control"
                 value={profileForm.languages}
@@ -229,7 +229,7 @@ export function AccountSettingsPanel({
               />
             </div>
             <div className="col-12">
-              <label className="hs-form-label">Bio</label>
+              <label className="hs-form-label">Giới thiệu bản thân (Bio)</label>
               <textarea
                 className="hs-form-control"
                 rows={4}
@@ -240,7 +240,7 @@ export function AccountSettingsPanel({
                 style={{ resize: "vertical" }}
               />
               <div style={{ textAlign: "right", fontSize: "0.75rem", color: "#94a3b8", marginTop: 4 }}>
-                {profileForm.bio.length} characters
+                {profileForm.bio.length} ký tự
               </div>
             </div>
             <div className="col-12">
@@ -251,7 +251,7 @@ export function AccountSettingsPanel({
                 style={{ display: "flex", alignItems: "center", gap: 6 }}
               >
                 <Save size={15} />
-                {isSavingProfile ? "Saving..." : "Save Changes"}
+                {isSavingProfile ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
             </div>
           </div>
@@ -278,7 +278,7 @@ export function AccountSettingsPanel({
             <div className="col-md-4">
               <label className="hs-form-label">
                 <KeyRound size={13} style={{ marginRight: 5, verticalAlign: "middle", color: "#2563EB" }} />
-                Current Password
+                Mật khẩu hiện tại
               </label>
               <input
                 className="hs-form-control"
@@ -287,11 +287,11 @@ export function AccountSettingsPanel({
                 onChange={(event) =>
                   handlePasswordFieldChange("currentPassword", event.target.value)
                 }
-                placeholder="Enter current password"
+                placeholder="Nhập mật khẩu hiện tại"
               />
             </div>
             <div className="col-md-4">
-              <label className="hs-form-label">New Password</label>
+              <label className="hs-form-label">Mật khẩu mới</label>
               <input
                 className="hs-form-control"
                 type="password"
@@ -299,11 +299,11 @@ export function AccountSettingsPanel({
                 onChange={(event) =>
                   handlePasswordFieldChange("newPassword", event.target.value)
                 }
-                placeholder="At least 6 characters"
+                placeholder="Tối thiểu 6 ký tự"
               />
             </div>
             <div className="col-md-4">
-              <label className="hs-form-label">Confirm New Password</label>
+              <label className="hs-form-label">Xác nhận mật khẩu mới</label>
               <input
                 className="hs-form-control"
                 type="password"
@@ -311,7 +311,7 @@ export function AccountSettingsPanel({
                 onChange={(event) =>
                   handlePasswordFieldChange("confirmPassword", event.target.value)
                 }
-                placeholder="Repeat new password"
+                placeholder="Nhập lại mật khẩu mới"
               />
             </div>
             <div className="col-12">
@@ -321,7 +321,7 @@ export function AccountSettingsPanel({
                 disabled={isChangingPassword}
                 style={{ fontSize: "0.87rem" }}
               >
-                {isChangingPassword ? "Updating..." : "Update Password"}
+                {isChangingPassword ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
               </button>
             </div>
           </div>

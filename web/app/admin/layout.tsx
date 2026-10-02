@@ -15,15 +15,15 @@ import {
 import { useAuth } from "@/components/context/AuthContext";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard",          path: "/admin/dashboard" },
-  { icon: Users,           label: "Manage Users",        path: "/admin/user" },
-  { icon: Building2,       label: "Manage Properties",   path: "/admin/properties-manage" },
-  { icon: KeyRound,        label: "Quick Links",         path: "/admin/quick-manage-links" },
-  { icon: CheckCircle,     label: "Property Approvals",  path: "/admin/property-approvals" },
-  { icon: CalendarDays,    label: "Manage Bookings",     path: "/admin/manage-booking" },
-  { icon: BarChart2,       label: "Reports",             path: "/admin/manage-reports" },
-  { icon: User,            label: "Profile",             path: "/admin/profile" },
-  { icon: Settings,        label: "Platform Settings",   path: "/admin/platform-settings" },
+  { icon: LayoutDashboard, label: "Tổng quan quản trị", path: "/admin/dashboard" },
+  { icon: Users,           label: "Quản lý người dùng", path: "/admin/user" },
+  { icon: Building2,       label: "Quản lý chỗ nghỉ", path: "/admin/properties-manage" },
+  { icon: KeyRound,        label: "Liên kết quản lý nhanh", path: "/admin/quick-manage-links" },
+  { icon: CheckCircle,     label: "Phê duyệt chỗ nghỉ", path: "/admin/property-approvals" },
+  { icon: CalendarDays,    label: "Quản lý đặt phòng", path: "/admin/manage-booking" },
+  { icon: BarChart2,       label: "Báo cáo tài chính", path: "/admin/manage-reports" },
+  { icon: User,            label: "Hồ sơ cá nhân", path: "/admin/profile" },
+  { icon: Settings,        label: "Cấu hình nền tảng", path: "/admin/platform-settings" },
 ];
 
 function AdminSidebarContent({
@@ -58,7 +58,7 @@ function AdminSidebarContent({
       </div>
 
       <div className="hs-admin-nav">
-        <div className="hs-admin-section-title">Main Navigation</div>
+        <div className="hs-admin-section-title">Danh mục quản trị</div>
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -73,10 +73,10 @@ function AdminSidebarContent({
 
       <div className="hs-admin-footer">
         <Link href="/" className="hs-admin-item" style={{ color: "#94a3b8", marginBottom: 4 }}>
-          <ExternalLink size={16} /> Go to Website
+          <ExternalLink size={16} /> Về trang chủ
         </Link>
         <button className="hs-admin-item" style={{ color: "#f87171", width: "100%" }} onClick={handleLogout}>
-          <LogOut size={17} /> Logout
+          <LogOut size={17} /> Đăng xuất
         </button>
       </div>
     </>
@@ -88,10 +88,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { user, logout, isInitializing } = useAuth();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
 
   const isActive    = (path: string) => pathname === path || pathname.startsWith(path);
-  const currentPage = navItems.find((n) => isActive(n.path))?.label ?? "Dashboard";
+  const currentPage = navItems.find((n) => isActive(n.path))?.label ?? "Tổng quan quản trị";
 
   useEffect(() => {
     if (!isInitializing && (!user || user.role !== "Admin")) {
@@ -107,7 +106,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (isInitializing || !user || user.role !== "Admin") {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
-        Checking admin access...
+        Đang kiểm tra quyền quản trị viên...
       </div>
     );
   }
@@ -145,51 +144,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
             <div>
               <div style={{ fontSize: "0.78rem", color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
-                <Shield size={12} color="#2563EB" /> Admin Panel
+                <Shield size={12} color="#2563EB" /> Cổng Quản trị viên Sàn
               </div>
               <div style={{ fontWeight: 700, color: "#1e293b", fontSize: "1.05rem" }}>{currentPage}</div>
             </div>
           </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ position: "relative" }}>
-              <button style={{ background: "#f1f5f9", border: "none", width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}
-                onClick={() => setNotifOpen(!notifOpen)}>
-                <Bell size={16} color="#64748b" />
-                <span style={{ position: "absolute", top: 6, right: 7, width: 7, height: 7, borderRadius: "50%", background: "#dc2626" }} />
-              </button>
-              {notifOpen && (
-                <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, boxShadow: "0 8px 28px rgba(0,0,0,0.12)", padding: "6px", zIndex: 999, minWidth: 260 }}>
-                  <div style={{ padding: "10px 12px", borderBottom: "1px solid #f1f5f9", fontWeight: 700, color: "#1e293b", fontSize: "0.87rem" }}>Admin Alerts (3)</div>
-                  {[
-                    { title: "New property pending",  desc: "Minimalist Tokyo Studio awaiting approval", time: "5m ago", dot: "#d97706" },
-                    { title: "User reported",          desc: "Safety report from guest #1029",            time: "1h ago", dot: "#dc2626" },
-                    { title: "Revenue milestone",      desc: "Monthly revenue hit $24,600!",              time: "2h ago", dot: "#16a34a" },
-                  ].map((n, i) => (
-                    <div key={i} style={{ padding: "10px 12px", borderRadius: 8, cursor: "pointer" }}
-                      onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "#f8fafc")}
-                      onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "none")}>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <div style={{ width: 7, height: 7, borderRadius: "50%", background: n.dot, marginTop: 5, flexShrink: 0 }} />
-                        <div>
-                          <div style={{ fontWeight: 600, color: "#1e293b", fontSize: "0.83rem" }}>{n.title}</div>
-                          <div style={{ color: "#64748b", fontSize: "0.77rem" }}>{n.desc}</div>
-                          <div style={{ color: "#94a3b8", fontSize: "0.72rem", marginTop: 2 }}>{n.time}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "#fce7f3", borderRadius: 8, padding: "5px 12px", border: "1px solid #fbcfe8" }}>
-              <Shield size={14} color="#db2777" />
-              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#9d174d" }}>Admin</span>
-            </div>
-          </div>
         </div>
 
-        {children}
+        <div>{children}</div>
       </div>
     </div>
   );

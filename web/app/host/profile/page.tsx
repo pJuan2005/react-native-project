@@ -37,7 +37,7 @@ export default function HostProfilePage() {
           ).length,
         });
       } catch (_error) {
-        setStatsError("Unable to load host statistics right now.");
+        setStatsError("Không thể tải số liệu thống kê của chủ nhà lúc này.");
       }
     }
 
@@ -55,18 +55,18 @@ export default function HostProfilePage() {
           color: "#64748b",
         }}
       >
-        Loading host profile...
+        Đang tải hồ sơ chủ nhà...
       </div>
     );
   }
 
   const initials = getUserInitials(user.name);
   const memberSince = user.joined
-    ? new Date(user.joined).toLocaleDateString("en-US", {
-        month: "long",
+    ? new Date(user.joined).toLocaleDateString("vi-VN", {
+        month: "2-digit",
         year: "numeric",
       })
-    : "January 2026";
+    : "Tháng 01/2026";
 
   return (
     <div style={{ padding: "28px" }}>
@@ -79,10 +79,10 @@ export default function HostProfilePage() {
             fontSize: "1.5rem",
           }}
         >
-          My Profile
+          Hồ sơ Chủ Homestay
         </h1>
         <p style={{ color: "#64748b", margin: 0 }}>
-          Manage your host information and account security.
+          Quản lý thông tin chủ nhà và cập nhật bảo mật tài khoản.
         </p>
       </div>
 
@@ -153,15 +153,15 @@ export default function HostProfilePage() {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#64748b" }}>
                 <Phone size={14} color="#2563EB" />
-                <span>{user.phone || "Not updated yet"}</span>
+                <span>{user.phone || "Chưa cập nhật SĐT"}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#64748b" }}>
                 <MapPin size={14} color="#2563EB" />
-                <span>{user.location || "Not updated yet"}</span>
+                <span>{user.location || "Chưa cập nhật địa chỉ"}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#64748b" }}>
                 <CalendarDays size={14} color="#2563EB" />
-                <span>Member since {memberSince}</span>
+                <span>Tham gia từ {memberSince}</span>
               </div>
             </div>
           </div>
@@ -177,12 +177,12 @@ export default function HostProfilePage() {
                 marginBottom: 12,
               }}
             >
-              Host Summary
+              Thống kê hoạt động
             </div>
             {[
-              { label: "Properties", value: stats.properties, color: "#2563EB" },
-              { label: "Bookings", value: stats.bookings, color: "#16a34a" },
-              { label: "Awaiting review", value: stats.pendingReviews, color: "#d97706" },
+              { label: "Chỗ nghỉ quản lý", value: stats.properties, color: "#2563EB" },
+              { label: "Đơn đặt phòng", value: stats.bookings, color: "#16a34a" },
+              { label: "Đơn chờ kiểm tra biên lai", value: stats.pendingReviews, color: "#d97706" },
             ].map((item, index) => (
               <div
                 key={item.label}
@@ -209,8 +209,8 @@ export default function HostProfilePage() {
         <div className="col-lg-8">
           <AccountSettingsPanel
             user={user}
-            profileTitle="Host Information"
-            passwordTitle="Change Password"
+            profileTitle="Thông tin cá nhân chủ nhà"
+            passwordTitle="Đổi mật khẩu tài khoản"
           />
         </div>
       </div>

@@ -34,34 +34,34 @@ const platformHighlights = [
   {
     icon: <Home size={24} color="#2563EB" />,
     bg: "#eff6ff",
-    title: "Property Management",
-    desc: "Hosts can create, update, and manage listings while admins review and approve every public stay.",
+    title: "Quản lý Chỗ nghỉ Toàn diện",
+    desc: "Chủ nhà dễ dàng đăng tải, cập nhật phòng và tiện nghi; Ban quản trị kiểm duyệt chặt chẽ từng cơ sở trước khi mở bán công khai.",
   },
   {
     icon: <Shield size={24} color="#059669" />,
     bg: "#ecfdf5",
-    title: "Booking Verification",
-    desc: "Guests create booking requests, upload payment proof, and wait for host or admin confirmation.",
+    title: "Quy trình Đặt phòng Minh bạch",
+    desc: "Khách hàng tạo đơn đặt phòng, quét mã VietQR và gửi ảnh biên lai; Hệ thống kiểm tra trùng lịch tự động và hỗ trợ xác nhận tức thì.",
   },
   {
     icon: <Star size={24} color="#d97706" />,
     bg: "#fef3c7",
-    title: "Review Flow",
-    desc: "Reviews are only available after a confirmed stay has passed checkout, keeping feedback tied to real bookings.",
+    title: "Đánh giá Thực từ Khách lưu trú",
+    desc: "Đánh giá chỉ mở sau khi kỳ nghỉ đã hoàn tất trả phòng, đảm bảo phản hồi chân thực 100% gắn liền với trải nghiệm thực tế.",
   },
   {
     icon: <MessageCircle size={24} color="#7c3aed" />,
     bg: "#f5f3ff",
-    title: "Booking Chat",
-    desc: "Confirmed bookings can open dedicated conversations between guest, host, and admin when needed.",
+    title: "Trao đổi Trực tiếp Thuận tiện",
+    desc: "Kênh trao đổi riêng giữa Khách, Chủ nhà và Ban quản trị giải đáp nhanh thắc mắc về đường đi, nhận phòng và hỗ trợ lưu trú.",
   },
 ];
 
 const builderPrinciples = [
-  "A focused booking flow from property approval to payment proof review.",
-  "Real roles for guest, host, and admin instead of a frontend-only demo.",
-  "Data-backed listing, dashboard, report, and review modules connected to the current database.",
-  "A structure that is practical for both demo presentation and future extension.",
+  "Quy trình đặt phòng khép kín từ kiểm duyệt chỗ nghỉ đến đối soát biên lai chuyển khoản ngân hàng.",
+  "Phân quyền thực tế đa vai trò: Khách hàng (Guest), Chủ nhà (Host) và Quản trị viên (Admin).",
+  "Hệ sinh thái đồng bộ dữ liệu thời gian thực giữa Ứng dụng Di động và Nền tảng Quản trị Web.",
+  "Kiến trúc kỹ thuật chuẩn mực, an toàn giao dịch và tối ưu hóa trải nghiệm trên mọi thiết bị.",
 ];
 
 export default function AboutPage() {
@@ -80,10 +80,8 @@ export default function AboutPage() {
         }
 
         setProperties(data);
-      } catch (_error) {
-        if (mounted) {
-          setProperties([]);
-        }
+      } catch (error) {
+        console.error("Unable to load platform statistics:", error);
       } finally {
         if (mounted) {
           setLoadingStats(false);
@@ -98,214 +96,159 @@ export default function AboutPage() {
     };
   }, []);
 
-  const stats = useMemo<AboutStats>(() => {
-    const uniqueCities = new Set(
-      properties.map((property) => property.city).filter(Boolean),
-    ).size;
-    const uniqueHosts = new Set(
-      properties.map((property) => property.hostId).filter(Boolean),
-    ).size;
-    const ratedProperties = properties.filter((property) => property.rating > 0);
+  const stats: AboutStats = useMemo(() => {
+    const propertyCount = properties.length;
+    const cities = new Set(properties.map((item) => item.city).filter(Boolean));
+    const hosts = new Set(properties.map((item) => item.hostId).filter(Boolean));
+    const ratingSum = properties.reduce(
+      (sum, item) => sum + Number(item.rating || 0),
+      0,
+    );
     const averageRating =
-      ratedProperties.length > 0
-        ? ratedProperties.reduce((sum, property) => sum + property.rating, 0) /
-          ratedProperties.length
-        : 0;
+      propertyCount > 0 ? Number((ratingSum / propertyCount).toFixed(1)) : 4.9;
 
     return {
-      propertyCount: properties.length,
-      cityCount: uniqueCities,
-      hostCount: uniqueHosts,
+      propertyCount,
+      cityCount: cities.size,
+      hostCount: hosts.size,
       averageRating,
     };
   }, [properties]);
 
-  const statCards = [
-    {
-      icon: <Home size={22} color="#2563EB" />,
-      value: loadingStats ? "..." : `${stats.propertyCount}`,
-      label: "Approved stays",
-      bg: "#eff6ff",
-    },
-    {
-      icon: <Globe size={22} color="#059669" />,
-      value: loadingStats ? "..." : `${stats.cityCount}`,
-      label: "Destinations",
-      bg: "#ecfdf5",
-    },
-    {
-      icon: <Users size={22} color="#7c3aed" />,
-      value: loadingStats ? "..." : `${stats.hostCount}`,
-      label: "Active hosts",
-      bg: "#f5f3ff",
-    },
-    {
-      icon: <Star size={22} color="#d97706" />,
-      value: loadingStats
-        ? "..."
-        : stats.averageRating > 0
-        ? stats.averageRating.toFixed(1)
-        : "New",
-      label: "Average rating",
-      bg: "#fef3c7",
-    },
-  ];
-
   return (
-    <div style={{ background: "#fff" }}>
+    <div style={{ background: "#f8fafc" }}>
+      {/* Hero Section */}
       <section
         style={{
-          background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #1d4ed8 100%)",
-          padding: "80px 0 72px",
-          textAlign: "center",
           position: "relative",
-          overflow: "hidden",
+          minHeight: 460,
+          display: "flex",
+          alignItems: "center",
+          backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.76), rgba(15, 23, 42, 0.84)), url(${IMG_HERO})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          color: "#fff",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0.08,
-            backgroundImage:
-              "radial-gradient(circle at 20% 50%, #fff 1px, transparent 1px), radial-gradient(circle at 80% 20%, #fff 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
-          }}
-        />
-        <div className="container" style={{ position: "relative" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              borderRadius: 100,
-              padding: "6px 16px",
-              marginBottom: 20,
-            }}
-          >
-            <Award size={14} color="#93c5fd" />
-            <span style={{ fontSize: "0.8rem", color: "#93c5fd", fontWeight: 600 }}>
-              About the project
-            </span>
-          </div>
-
-          <h1
-            style={{
-              color: "#fff",
-              marginBottom: 18,
-              fontSize: "clamp(2rem, 5vw, 3rem)",
-              letterSpacing: -1,
-              maxWidth: 760,
-              marginInline: "auto",
-            }}
-          >
-            A Booking Platform Built and Maintained by{" "}
+        <div className="container" style={{ padding: "80px 20px" }}>
+          <div style={{ maxWidth: 760 }}>
             <span
               style={{
-                background: "linear-gradient(90deg, #60a5fa, #a78bfa)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
+                display: "inline-block",
+                padding: "6px 14px",
+                borderRadius: 20,
+                background: "rgba(37, 99, 235, 0.28)",
+                border: "1px solid rgba(147, 197, 253, 0.35)",
+                color: "#bfdbfe",
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                letterSpacing: "0.5px",
+                textTransform: "uppercase",
+                marginBottom: 16,
               }}
             >
-              Phạm Xuân Chuẩn
+              Về nền tảng HomeStay
             </span>
-          </h1>
-
-          <p
-            style={{
-              color: "#94a3b8",
-              fontSize: "1.05rem",
-              maxWidth: 620,
-              margin: "0 auto 36px",
-              lineHeight: 1.75,
-            }}
-          >
-            HomeStay is a full-stack booking platform started in 2026, designed
-            around real role-based flows for guests, hosts, and admins.
-          </p>
-
-          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/listings">
-              <button
-                className="btn-primary-hs"
-                style={{
-                  fontSize: "0.95rem",
-                  padding: "12px 28px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                Explore properties <ArrowRight size={16} />
-              </button>
-            </Link>
-            <Link href="/contact">
-              <button
-                style={{
-                  background: "rgba(255,255,255,0.1)",
-                  border: "1.5px solid rgba(255,255,255,0.3)",
-                  color: "#fff",
-                  borderRadius: 8,
-                  padding: "12px 28px",
-                  fontSize: "0.95rem",
-                  cursor: "pointer",
-                  fontWeight: 500,
-                }}
-              >
-                Contact the developer
-              </button>
-            </Link>
+            <h1
+              style={{
+                fontSize: "2.8rem",
+                fontWeight: 800,
+                letterSpacing: "-0.8px",
+                lineHeight: 1.15,
+                margin: "0 0 16px",
+              }}
+            >
+              Hệ sinh thái kết nối lưu trú & du lịch nghỉ dưỡng xanh
+            </h1>
+            <p
+              style={{
+                fontSize: "1.05rem",
+                lineHeight: 1.7,
+                color: "#cbd5e1",
+                margin: "0 0 28px",
+              }}
+            >
+              Chúng tôi mang đến giải pháp đặt chỗ nghỉ dưỡng thông minh, minh bạch và an toàn. Nơi du khách dễ dàng tìm thấy những căn homestay mang đậm dấu ấn bản địa, và các chủ nhà có công cụ quản lý chuyên nghiệp, chống overbooking hiệu quả.
+            </p>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <Link href="/listings">
+                <button className="btn-primary-hs" style={{ padding: "12px 24px" }}>
+                  Khám phá chỗ nghỉ ngay <ArrowRight size={16} />
+                </button>
+              </Link>
+              <Link href="/contact">
+                <button
+                  className="btn-outline-hs"
+                  style={{
+                    padding: "12px 24px",
+                    color: "#fff",
+                    borderColor: "rgba(255, 255, 255, 0.35)",
+                  }}
+                >
+                  Liên hệ hỗ trợ
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <section style={{ padding: "60px 0", background: "#f8fafc" }}>
+      {/* Stats Bar */}
+      <section style={{ transform: "translateY(-30px)", position: "relative", zIndex: 10 }}>
         <div className="container">
-          <div style={{ textAlign: "center", marginBottom: 28 }}>
-            <h2 className="hs-section-title" style={{ marginBottom: 10 }}>
-              Live Platform Snapshot
-            </h2>
-            <p className="hs-section-subtitle" style={{ maxWidth: 620, margin: "0 auto" }}>
-              A quick overview of the current platform footprint across public
-              stays, destinations, hosts, and guest ratings.
-            </p>
-          </div>
-
-          <div className="row g-4">
-            {statCards.map((stat) => (
-              <div key={stat.label} className="col-lg-3 col-sm-6">
+          <div
+            className="hs-card"
+            style={{
+              padding: "24px 28px",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: 20,
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.08)",
+            }}
+          >
+            {[
+              {
+                icon: <Building2 size={24} color="#2563EB" />,
+                value: loadingStats ? "..." : `${stats.propertyCount}+`,
+                label: "Chỗ nghỉ trên toàn quốc",
+              },
+              {
+                icon: <Globe size={24} color="#059669" />,
+                value: loadingStats ? "..." : `${stats.cityCount}+`,
+                label: "Tỉnh thành & Điểm đến",
+              },
+              {
+                icon: <UserRound size={24} color="#7c3aed" />,
+                value: loadingStats ? "..." : `${stats.hostCount}+`,
+                label: "Chủ nhà đồng hành",
+              },
+              {
+                icon: <Star size={24} color="#d97706" />,
+                value: loadingStats ? "..." : `${stats.averageRating}★`,
+                label: "Điểm đánh giá trung bình",
+              },
+            ].map((stat, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <div
                   style={{
-                    background: "#fff",
-                    borderRadius: 16,
-                    padding: "28px 24px",
+                    width: 50,
+                    height: 50,
+                    borderRadius: 14,
+                    background: "#f8fafc",
                     border: "1px solid #e2e8f0",
-                    textAlign: "center",
-                    boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
                   }}
                 >
-                  <div
-                    style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 14,
-                      background: stat.bg,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      margin: "0 auto 14px",
-                    }}
-                  >
-                    {stat.icon}
-                  </div>
-                  <div style={{ fontSize: "2rem", fontWeight: 800, color: "#1e293b", letterSpacing: -1 }}>
+                  {stat.icon}
+                </div>
+                <div>
+                  <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#1e293b" }}>
                     {stat.value}
                   </div>
-                  <div style={{ color: "#64748b", fontSize: "0.87rem", marginTop: 4 }}>
-                    {stat.label}
-                  </div>
+                  <div style={{ fontSize: "0.82rem", color: "#64748b" }}>{stat.label}</div>
                 </div>
               </div>
             ))}
@@ -313,319 +256,115 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section style={{ padding: "72px 0" }}>
+      {/* Pillars Section */}
+      <section style={{ padding: "40px 0 70px" }}>
+        <div className="container">
+          <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 48px" }}>
+            <span
+              style={{
+                fontSize: "0.78rem",
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                color: "#2563EB",
+                display: "block",
+                marginBottom: 6,
+              }}
+            >
+              Hệ thống vận hành
+            </span>
+            <h2 style={{ fontSize: "2rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+              Các tính năng cốt lõi của nền tảng
+            </h2>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24 }}>
+            {platformHighlights.map((item, idx) => (
+              <div
+                key={idx}
+                className="hs-card"
+                style={{ padding: 26, display: "flex", flexDirection: "column", height: "100%" }}
+              >
+                <div
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 14,
+                    background: item.bg,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: 18,
+                  }}
+                >
+                  {item.icon}
+                </div>
+                <h3 style={{ fontSize: "1.08rem", fontWeight: 800, color: "#1e293b", margin: "0 0 8px" }}>
+                  {item.title}
+                </h3>
+                <p style={{ color: "#64748b", fontSize: "0.87rem", lineHeight: 1.65, margin: 0 }}>
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Principles Section */}
+      <section style={{ padding: "70px 0", background: "#fff", borderTop: "1px solid #e2e8f0" }}>
         <div className="container">
           <div className="row g-5 align-items-center">
             <div className="col-lg-6">
-              <div style={{ position: "relative" }}>
-                <img
-                  src={IMG_PRODUCT}
-                  alt="HomeStay product workflow"
-                  style={{ width: "100%", borderRadius: 20, objectFit: "cover", height: 420 }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: 24,
-                    left: 24,
-                    right: 24,
-                    background: "rgba(15,23,42,0.86)",
-                    backdropFilter: "blur(8px)",
-                    borderRadius: 12,
-                    padding: "16px 20px",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                >
-                  <div style={{ color: "#fff", fontWeight: 700, marginBottom: 4 }}>
-                    Started in 2026
-                  </div>
-                  <div style={{ color: "#94a3b8", fontSize: "0.85rem" }}>
-                    Designed as a full-stack booking system with property approval,
-                    payment proof, review flow, reporting, and role-based dashboards.
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-lg-6">
-              <div
+              <span
                 style={{
-                  display: "inline-block",
-                  background: "#eff6ff",
-                  borderRadius: 8,
-                  padding: "4px 14px",
-                  marginBottom: 16,
-                }}
-              >
-                <span style={{ color: "#2563EB", fontSize: "0.8rem", fontWeight: 700 }}>
-                  PROJECT STORY
-                </span>
-              </div>
-              <h2
-                style={{
+                  fontSize: "0.78rem",
                   fontWeight: 800,
-                  color: "#1e293b",
-                  marginBottom: 18,
-                  letterSpacing: -0.5,
-                  fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  color: "#2563EB",
+                  display: "block",
+                  marginBottom: 6,
                 }}
               >
-                Built as a Real Booking Flow, Not Just a UI Demo
+                Cam kết phát triển
+              </span>
+              <h2 style={{ fontSize: "2rem", fontWeight: 800, color: "#1e293b", margin: "0 0 16px" }}>
+                Xây dựng nền tảng vững chắc và an toàn
               </h2>
-              <p style={{ color: "#64748b", lineHeight: 1.8, marginBottom: 20, fontSize: "0.97rem" }}>
-                This project was developed independently by Phạm Xuân Chuẩn to
-                model a more complete booking platform: properties are created by
-                hosts, reviewed by admins, booked by guests, verified through
-                payment proof, and closed with reviews after checkout.
-              </p>
-              <p style={{ color: "#64748b", lineHeight: 1.8, marginBottom: 28, fontSize: "0.97rem" }}>
-                The goal is to bring property management, booking workflows,
-                role permissions, and public browsing into one consistent and
-                practical experience.
+              <p style={{ color: "#64748b", lineHeight: 1.7, fontSize: "0.92rem", marginBottom: 24 }}>
+                Hệ thống được thiết kế xuất phát từ nhu cầu thực tiễn của các cơ sở homestay vừa và nhỏ tại Việt Nam. Không chỉ là nơi quảng bá hình ảnh, chúng tôi số hóa toàn bộ khâu tiếp nhận khách, thanh toán và đối soát dòng tiền.
               </p>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {builderPrinciples.map((item) => (
-                  <div key={item} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div
-                      style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: "50%",
-                        background: "#dcfce7",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <CheckCircle size={13} color="#16a34a" />
-                    </div>
-                    <span style={{ color: "#475569", fontSize: "0.9rem" }}>{item}</span>
+              <div style={{ display: "grid", gap: 12 }}>
+                {builderPrinciples.map((text, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <CheckCircle size={18} color="#16a34a" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <span style={{ fontSize: "0.88rem", color: "#334155", lineHeight: 1.6 }}>
+                      {text}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      <section style={{ padding: "72px 0", background: "#f8fafc" }}>
-        <div className="container">
-          <div style={{ textAlign: "center", marginBottom: 52 }}>
-            <div
-              style={{
-                display: "inline-block",
-                background: "#eff6ff",
-                borderRadius: 8,
-                padding: "4px 14px",
-                marginBottom: 14,
-              }}
-            >
-              <span style={{ color: "#2563EB", fontSize: "0.8rem", fontWeight: 700 }}>
-                PLATFORM MODULES
-              </span>
-            </div>
-            <h2 className="hs-section-title" style={{ marginBottom: 12 }}>
-              What the Current Platform Already Covers
-            </h2>
-            <p className="hs-section-subtitle" style={{ maxWidth: 620, margin: "0 auto" }}>
-              These are the main flows already wired into the current system and
-              backed by the existing database and API layer.
-            </p>
-          </div>
-
-          <div className="row g-4">
-            {platformHighlights.map((item) => (
-              <div key={item.title} className="col-lg-3 col-md-6">
-                <div
-                  style={{
-                    background: "#fff",
-                    borderRadius: 16,
-                    padding: "28px 24px",
-                    border: "1px solid #e2e8f0",
-                    height: "100%",
-                    boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 14,
-                      background: item.bg,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: 18,
-                    }}
-                  >
-                    {item.icon}
-                  </div>
-                  <h4 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 10, fontSize: "1rem" }}>
-                    {item.title}
-                  </h4>
-                  <p style={{ color: "#64748b", fontSize: "0.88rem", lineHeight: 1.75, margin: 0 }}>
-                    {item.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section style={{ padding: "72px 0" }}>
-        <div className="container">
-          <div style={{ textAlign: "center", marginBottom: 44 }}>
-            <div
-              style={{
-                display: "inline-block",
-                background: "#eff6ff",
-                borderRadius: 8,
-                padding: "4px 14px",
-                marginBottom: 14,
-              }}
-            >
-              <span style={{ color: "#2563EB", fontSize: "0.8rem", fontWeight: 700 }}>
-                BUILT BY
-              </span>
-            </div>
-            <h2 className="hs-section-title" style={{ marginBottom: 12 }}>
-              The Person Behind HomeStay
-            </h2>
-            <p className="hs-section-subtitle" style={{ maxWidth: 520, margin: "0 auto" }}>
-              This project is currently developed and maintained by a single
-              builder.
-            </p>
-          </div>
-
-          <div className="row justify-content-center">
-            <div className="col-lg-5 col-md-8">
+            <div className="col-lg-6">
               <div
                 style={{
-                  background: "#fff",
+                  position: "relative",
                   borderRadius: 20,
-                  border: "1px solid #e2e8f0",
-                  boxShadow: "0 8px 30px rgba(15, 23, 42, 0.06)",
-                  padding: "32px 28px",
-                  textAlign: "center",
+                  overflow: "hidden",
+                  boxShadow: "0 16px 40px rgba(0, 0, 0, 0.1)",
+                  height: 380,
                 }}
               >
-                <div
-                  style={{
-                    width: 88,
-                    height: 88,
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, #2563EB, #7c3aed)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    margin: "0 auto 16px",
-                    boxShadow: "0 10px 24px rgba(37, 99, 235, 0.25)",
-                  }}
-                >
-                  <UserRound size={34} color="#fff" />
-                </div>
-
-                <div style={{ fontWeight: 800, color: "#1e293b", fontSize: "1.35rem", marginBottom: 6 }}>
-                  Phạm Xuân Chuẩn
-                </div>
-                <div style={{ color: "#64748b", fontSize: "0.92rem", marginBottom: 18 }}>
-                  Solo Developer • Product Builder
-                </div>
-
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    background: "#eff6ff",
-                    color: "#2563EB",
-                    borderRadius: 999,
-                    padding: "7px 14px",
-                    fontSize: "0.8rem",
-                    fontWeight: 700,
-                    marginBottom: 18,
-                  }}
-                >
-                  <Code2 size={14} />
-                  Active since 2026
-                </div>
-
-                <p style={{ color: "#64748b", lineHeight: 1.8, margin: 0 }}>
-                  Focused on turning a booking project into a more complete
-                  full-stack product, with real workflows for property approval,
-                  payment proof validation, review control, dashboards, reports,
-                  and role-based management.
-                </p>
+                <img
+                  src={IMG_PRODUCT}
+                  alt="Đội ngũ phát triển"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        style={{
-          padding: "80px 0",
-          textAlign: "center",
-          background: "linear-gradient(135deg, #1e3a5f, #1d4ed8)",
-        }}
-      >
-        <div className="container">
-          <h2
-            style={{
-              color: "#fff",
-              fontWeight: 800,
-              marginBottom: 16,
-              fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
-            }}
-          >
-            Want to Explore the Current Build?
-          </h2>
-          <p
-            style={{
-              color: "#94a3b8",
-              marginBottom: 36,
-              fontSize: "1rem",
-              maxWidth: 560,
-              marginInline: "auto",
-            }}
-          >
-            Browse the live listings, test the booking flow, or contact Phạm Xuân
-            Chuẩn directly for more details about the project.
-          </p>
-          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/listings">
-              <button
-                className="btn-primary-hs"
-                style={{
-                  fontSize: "0.95rem",
-                  padding: "12px 28px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                Browse listings <ArrowRight size={16} />
-              </button>
-            </Link>
-            <Link href="/contact">
-              <button
-                style={{
-                  background: "transparent",
-                  border: "1.5px solid rgba(255,255,255,0.4)",
-                  color: "#fff",
-                  borderRadius: 8,
-                  padding: "12px 28px",
-                  fontSize: "0.95rem",
-                  cursor: "pointer",
-                  fontWeight: 500,
-                }}
-              >
-                Contact
-              </button>
-            </Link>
           </div>
         </div>
       </section>

@@ -8,19 +8,19 @@ const paymentStatusMap: Record<
 > = {
   unpaid: {
     className: "hs-badge hs-badge-pending",
-    label: "Unpaid",
+    label: "Chưa thanh toán",
   },
   proof_uploaded: {
     className: "hs-badge hs-badge-pending",
-    label: "Proof Uploaded",
+    label: "Đã gửi biên lai",
   },
   verified: {
     className: "hs-badge hs-badge-approved",
-    label: "Verified",
+    label: "Đã xác minh",
   },
   rejected: {
     className: "hs-badge hs-badge-rejected",
-    label: "Rejected",
+    label: "Từ chối",
   },
 };
 

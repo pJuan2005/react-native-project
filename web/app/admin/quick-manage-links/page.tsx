@@ -56,7 +56,7 @@ function downloadExcelCompatibleCsv(rows: string[][], filename: string) {
   };
 
   const content = rows.map((row) => row.map(escapeCell).join(",")).join("\r\n");
-  const blob = new Blob([`\uFEFF${content}`], {
+  const blob = new Blob([`﻿${content}`], {
     type: "text/csv;charset=utf-8;",
   });
   const objectUrl = URL.createObjectURL(blob);
@@ -89,7 +89,7 @@ export default function AdminQuickManageLinksPage() {
         setNotice(
           error instanceof Error
             ? error.message
-            : "Unable to load quick management links right now.",
+            : "Không thể tải danh sách liên kết quản lý nhanh lúc này.",
         );
       } finally {
         setLoading(false);
@@ -203,9 +203,9 @@ export default function AdminQuickManageLinksPage() {
   async function handleCopy(property: PropertySummary) {
     try {
       await navigator.clipboard.writeText(getQuickManageUrl(property.manageToken || ""));
-      setNotice(`Quick link copied for "${property.title}".`);
+      setNotice(`Đã sao chép liên kết quản lý nhanh cho "${property.title}".`);
     } catch (_error) {
-      setNotice("Unable to copy the quick link on this browser.");
+      setNotice("Không thể sao chép liên kết trên trình duyệt này.");
     }
   }
 
@@ -224,12 +224,12 @@ export default function AdminQuickManageLinksPage() {
             : item,
         ),
       );
-      setNotice(`Quick link regenerated for "${property.title}".`);
+      setNotice(`Đã tạo mới mã liên kết quản lý cho "${property.title}".`);
     } catch (error) {
       setNotice(
         error instanceof Error
           ? error.message
-          : "Unable to regenerate the quick link right now.",
+          : "Không thể tạo mới mã liên kết quản lý lúc này.",
       );
     } finally {
       setBusyPropertyId(null);
@@ -252,13 +252,13 @@ export default function AdminQuickManageLinksPage() {
         ),
       );
       setNotice(
-        `Quick link ${nextActive ? "enabled" : "disabled"} for "${property.title}".`,
+        `Đã ${nextActive ? "kích hoạt" : "vô hiệu hóa"} liên kết quản lý cho "${property.title}".`,
       );
     } catch (error) {
       setNotice(
         error instanceof Error
           ? error.message
-          : "Unable to update the quick link status right now.",
+          : "Không thể cập nhật trạng thái liên kết quản lý lúc này.",
       );
     } finally {
       setBusyPropertyId(null);
@@ -272,13 +272,13 @@ export default function AdminQuickManageLinksPage() {
 
     const rows = [
       [
-        "Property ID",
-        "Property Title",
-        "Host",
-        "Location",
-        "Status",
-        "Quick Link Status",
-        "Quick Link URL",
+        "Mã chỗ nghỉ",
+        "Tên chỗ nghỉ",
+        "Chủ nhà",
+        "Địa điểm",
+        "Trạng thái duyệt",
+        "Trạng thái liên kết",
+        "Đường dẫn quản lý nhanh",
       ],
       ...selectedHost.properties.map((property) => [
         String(property.id),
@@ -286,18 +286,18 @@ export default function AdminQuickManageLinksPage() {
         property.hostName,
         property.location,
         property.status,
-        property.manageTokenActive ? "active" : "disabled",
+        property.manageTokenActive ? "đang hoạt động" : "đã tắt",
         getQuickManageUrl(property.manageToken || ""),
       ]),
     ];
 
     downloadExcelCompatibleCsv(
       rows,
-      `quick-manage-links-${selectedHost.hostName
+      `danh-sach-lien-ket-quan-ly-${selectedHost.hostName
         .replace(/\s+/g, "-")
         .toLowerCase()}.csv`,
     );
-    setNotice(`Excel-compatible CSV exported for ${selectedHost.hostName}.`);
+    setNotice(`Đã xuất tệp CSV Excel thành công cho chủ nhà ${selectedHost.hostName}.`);
   }
 
   return (
@@ -321,16 +321,15 @@ export default function AdminQuickManageLinksPage() {
               fontSize: "1.5rem",
             }}
           >
-            Quick Manage Links
+            Liên kết Quản lý Nhanh tại Quầy
           </h1>
           <p style={{ color: "#64748b", margin: 0, maxWidth: 760 }}>
-            Browse hosts first, then review or export the approved quick links
-            attached to that host&apos;s properties.
+            Quản lý và cấp quyền liên kết tự đăng ký nhận khách tại quầy (walk-in) dành riêng cho từng chủ homestay.
           </p>
         </div>
 
         <Link href="/admin/properties-manage">
-          <button className="btn-outline-hs">Open Property List</button>
+          <button className="btn-outline-hs">Xem danh sách chỗ nghỉ</button>
         </Link>
       </div>
 
@@ -363,7 +362,7 @@ export default function AdminQuickManageLinksPage() {
                 marginTop: 12,
               }}
             >
-              Hosts with approved quick links
+              Chủ nhà có liên kết quản lý
             </div>
             <div
               style={{
@@ -390,7 +389,7 @@ export default function AdminQuickManageLinksPage() {
                 marginTop: 12,
               }}
             >
-              Approved properties with quick links
+              Chỗ nghỉ đã cấp liên kết
             </div>
             <div
               style={{
@@ -417,7 +416,7 @@ export default function AdminQuickManageLinksPage() {
                 marginTop: 12,
               }}
             >
-              Active quick links
+              Liên kết đang hoạt động
             </div>
             <div
               style={{
@@ -457,10 +456,10 @@ export default function AdminQuickManageLinksPage() {
                 marginBottom: 4,
               }}
             >
-              Hosts
+              Danh sách Chủ Homestay
             </div>
             <div style={{ color: "#64748b", fontSize: "0.82rem" }}>
-              Search and select one host to inspect their quick management links.
+              Tìm kiếm và chọn chủ nhà để quản lý danh sách liên kết tại quầy.
             </div>
           </div>
 
@@ -477,7 +476,7 @@ export default function AdminQuickManageLinksPage() {
             />
             <input
               className="hs-form-control"
-              placeholder="Search host name..."
+              placeholder="Tìm theo tên chủ nhà..."
               value={hostSearch}
               onChange={(event) => setHostSearch(event.target.value)}
               style={{ paddingLeft: 36 }}
@@ -489,10 +488,10 @@ export default function AdminQuickManageLinksPage() {
           <table className="hs-table">
             <thead>
               <tr>
-                <th>Host</th>
-                <th>Approved Properties</th>
-                <th>Active Links</th>
-                <th>Actions</th>
+                <th>Chủ nhà</th>
+                <th>Chỗ nghỉ đã duyệt</th>
+                <th>Liên kết đang bật</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -506,7 +505,7 @@ export default function AdminQuickManageLinksPage() {
                       color: "#94a3b8",
                     }}
                   >
-                    Loading hosts...
+                    Đang tải danh sách chủ nhà...
                   </td>
                 </tr>
               ) : paginatedHosts.length === 0 ? (
@@ -519,7 +518,7 @@ export default function AdminQuickManageLinksPage() {
                       color: "#94a3b8",
                     }}
                   >
-                    No host matched your search.
+                    Không tìm thấy chủ nhà nào phù hợp.
                   </td>
                 </tr>
               ) : (
@@ -545,7 +544,7 @@ export default function AdminQuickManageLinksPage() {
                               fontSize: "0.75rem",
                             }}
                           >
-                            Host ID #{host.hostId}
+                            Mã chủ nhà #{host.hostId}
                           </div>
                         </div>
                       </td>
@@ -572,7 +571,7 @@ export default function AdminQuickManageLinksPage() {
                             cursor: "pointer",
                           }}
                         >
-                          {isSelected ? "Selected" : "View links"}
+                          {isSelected ? "Đang chọn" : "Xem liên kết"}
                         </button>
                       </td>
                     </tr>
@@ -589,7 +588,7 @@ export default function AdminQuickManageLinksPage() {
         totalPages={totalHostPages}
         totalItems={filteredHosts.length}
         pageSize={HOSTS_PER_PAGE}
-        itemLabel="hosts"
+        itemLabel="chủ nhà"
         onPageChange={setHostPage}
       />
 
@@ -615,13 +614,13 @@ export default function AdminQuickManageLinksPage() {
               }}
             >
               {selectedHost
-                ? `${selectedHost.hostName}'s quick links`
-                : "Selected host quick links"}
+                ? `Liên kết quản lý của: ${selectedHost.hostName}`
+                : "Liên kết quản lý của chủ nhà được chọn"}
             </div>
             <div style={{ color: "#64748b", fontSize: "0.82rem" }}>
               {selectedHost
-                ? `${selectedHost.total} approved properties · ${selectedHost.active} active links`
-                : "Choose one host above to view and export their property links."}
+                ? `${selectedHost.total} chỗ nghỉ đã duyệt · ${selectedHost.active} liên kết đang kích hoạt`
+                : "Vui lòng chọn một chủ nhà ở bảng trên để xem và xuất liên kết."}
             </div>
           </div>
 
@@ -632,7 +631,7 @@ export default function AdminQuickManageLinksPage() {
             className="btn-primary-hs"
             style={{ opacity: selectedHost ? 1 : 0.6 }}
           >
-            Export Selected Host Links
+            Xuất danh sách ra Excel (CSV)
           </button>
         </div>
 
@@ -640,11 +639,11 @@ export default function AdminQuickManageLinksPage() {
           <table className="hs-table">
             <thead>
               <tr>
-                <th>Property</th>
-                <th>Status</th>
-                <th>Link Status</th>
-                <th>Quick Link</th>
-                <th>Actions</th>
+                <th>Chỗ nghỉ</th>
+                <th>Trạng thái duyệt</th>
+                <th>Trạng thái liên kết</th>
+                <th>Đường dẫn truy cập</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -658,7 +657,7 @@ export default function AdminQuickManageLinksPage() {
                       color: "#94a3b8",
                     }}
                   >
-                    Select a host above to inspect that host&apos;s quick links.
+                    Vui lòng chọn một chủ nhà phía trên để kiểm tra liên kết.
                   </td>
                 </tr>
               ) : paginatedProperties.length === 0 ? (
@@ -671,7 +670,7 @@ export default function AdminQuickManageLinksPage() {
                       color: "#94a3b8",
                     }}
                   >
-                    This host does not have any approved quick links yet.
+                    Chủ nhà này chưa có chỗ nghỉ nào được cấp liên kết quản lý.
                   </td>
                 </tr>
               ) : (
@@ -728,7 +727,7 @@ export default function AdminQuickManageLinksPage() {
                           ) : (
                             <ShieldOff size={13} />
                           )}
-                          {property.manageTokenActive ? "Active" : "Disabled"}
+                          {property.manageTokenActive ? "Đang bật" : "Đã tắt"}
                         </span>
                       </td>
                       <td style={{ maxWidth: 320 }}>
@@ -775,7 +774,7 @@ export default function AdminQuickManageLinksPage() {
                             }}
                           >
                             <Copy size={13} />
-                            Copy
+                            Sao chép
                           </button>
                           <Link href={quickPath} target="_blank" rel="noreferrer">
                             <button
@@ -795,7 +794,7 @@ export default function AdminQuickManageLinksPage() {
                               }}
                             >
                               <ExternalLink size={13} />
-                              Open
+                              Mở
                             </button>
                           </Link>
                           <button
@@ -818,7 +817,7 @@ export default function AdminQuickManageLinksPage() {
                               opacity: busy ? 0.7 : 1,
                             }}
                           >
-                            {property.manageTokenActive ? "Disable" : "Enable"}
+                            {property.manageTokenActive ? "Tắt" : "Bật"}
                           </button>
                           <button
                             type="button"
@@ -840,7 +839,7 @@ export default function AdminQuickManageLinksPage() {
                             }}
                           >
                             <RefreshCcw size={13} />
-                            Regenerate
+                            Tạo lại mã
                           </button>
                         </div>
                       </td>
@@ -852,17 +851,6 @@ export default function AdminQuickManageLinksPage() {
           </table>
         </div>
       </div>
-
-      {selectedHost && (
-        <PaginationControls
-          currentPage={safePropertyPage}
-          totalPages={totalPropertyPages}
-          totalItems={selectedHostProperties.length}
-          pageSize={LINKS_PER_PAGE}
-          itemLabel="quick links"
-          onPageChange={setPropertyPage}
-        />
-      )}
     </div>
   );
 }

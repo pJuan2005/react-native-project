@@ -23,26 +23,26 @@ const contactInfo = [
   {
     icon: <Mail size={22} color="#2563EB" />,
     bg: "#eff6ff",
-    title: "Email",
+    title: "Email liên hệ",
     lines: ["phamchuan2608@gmail.com"],
   },
   {
     icon: <Phone size={22} color="#059669" />,
     bg: "#ecfdf5",
-    title: "Phone",
-    lines: ["0362111527", "Mon - Sat, 8am - 9pm"],
+    title: "Hotline hỗ trợ",
+    lines: ["0362111527", "Thứ 2 - Thứ 7, 8:00 - 21:00"],
   },
   {
     icon: <MapPin size={22} color="#7c3aed" />,
     bg: "#f5f3ff",
-    title: "Address",
+    title: "Địa chỉ văn phòng",
     lines: ["Bình Giang, Hải Phòng", "Việt Nam"],
   },
   {
     icon: <HeadphonesIcon size={22} color="#d97706" />,
     bg: "#fef3c7",
-    title: "Support",
-    lines: ["24/7 Guest Support", "Direct support for hosts and guests"],
+    title: "Chăm sóc khách hàng",
+    lines: ["Hỗ trợ kỹ thuật 24/7", "Đồng hành cùng chủ nhà & khách du lịch"],
   },
 ];
 
@@ -50,54 +50,30 @@ const supportChannels = [
   {
     icon: <MessageSquare size={24} color="#2563EB" />,
     bg: "#eff6ff",
-    title: "Live Chat",
-    desc: "Chat with us directly when you need support for booking, hosting, or account issues.",
-    action: "Start Chat",
+    title: "Trò chuyện trực tuyến",
+    desc: "Trao đổi trực tiếp khi bạn cần hỗ trợ nhanh về thông tin đặt phòng, phòng nghỉ hoặc tài khoản.",
+    action: "Bắt đầu nhắn tin",
   },
   {
     icon: <HeadphonesIcon size={24} color="#7c3aed" />,
     bg: "#f5f3ff",
-    title: "Phone Support",
-    desc: "Call directly during working hours when you need a faster conversation.",
-    action: "Call Now",
+    title: "Tổng đài điện thoại",
+    desc: "Gọi trực tiếp trong giờ hành chính để được giải đáp và hỗ trợ nhanh chóng nhất.",
+    action: "Gọi ngay",
   },
   {
     icon: <BookOpen size={24} color="#059669" />,
     bg: "#ecfdf5",
-    title: "Help Center",
-    desc: "Browse guides for booking, payment proof, hosting workflows, and account settings.",
-    action: "Browse Guides",
+    title: "Trung tâm trợ giúp",
+    desc: "Xem hướng dẫn đặt phòng, thanh toán VietQR, quy trình đăng chỗ nghỉ và cài đặt tài khoản.",
+    action: "Xem hướng dẫn",
   },
   {
     icon: <Shield size={24} color="#dc2626" />,
     bg: "#fef2f2",
-    title: "Safety Support",
-    desc: "Reach out quickly if you need help with trust, safety, or booking-related concerns.",
-    action: "Contact Support",
-  },
-];
-
-const socialLinks = [
-  {
-    icon: <Facebook size={18} />,
-    label: "Facebook",
-    color: "#1877F2",
-    bg: "#e7f0fd",
-    href: "https://www.facebook.com/pham.chuan.915459/",
-  },
-  {
-    icon: <Instagram size={18} />,
-    label: "Instagram",
-    color: "#E1306C",
-    bg: "#fce4ec",
-    href: "#!",
-  },
-  {
-    icon: <Twitter size={18} />,
-    label: "Twitter",
-    color: "#1DA1F2",
-    bg: "#e7f5fe",
-    href: "#!",
+    title: "An toàn & Khiếu nại",
+    desc: "Liên hệ ngay nếu bạn cần hỗ trợ về vấn đề xác minh, an toàn lưu trú hoặc giải quyết tranh chấp.",
+    action: "Gửi yêu cầu",
   },
 ];
 
@@ -106,126 +82,104 @@ export default function ContactPage() {
     name: "",
     email: "",
     subject: "",
-    category: "",
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setLoading(true);
-
-    setTimeout(() => {
-      setLoading(false);
-      setSubmitted(true);
-    }, 1200);
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitted(true);
+    setForm({ name: "", email: "", subject: "", message: "" });
   }
 
   return (
-    <div style={{ background: "#fff" }}>
+    <div style={{ background: "#f8fafc" }}>
+      {/* Hero Banner */}
       <section
         style={{
-          background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #1d4ed8 100%)",
-          padding: "64px 0 56px",
-          textAlign: "center",
           position: "relative",
-          overflow: "hidden",
+          minHeight: 380,
+          display: "flex",
+          alignItems: "center",
+          backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.76), rgba(15, 23, 42, 0.84)), url(${IMG_CONTACT})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          color: "#fff",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0.07,
-            backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-        <div className="container" style={{ position: "relative" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              borderRadius: 100,
-              padding: "5px 16px",
-              marginBottom: 18,
-            }}
-          >
-            <Mail size={13} color="#93c5fd" />
-            <span style={{ fontSize: "0.78rem", color: "#93c5fd", fontWeight: 600 }}>
-              Get in Touch
+        <div className="container" style={{ padding: "60px 20px" }}>
+          <div style={{ maxWidth: 640 }}>
+            <span
+              style={{
+                display: "inline-block",
+                padding: "6px 14px",
+                borderRadius: 20,
+                background: "rgba(37, 99, 235, 0.28)",
+                border: "1px solid rgba(147, 197, 253, 0.35)",
+                color: "#bfdbfe",
+                fontSize: "0.82rem",
+                fontWeight: 700,
+                letterSpacing: "0.5px",
+                textTransform: "uppercase",
+                marginBottom: 14,
+              }}
+            >
+              Liên hệ với chúng tôi
             </span>
+            <h1
+              style={{
+                fontSize: "2.6rem",
+                fontWeight: 800,
+                letterSpacing: "-0.6px",
+                lineHeight: 1.18,
+                margin: "0 0 14px",
+              }}
+            >
+              Chúng tôi luôn sẵn sàng lắng nghe & hỗ trợ bạn
+            </h1>
+            <p style={{ fontSize: "1rem", color: "#cbd5e1", lineHeight: 1.6, margin: 0 }}>
+              Bạn có câu hỏi về việc đặt homestay, hợp tác mở bán phòng nghỉ hoặc cần hỗ trợ sự cố? Hãy gửi tin nhắn cho chúng tôi.
+            </p>
           </div>
-          <h1
-            style={{
-              color: "#fff",
-              marginBottom: 14,
-              fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
-              letterSpacing: -0.8,
-            }}
-          >
-            Let&apos;s Talk About Your Stay
-          </h1>
-          <p
-            style={{
-              color: "#94a3b8",
-              maxWidth: 520,
-              margin: "0 auto",
-              fontSize: "1rem",
-              lineHeight: 1.7,
-            }}
-          >
-            Reach out if you need help with a booking, hosting workflow, or general
-            support. We are here to help.
-          </p>
         </div>
       </section>
 
-      <section style={{ padding: "60px 0 20px", background: "#f8fafc" }}>
+      {/* Info Cards */}
+      <section style={{ transform: "translateY(-30px)", position: "relative", zIndex: 10 }}>
         <div className="container">
-          <div className="row g-4">
-            {contactInfo.map((item) => (
-              <div key={item.title} className="col-lg-3 col-sm-6">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 20,
+            }}
+          >
+            {contactInfo.map((item, idx) => (
+              <div
+                key={idx}
+                className="hs-card"
+                style={{ padding: "22px 20px", display: "flex", gap: 14, alignItems: "flex-start" }}
+              >
                 <div
                   style={{
-                    background: "#fff",
-                    borderRadius: 14,
-                    padding: "24px 20px",
-                    border: "1px solid #e2e8f0",
-                    textAlign: "center",
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    background: item.bg,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
                   }}
                 >
-                  <div
-                    style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 14,
-                      background: item.bg,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      margin: "0 auto 16px",
-                    }}
-                  >
-                    {item.icon}
-                  </div>
-                  <h5 style={{ fontWeight: 700, color: "#1e293b", marginBottom: 8 }}>
+                  {item.icon}
+                </div>
+                <div>
+                  <h4 style={{ fontWeight: 800, fontSize: "0.95rem", color: "#1e293b", margin: "0 0 4px" }}>
                     {item.title}
-                  </h5>
-                  {item.lines.map((line) => (
-                    <div
-                      key={line}
-                      style={{
-                        color: "#64748b",
-                        fontSize: "0.87rem",
-                        lineHeight: 1.7,
-                      }}
-                    >
+                  </h4>
+                  {item.lines.map((line, i) => (
+                    <div key={i} style={{ color: "#64748b", fontSize: "0.82rem", lineHeight: 1.5 }}>
                       {line}
                     </div>
                   ))}
@@ -236,357 +190,149 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section style={{ padding: "56px 0 72px", background: "#f8fafc" }}>
+      {/* Contact Form & Support Channels */}
+      <section style={{ padding: "40px 0 70px" }}>
         <div className="container">
-          <div className="row g-5 align-items-start">
+          <div className="row g-5">
+            {/* Form */}
             <div className="col-lg-7">
-              <div
-                style={{
-                  background: "#fff",
-                  borderRadius: 20,
-                  padding: "36px",
-                  border: "1px solid #e2e8f0",
-                  boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
-                }}
-              >
+              <div className="hs-card" style={{ padding: "32px 28px" }}>
+                <h3 style={{ fontWeight: 800, color: "#1e293b", fontSize: "1.3rem", margin: "0 0 8px" }}>
+                  Gửi tin nhắn phản hồi
+                </h3>
+                <p style={{ color: "#64748b", fontSize: "0.88rem", margin: "0 0 24px" }}>
+                  Điền đầy đủ thông tin bên dưới, bộ phận chăm sóc khách hàng sẽ phản hồi qua email trong vòng 24 giờ.
+                </p>
+
                 {submitted ? (
-                  <div style={{ textAlign: "center", padding: "40px 20px" }}>
-                    <div
-                      style={{
-                        width: 72,
-                        height: 72,
-                        borderRadius: "50%",
-                        background: "#dcfce7",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        margin: "0 auto 20px",
-                      }}
-                    >
-                      <CheckCircle size={36} color="#16a34a" />
-                    </div>
-                    <h3 style={{ fontWeight: 800, color: "#1e293b", marginBottom: 12 }}>
-                      Message Sent
-                    </h3>
-                    <p
-                      style={{
-                        color: "#64748b",
-                        fontSize: "0.95rem",
-                        lineHeight: 1.7,
-                        marginBottom: 24,
-                      }}
-                    >
-                      Thanks for reaching out. We will review your message and get back
-                      to you as soon as possible.
+                  <div
+                    style={{
+                      padding: "24px 20px",
+                      borderRadius: 14,
+                      background: "#f0fdf4",
+                      border: "1px solid #bbf7d0",
+                      textAlign: "center",
+                    }}
+                  >
+                    <CheckCircle size={36} color="#16a34a" style={{ marginBottom: 10 }} />
+                    <h4 style={{ fontWeight: 800, color: "#15803d", margin: "0 0 6px" }}>
+                      Tin nhắn của bạn đã được gửi thành công!
+                    </h4>
+                    <p style={{ color: "#166534", fontSize: "0.85rem", margin: "0 0 16px" }}>
+                      Cảm ơn bạn đã liên hệ. Chúng tôi sẽ xử lý thông tin và phản hồi sớm nhất có thể.
                     </p>
                     <button
+                      onClick={() => setSubmitted(false)}
                       className="btn-outline-hs"
-                      onClick={() => {
-                        setSubmitted(false);
-                        setForm({
-                          name: "",
-                          email: "",
-                          subject: "",
-                          category: "",
-                          message: "",
-                        });
-                      }}
+                      style={{ fontSize: "0.82rem", padding: "6px 16px" }}
                     >
-                      Send Another Message
+                      Gửi tin nhắn khác
                     </button>
                   </div>
                 ) : (
-                  <>
-                    <h3
-                      style={{
-                        fontWeight: 800,
-                        color: "#1e293b",
-                        marginBottom: 6,
-                        fontSize: "1.3rem",
-                      }}
-                    >
-                      Send a Message
-                    </h3>
-                    <p style={{ color: "#64748b", fontSize: "0.87rem", marginBottom: 28 }}>
-                      Fill out the form below and we will get back to you shortly.
-                    </p>
-
-                    <form onSubmit={handleSubmit}>
-                      <div className="row g-3">
-                        <div className="col-sm-6">
-                          <label className="hs-form-label">Full Name *</label>
-                          <input
-                            type="text"
-                            required
-                            className="hs-form-control"
-                            placeholder="John Doe"
-                            value={form.name}
-                            onChange={(event) =>
-                              setForm((prev) => ({ ...prev, name: event.target.value }))
-                            }
-                          />
-                        </div>
-                        <div className="col-sm-6">
-                          <label className="hs-form-label">Email Address *</label>
-                          <input
-                            type="email"
-                            required
-                            className="hs-form-control"
-                            placeholder="you@example.com"
-                            value={form.email}
-                            onChange={(event) =>
-                              setForm((prev) => ({ ...prev, email: event.target.value }))
-                            }
-                          />
-                        </div>
-                        <div className="col-sm-6">
-                          <label className="hs-form-label">Category</label>
-                          <select
-                            className="hs-form-control"
-                            value={form.category}
-                            onChange={(event) =>
-                              setForm((prev) => ({ ...prev, category: event.target.value }))
-                            }
-                          >
-                            <option value="">Select a category</option>
-                            <option>Booking Support</option>
-                            <option>Host Inquiry</option>
-                            <option>Payment Issue</option>
-                            <option>Safety Concern</option>
-                            <option>Technical Problem</option>
-                            <option>Other</option>
-                          </select>
-                        </div>
-                        <div className="col-sm-6">
-                          <label className="hs-form-label">Subject *</label>
-                          <input
-                            type="text"
-                            required
-                            className="hs-form-control"
-                            placeholder="Brief subject line"
-                            value={form.subject}
-                            onChange={(event) =>
-                              setForm((prev) => ({ ...prev, subject: event.target.value }))
-                            }
-                          />
-                        </div>
-                        <div className="col-12">
-                          <label className="hs-form-label">Message *</label>
-                          <textarea
-                            required
-                            className="hs-form-control"
-                            rows={5}
-                            placeholder="Tell us how we can help..."
-                            value={form.message}
-                            onChange={(event) =>
-                              setForm((prev) => ({ ...prev, message: event.target.value }))
-                            }
-                            style={{ resize: "vertical" }}
-                          />
-                        </div>
-                        <div className="col-12" style={{ paddingTop: 6 }}>
-                          <button
-                            type="submit"
-                            className="btn-primary-hs"
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 8,
-                              fontSize: "0.95rem",
-                              padding: "12px 28px",
-                            }}
-                            disabled={loading}
-                          >
-                            {loading ? "Sending..." : <><Send size={16} /> Send Message</>}
-                          </button>
-                        </div>
+                  <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16 }}>
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <label className="hs-form-label">Họ và tên *</label>
+                        <input
+                          type="text"
+                          required
+                          className="hs-form-control"
+                          placeholder="Nguyễn Văn A"
+                          value={form.name}
+                          onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        />
                       </div>
-                    </form>
-                  </>
+                      <div className="col-md-6">
+                        <label className="hs-form-label">Địa chỉ Email *</label>
+                        <input
+                          type="email"
+                          required
+                          className="hs-form-control"
+                          placeholder="name@example.com"
+                          value={form.email}
+                          onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="hs-form-label">Chủ đề cần hỗ trợ *</label>
+                      <input
+                        type="text"
+                        required
+                        className="hs-form-control"
+                        placeholder="VD: Hỗ trợ đặt phòng, hợp tác homestay..."
+                        value={form.subject}
+                        onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="hs-form-label">Nội dung chi tiết *</label>
+                      <textarea
+                        required
+                        rows={5}
+                        className="hs-form-control"
+                        placeholder="Mô tả cụ thể thắc mắc hoặc yêu cầu của bạn..."
+                        value={form.message}
+                        onChange={(e) => setForm({ ...form, message: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <button
+                        type="submit"
+                        className="btn-primary-hs"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 24px" }}
+                      >
+                        <Send size={15} />
+                        <span>Gửi tin nhắn</span>
+                      </button>
+                    </div>
+                  </form>
                 )}
               </div>
             </div>
 
+            {/* Channels */}
             <div className="col-lg-5">
-              <div
-                style={{
-                  borderRadius: 16,
-                  overflow: "hidden",
-                  marginBottom: 24,
-                  border: "1px solid #e2e8f0",
-                  position: "relative",
-                  height: 240,
-                }}
-              >
-                <img
-                  src={IMG_CONTACT}
-                  alt="Contact"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    background:
-                      "linear-gradient(135deg, rgba(15,23,42,0.7) 0%, rgba(37,99,235,0.5) 100%)",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
+              <div style={{ display: "grid", gap: 16 }}>
+                {supportChannels.map((channel, i) => (
                   <div
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: "50%",
-                      background: "rgba(255,255,255,0.15)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: 10,
-                    }}
+                    key={i}
+                    className="hs-card"
+                    style={{ padding: "20px 22px", display: "flex", gap: 14, alignItems: "flex-start" }}
                   >
-                    <MapPin size={22} color="#fff" />
-                  </div>
-                  <div style={{ color: "#fff", fontWeight: 700, fontSize: "1rem" }}>
-                    Bình Giang, Hải Phòng
-                  </div>
-                  <div style={{ color: "#93c5fd", fontSize: "0.82rem", marginTop: 4 }}>
-                    Việt Nam
-                  </div>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  background: "#fff",
-                  borderRadius: 16,
-                  padding: "22px",
-                  border: "1px solid #e2e8f0",
-                }}
-              >
-                <h5
-                  style={{
-                    fontWeight: 700,
-                    color: "#1e293b",
-                    marginBottom: 16,
-                    fontSize: "0.97rem",
-                  }}
-                >
-                  Follow Us
-                </h5>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  {socialLinks.map((social) => (
-                    <a
-                      key={social.label}
-                      href={social.href}
-                      target={social.href.startsWith("http") ? "_blank" : undefined}
-                      rel={social.href.startsWith("http") ? "noreferrer" : undefined}
+                    <div
                       style={{
+                        width: 46,
+                        height: 46,
+                        borderRadius: 12,
+                        background: channel.bg,
                         display: "flex",
                         alignItems: "center",
-                        gap: 6,
-                        padding: "7px 14px",
-                        borderRadius: 8,
-                        background: social.bg,
-                        color: social.color,
-                        textDecoration: "none",
-                        fontSize: "0.82rem",
-                        fontWeight: 600,
+                        justifyContent: "center",
+                        flexShrink: 0,
                       }}
                     >
-                      {social.icon} {social.label}
-                    </a>
-                  ))}
-                </div>
-                <p
-                  style={{
-                    color: "#94a3b8",
-                    fontSize: "0.78rem",
-                    marginTop: 14,
-                    marginBottom: 0,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  Follow along for updates, product improvements, and new travel
-                  features.
-                </p>
+                      {channel.icon}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{ fontWeight: 800, color: "#1e293b", fontSize: "0.98rem", margin: "0 0 4px" }}>
+                        {channel.title}
+                      </h4>
+                      <p style={{ color: "#64748b", fontSize: "0.83rem", lineHeight: 1.6, margin: "0 0 10px" }}>
+                        {channel.desc}
+                      </p>
+                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#2563EB", cursor: "pointer" }}>
+                        {channel.action} →
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section style={{ padding: "60px 0 72px" }}>
-        <div className="container">
-          <div style={{ textAlign: "center", marginBottom: 44 }}>
-            <h2 className="hs-section-title" style={{ marginBottom: 10 }}>
-              Other Ways to Reach Us
-            </h2>
-            <p className="hs-section-subtitle">
-              Choose the support channel that works best for you.
-            </p>
-          </div>
-          <div className="row g-4">
-            {supportChannels.map((channel) => (
-              <div key={channel.title} className="col-lg-3 col-md-6">
-                <div
-                  style={{
-                    background: "#fff",
-                    borderRadius: 16,
-                    padding: "28px 24px",
-                    border: "1px solid #e2e8f0",
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 14,
-                      background: channel.bg,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: 18,
-                    }}
-                  >
-                    {channel.icon}
-                  </div>
-                  <h5
-                    style={{
-                      fontWeight: 700,
-                      color: "#1e293b",
-                      marginBottom: 8,
-                      fontSize: "0.97rem",
-                    }}
-                  >
-                    {channel.title}
-                  </h5>
-                  <p
-                    style={{
-                      color: "#64748b",
-                      fontSize: "0.85rem",
-                      lineHeight: 1.7,
-                      flex: 1,
-                      margin: 0,
-                    }}
-                  >
-                    {channel.desc}
-                  </p>
-                  <button
-                    className="btn-outline-hs"
-                    style={{ marginTop: 18, fontSize: "0.82rem", padding: "7px 16px" }}
-                  >
-                    {channel.action}
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>

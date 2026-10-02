@@ -104,51 +104,51 @@ export function validatePropertyForm(
   const errors: PropertyFormErrors = {};
 
   if (!form.title.trim()) {
-    errors.title = "Title is required.";
+    errors.title = "Vui lòng nhập tên chỗ nghỉ.";
   }
 
   if (!form.type.trim()) {
-    errors.type = "Property type is required.";
+    errors.type = "Vui lòng chọn loại hình chỗ nghỉ.";
   }
 
   if (!form.address.trim()) {
-    errors.address = "Address is required.";
+    errors.address = "Vui lòng nhập địa chỉ chỗ nghỉ.";
   }
 
   if (!form.city.trim()) {
-    errors.city = "City is required.";
+    errors.city = "Vui lòng nhập tỉnh / thành phố.";
   }
 
   if (!form.country.trim()) {
-    errors.country = "Country is required.";
+    errors.country = "Vui lòng nhập quốc gia.";
   }
 
   const price = Number(form.price);
   if (!Number.isFinite(price) || price <= 0) {
-    errors.price = "Price per night must be greater than 0.";
+    errors.price = "Giá thuê mỗi đêm phải lớn hơn 0 ₫.";
   }
 
   if (!form.description.trim() || form.description.trim().length < 20) {
-    errors.description = "Description must be at least 20 characters.";
+    errors.description = "Mô tả chỗ nghỉ phải có ít nhất 20 ký tự.";
   }
 
   const maxGuests = Number(form.maxGuests);
   if (!Number.isInteger(maxGuests) || maxGuests <= 0) {
-    errors.maxGuests = "Maximum guests must be greater than 0.";
+    errors.maxGuests = "Số lượng khách tối đa phải lớn hơn 0.";
   }
 
   const bedrooms = Number(form.bedrooms);
   if (!Number.isInteger(bedrooms) || bedrooms < 0) {
-    errors.bedrooms = "Bedrooms value is invalid.";
+    errors.bedrooms = "Số lượng phòng ngủ không hợp lệ.";
   }
 
   const bathrooms = Number(form.bathrooms);
   if (!Number.isFinite(bathrooms) || bathrooms < 0) {
-    errors.bathrooms = "Bathrooms value is invalid.";
+    errors.bathrooms = "Số lượng phòng tắm không hợp lệ.";
   }
 
   if (options.requireCoverImage && !options.hasCoverImage) {
-    errors.coverImage = "A cover image is required for this property.";
+    errors.coverImage = "Vui lòng tải lên ảnh bìa đại diện cho chỗ nghỉ.";
   }
 
   return errors;
@@ -212,7 +212,7 @@ export function createPropertyFormData({
 }
 
 export function buildImageSizeError(file: File) {
-  return `Image "${file.name}" exceeds ${MAX_PROPERTY_IMAGE_SIZE_MB} MB. Please choose a smaller file.`;
+  return `Tệp ảnh "${file.name}" vượt quá dung lượng cho phép (${MAX_PROPERTY_IMAGE_SIZE_MB} MB). Vui lòng chọn tệp nhỏ hơn.`;
 }
 
 export function isImageFileTooLarge(file: File) {

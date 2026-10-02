@@ -4,22 +4,22 @@ import { PlatformSettingsPanel } from "@/components/shared/PlatformSettingsPanel
 const platformHighlights = [
   {
     icon: CircleDollarSign,
-    title: "Exchange Rate",
-    description: "Keeps QR payment totals aligned with the USD booking amount.",
+    title: "Tỷ giá quy đổi",
+    description: "Giữ tỷ giá quy đổi chuyển khoản ngân hàng và mã VietQR chuẩn xác.",
     color: "#2563EB",
     background: "#eff6ff",
   },
   {
     icon: BadgePercent,
-    title: "Commission Rules",
-    description: "Separate online and direct booking fees for reporting and payouts.",
+    title: "Quy tắc hoa hồng sàn",
+    description: "Phân tách tỷ lệ hoa hồng đơn đặt trực tuyến và đơn đặt tại quầy lễ tân.",
     color: "#7c3aed",
     background: "#f5f3ff",
   },
   {
     icon: ShieldCheck,
-    title: "Transfer Account",
-    description: "Control the bank account details shown in guest transfer instructions and VietQR.",
+    title: "Tài khoản nhận tiền",
+    description: "Cấu hình số tài khoản ngân hàng và tên thụ hưởng hiển thị trên mã VietQR.",
     color: "#059669",
     background: "#ecfdf5",
   },
@@ -37,11 +37,10 @@ export default function AdminPlatformSettingsPage() {
             fontSize: "1.5rem",
           }}
         >
-          Platform Settings
+          Cấu hình Nền tảng
         </h1>
         <p style={{ color: "#64748b", margin: 0 }}>
-          Manage the exchange rate, commission rules, and bank account details
-          used across the admin platform.
+          Quản lý tỷ giá, tỷ lệ chiết khấu hoa hồng và tài khoản ngân hàng thụ hưởng của sàn.
         </p>
       </div>
 
@@ -71,11 +70,10 @@ export default function AdminPlatformSettingsPage() {
                 marginBottom: 8,
               }}
             >
-              Financial Controls
+              Thiết lập Tài chính Sàn
             </h2>
             <p style={{ color: "#64748b", fontSize: "0.84rem", marginBottom: 20 }}>
-              These values affect booking calculations, host payouts, and admin
-              reporting throughout the system.
+              Các thông số này ảnh hưởng trực tiếp đến việc tính tiền thanh toán, tiền chi trả cho chủ nhà và báo cáo doanh thu.
             </p>
 
             <div style={{ display: "grid", gap: 12 }}>

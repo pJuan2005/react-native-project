@@ -1,7 +1,4 @@
 "use client";
-// ============================================================
-// TARGET: frontend/app/host/layout.tsx
-// ============================================================
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -10,15 +7,14 @@ import {
   LayoutDashboard, Building2, Plus, CalendarDays, User, LogOut,
   Home, Menu, Bell, ChevronRight, ExternalLink
 } from "lucide-react";
-// Adjust this import path if you end up putting Context in a different clear spot.
 import { useAuth, getUserInitials } from "@/components/context/AuthContext";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/host/dashboard" },
-  { icon: Building2, label: "My Properties", path: "/host/my-properties" },
-  { icon: Plus, label: "Add New Property", path: "/host/add-property" },
-  { icon: CalendarDays, label: "Bookings", path: "/host/manage-booking" },
-  { icon: User, label: "Profile", path: "/host/profile" },
+  { icon: LayoutDashboard, label: "Tổng quan", path: "/host/dashboard" },
+  { icon: Building2, label: "Chỗ nghỉ của tôi", path: "/host/my-properties" },
+  { icon: Plus, label: "Đăng chỗ nghỉ mới", path: "/host/add-property" },
+  { icon: CalendarDays, label: "Quản lý đặt phòng", path: "/host/manage-booking" },
+  { icon: User, label: "Hồ sơ chủ nhà", path: "/host/profile" },
 ];
 
 export default function HostLayout({ children }: { children: React.ReactNode }) {
@@ -45,14 +41,14 @@ export default function HostLayout({ children }: { children: React.ReactNode }) 
   if (isInitializing || !user || user.role !== "Host") {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
-        Checking host access...
+        Đang kiểm tra quyền truy cập của chủ nhà...
       </div>
     );
   }
 
-  const displayName = user?.name || "Made Wijaya";
+  const displayName = user?.name || "Chủ Homestay";
   const initials = getUserInitials(displayName);
-  const currentPage = navItems.find(n => isActive(n.path))?.label || "Dashboard";
+  const currentPage = navItems.find(n => isActive(n.path))?.label || "Tổng quan";
 
   const SidebarContent = () => (
     <>
@@ -86,14 +82,14 @@ export default function HostLayout({ children }: { children: React.ReactNode }) 
             <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {displayName}
             </div>
-            <div style={{ fontSize: "0.72rem", color: "#7c3aed", fontWeight: 600 }}>Host Account</div>
+            <div style={{ fontSize: "0.72rem", color: "#7c3aed", fontWeight: 600 }}>Tài khoản Chủ nhà</div>
           </div>
         </div>
       </div>
 
       <div className="hs-sidebar-nav">
         <div style={{ color: "#94a3b8", fontSize: "0.7rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", padding: "4px 14px 10px" }}>
-          Main Menu
+          Danh mục quản lý
         </div>
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -115,7 +111,7 @@ export default function HostLayout({ children }: { children: React.ReactNode }) 
 
       <div className="hs-sidebar-footer">
         <Link href="/" className="hs-sidebar-item" style={{ marginBottom: 4 }}>
-          <ExternalLink size={16} /> Back to Website
+          <ExternalLink size={16} /> Về trang chủ
         </Link>
         <button
           className="hs-sidebar-item"
@@ -123,7 +119,7 @@ export default function HostLayout({ children }: { children: React.ReactNode }) 
           onClick={handleLogout}
         >
           <LogOut size={17} />
-          Logout
+          Đăng xuất
         </button>
       </div>
     </>
@@ -158,7 +154,7 @@ export default function HostLayout({ children }: { children: React.ReactNode }) 
               <Menu size={22} color="#1e293b" />
             </button>
             <div>
-              <div style={{ fontSize: "0.78rem", color: "#94a3b8", fontWeight: 500 }}>Host Panel</div>
+              <div style={{ fontSize: "0.78rem", color: "#94a3b8", fontWeight: 500 }}>Cổng Chủ Homestay</div>
               <div style={{ fontWeight: 700, color: "#1e293b", fontSize: "1.05rem" }}>{currentPage}</div>
             </div>
           </div>
@@ -180,11 +176,11 @@ export default function HostLayout({ children }: { children: React.ReactNode }) 
                   boxShadow: "0 8px 28px rgba(0,0,0,0.12)", padding: "6px", zIndex: 999, minWidth: 260
                 }}>
                   <div style={{ padding: "10px 12px", borderBottom: "1px solid #f1f5f9", fontWeight: 700, color: "#1e293b", fontSize: "0.87rem" }}>
-                    Notifications (2)
+                    Thông báo mới (2)
                   </div>
                   {[
-                    { title: "New booking request", desc: "Bob Williams booked Bali Bamboo House", time: "2m ago", dot: "#2563EB" },
-                    { title: "Property approved", desc: "Your listing is now live!", time: "1h ago", dot: "#16a34a" },
+                    { title: "Yêu cầu đặt phòng mới", desc: "Khách vừa gửi yêu cầu đặt phòng", time: "2 phút trước", dot: "#2563EB" },
+                    { title: "Chỗ nghỉ đã được duyệt", desc: "Chỗ nghỉ của bạn đã mở bán thành công!", time: "1 giờ trước", dot: "#16a34a" },
                   ].map((n, i) => (
                     <div key={i} style={{ padding: "10px 12px", borderRadius: 8, cursor: "pointer" }}
                       onMouseEnter={e => (e.currentTarget.style.background = "#f8fafc")}
@@ -203,19 +199,10 @@ export default function HostLayout({ children }: { children: React.ReactNode }) 
                 </div>
               )}
             </div>
-
-            {/* Avatar */}
-            <div style={{
-              width: 34, height: 34, borderRadius: "50%",
-              background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "0.75rem", fontWeight: 700, color: "#fff", cursor: "pointer"
-            }}>
-              {initials}
-            </div>
           </div>
         </div>
-        {children}
+
+        <div>{children}</div>
       </div>
     </div>
   );

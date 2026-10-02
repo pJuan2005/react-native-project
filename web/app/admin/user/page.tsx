@@ -57,10 +57,10 @@ function formatJoinedDate(value: string) {
     return value;
   }
 
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString("vi-VN", {
     year: "numeric",
-    month: "short",
-    day: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   });
 }
 
@@ -90,7 +90,7 @@ export default function ManageUsersPage() {
       setPageError(
         error instanceof Error
           ? error.message
-          : "Unable to load the user list right now.",
+          : "Không thể tải danh sách người dùng lúc này.",
       );
     } finally {
       setIsLoading(false);
@@ -176,7 +176,7 @@ export default function ManageUsersPage() {
       setPageError(
         error instanceof Error
           ? error.message
-          : "Unable to update the user status right now.",
+          : "Không thể cập nhật trạng thái người dùng lúc này.",
       );
     } finally {
       setUpdatingStatusId(null);
@@ -203,7 +203,7 @@ export default function ManageUsersPage() {
       setPageError(
         error instanceof Error
           ? error.message
-          : "Unable to save this user right now.",
+          : "Không thể lưu thông tin người dùng lúc này.",
       );
     } finally {
       setIsSavingUser(false);
@@ -223,10 +223,10 @@ export default function ManageUsersPage() {
             fontSize: "1.5rem",
           }}
         >
-          Manage Users
+          Quản lý Người dùng
         </h1>
         <p style={{ color: "#64748b", margin: 0 }}>
-          {userList.length} registered users on the platform
+          {userList.length} tài khoản đã đăng ký trên hệ thống
         </p>
       </div>
 
@@ -247,14 +247,19 @@ export default function ManageUsersPage() {
       )}
 
       <div className="row g-3 mb-4">
-        {Object.entries(roleCounts).map(([role, count]) => (
-          <div key={role} className="col-6 col-md-3">
+        {[
+          { key: "All", label: "Tổng người dùng", count: roleCounts.All },
+          { key: "Guest", label: "Khách hàng", count: roleCounts.Guest },
+          { key: "Host", label: "Chủ Homestay", count: roleCounts.Host },
+          { key: "Admin", label: "Quản trị viên", count: roleCounts.Admin },
+        ].map((item) => (
+          <div key={item.key} className="col-6 col-md-3">
             <div className="hs-stat-card" style={{ padding: "14px 18px" }}>
               <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "#1e293b" }}>
-                {count}
+                {item.count}
               </div>
               <div style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: 600 }}>
-                {role === "All" ? "Total Users" : `${role}s`}
+                {item.label}
               </div>
             </div>
           </div>
@@ -283,7 +288,7 @@ export default function ManageUsersPage() {
           />
           <input
             className="hs-form-control"
-            placeholder="Search by name, email, or phone..."
+            placeholder="Tìm theo tên, email hoặc số điện thoại..."
             style={{ paddingLeft: 36 }}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -293,24 +298,29 @@ export default function ManageUsersPage() {
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
           <Filter size={14} color="#64748b" />
           <span style={{ fontSize: "0.82rem", color: "#64748b", fontWeight: 600 }}>
-            Role:
+            Vai trò:
           </span>
-          {(["All", "Guest", "Host", "Admin"] as RoleFilter[]).map((role) => (
+          {[
+            { key: "All", label: "Tất cả" },
+            { key: "Guest", label: "Khách" },
+            { key: "Host", label: "Chủ nhà" },
+            { key: "Admin", label: "Quản trị" },
+          ].map((role) => (
             <button
-              key={role}
-              onClick={() => setRoleFilter(role)}
+              key={role.key}
+              onClick={() => setRoleFilter(role.key as RoleFilter)}
               style={{
                 padding: "6px 12px",
                 borderRadius: 20,
                 fontSize: "0.8rem",
-                border: `1.5px solid ${roleFilter === role ? "#2563EB" : "#e2e8f0"}`,
-                background: roleFilter === role ? "#eff6ff" : "#fff",
-                color: roleFilter === role ? "#2563EB" : "#64748b",
-                fontWeight: roleFilter === role ? 700 : 500,
+                border: `1.5px solid ${roleFilter === role.key ? "#2563EB" : "#e2e8f0"}`,
+                background: roleFilter === role.key ? "#eff6ff" : "#fff",
+                color: roleFilter === role.key ? "#2563EB" : "#64748b",
+                fontWeight: roleFilter === role.key ? 700 : 500,
                 cursor: "pointer",
               }}
             >
-              {role}
+              {role.label}
             </button>
           ))}
 
@@ -322,24 +332,28 @@ export default function ManageUsersPage() {
               marginLeft: 4,
             }}
           >
-            Status:
+            Trạng thái:
           </span>
-          {(["All", "Active", "Blocked"] as StatusFilter[]).map((status) => (
+          {[
+            { key: "All", label: "Tất cả" },
+            { key: "Active", label: "Đang hoạt động" },
+            { key: "Blocked", label: "Đã khóa" },
+          ].map((status) => (
             <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
+              key={status.key}
+              onClick={() => setStatusFilter(status.key as StatusFilter)}
               style={{
                 padding: "6px 12px",
                 borderRadius: 20,
                 fontSize: "0.8rem",
-                border: `1.5px solid ${statusFilter === status ? "#2563EB" : "#e2e8f0"}`,
-                background: statusFilter === status ? "#eff6ff" : "#fff",
-                color: statusFilter === status ? "#2563EB" : "#64748b",
-                fontWeight: statusFilter === status ? 700 : 500,
+                border: `1.5px solid ${statusFilter === status.key ? "#2563EB" : "#e2e8f0"}`,
+                background: statusFilter === status.key ? "#eff6ff" : "#fff",
+                color: statusFilter === status.key ? "#2563EB" : "#64748b",
+                fontWeight: statusFilter === status.key ? 700 : 500,
                 cursor: "pointer",
               }}
             >
-              {status}
+              {status.label}
             </button>
           ))}
         </div>
@@ -364,8 +378,8 @@ export default function ManageUsersPage() {
               color: "#64748b",
             }}
           >
-            <Users size={15} /> Showing {paginatedUsers.length} of{" "}
-            {filteredUsers.length} filtered users
+            <Users size={15} /> Hiển thị {paginatedUsers.length} trên tổng số{" "}
+            {filteredUsers.length} người dùng phù hợp
           </div>
         </div>
 
@@ -373,26 +387,26 @@ export default function ManageUsersPage() {
           <table className="hs-table">
             <thead>
               <tr>
-                <th>User</th>
+                <th>Người dùng</th>
                 <th>Email</th>
-                <th>Role</th>
-                <th>Joined</th>
-                <th>Activity</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>Vai trò</th>
+                <th>Ngày tham gia</th>
+                <th>Hoạt động</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
-                    Loading users...
+                    Đang tải danh sách người dùng...
                   </td>
                 </tr>
               ) : paginatedUsers.length === 0 ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
-                    No users found
+                    Không tìm thấy người dùng nào phù hợp
                   </td>
                 </tr>
               ) : (
@@ -434,7 +448,7 @@ export default function ManageUsersPage() {
                             <div style={{ fontWeight: 700, color: "#1e293b", fontSize: "0.9rem" }}>
                               {user.name}
                             </div>
-                            <div style={{ color: "#94a3b8", fontSize: "0.75rem" }}>ID #{user.id}</div>
+                            <div style={{ color: "#94a3b8", fontSize: "0.75rem" }}>Mã #{user.id}</div>
                           </div>
                         </div>
                       </td>
@@ -448,13 +462,13 @@ export default function ManageUsersPage() {
                       <td style={{ fontSize: "0.83rem", color: "#64748b" }}>
                         {user.role === "Host" && (
                           <span>
-                            {user.propertyCount} props • {user.bookingCount} bookings
+                            {user.propertyCount} chỗ nghỉ • {user.bookingCount} đơn phòng
                           </span>
                         )}
                         {user.role === "Guest" && (
-                          <span>{user.bookingCount} bookings</span>
+                          <span>{user.bookingCount} chuyến đi</span>
                         )}
-                        {user.role === "Admin" && <span>Full access</span>}
+                        {user.role === "Admin" && <span>Toàn quyền quản trị</span>}
                       </td>
                       <td>
                         <StatusBadge status={user.status} />
@@ -478,7 +492,7 @@ export default function ManageUsersPage() {
                               cursor: "pointer",
                             }}
                           >
-                            <Pencil size={13} /> Edit
+                            <Pencil size={13} /> Sửa
                           </button>
                           <button
                             type="button"
@@ -507,11 +521,11 @@ export default function ManageUsersPage() {
                           >
                             {user.status === "Active" ? (
                               <>
-                                <UserX size={13} /> Block
+                                <UserX size={13} /> Khóa
                               </>
                             ) : (
                               <>
-                                <UserCheck size={13} /> Unblock
+                                <UserCheck size={13} /> Mở khóa
                               </>
                             )}
                           </button>
@@ -526,14 +540,16 @@ export default function ManageUsersPage() {
         </div>
       </div>
 
-      <PaginationControls
-        currentPage={safeCurrentPage}
-        totalPages={totalPages}
-        totalItems={filteredUsers.length}
-        pageSize={ITEMS_PER_PAGE}
-        itemLabel="users"
-        onPageChange={setCurrentPage}
-      />
+      <div style={{ marginTop: 20 }}>
+        <PaginationControls
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={filteredUsers.length}
+          pageSize={ITEMS_PER_PAGE}
+          itemLabel="người dùng"
+          onPageChange={setCurrentPage}
+        />
+      </div>
 
       {selectedUser && editForm && (
         <div
@@ -571,10 +587,10 @@ export default function ManageUsersPage() {
             >
               <div>
                 <h3 style={{ margin: 0, fontWeight: 800, color: "#1e293b", fontSize: "1.15rem" }}>
-                  Edit User
+                  Chỉnh sửa Người dùng
                 </h3>
                 <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "0.85rem" }}>
-                  Update account details, role, and status for {selectedUser.name}.
+                  Cập nhật thông tin tài khoản, vai trò và trạng thái cho {selectedUser.name}.
                 </p>
               </div>
               <button
@@ -583,14 +599,14 @@ export default function ManageUsersPage() {
                 onClick={closeEditModal}
                 style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               >
-                <X size={14} /> Close
+                <X size={14} /> Đóng
               </button>
             </div>
 
             <form onSubmit={handleSaveUser}>
               <div className="row g-3">
                 <div className="col-md-6">
-                  <label className="hs-form-label">Full Name</label>
+                  <label className="hs-form-label">Họ và tên</label>
                   <input
                     className="hs-form-control"
                     value={editForm.fullName}
@@ -604,7 +620,7 @@ export default function ManageUsersPage() {
                   />
                 </div>
                 <div className="col-md-6">
-                  <label className="hs-form-label">Email</label>
+                  <label className="hs-form-label">Địa chỉ Email</label>
                   <input
                     className="hs-form-control"
                     type="email"
@@ -619,7 +635,7 @@ export default function ManageUsersPage() {
                   />
                 </div>
                 <div className="col-md-6">
-                  <label className="hs-form-label">Phone Number</label>
+                  <label className="hs-form-label">Số điện thoại</label>
                   <input
                     className="hs-form-control"
                     value={editForm.phone}
@@ -633,7 +649,7 @@ export default function ManageUsersPage() {
                   />
                 </div>
                 <div className="col-md-3">
-                  <label className="hs-form-label">Role</label>
+                  <label className="hs-form-label">Vai trò</label>
                   <select
                     className="hs-form-control"
                     value={editForm.role}
@@ -649,13 +665,13 @@ export default function ManageUsersPage() {
                       )
                     }
                   >
-                    <option value="guest">Guest</option>
-                    <option value="host">Host</option>
-                    <option value="admin">Admin</option>
+                    <option value="guest">Khách hàng</option>
+                    <option value="host">Chủ Homestay</option>
+                    <option value="admin">Quản trị viên</option>
                   </select>
                 </div>
                 <div className="col-md-3">
-                  <label className="hs-form-label">Status</label>
+                  <label className="hs-form-label">Trạng thái</label>
                   <select
                     className="hs-form-control"
                     value={editForm.status}
@@ -671,12 +687,12 @@ export default function ManageUsersPage() {
                       )
                     }
                   >
-                    <option value="active">Active</option>
-                    <option value="blocked">Blocked</option>
+                    <option value="active">Đang hoạt động</option>
+                    <option value="blocked">Bị khóa</option>
                   </select>
                 </div>
                 <div className="col-md-6">
-                  <label className="hs-form-label">Location</label>
+                  <label className="hs-form-label">Địa chỉ / Khu vực</label>
                   <input
                     className="hs-form-control"
                     value={editForm.location}
@@ -690,7 +706,7 @@ export default function ManageUsersPage() {
                   />
                 </div>
                 <div className="col-md-6">
-                  <label className="hs-form-label">Website</label>
+                  <label className="hs-form-label">Trang cá nhân / Website</label>
                   <input
                     className="hs-form-control"
                     value={editForm.website}
@@ -704,7 +720,7 @@ export default function ManageUsersPage() {
                   />
                 </div>
                 <div className="col-12">
-                  <label className="hs-form-label">Languages</label>
+                  <label className="hs-form-label">Ngôn ngữ</label>
                   <input
                     className="hs-form-control"
                     value={editForm.languages}
@@ -718,7 +734,7 @@ export default function ManageUsersPage() {
                   />
                 </div>
                 <div className="col-12">
-                  <label className="hs-form-label">Bio</label>
+                  <label className="hs-form-label">Giới thiệu ngắn (Tiểu sử)</label>
                   <textarea
                     className="hs-form-control"
                     rows={4}
@@ -747,8 +763,7 @@ export default function ManageUsersPage() {
                     fontSize: "0.83rem",
                   }}
                 >
-                  Your own admin role and status are protected here. Use the profile
-                  screen for personal updates only.
+                  Vai trò quản trị viên của chính bạn được bảo vệ. Vui lòng sử dụng trang Hồ sơ cá nhân để cập nhật thông tin cá nhân của bạn.
                 </div>
               )}
 
@@ -765,7 +780,7 @@ export default function ManageUsersPage() {
                   className="btn-outline-hs"
                   onClick={closeEditModal}
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
                   type="submit"
@@ -774,7 +789,7 @@ export default function ManageUsersPage() {
                   style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
                 >
                   <Save size={14} />
-                  {isSavingUser ? "Saving..." : "Save User"}
+                  {isSavingUser ? "Đang lưu..." : "Lưu thay đổi"}
                 </button>
               </div>
             </form>
