@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { useAuth } from "@/components/context/AuthContext";
 import { getMyBookings, type BookingRecord } from "@/services/bookingService";
 import { HeroSection } from "@/components/guest/landing/HeroSection";
@@ -45,50 +43,34 @@ export default function LandingHomePage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        background: "#fcfbf9",
-        color: "#1e293b",
-      }}
-    >
-      {/* 1. Header Navigation */}
-      <Navbar />
+    <div style={{ background: "#fcfbf9", color: "#1e293b" }}>
+      {/* 1. Hero Section: Typography + Integrated Atmospheric 3D + Search */}
+      <HeroSection
+        user={user}
+        isAuthenticated={isAuthenticated}
+        recentBooking={recentBooking}
+      />
 
-      <main style={{ flex: 1 }}>
-        {/* 2. Hero Section: Typography + Integrated Atmospheric 3D + Search */}
-        <HeroSection
-          user={user}
-          isAuthenticated={isAuthenticated}
-          recentBooking={recentBooking}
-        />
+      {/* 2. Popular Destinations */}
+      <FeaturedDestinations />
 
-        {/* 3. Popular Destinations */}
-        <FeaturedDestinations />
+      {/* 3. Featured Properties */}
+      <FeaturedProperties />
 
-        {/* 4. Featured Properties */}
-        <FeaturedProperties />
+      {/* 4. Platform Experience & Values */}
+      <ExperienceValues />
 
-        {/* 5. Platform Experience & Values */}
-        <ExperienceValues />
+      {/* 5. Simple 4-Step Booking Process */}
+      <BookingSteps />
 
-        {/* 6. Simple 4-Step Booking Process */}
-        <BookingSteps />
+      {/* 6. Guest Stories & Reviews */}
+      <GuestStories />
 
-        {/* 7. Guest Stories & Reviews */}
-        <GuestStories />
-
-        {/* 8. Final Call-to-Action */}
-        <FinalCTA
-          onExploreClick={scrollToSearch}
-          isHost={user?.role === "Host"}
-        />
-      </main>
-
-      {/* 9. Platform Footer */}
-      <Footer />
+      {/* 7. Final Call-to-Action */}
+      <FinalCTA
+        onExploreClick={scrollToSearch}
+        isHost={user?.role === "Host"}
+      />
     </div>
   );
 }

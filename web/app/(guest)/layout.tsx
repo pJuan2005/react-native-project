@@ -9,7 +9,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f8fafc" }}>
       <Navbar />
-      <main style={{ flex: 1, paddingBottom: 40 }}>
+      <main style={{ flex: 1 }}>
         {children}
       </main>
       <Footer />

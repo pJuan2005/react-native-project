@@ -93,6 +93,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
             }}
           >
             <label
+              htmlFor="search-destination"
               style={{
                 display: "block",
                 fontSize: "0.72rem",
@@ -101,6 +102,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
                 textTransform: "uppercase",
                 letterSpacing: "0.4px",
                 marginBottom: 3,
+                cursor: "pointer",
               }}
             >
               Bạn muốn đi đâu?
@@ -108,6 +110,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <MapPin size={17} color="#2563EB" style={{ flexShrink: 0 }} />
               <input
+                id="search-destination"
                 type="text"
                 placeholder="Địa điểm, homestay, villa..."
                 value={location}
@@ -133,6 +136,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
                     cursor: "pointer",
                     color: "#94a3b8",
                   }}
+                  aria-label="Xóa địa điểm đã nhập"
                 >
                   <X size={14} />
                 </button>
@@ -151,6 +155,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
             }}
           >
             <label
+              htmlFor="search-checkin"
               style={{
                 display: "block",
                 fontSize: "0.72rem",
@@ -159,6 +164,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
                 textTransform: "uppercase",
                 letterSpacing: "0.4px",
                 marginBottom: 3,
+                cursor: "pointer",
               }}
             >
               Nhận phòng
@@ -166,6 +172,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Calendar size={17} color="#2563EB" style={{ flexShrink: 0 }} />
               <input
+                id="search-checkin"
                 type="date"
                 value={checkIn}
                 onChange={(e) => setCheckIn(e.target.value)}
@@ -194,6 +201,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
             }}
           >
             <label
+              htmlFor="search-checkout"
               style={{
                 display: "block",
                 fontSize: "0.72rem",
@@ -202,6 +210,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
                 textTransform: "uppercase",
                 letterSpacing: "0.4px",
                 marginBottom: 3,
+                cursor: "pointer",
               }}
             >
               Trả phòng
@@ -209,6 +218,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Calendar size={17} color="#2563EB" style={{ flexShrink: 0 }} />
               <input
+                id="search-checkout"
                 type="date"
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
@@ -237,6 +247,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
             }}
           >
             <label
+              htmlFor="search-guests"
               style={{
                 display: "block",
                 fontSize: "0.72rem",
@@ -245,6 +256,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
                 textTransform: "uppercase",
                 letterSpacing: "0.4px",
                 marginBottom: 3,
+                cursor: "pointer",
               }}
             >
               Số lượng khách
@@ -252,6 +264,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Users size={17} color="#2563EB" style={{ flexShrink: 0 }} />
               <select
+                id="search-guests"
                 value={guests}
                 onChange={(e) => setGuests(e.target.value)}
                 style={{
