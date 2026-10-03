@@ -8,6 +8,7 @@
     "backend": "cd backend && npm run dev",
     "web": "cd web && npm run dev",
     "test:system": "node backend/test-system.js",
+    "test:full": "node backend/test-full-platform.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "lint": "expo lint"

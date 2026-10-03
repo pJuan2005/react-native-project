@@ -274,7 +274,10 @@ class BookingModel {
           "SELECT setting_value FROM app_settings WHERE setting_key = 'platform_commission_rate'"
         );
         if (settingRows.length > 0) {
-          commissionRate = parseFloat(settingRows[0].setting_value) || 10.00;
+          const val = parseFloat(settingRows[0].setting_value);
+          if (!isNaN(val) && val > 0) {
+            commissionRate = val <= 1 ? val * 100 : val;
+          }
         }
       } catch (_) {}
 
@@ -454,7 +457,10 @@ class BookingModel {
           "SELECT setting_value FROM app_settings WHERE setting_key = 'direct_commission_rate'"
         );
         if (settingRows.length > 0) {
-          directCommissionRate = parseFloat(settingRows[0].setting_value) || 5.00;
+          const val = parseFloat(settingRows[0].setting_value);
+          if (!isNaN(val) && val > 0) {
+            directCommissionRate = val <= 1 ? val * 100 : val;
+          }
         }
       } catch (_) {}
 

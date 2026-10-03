@@ -17,7 +17,6 @@
   "exclude": [
     "node_modules",
     "web",
-    "admin-web",
     "backend"
   ]
 }

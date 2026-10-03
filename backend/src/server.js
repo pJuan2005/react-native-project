@@ -8,7 +8,7 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
   console.log(`=======================================================`);
   console.log(`🚀 Homestay 3-Tier Backend API is running!`);
   console.log(`📡 Backend API Base : http://localhost:${PORT}/api`);
-  console.log(`💻 Web Portal (Next): http://localhost:3001  (chạy lệnh: cd admin-web && npm run dev)`);
+  console.log(`💻 Web Portal (Next): http://localhost:3001  (chạy lệnh: cd web && npm run dev)`);
   console.log(`👑 Admin Dashboard  : http://localhost:3001/admin/dashboard`);
   console.log(`🏡 Host Workspace   : http://localhost:3001/host/dashboard`);
   console.log(`🏨 Lễ tân Walk-in   : http://localhost:3001/quick-manage/HMTOKEN_0001`);
