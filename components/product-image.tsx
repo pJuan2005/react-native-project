@@ -1,17 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Image, ImageStyle, Platform, StyleProp, View, ViewStyle } from 'react-native';
+import { Image, ImageResizeMode, ImageStyle, Platform, StyleProp, View, ViewStyle } from 'react-native';
 
-const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=300&q=80';
+const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80';
 
 export function ProductImage({
   uri,
   style,
   containerStyle,
+  resizeMode = 'cover',
 }: {
   uri: string;
   style: StyleProp<ImageStyle>;
   containerStyle?: StyleProp<ViewStyle>;
+  resizeMode?: ImageResizeMode;
 }) {
   const [failed, setFailed] = useState(false);
 
@@ -31,8 +33,9 @@ export function ProductImage({
     <Image
       source={{ uri: safeUri }}
       style={style}
-      resizeMode="cover"
+      resizeMode={resizeMode}
       onError={() => setFailed(true)}
     />
   );
 }
+

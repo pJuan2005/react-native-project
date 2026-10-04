@@ -765,57 +765,70 @@ export default function HomestayDetail() {
         onRequestClose={() => setShowFullscreenGallery(false)}
       >
         <View style={s.fullscreenOverlay}>
-          <View style={s.fullscreenHeader}>
-            <Text style={s.fullscreenTitle}>
-              {homestay.name} ({currentImage + 1}/{imagesList.length})
-            </Text>
-            <Pressable
-              style={s.closeFullscreenBtn}
-              onPress={() => setShowFullscreenGallery(false)}
-              hitSlop={8}
-            >
-              <Ionicons name="close" size={24} color="#FFFFFF" />
-            </Pressable>
-          </View>
+          {/* Top Bar with Title, Counter and Close Button */}
+          <SafeAreaView edges={['top']} style={s.fullscreenTopBar}>
+            <View style={s.fullscreenHeader}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <Text numberOfLines={1} style={s.fullscreenTitle}>
+                  {homestay.name}
+                </Text>
+                <Text style={s.fullscreenCounterText}>
+                  Ảnh {currentImage + 1} / {imagesList.length}
+                </Text>
+              </View>
+              <Pressable
+                style={s.closeFullscreenBtn}
+                onPress={() => setShowFullscreenGallery(false)}
+                hitSlop={10}
+              >
+                <Ionicons name="close-circle" size={30} color="#FFFFFF" />
+              </Pressable>
+            </View>
+          </SafeAreaView>
 
+          {/* Central Large Fullscreen Image View (Expands to fill whole viewport) */}
           <View style={s.fullscreenImageBox}>
             <ProductImage
               uri={imagesList[currentImage]}
               style={s.fullscreenImage}
               containerStyle={s.fullscreenImage}
+              resizeMode="contain"
             />
 
             {imagesList.length > 1 && (
-              <Pressable style={[s.fullNavBtn, s.fullNavLeft]} onPress={prevImage} hitSlop={10}>
-                <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
+              <Pressable style={[s.fullNavBtn, s.fullNavLeft]} onPress={prevImage} hitSlop={12}>
+                <Ionicons name="chevron-back" size={26} color="#FFFFFF" />
               </Pressable>
             )}
 
             {imagesList.length > 1 && (
-              <Pressable style={[s.fullNavBtn, s.fullNavRight]} onPress={nextImage} hitSlop={10}>
-                <Ionicons name="chevron-forward" size={28} color="#FFFFFF" />
+              <Pressable style={[s.fullNavBtn, s.fullNavRight]} onPress={nextImage} hitSlop={12}>
+                <Ionicons name="chevron-forward" size={26} color="#FFFFFF" />
               </Pressable>
             )}
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.fullscreenThumbList}
-          >
-            {imagesList.map((imgUrl, idx) => (
-              <Pressable
-                key={idx}
-                style={[
-                  s.fullThumbWrapper,
-                  currentImage === idx && s.fullThumbWrapperActive,
-                ]}
-                onPress={() => setCurrentImage(idx)}
-              >
-                <ProductImage uri={imgUrl} style={s.fullThumbImg} containerStyle={s.fullThumbImg} />
-              </Pressable>
-            ))}
-          </ScrollView>
+          {/* Bottom Thumbnail Strip Bar */}
+          <SafeAreaView edges={['bottom']} style={s.fullscreenBottomBar}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.fullscreenThumbList}
+            >
+              {imagesList.map((imgUrl, idx) => (
+                <Pressable
+                  key={idx}
+                  style={[
+                    s.fullThumbWrapper,
+                    currentImage === idx && s.fullThumbWrapperActive,
+                  ]}
+                  onPress={() => setCurrentImage(idx)}
+                >
+                  <ProductImage uri={imgUrl} style={s.fullThumbImg} containerStyle={s.fullThumbImg} />
+                </Pressable>
+              ))}
+            </ScrollView>
+          </SafeAreaView>
         </View>
       </Modal>
 
@@ -1284,63 +1297,83 @@ const s = StyleSheet.create({
   },
   fullscreenOverlay: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#0A0F1D',
     justifyContent: 'space-between',
-    paddingVertical: 40,
-    paddingHorizontal: 16,
+  },
+  fullscreenTopBar: {
+    backgroundColor: 'rgba(10, 15, 29, 0.9)',
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   fullscreenHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   fullscreenTitle: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-    flex: 1,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  fullscreenCounterText: {
+    color: '#38BDF8',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
   },
   closeFullscreenBtn: {
-    padding: 6,
+    padding: 4,
   },
   fullscreenImageBox: {
+    flex: 1,
     width: '100%',
-    height: 320,
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
   fullscreenImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 12,
   },
   fullNavBtn: {
     position: 'absolute',
     top: '50%',
-    marginTop: -22,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    marginTop: -23,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
-  fullNavLeft: { left: 8 },
-  fullNavRight: { right: 8 },
+  fullNavLeft: { left: 12 },
+  fullNavRight: { right: 12 },
+  fullscreenBottomBar: {
+    backgroundColor: 'rgba(10, 15, 29, 0.95)',
+    borderTopWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
   fullscreenThumbList: {
     flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    paddingVertical: 10,
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
   },
   fullThumbWrapper: {
-    width: 64,
+    width: 68,
     height: 52,
     borderRadius: 8,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#475569',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   fullThumbWrapperActive: {
     borderColor: '#38BDF8',
