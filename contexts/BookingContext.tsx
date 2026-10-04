@@ -69,7 +69,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [savedHomestays, setSavedHomestays] = useState<BookingItem[]>([]);
   const [userVouchers, setUserVouchers] = useState<Voucher[]>(mockVouchers);
-  const [rewardPoints, setRewardPoints] = useState<number>(350);
+  const [rewardPoints, setRewardPoints] = useState<number>(82);
   const [pointHistory, setPointHistory] = useState<PointTransaction[]>(initialPointTransactions);
 
   // Sync with authUser when user logs in or registers
@@ -276,7 +276,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           },
         ];
       });
-      addRewardPoints(100, `Đặt phòng thành công: ${homestay.name}`);
+      const calculatedPoints = Math.max(10, Math.floor((bookingDetails.totalPrice || 0) / 10000));
+      addRewardPoints(calculatedPoints, `Tích lũy ${calculatedPoints} điểm từ đặt phòng: ${homestay.name}`);
 
       return {
         success: true,

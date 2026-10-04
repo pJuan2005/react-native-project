@@ -322,12 +322,13 @@ class BookingModel {
         [bookingId, paymentMethod || 'cash', finalTotal]
       );
 
-      // 7. Reward Points (+100)
+      // 7. Reward Points (Kinh tế thực tế: 10.000₫ chi tiêu = 1 điểm, tương đương hoàn ~1% vào điểm thưởng)
+      const earnedPoints = Math.max(10, Math.floor(finalTotal / 10000));
       if (userId) {
-        await runner.query('UPDATE users SET reward_points = reward_points + 100 WHERE id = ?', [userId]);
+        await runner.query('UPDATE users SET reward_points = reward_points + ? WHERE id = ?', [earnedPoints, userId]);
         await runner.query(
-          'INSERT INTO point_transactions (user_id, title, points, type, reference_id) VALUES (?, ?, 100, "earn", ?)',
-          [userId, `Thưởng đặt phòng ${bookingCode} (${homestay.name})`, bookingId]
+          'INSERT INTO point_transactions (user_id, title, points, type, reference_id) VALUES (?, ?, ?, "earn", ?)',
+          [userId, `Tích lũy ${earnedPoints} điểm từ đơn đặt phòng ${bookingCode} (${homestay.name})`, earnedPoints, bookingId]
         );
 
         // 8. In-App Notification
@@ -336,7 +337,7 @@ class BookingModel {
            VALUES (?, 'Đã tạo đơn đặt phòng! ⏳', ?, 'booking_status', ?)`,
           [
             userId,
-            `Đơn đặt phòng ${bookingCode} tại ${homestay.name} đã được ghi nhận. Vui lòng thanh toán để Admin duyệt đơn.`,
+            `Đơn đặt phòng ${bookingCode} tại ${homestay.name} đã được ghi nhận (+${earnedPoints} điểm thưởng). Vui lòng thanh toán để Admin duyệt đơn.`,
             bookingId,
           ]
         );

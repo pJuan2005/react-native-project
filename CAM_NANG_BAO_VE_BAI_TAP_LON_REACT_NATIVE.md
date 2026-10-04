@@ -301,6 +301,24 @@ CSDL tên là `homestay_db`, gồm 15 bảng chuẩn hóa quan hệ 3NF:
   - Đặt phòng sát giờ nhận phòng (dưới 2 giờ): $+15$ điểm rủi ro.
   - Phân loại: $\text{Score} < 30 \rightarrow \text{LOW}$, $30 - 49 \rightarrow \text{MEDIUM}$, $\ge 50 \rightarrow \text{HIGH}$ (Cảnh báo đỏ trên Dashboard quản trị).
 
+### 5.6. Thuật toán Kinh tế Tích lũy Điểm thưởng & Đổi Voucher Bền vững (Sustainable Loyalty Economy)
+*File đường dẫn:* `backend/src/models/booking.model.js` và `constants/mockData.ts`
+- **Vấn đề thực tế (Kinh tế nền tảng):** Nếu đặt phòng nào cũng cộng cố định 100-150 điểm, khách chỉ cần đặt 1-2 đơn phòng rẻ tiền là đủ điểm đổi ngay voucher 100k-500k. Điều này làm sàn bị **lỗ nặng**, chủ nhà bị ép giá và cơ chế điểm thưởng trở nên phi thực tế.
+- **Giải pháp thiết kế kinh tế thực tế:**
+  1. **Quy tắc tích điểm theo giá trị đơn hàng (Tỷ lệ hoàn ~1%):**
+     $$\text{EarnedPoints} = \max\left(10, \left\lfloor \frac{\text{Tổng tiền thanh toán}}{10.000} \right\rfloor\right)$$
+     - Đơn 1.500.000₫ tích lũy: $1.500.000 / 10.000 = 150$ điểm.
+     - Đơn 4.500.000₫ tích lũy: $4.500.000 / 10.000 = 450$ điểm.
+     - Đặt ít tiền tích ít điểm, đặt nhiều tiền tích nhiều điểm.
+  2. **Quy tắc đổi Voucher lũy tiến kết hợp Điều kiện Đơn tối thiểu (Min Order):**
+     - Voucher 50.000₫: Cần **100 điểm** (đơn tối thiểu 1.000.000₫). Tỷ lệ giảm tối đa 5%.
+     - Voucher 100.000₫: Cần **200 điểm** (đơn tối thiểu 1.800.000₫). Tỷ lệ giảm tối đa 5.5%.
+     - Voucher 250.000₫: Cần **450 điểm** (đơn tối thiểu 3.500.000₫). Tỷ lệ giảm tối đa 7.1%.
+     - Voucher VIP 500.000₫: Cần **900 điểm** (đơn tối thiểu 6.000.000₫). Tỷ lệ giảm tối đa 8.3%.
+  3. **Hiệu quả kinh tế & Kích cầu:**
+     - Sàn thu hoa hồng 10% giá trị đơn hàng. Mức giảm voucher cao nhất chỉ 8.3% trên đơn tối thiểu $\rightarrow$ Sàn **luôn luôn có lãi** (tối thiểu 1.7% - 5%), không bao giờ bị âm tiền.
+     - Khách hàng có động lực quay lại đặt phòng lần 2, lần 3 để gom đủ điểm đổi voucher lớn và tiếp tục chi tiêu đơn hàng giá trị cao.
+
 ---
 
 # PHẦN 6: CƠ CHẾ XÁC THỰC HOST & KIỂM DUYỆT HOMESTAY THẬT
@@ -394,6 +412,12 @@ Dưới đây là các câu hỏi trọng tâm thường được hội đồng 
 
 **Q9: Làm sao hệ thống đảm bảo homestay đăng bán là có thật?**
 > **Trả lời:** Hệ thống tách biệt 2 lớp kiểm duyệt: Lớp 1 xác minh danh tính chủ nhà bằng CCCD và Giấy phép kinh doanh (`host_verifications`). Lớp 2 kiểm duyệt cơ sở lưu trú (`homestays.approval_status`). Mọi homestay đăng mới đều ở trạng thái `pending` và bị ẩn, chỉ khi Admin kiểm tra hình ảnh thực tế, tiện nghi và vị trí đạt chuẩn thì mới bấm duyệt mở bán công khai.
+
+**Q10: Cơ chế tích lũy điểm thưởng và đổi Voucher trong dự án được thiết kế như thế nào để đảm bảo tính thực tế và lợi nhuận cho sàn?**
+> **Trả lời:** Em không áp dụng mức cộng điểm cố định vì sẽ gây lạm phát điểm và làm sàn thua lỗ. Thay vào đó, em thiết kế **mô hình kinh tế bền vững (Sustainable Loyalty Economy)**:
+> 1. Tỷ lệ tích điểm tỷ lệ thuận với giá trị đơn hàng: Cứ 10.000₫ thanh toán sẽ tích lũy được 1 điểm (tương đương hoàn ~1% vào điểm thưởng).
+> 2. Quy tắc đổi voucher lũy tiến kèm điều kiện đơn hàng tối thiểu (Min Order): Khách cần chi tiêu khoảng 1.000.000₫ để tích 100 điểm đổi voucher 50k (đơn tối thiểu 1 triệu); chi tiêu khoảng 6.000.000₫ tích 600-900 điểm đổi voucher 500k (đơn tối thiểu 6 triệu).
+> 3. Bảo toàn lợi nhuận: Vì sàn thu phí hoa hồng 10% trên mỗi đơn đặt phòng online, trong khi mức giảm voucher cao nhất chỉ chiếm tối đa 5% - 8.3% trên giá trị đơn tối thiểu. Nhờ đó, sàn luôn giữ được biên lợi nhuận dương (1.7% - 5%), vừa kích thích khách quay lại đặt phòng lần tiếp theo, vừa đảm bảo doanh thu bền vững.
 
 ---
 
