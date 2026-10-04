@@ -1,5 +1,6 @@
 function requireAuth(req, res, next) {
-  if (!req.currentUser) {
+  const currentUser = req.currentUser || req.user;
+  if (!currentUser) {
     return res.status(401).json({
       message: "Authentication is required",
     });
@@ -10,13 +11,17 @@ function requireAuth(req, res, next) {
 
 function requireRoles(...roles) {
   return (req, res, next) => {
-    if (!req.currentUser) {
+    const currentUser = req.currentUser || req.user;
+    if (!currentUser) {
       return res.status(401).json({
         message: "Authentication is required",
       });
     }
 
-    if (!roles.includes(req.currentUser.role)) {
+    const currentRole = currentUser.role === "customer" ? "guest" : currentUser.role;
+    const allowedRoles = roles.map((r) => (r === "customer" ? "guest" : r));
+
+    if (!allowedRoles.includes(currentRole) && !roles.includes(currentUser.role)) {
       return res.status(403).json({
         message: "You do not have permission to access this resource",
       });
@@ -30,3 +35,4 @@ module.exports = {
   requireAuth,
   requireRoles,
 };
+

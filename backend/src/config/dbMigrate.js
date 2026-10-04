@@ -347,6 +347,104 @@ async function migrateDatabase() {
       `);
     } catch (_) {}
 
+    // 14. Bổ sung bộ ảnh đầy đủ 6-8 ảnh sắc nét cho từng homestay
+    try {
+      const [imgCount] = await db.query('SELECT COUNT(*) AS total FROM homestay_images WHERE homestay_id = 1');
+      if (imgCount[0]?.total < 6) {
+        const richImages = [
+          // Homestay 1: Villa Lavender Dream (7 ảnh)
+          [1, 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80', 1, 1],
+          [1, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 2],
+          [1, 'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?auto=format&fit=crop&w=900&q=80', 0, 3],
+          [1, 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80', 0, 4],
+          [1, 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80', 0, 5],
+          [1, 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=80', 0, 6],
+          [1, 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80', 0, 7],
+
+          // Homestay 2: Homestay Cloud Nine (7 ảnh)
+          [2, 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80', 1, 1],
+          [2, 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80', 0, 2],
+          [2, 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=900&q=80', 0, 3],
+          [2, 'https://images.unsplash.com/photo-1540518614846-7ede433c4b13?auto=format&fit=crop&w=900&q=80', 0, 4],
+          [2, 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=900&q=80', 0, 5],
+          [2, 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80', 0, 6],
+          [2, 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80', 0, 7],
+
+          // Homestay 3: Seaside Bliss Luxury Villa (7 ảnh)
+          [3, 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80', 1, 1],
+          [3, 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=900&q=80', 0, 2],
+          [3, 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80', 0, 3],
+          [3, 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80', 0, 4],
+          [3, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 5],
+          [3, 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=80', 0, 6],
+          [3, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80', 0, 7],
+
+          // Homestay 4: Rice Terrace Mountain Homestay (6 ảnh)
+          [4, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80', 1, 1],
+          [4, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80', 0, 2],
+          [4, 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80', 0, 3],
+          [4, 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80', 0, 4],
+          [4, 'https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=900&q=80', 0, 5],
+          [4, 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=900&q=80', 0, 6],
+
+          // Homestay 5: Ancient Town Riverside Homestay (6 ảnh)
+          [5, 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80', 1, 1],
+          [5, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80', 0, 2],
+          [5, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 3],
+          [5, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 4],
+          [5, 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&w=900&q=80', 0, 5],
+          [5, 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80', 0, 6],
+
+          // Homestay 6: Ocean View Nha Trang Resort (6 ảnh)
+          [6, 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=900&q=80', 1, 1],
+          [6, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80', 0, 2],
+          [6, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 3],
+          [6, 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80', 0, 4],
+          [6, 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=900&q=80', 0, 5],
+          [6, 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80', 0, 6],
+
+          // Homestay 7: Pine Hill Rustic Cabin (6 ảnh)
+          [7, 'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=900&q=80', 1, 1],
+          [7, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80', 0, 2],
+          [7, 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80', 0, 3],
+          [7, 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=80', 0, 4],
+          [7, 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=900&q=80', 0, 5],
+          [7, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 6],
+
+          // Homestay 8: Bamboo Eco Green House (6 ảnh)
+          [8, 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80', 1, 1],
+          [8, 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80', 0, 2],
+          [8, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 3],
+          [8, 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&w=900&q=80', 0, 4],
+          [8, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 5],
+          [8, 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=900&q=80', 0, 6],
+
+          // Homestay 9: Tràng An Valley Lotus Retreat (6 ảnh)
+          [9, 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=900&q=80', 1, 1],
+          [9, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80', 0, 2],
+          [9, 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=900&q=80', 0, 3],
+          [9, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80', 0, 4],
+          [9, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 5],
+          [9, 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80', 0, 6],
+
+          // Homestay 10: Sunset Cliff Villa Nha Trang (7 ảnh)
+          [10, 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80', 1, 1],
+          [10, 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=900&q=80', 0, 2],
+          [10, 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=900&q=80', 0, 3],
+          [10, 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80', 0, 4],
+          [10, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 5],
+          [10, 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=80', 0, 6],
+          [10, 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=900&q=80', 0, 7],
+        ];
+
+        await db.query('DELETE FROM homestay_images WHERE homestay_id BETWEEN 1 AND 10');
+        await db.query(
+          'INSERT INTO homestay_images (homestay_id, image_url, is_primary, sort_order) VALUES ?',
+          [richImages]
+        );
+      }
+    } catch (_) {}
+
     console.log('✅ Database schema migration verified & fully synchronized for Web Admin, Host Portal, and Mobile App.');
   } catch (err) {
     console.warn('⚠️ DB Migration notice (DB might be offline or using mock):', err.message);

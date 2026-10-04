@@ -64,7 +64,7 @@ type BookingContextValue = {
 const BookingContext = createContext<BookingContextValue | undefined>(undefined);
 
 export function BookingProvider({ children }: { children: ReactNode }) {
-  const { user: authUser, updateUser: updateAuthUser } = useAuth();
+  const { user: authUser, token: authToken, updateUser: updateAuthUser } = useAuth();
   const [userProfile, setUserProfile] = useState<CustomerProfile>(authUser || mockUser);
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [savedHomestays, setSavedHomestays] = useState<BookingItem[]>([]);
@@ -83,8 +83,19 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   // Load user bookings and favorites from MySQL Backend API
   const fetchUserData = async (userId: string) => {
     try {
+      const authHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (authToken) {
+        authHeaders['Authorization'] = `Bearer ${authToken}`;
+      }
+
       // 1. Fetch user bookings (exclude cancelled bookings from active list)
-      const bRes = await fetchWithTimeout(`${API_BASE_URL}/api/bookings/my-bookings?userId=${userId}`, {}, 3000);
+      const bRes = await fetchWithTimeout(
+        `${API_BASE_URL}/api/bookings/my-bookings?userId=${userId}`,
+        { headers: authHeaders },
+        3000
+      );
       const bJson = await bRes.json();
       if (bJson.success && Array.isArray(bJson.data)) {
         const mappedBookings = bJson.data
@@ -122,7 +133,11 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       }
 
       // 2. Fetch user favorites
-      const fRes = await fetchWithTimeout(`${API_BASE_URL}/api/favorites?userId=${userId}`, {}, 3000);
+      const fRes = await fetchWithTimeout(
+        `${API_BASE_URL}/api/favorites?userId=${userId}`,
+        { headers: authHeaders },
+        3000
+      );
       const fJson = await fRes.json();
       if (fJson.success && Array.isArray(fJson.data)) {
         const mappedFavs = fJson.data.map((f: any) => ({
@@ -132,8 +147,12 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         setSavedHomestays(mappedFavs);
       }
 
-      // 3. Fetch vouchers belonging to this specific user (user 7)
-      const vRes = await fetchWithTimeout(`${API_BASE_URL}/api/promotions?userId=${userId}`, {}, 3000);
+      // 3. Fetch vouchers belonging to this specific user
+      const vRes = await fetchWithTimeout(
+        `${API_BASE_URL}/api/promotions?userId=${userId}`,
+        { headers: authHeaders },
+        3000
+      );
       const vJson = await vRes.json();
       if (vJson.success && Array.isArray(vJson.data)) {
         const mappedVouchers: Voucher[] = vJson.data.map((v: any) => ({
@@ -155,6 +174,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       console.warn('API sync bookings/favorites failed, using local state:', err);
     }
   };
+
 
   const updateUserProfile = async (profileData: Partial<CustomerProfile>): Promise<boolean> => {
     // 1. Update global state immediately for instant UI responsiveness
@@ -228,11 +248,18 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
       // 1. Call Backend API to save into MySQL Database
       try {
+        const postHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (authToken) {
+          postHeaders['Authorization'] = `Bearer ${authToken}`;
+        }
+
         const res = await fetchWithTimeout(
           `${API_BASE_URL}/api/bookings`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: postHeaders,
             body: JSON.stringify({
               userId: parseInt(currentUserId, 10) || 1,
               homestayId: parseInt(homestay.id, 10) || 1,
