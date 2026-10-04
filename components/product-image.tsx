@@ -17,9 +17,12 @@ export function ProductImage({
 }) {
   const [failed, setFailed] = useState(false);
 
-  // Trên Web, các URL file:// từ thiết bị di động bị trình duyệt chặn vì bảo mật
-  const isInvalidFileUrlOnWeb = Platform.OS === 'web' && typeof uri === 'string' && uri.startsWith('file:');
-  const safeUri = isInvalidFileUrlOnWeb || !uri || failed ? DEFAULT_FALLBACK_IMAGE : uri;
+  // Trên Web, các URL file:// hoặc blob:// tạm thời bị trình duyệt báo lỗi net::ERR_FILE_NOT_FOUND khi tải lại trang
+  const isInvalidUrlOnWeb =
+    Platform.OS === 'web' &&
+    typeof uri === 'string' &&
+    (uri.startsWith('file:') || uri.startsWith('blob:'));
+  const safeUri = isInvalidUrlOnWeb || !uri || failed ? DEFAULT_FALLBACK_IMAGE : uri;
 
   if (failed && !safeUri) {
     return (

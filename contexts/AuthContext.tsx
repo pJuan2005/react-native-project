@@ -1,4 +1,5 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CustomerProfile, mockUser } from '@/constants/mockData';
 import { API_BASE_URL, fetchWithTimeout } from '@/config/api';
@@ -31,7 +32,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const savedUser = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
         const savedToken = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
         if (savedUser && savedToken) {
-          setUser(JSON.parse(savedUser));
+          const parsed: CustomerProfile = JSON.parse(savedUser);
+          // Trên Web, blob: URLs bị hết hạn sau khi reload trang -> reset về avatar an toàn
+          if (Platform.OS === 'web' && typeof parsed.avatar === 'string' && parsed.avatar.startsWith('blob:')) {
+            parsed.avatar = mockUser.avatar;
+            AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(parsed)).catch(() => {});
+          }
+          setUser(parsed);
           setToken(savedToken);
         }
       } catch (e) {

@@ -10,10 +10,11 @@ import { useAppTheme, ThemeMode } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -112,10 +113,18 @@ export default function ProfileScreen() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
+        base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const selectedUri = result.assets[0].uri;
+        const asset = result.assets[0];
+        let selectedUri = asset.uri;
+
+        // Trên Web, blob: URL bị trình duyệt thu hồi khi tải lại trang -> dùng base64 Data URL để lưu vĩnh viễn
+        if (Platform.OS === 'web' && asset.base64) {
+          selectedUri = `data:${asset.mimeType || 'image/jpeg'};base64,${asset.base64}`;
+        }
+
         await selectAvatar(selectedUri);
       }
     } catch (err) {
@@ -148,6 +157,13 @@ export default function ProfileScreen() {
     }
   };
 
+  const safeAvatarUri = useMemo(() => {
+    if (Platform.OS === 'web' && typeof userProfile.avatar === 'string' && userProfile.avatar.startsWith('blob:')) {
+      return mockUser.avatar;
+    }
+    return userProfile.avatar || mockUser.avatar;
+  }, [userProfile.avatar]);
+
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -165,7 +181,7 @@ export default function ProfileScreen() {
         {/* Profile Avatar Header - Ocean Theme */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
-            <ProductImage uri={userProfile.avatar} style={styles.avatar} containerStyle={styles.avatar} />
+            <ProductImage uri={safeAvatarUri} style={styles.avatar} containerStyle={styles.avatar} />
             <Pressable
               style={styles.avatarBadge}
               onPress={() => setShowAvatarModal(true)}
