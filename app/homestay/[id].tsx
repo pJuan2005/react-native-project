@@ -48,7 +48,16 @@ export default function HomestayDetail() {
   const [showVoucherModal, setShowVoucherModal] = useState(false);
   const [showFullscreenGallery, setShowFullscreenGallery] = useState(false);
   const [promoInput, setPromoInput] = useState('');
-  const [pickerMonth, setPickerMonth] = useState(new Date(2026, 8, 1)); // Tháng 9, 2026
+  const [pickerMonth, setPickerMonth] = useState(() => new Date());
+
+  const formatLocalDateStr = (d: Date) => {
+    const year = d.getFullYear();
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayStr = useMemo(() => formatLocalDateStr(new Date()), []);
 
   // Bank-like Success Receipt Modal
   const [bookingSuccessData, setBookingSuccessData] = useState<{
@@ -130,8 +139,16 @@ export default function HomestayDetail() {
       Alert.alert('Thiếu thông tin', 'Vui lòng chọn ngày nhận và trả phòng');
       return;
     }
-    if (nights <= 0) {
+    if (checkIn < todayStr) {
+      Alert.alert('Ngày không hợp lệ', 'Ngày nhận phòng không thể trước ngày hiện tại');
+      return;
+    }
+    if (checkOut <= checkIn) {
       Alert.alert('Ngày không hợp lệ', 'Ngày trả phòng phải sau ngày nhận phòng');
+      return;
+    }
+    if (nights <= 0) {
+      Alert.alert('Ngày không hợp lệ', 'Thời gian lưu trú tối thiểu là 1 đêm');
       return;
     }
     if (guests > homestay.maxGuests) {
@@ -186,11 +203,15 @@ export default function HomestayDetail() {
   };
 
   const handleDayPress = (dateStr: string) => {
+    if (dateStr < todayStr) {
+      Alert.alert('Ngày không hợp lệ', 'Không thể chọn ngày trong quá khứ.');
+      return;
+    }
     if (!checkIn || (checkIn && checkOut)) {
       setCheckIn(dateStr);
       setCheckOut('');
     } else {
-      if (new Date(dateStr) > new Date(checkIn)) {
+      if (dateStr > checkIn) {
         setCheckOut(dateStr);
       } else {
         setCheckIn(dateStr);
@@ -201,13 +222,12 @@ export default function HomestayDetail() {
 
   const setQuickPreset = (type: 'tonight' | 'weekend' | '3days') => {
     const today = new Date();
-    const formatDateStr = (d: Date) => d.toISOString().split('T')[0];
 
     if (type === 'tonight') {
       const tomorrow = new Date(today);
       tomorrow.setDate(today.getDate() + 1);
-      setCheckIn(formatDateStr(today));
-      setCheckOut(formatDateStr(tomorrow));
+      setCheckIn(formatLocalDateStr(today));
+      setCheckOut(formatLocalDateStr(tomorrow));
     } else if (type === 'weekend') {
       const friday = new Date(today);
       const day = today.getDay();
@@ -215,18 +235,27 @@ export default function HomestayDetail() {
       friday.setDate(today.getDate() + (distToFriday === 0 ? 7 : distToFriday));
       const sunday = new Date(friday);
       sunday.setDate(friday.getDate() + 2);
-      setCheckIn(formatDateStr(friday));
-      setCheckOut(formatDateStr(sunday));
+      setCheckIn(formatLocalDateStr(friday));
+      setCheckOut(formatLocalDateStr(sunday));
     } else {
       const d1 = new Date(today);
       d1.setDate(today.getDate() + 3);
       const d2 = new Date(d1);
       d2.setDate(d1.getDate() + 2);
-      setCheckIn(formatDateStr(d1));
-      setCheckOut(formatDateStr(d2));
+      setCheckIn(formatLocalDateStr(d1));
+      setCheckOut(formatLocalDateStr(d2));
     }
     setShowDatePicker(false);
   };
+
+  const canGoPrevMonth = useMemo(() => {
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = now.getMonth();
+    const pYear = pickerMonth.getFullYear();
+    const pMonth = pickerMonth.getMonth();
+    return pYear > curYear || (pYear === curYear && pMonth > curMonth);
+  }, [pickerMonth]);
 
   const handleApplyPromoCode = () => {
     const code = promoInput.trim().toUpperCase();
@@ -572,10 +601,15 @@ export default function HomestayDetail() {
             {/* Month Navigation */}
             <View style={s.monthNav}>
               <Pressable
-                onPress={() => setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1))}
-                style={s.monthNavBtn}
+                disabled={!canGoPrevMonth}
+                onPress={() => {
+                  if (canGoPrevMonth) {
+                    setPickerMonth(new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() - 1, 1));
+                  }
+                }}
+                style={[s.monthNavBtn, !canGoPrevMonth && { opacity: 0.25 }]}
               >
-                <Ionicons name="chevron-back" size={20} color={colors.text} />
+                <Ionicons name="chevron-back" size={20} color={canGoPrevMonth ? colors.text : colors.textSecondary} />
               </Pressable>
               <Text style={[s.monthNavTitle, { color: colors.text }]}>
                 Tháng {pickerMonth.getMonth() + 1}, {pickerMonth.getFullYear()}
@@ -602,28 +636,36 @@ export default function HomestayDetail() {
                   return <View key={idx} style={s.calendarCell} />;
                 }
 
+                const isPast = cell.dateStr < todayStr;
                 const isCheckIn = cell.dateStr === checkIn;
                 const isCheckOut = cell.dateStr === checkOut;
                 const inRange =
                   checkIn &&
                   checkOut &&
-                  new Date(cell.dateStr) > new Date(checkIn) &&
-                  new Date(cell.dateStr) < new Date(checkOut);
+                  cell.dateStr > checkIn &&
+                  cell.dateStr < checkOut;
 
                 return (
                   <Pressable
                     key={idx}
+                    disabled={isPast}
                     style={[
                       s.calendarCell,
+                      isPast && { opacity: 0.28 },
                       inRange && { backgroundColor: isDark ? '#082F49' : '#E0F2FE' },
                       (isCheckIn || isCheckOut) && { backgroundColor: colors.primary, borderRadius: 19 },
                     ]}
-                    onPress={() => handleDayPress(cell.dateStr)}
+                    onPress={() => {
+                      if (!isPast) {
+                        handleDayPress(cell.dateStr);
+                      }
+                    }}
                   >
                     <Text
                       style={[
                         s.calendarDayText,
-                        { color: colors.text },
+                        { color: isPast ? (isDark ? '#475569' : '#94A3B8') : colors.text },
+                        isPast && { textDecorationLine: 'line-through' },
                         inRange && { color: colors.primary, fontWeight: '700' },
                         (isCheckIn || isCheckOut) && { color: '#FFFFFF', fontWeight: '700' },
                       ]}

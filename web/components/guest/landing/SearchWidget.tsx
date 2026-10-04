@@ -28,9 +28,16 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
   const [guests, setGuests] = useState("2");
   const [errorMessage, setErrorMessage] = useState("");
 
+  const todayStr = new Date().toISOString().split("T")[0];
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
+
+    if (checkIn && checkIn < todayStr) {
+      setErrorMessage("Ngày nhận phòng không thể trước ngày hiện tại.");
+      return;
+    }
 
     if (checkIn && checkOut) {
       if (new Date(checkOut) <= new Date(checkIn)) {
@@ -174,6 +181,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
               <input
                 id="search-checkin"
                 type="date"
+                min={todayStr}
                 value={checkIn}
                 onChange={(e) => setCheckIn(e.target.value)}
                 style={{
@@ -220,6 +228,7 @@ export function SearchWidget({ onSearch }: SearchWidgetProps) {
               <input
                 id="search-checkout"
                 type="date"
+                min={checkIn || todayStr}
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
                 style={{

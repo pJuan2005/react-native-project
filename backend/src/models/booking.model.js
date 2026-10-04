@@ -215,8 +215,19 @@ class BookingModel {
         throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${homestay.max_guests} người)`);
       }
 
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       const checkInDate = new Date(checkIn);
+      checkInDate.setHours(0, 0, 0, 0);
+
       const checkOutDate = new Date(checkOut);
+      checkOutDate.setHours(0, 0, 0, 0);
+
+      if (checkInDate < today) {
+        throw new Error('Ngày nhận phòng không thể trước ngày hiện tại');
+      }
+
       if (checkOutDate <= checkInDate) {
         throw new Error('Ngày trả phòng phải sau ngày nhận phòng');
       }
@@ -424,8 +435,19 @@ class BookingModel {
         throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${homestay.max_guests} người)`);
       }
 
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       const checkInDate = new Date(checkIn);
+      checkInDate.setHours(0, 0, 0, 0);
+
       const checkOutDate = new Date(checkOut);
+      checkOutDate.setHours(0, 0, 0, 0);
+
+      if (checkInDate < today) {
+        throw new Error('Ngày nhận phòng không thể trước ngày hiện tại');
+      }
+
       if (checkOutDate <= checkInDate) {
         throw new Error('Ngày trả phòng phải sau ngày nhận phòng');
       }
