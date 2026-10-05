@@ -11,12 +11,12 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { isDark, colors } = useAppTheme();
 
-  // Đảm bảo đủ chiều cao hiển thị trọn vẹn cả Icon và Text nhãn, không bị che/cắt trên mọi thiết bị & web:
-  // - Trên Web / Android / iOS không Home bar: đệm đáy 10px, tổng chiều cao 68px
-  // - Trên iOS có Home bar (insets.bottom > 0, thường 34px): đệm đáy = insets.bottom, tổng chiều cao = 58 + insets.bottom (~92px)
-  const isNativeIos = Platform.OS === 'ios';
-  const bottomInset = insets.bottom > 0 ? insets.bottom : (isNativeIos ? 24 : 10);
-  const tabHeight = 58 + bottomInset;
+  // Đảm bảo đủ chiều cao hiển thị trọn vẹn cả Icon và Text nhãn, không bao giờ bị cắt hay che mất:
+  // - Trên iOS có Home Indicator (insets.bottom ~ 34px): thêm padding đệm đáy tránh thanh gạt iOS
+  // - Trên Web / Android (insets.bottom = 0): chiều cao 60px chuẩn gọn gàng, đệm đáy 4px
+  const isIos = Platform.OS === 'ios';
+  const bottomInset = insets.bottom > 0 ? insets.bottom : (isIos ? 24 : 0);
+  const tabHeight = 60 + bottomInset;
 
   return (
     <Tabs
@@ -30,8 +30,8 @@ export default function TabLayout() {
           borderTopColor: isDark ? '#334155' : '#E0F2FE',
           borderTopWidth: 1.5,
           height: tabHeight,
-          paddingTop: 8,
-          paddingBottom: bottomInset,
+          paddingTop: 4,
+          paddingBottom: insets.bottom > 0 ? insets.bottom - 4 : (isIos ? 16 : 4),
           elevation: 8,
           shadowColor: '#0284C7',
           shadowOffset: { width: 0, height: -2 },
@@ -41,13 +41,11 @@ export default function TabLayout() {
         tabBarItemStyle: {
           justifyContent: 'center',
           alignItems: 'center',
-          paddingVertical: 2,
         },
         tabBarLabelStyle: {
-          fontSize: 10.5,
+          fontSize: 11,
           fontWeight: '700',
-          marginTop: 2,
-          marginBottom: 2,
+          lineHeight: 14,
         },
       }}>
       <Tabs.Screen
