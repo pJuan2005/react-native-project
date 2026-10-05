@@ -262,8 +262,9 @@ async function migrateDatabase() {
       }
     } catch (_) {}
 
-    // Bổ sung is_verified cho users
+    // Bổ sung is_verified cho users và nâng cấp avatar_url lên TEXT
     try {
+      await db.query('ALTER TABLE users MODIFY COLUMN avatar_url TEXT NULL');
       const [vCols] = await db.query("SHOW COLUMNS FROM users LIKE 'is_verified'");
       if (vCols.length === 0) {
         await db.query('ALTER TABLE users ADD COLUMN is_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active');

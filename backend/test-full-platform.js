@@ -238,6 +238,31 @@ async function testFullPlatform() {
     assert.strictEqual(riskAlert.riskScore, 45);
     console.log('   ✓ Risk Scoring Rules PASSED!\n');
 
+    // -------------------------------------------------------------
+    // TEST 12: Avatar Upload & Static File Storage
+    // -------------------------------------------------------------
+    console.log('TEST 12: Avatar Upload & Static Server Storage');
+    const userController = require('./src/controllers/user.controller');
+    const fakeReq = {
+      params: { id: testUserId },
+      body: {
+        avatarBase64: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA='
+      }
+    };
+    let uploadOutput = null;
+    const fakeRes = {
+      status: (s) => fakeRes,
+      json: (data) => { uploadOutput = data; return fakeRes; }
+    };
+    await userController.uploadAvatar(fakeReq, fakeRes);
+    assert(uploadOutput && uploadOutput.success === true, 'Upload avatar must succeed');
+    assert(uploadOutput.data.avatarUrl.startsWith('/uploads/avatars/avatar-'), 'Avatar URL must point to /uploads/avatars/');
+
+    const [updatedUser] = await db.query('SELECT avatar_url FROM users WHERE id = ?', [testUserId]);
+    assert.strictEqual(updatedUser[0].avatar_url, uploadOutput.data.avatarUrl);
+    console.log('   Avatar lưu thành file tĩnh thành công:', uploadOutput.data.avatarUrl);
+    console.log('   ✓ Avatar Upload & Storage PASSED!\n');
+
     console.log('================================================================');
     console.log('🎉 100% OF END-TO-END BUSINESS LOGIC & FUNCTIONS PASSED SAFELY!');
     console.log('================================================================');

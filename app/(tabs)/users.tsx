@@ -24,31 +24,32 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useResponsive } from '@/utils/responsive';
+import { API_BASE_URL, fetchWithTimeout } from '@/config/api';
 
 const DISNEY_AVATARS = [
   {
-    name: 'Mickey Mouse',
-    url: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=300&q=80',
+    name: 'Chuột Mickey',
+    url: 'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?auto=format&fit=crop&w=400&q=80',
   },
   {
-    name: 'Stitch',
-    url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=300&q=80',
+    name: 'Thỏ Judy Hopps',
+    url: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&w=400&q=80',
   },
   {
-    name: 'Elsa (Frozen)',
-    url: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=300&q=80',
+    name: 'Gấu Pooh',
+    url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=400&q=80',
   },
   {
-    name: 'Simba (Lion King)',
-    url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=300&q=80',
+    name: 'Stitch tinh nghịch',
+    url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=400&q=80',
   },
   {
-    name: 'Donald Duck',
-    url: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&w=300&q=80',
+    name: 'Vịt Donald',
+    url: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?auto=format&fit=crop&w=400&q=80',
   },
   {
-    name: 'Woody (Toy Story)',
-    url: 'https://images.unsplash.com/photo-1558679908-541bcf1249ff?auto=format&fit=crop&w=300&q=80',
+    name: 'Thỏ Thumper',
+    url: 'https://images.unsplash.com/photo-1518796745738-41048802f99a?auto=format&fit=crop&w=400&q=80',
   },
 ];
 
@@ -112,20 +113,49 @@ export default function ProfileScreen() {
         mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.8,
+        quality: 0.7,
         base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
-        let selectedUri = asset.uri;
+        const targetUserId = userProfile.id || '1';
+        setShowAvatarModal(false);
 
-        // Trên Web, blob: URL bị trình duyệt thu hồi khi tải lại trang -> dùng base64 Data URL để lưu vĩnh viễn
-        if (Platform.OS === 'web' && asset.base64) {
-          selectedUri = `data:${asset.mimeType || 'image/jpeg'};base64,${asset.base64}`;
+        // 1. Tải lên server Backend để lưu thành file tĩnh thật trong thư mục uploads/avatars/
+        try {
+          const payload = {
+            avatarBase64: asset.base64
+              ? `data:${asset.mimeType || 'image/jpeg'};base64,${asset.base64}`
+              : undefined,
+            avatarUrl: !asset.base64 ? asset.uri : undefined,
+          };
+
+          const res = await fetchWithTimeout(
+            `${API_BASE_URL}/api/users/${targetUserId}/avatar`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            },
+            10000
+          );
+          const json = await res.json();
+
+          if (json.success && json.data?.avatarUrl) {
+            const serverUrl = json.data.avatarUrl.startsWith('http')
+              ? json.data.avatarUrl
+              : `${API_BASE_URL}${json.data.avatarUrl}`;
+            await selectAvatar(serverUrl);
+            Alert.alert('Thành công! 🎉', 'Ảnh đại diện của bạn đã được tải lên và lưu thành công.');
+            return;
+          }
+        } catch (uploadErr) {
+          console.warn('Lỗi tải ảnh lên backend:', uploadErr);
         }
 
-        await selectAvatar(selectedUri);
+        // Fallback: nếu server không phản hồi thì lưu uri tạm
+        await selectAvatar(asset.uri);
       }
     } catch (err) {
       console.error('Image picker error:', err);
@@ -158,10 +188,17 @@ export default function ProfileScreen() {
   };
 
   const safeAvatarUri = useMemo(() => {
-    if (Platform.OS === 'web' && typeof userProfile.avatar === 'string' && userProfile.avatar.startsWith('blob:')) {
+    const raw = userProfile.avatar;
+    if (!raw || typeof raw !== 'string') return mockUser.avatar;
+    // Bỏ qua các URL blob cũ bị thu hồi khi reload web
+    if (Platform.OS === 'web' && raw.startsWith('blob:')) {
       return mockUser.avatar;
     }
-    return userProfile.avatar || mockUser.avatar;
+    // Bỏ qua các chuỗi data: URL cũ bị lỗi net::ERR_INVALID_URL do bị cắt ngắn
+    if (raw.startsWith('data:')) {
+      return mockUser.avatar;
+    }
+    return raw;
   }, [userProfile.avatar]);
 
   return (
@@ -181,7 +218,7 @@ export default function ProfileScreen() {
         {/* Profile Avatar Header - Ocean Theme */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
-            <ProductImage uri={safeAvatarUri} style={styles.avatar} containerStyle={styles.avatar} />
+            <ProductImage uri={safeAvatarUri} style={styles.avatar} containerStyle={styles.avatar} fallbackType="avatar" />
             <Pressable
               style={styles.avatarBadge}
               onPress={() => setShowAvatarModal(true)}
@@ -459,7 +496,7 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
             </Pressable>
 
-            <Text style={styles.disneySectionTitle}>Avatar mẫu:</Text>
+            <Text style={styles.disneySectionTitle}>Avatar hoạt hình Disney dễ thương:</Text>
             <View style={styles.presetsGrid}>
               {DISNEY_AVATARS.map((item, idx) => (
                 <Pressable
@@ -468,7 +505,7 @@ export default function ProfileScreen() {
                   onPress={() => selectAvatar(item.url)}
                 >
                   <View style={[styles.presetAvatarWrapper, form.avatar === item.url && styles.presetAvatarSelected]}>
-                    <ProductImage uri={item.url} style={styles.presetAvatar} containerStyle={styles.presetAvatar} />
+                    <ProductImage uri={item.url} style={styles.presetAvatar} containerStyle={styles.presetAvatar} fallbackType="avatar" />
                     {form.avatar === item.url && (
                       <View style={styles.checkBadge}>
                         <Ionicons name="checkmark" size={10} color="#FFFFFF" />

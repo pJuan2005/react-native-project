@@ -419,6 +419,9 @@ Dưới đây là các câu hỏi trọng tâm thường được hội đồng 
 > 2. Quy tắc đổi voucher lũy tiến kèm điều kiện đơn hàng tối thiểu (Min Order): Khách cần chi tiêu khoảng 1.000.000₫ để tích 100 điểm đổi voucher 50k (đơn tối thiểu 1 triệu); chi tiêu khoảng 6.000.000₫ tích 600-900 điểm đổi voucher 500k (đơn tối thiểu 6 triệu).
 > 3. Bảo toàn lợi nhuận: Vì sàn thu phí hoa hồng 10% trên mỗi đơn đặt phòng online, trong khi mức giảm voucher cao nhất chỉ chiếm tối đa 5% - 8.3% trên giá trị đơn tối thiểu. Nhờ đó, sàn luôn giữ được biên lợi nhuận dương (1.7% - 5%), vừa kích thích khách quay lại đặt phòng lần tiếp theo, vừa đảm bảo doanh thu bền vững.
 
+**Q11: Cơ chế xử lý và upload ảnh đại diện (Avatar) trên điện thoại và máy tính hoạt động như thế nào để không bị lỗi bộ nhớ hay mất ảnh khi tải lại trang?**
+> **Trả lời:** Em sử dụng `expo-image-picker` để người dùng chọn ảnh từ thiết bị. Thay vì lưu chuỗi Base64 khổng lồ hay `blob:` URL tạm thời vào CSDL (dễ gây lỗi `net::ERR_INVALID_URL` hoặc bị trình duyệt thu hồi bộ nhớ khi reload F5), ứng dụng gửi dữ liệu ảnh lên endpoint `POST /api/users/:id/avatar`. Backend lưu ảnh thành tệp tĩnh thực sự trong thư mục `/uploads/avatars/` và lưu đường dẫn ngắn gọn vào cột `avatar_url` trong MySQL. Nhờ đó, ảnh đại diện được nạp ổn định qua giao thức HTTP tĩnh, không bao giờ bị mất khi reload và hiển thị chính xác ảnh người dùng đã chọn. Đồng thời, hệ thống cung cấp sẵn danh mục avatar các nhân vật hoạt hình Disney đáng yêu (Mickey, Thỏ Judy Hopps, Gấu Pooh, Stitch, Vịt Donald, Thỏ Thumper) để người dùng lựa chọn nhanh chóng.
+
 ---
 
 # PHẦN 8: KỊCH BẢN THUYẾT TRÌNH BẢO VỆ 5 PHÚT TỰ TIN

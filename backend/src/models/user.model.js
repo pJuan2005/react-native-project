@@ -36,7 +36,15 @@ class UserModel {
            avatar_url = COALESCE(?, avatar_url),
            birth_date = COALESCE(?, birth_date)
        WHERE id = ?`,
-      [name, email, phone, address, avatarUrl, birthDate, id]
+      [
+        name ?? null,
+        email ?? null,
+        phone ?? null,
+        address ?? null,
+        avatarUrl ?? null,
+        birthDate ?? null,
+        id,
+      ]
     );
     return this.findById(id);
   }
