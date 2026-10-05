@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   input: { flex: 1, marginLeft: 8, fontSize: 14, fontWeight: '600' },
-  list: { padding: 16, gap: 12, paddingBottom: 30 },
+  list: { padding: 16, gap: 12, paddingBottom: 40 },
   card: {
     borderRadius: 16,
     overflow: 'hidden',

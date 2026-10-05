@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   sortPillText: { fontSize: 11, fontWeight: '600' },
-  list: { paddingHorizontal: 16, gap: 10, paddingBottom: 24 },
+  list: { paddingHorizontal: 16, gap: 10, paddingBottom: 40 },
   card: {
     borderRadius: 14,
     padding: 10,

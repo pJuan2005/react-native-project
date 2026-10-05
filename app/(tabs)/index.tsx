@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F9FF',
   },
   content: {
-    paddingBottom: 24,
+    paddingBottom: 40,
   },
   // Hero Banner Background - Ocean Blue
   heroBackground: {

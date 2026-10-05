@@ -10,11 +10,13 @@ import { Ionicons } from '@expo/vector-icons';
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { isDark, colors } = useAppTheme();
-  const isIos = Platform.OS === 'ios';
 
-  // Compute exact bottom padding matching device home bar without extra empty space
-  const bottomPadding = isIos ? Math.max(insets.bottom, 12) : 8;
-  const tabHeight = 52 + bottomPadding;
+  // Đảm bảo đủ chiều cao hiển thị trọn vẹn cả Icon và Text nhãn, không bị che/cắt trên mọi thiết bị & web:
+  // - Trên Web / Android / iOS không Home bar: đệm đáy 10px, tổng chiều cao 68px
+  // - Trên iOS có Home bar (insets.bottom > 0, thường 34px): đệm đáy = insets.bottom, tổng chiều cao = 58 + insets.bottom (~92px)
+  const isNativeIos = Platform.OS === 'ios';
+  const bottomInset = insets.bottom > 0 ? insets.bottom : (isNativeIos ? 24 : 10);
+  const tabHeight = 58 + bottomInset;
 
   return (
     <Tabs
@@ -28,8 +30,8 @@ export default function TabLayout() {
           borderTopColor: isDark ? '#334155' : '#E0F2FE',
           borderTopWidth: 1.5,
           height: tabHeight,
-          paddingTop: 6,
-          paddingBottom: bottomPadding,
+          paddingTop: 8,
+          paddingBottom: bottomInset,
           elevation: 8,
           shadowColor: '#0284C7',
           shadowOffset: { width: 0, height: -2 },
@@ -39,11 +41,13 @@ export default function TabLayout() {
         tabBarItemStyle: {
           justifyContent: 'center',
           alignItems: 'center',
+          paddingVertical: 2,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 10.5,
           fontWeight: '700',
-          marginTop: 1,
+          marginTop: 2,
+          marginBottom: 2,
         },
       }}>
       <Tabs.Screen
@@ -51,7 +55,7 @@ export default function TabLayout() {
         options={{
           title: 'Trang chủ',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons size={20} name={focused ? 'home' : 'home-outline'} color={color} />
+            <Ionicons size={21} name={focused ? 'home' : 'home-outline'} color={color} />
           ),
         }}
       />
@@ -60,7 +64,7 @@ export default function TabLayout() {
         options={{
           title: 'Địa điểm',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons size={20} name={focused ? 'map' : 'map-outline'} color={color} />
+            <Ionicons size={21} name={focused ? 'map' : 'map-outline'} color={color} />
           ),
         }}
       />
@@ -69,7 +73,7 @@ export default function TabLayout() {
         options={{
           title: 'Homestay',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons size={20} name={focused ? 'bed' : 'bed-outline'} color={color} />
+            <Ionicons size={21} name={focused ? 'bed' : 'bed-outline'} color={color} />
           ),
         }}
       />
@@ -78,7 +82,7 @@ export default function TabLayout() {
         options={{
           title: 'Đặt phòng',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons size={20} name={focused ? 'cart' : 'cart-outline'} color={color} />
+            <Ionicons size={21} name={focused ? 'cart' : 'cart-outline'} color={color} />
           ),
         }}
       />
@@ -87,7 +91,7 @@ export default function TabLayout() {
         options={{
           title: 'Cá nhân',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons size={20} name={focused ? 'person' : 'person-outline'} color={color} />
+            <Ionicons size={21} name={focused ? 'person' : 'person-outline'} color={color} />
           ),
         }}
       />

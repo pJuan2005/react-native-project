@@ -789,7 +789,7 @@ function MenuItem({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#F0F9FF' },
-  content: { padding: 16, paddingBottom: 32 },
+  content: { padding: 16, paddingBottom: 48 },
   topHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

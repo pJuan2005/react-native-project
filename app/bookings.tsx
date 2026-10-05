@@ -801,7 +801,7 @@ const s = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  contentList: { padding: 16, paddingBottom: 32 },
+  contentList: { padding: 16, paddingBottom: 48 },
   empty: { alignItems: 'center', paddingVertical: 50, paddingHorizontal: 20 },
   emptyIconCircle: {
     width: 70,
