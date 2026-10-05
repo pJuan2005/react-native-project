@@ -11,6 +11,7 @@ import {
   FlatList,
   Image,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -615,7 +616,7 @@ export default function BookingsScreen() {
                 <Text style={[s.qrTitle, { color: colors.text }]}>Quét mã VietQR chuyển khoản</Text>
                 <Image
                   source={{
-                    uri: `https://img.vietqr.io/image/mbbank-0988888888-compact2.png?amount=${paymentBooking?.totalPrice || 0}&addInfo=${paymentBooking?.bookingCode || 'DATPHONG'}&accountName=HOMESTAY%20BOOKING%20VN`,
+                    uri: `https://img.vietqr.io/image/TCB-19071766471019-compact2.png?amount=${paymentBooking?.totalPrice || 0}&addInfo=${paymentBooking?.bookingCode || 'DATPHONG'}&accountName=PHAM%20XUAN%20CHUAN`,
                   }}
                   style={[s.qrImage, { width: qrSize, height: qrSize }]}
                   resizeMode="contain"
@@ -625,20 +626,20 @@ export default function BookingsScreen() {
 
               {/* Bank Account Details */}
               <View style={[s.bankInfoBox, { backgroundColor: isDark ? '#0F172A' : '#EFF6FF', borderColor: '#BFDBFE' }]}>
-                <BankLine label="Ngân hàng" value="MB Bank (Quân Đội)" isDark={isDark} />
-                <BankLine label="Số tài khoản" value="0988 888 888" isDark={isDark} isCopyable />
-                <BankLine label="Chủ tài khoản" value="HOMESTAY BOOKING VN" isDark={isDark} />
+                <BankLine label="Ngân hàng" value="Techcombank (TCB)" isDark={isDark} />
+                <BankLine label="Số tài khoản" value="1907 1766 4710 19" isDark={isDark} isCopyable copyText="19071766471019" />
+                <BankLine label="Chủ tài khoản" value="PHAM XUAN CHUAN" isDark={isDark} />
                 <BankLine label="Số tiền cần chuyển" value={formatPrice(paymentBooking?.totalPrice || 0)} isDark={isDark} isHighlight />
-                <BankLine label="Nội dung CK" value={paymentBooking?.bookingCode || ''} isDark={isDark} isCopyable />
+                <BankLine label="Nội dung CK" value={paymentBooking?.bookingCode || ''} isDark={isDark} isCopyable copyText={paymentBooking?.bookingCode || ''} />
               </View>
 
               {/* Upload Proof of Payment */}
               <View style={[s.uploadSection, { borderColor: colors.cardBorder }]}>
                 <Text style={[s.uploadTitle, { color: colors.text }]}>
-                  📸 Minh chứng chuyển khoản (Bắt buộc)
+                  Biên lai chuyển khoản
                 </Text>
                 <Text style={s.uploadDesc}>
-                  Chụp màn hình giao dịch chuyển khoản thành công và tải lên đây để hoàn tất thanh toán.
+                  Tải lên ảnh chụp màn hình giao dịch chuyển khoản thành công để hoàn tất xác nhận đơn phòng.
                 </Text>
 
                 {proofImage ? (
@@ -650,29 +651,19 @@ export default function BookingsScreen() {
                     </Pressable>
                   </View>
                 ) : (
-                  <View style={s.uploadButtonsRow}>
-                    <Pressable style={[s.chooseImageBtn, { backgroundColor: colors.primary }]} onPress={handlePickProofImage}>
-                      <Ionicons name="images-outline" size={16} color="#FFFFFF" />
-                      <Text style={s.chooseImageText}>Chọn từ thư viện</Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={[s.demoMockBtn, { backgroundColor: isDark ? '#0B132B' : '#E0F2FE' }]}
-                      onPress={handleUseMockBill}
-                    >
-                      <Ionicons name="flash-outline" size={14} color={colors.primary} />
-                      <Text style={[s.demoMockText, { color: colors.primary }]}>Dùng ảnh mẫu (Demo)</Text>
-                    </Pressable>
-                  </View>
+                  <Pressable style={[s.chooseImageBtn, { backgroundColor: colors.primary }]} onPress={handlePickProofImage}>
+                    <Ionicons name="images-outline" size={16} color="#FFFFFF" />
+                    <Text style={s.chooseImageText}>Tải ảnh biên lai lên</Text>
+                  </Pressable>
                 )}
 
                 {/* Optional Transaction Code */}
                 <View style={{ marginTop: 10 }}>
-                  <Text style={[s.inputLabel, { color: colors.textSecondary }]}>Mã giao dịch ngân hàng (tùy chọn):</Text>
+                  <Text style={[s.inputLabel, { color: colors.textSecondary }]}>Mã giao dịch ngân hàng (nếu có):</Text>
                   <TextInput
                     value={transactionCode}
                     onChangeText={setTransactionCode}
-                    placeholder="VD: FT260918001"
+                    placeholder="Ví dụ: FT260918001"
                     placeholderTextColor="#94A3B8"
                     style={[s.inputBox, { backgroundColor: colors.inputBg, color: colors.text, borderColor: colors.cardBorder }]}
                   />
@@ -722,7 +713,6 @@ export default function BookingsScreen() {
               Bạn có chắc chắn muốn hủy đơn đặt phòng tại{' '}
               <Text style={{ fontWeight: '700', color: colors.text }}>"{cancelTarget?.name}"</Text> không?
               {cancelTarget?.bookingCode ? `\n(Mã đơn: ${cancelTarget.bookingCode})` : ''}
-              {'\n'}Thao tác này sẽ cập nhật vào CSDL và giải phóng lịch phòng.
             </Text>
 
             <View style={s.cancelModalActions}>
@@ -794,17 +784,28 @@ function BankLine({
   isDark,
   isHighlight,
   isCopyable,
+  copyText,
 }: {
   label: string;
   value: string;
   isDark?: boolean;
   isHighlight?: boolean;
   isCopyable?: boolean;
+  copyText?: string;
 }) {
+  const handleCopy = () => {
+    if (isCopyable) {
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(copyText || value);
+      }
+      Alert.alert('Đã sao chép 📋', `${label}: ${copyText || value}`);
+    }
+  };
+
   return (
-    <View style={s.bankLine}>
+    <Pressable style={s.bankLine} onPress={isCopyable ? handleCopy : undefined}>
       <Text style={s.bankLineLabel}>{label}:</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <Text
           style={[
             s.bankLineValue,
@@ -815,10 +816,10 @@ function BankLine({
           {value}
         </Text>
         {isCopyable && (
-          <Ionicons name="copy-outline" size={12} color="#64748B" />
+          <Ionicons name="copy-outline" size={14} color="#0284C7" />
         )}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
