@@ -74,6 +74,7 @@ export default function ProfileScreen() {
     phone: userProfile.phone,
     address: userProfile.address,
     avatar: userProfile.avatar,
+    birthDate: userProfile.birthDate || '',
   });
   const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'wishlist' | 'vouchers'>('profile');
   const [saving, setSaving] = useState(false);
@@ -92,6 +93,7 @@ export default function ProfileScreen() {
       phone: userProfile.phone,
       address: userProfile.address,
       avatar: userProfile.avatar,
+      birthDate: userProfile.birthDate || '',
     });
   }, [userProfile]);
 
@@ -240,6 +242,7 @@ export default function ProfileScreen() {
                 phone: userProfile.phone,
                 address: userProfile.address,
                 avatar: userProfile.avatar,
+                birthDate: userProfile.birthDate || '',
               });
               setIsEditing(!isEditing);
             }}
@@ -307,6 +310,7 @@ export default function ProfileScreen() {
                 <Field label="Email" value={form.email} onChangeText={(email) => setForm({ ...form, email })} keyboardType="email-address" />
                 <Field label="Số điện thoại" value={form.phone} onChangeText={(phone) => setForm({ ...form, phone })} keyboardType="phone-pad" />
                 <Field label="Địa chỉ" value={form.address} onChangeText={(address) => setForm({ ...form, address })} />
+                <Field label="Ngày sinh" value={form.birthDate} onChangeText={(birthDate) => setForm({ ...form, birthDate })} placeholder="VD: 15/05/2000" />
 
                 <Pressable style={[styles.saveButton, saving && { opacity: 0.6 }]} onPress={saveProfile} disabled={saving}>
                   <Text style={styles.saveText}>{saving ? 'Đang lưu...' : 'Lưu thay đổi'}</Text>
@@ -731,11 +735,13 @@ function Field({
   value,
   onChangeText,
   keyboardType,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  placeholder?: string;
 }) {
   return (
     <View style={{ marginBottom: 10 }}>
@@ -745,6 +751,7 @@ function Field({
         onChangeText={onChangeText}
         keyboardType={keyboardType}
         style={styles.input}
+        placeholder={placeholder}
         placeholderTextColor="#94A3B8"
       />
     </View>

@@ -1,10 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowRight, CalendarDays, Compass, Sparkles } from "lucide-react";
-import { AtmosphericHero3D } from "./AtmosphericHero3D";
 import { SearchWidget } from "./SearchWidget";
 import type { BookingRecord } from "@/services/bookingService";
+
+const AtmosphericHero3D = dynamic(
+  () => import("./AtmosphericHero3D").then((mod) => mod.AtmosphericHero3D),
+  { ssr: false }
+);
 
 interface HeroSectionProps {
   user: { name: string; email: string; role?: string } | null;
