@@ -352,32 +352,45 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
   const removeFromBooking = async (id: string, bookingDbId?: string) => {
     const currentUserId = userProfile.id || '1';
+    const targetBookingId = bookingDbId || id;
+
     // 1. Remove from local state immediately
     setBookings((items) =>
-      items.filter(
-        (item) =>
-          item.id !== id &&
-          item.id + (item.checkIn || '') !== id &&
-          item.bookingId !== id &&
-          item.bookingId !== bookingDbId
-      )
+      items.filter((item) => {
+        if (targetBookingId && (item.bookingId === targetBookingId || item.id === targetBookingId)) {
+          return false;
+        }
+        if (id && item.id + (item.checkIn || '') === id) {
+          return false;
+        }
+        if (id && (item.id === id || item.bookingId === id)) {
+          return false;
+        }
+        return true;
+      })
     );
 
     // 2. Call backend API to cancel in MySQL database
-    const targetId = bookingDbId || id;
-    if (targetId) {
+    if (targetBookingId) {
       try {
+        const cancelHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (authToken) {
+          cancelHeaders['Authorization'] = `Bearer ${authToken}`;
+        }
+
         await fetchWithTimeout(
-          `${API_BASE_URL}/api/bookings/${targetId}/cancel`,
+          `${API_BASE_URL}/api/bookings/${targetBookingId}/cancel`,
           {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: cancelHeaders,
             body: JSON.stringify({
               userId: parseInt(currentUserId, 10) || 1,
               reason: 'Khách hủy đơn phòng trên ứng dụng',
             }),
           },
-          3000
+          4000
         );
       } catch (err) {
         console.warn('API cancel booking failed:', err);

@@ -43,6 +43,10 @@ export default function BookingsScreen() {
   const [activeTab, setActiveTab] = useState<'bookings' | 'wishlist'>('bookings');
   const [selectedBookingDetail, setSelectedBookingDetail] = useState<BookingItem | null>(null);
 
+  // Cancel Confirmation Modal State
+  const [cancelTarget, setCancelTarget] = useState<BookingItem | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+
   // Payment Modal State
   const [paymentBooking, setPaymentBooking] = useState<BookingItem | null>(null);
   const [proofImage, setProofImage] = useState<string | null>(null);
@@ -68,28 +72,30 @@ export default function BookingsScreen() {
     );
   };
 
-  // Safe Cancel Confirmation with Native Alert
+  // Safe Cancel Confirmation with Dedicated Cross-Platform Modal
   const handlePromptCancel = (booking: BookingItem) => {
-    Alert.alert(
-      'Xác nhận hủy đặt phòng',
-      `Bạn có chắc chắn muốn hủy đơn đặt phòng tại "${booking.name}" không? Thao tác này sẽ cập nhật vào CSDL.`,
-      [
-        { text: 'Giữ lại', style: 'cancel' },
-        {
-          text: 'Hủy đơn',
-          style: 'destructive',
-          onPress: async () => {
-            const key = booking.id + (booking.checkIn || '');
-            const dbId = booking.bookingId || booking.id;
-            await removeFromBooking(key, dbId);
-            if (selectedBookingDetail?.id === booking.id) {
-              setSelectedBookingDetail(null);
-            }
-            Alert.alert('Đã hủy đặt phòng', `Đơn đặt phòng "${booking.name}" đã được hủy thành công.`);
-          },
-        },
-      ]
-    );
+    setCancelTarget(booking);
+  };
+
+  const confirmCancelBooking = async () => {
+    if (!cancelTarget) return;
+    setIsCancelling(true);
+    try {
+      const key = cancelTarget.id + (cancelTarget.checkIn || '');
+      const dbId = cancelTarget.bookingId || cancelTarget.id;
+      await removeFromBooking(key, dbId);
+      if (
+        selectedBookingDetail?.id === cancelTarget.id ||
+        selectedBookingDetail?.bookingId === cancelTarget.bookingId
+      ) {
+        setSelectedBookingDetail(null);
+      }
+      setCancelTarget(null);
+    } catch (err) {
+      console.warn('Cancel booking error:', err);
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   // Image Picker for Payment Proof
@@ -569,9 +575,7 @@ export default function BookingsScreen() {
                   if (selectedBookingDetail) {
                     const item = selectedBookingDetail;
                     setSelectedBookingDetail(null);
-                    setTimeout(() => {
-                      handlePromptCancel(item);
-                    }, 350);
+                    setCancelTarget(item);
                   }
                 }}
               >
@@ -689,6 +693,60 @@ export default function BookingsScreen() {
                   <>
                     <Ionicons name="cloud-upload" size={16} color="#FFFFFF" />
                     <Text style={s.submitProofText}>Xác nhận thanh toán</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL 3: XÁC NHẬN HỦY ĐẶT PHÒNG (CROSS-PLATFORM POPUP) */}
+      <Modal
+        visible={!!cancelTarget}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCancelTarget(null)}
+      >
+        <View style={s.modalOverlay}>
+          <View style={[s.cancelModalCard, { width: modalCardWidth, backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+            <View style={s.cancelIconCircle}>
+              <Ionicons name="trash" size={28} color="#DC2626" />
+            </View>
+
+            <Text style={[s.cancelModalTitle, { color: colors.text }]}>
+              Xác nhận hủy đặt phòng
+            </Text>
+
+            <Text style={[s.cancelModalDesc, { color: colors.textSecondary }]}>
+              Bạn có chắc chắn muốn hủy đơn đặt phòng tại{' '}
+              <Text style={{ fontWeight: '700', color: colors.text }}>"{cancelTarget?.name}"</Text> không?
+              {cancelTarget?.bookingCode ? `\n(Mã đơn: ${cancelTarget.bookingCode})` : ''}
+              {'\n'}Thao tác này sẽ cập nhật vào CSDL và giải phóng lịch phòng.
+            </Text>
+
+            <View style={s.cancelModalActions}>
+              <Pressable
+                style={[s.cancelKeepBtn, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}
+                onPress={() => setCancelTarget(null)}
+                disabled={isCancelling}
+              >
+                <Text style={[s.cancelKeepText, { color: isDark ? '#E2E8F0' : '#475569' }]}>
+                  Giữ lại
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[s.cancelConfirmBtn, isCancelling && { opacity: 0.6 }]}
+                onPress={confirmCancelBooking}
+                disabled={isCancelling}
+              >
+                {isCancelling ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="trash-outline" size={15} color="#FFFFFF" />
+                    <Text style={s.cancelConfirmText}>Xác nhận hủy</Text>
                   </>
                 )}
               </Pressable>
@@ -1288,6 +1346,69 @@ const s = StyleSheet.create({
     borderRadius: 14,
   },
   submitProofText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  // Cancel Confirmation Modal Styles
+  cancelModalCard: {
+    borderRadius: 22,
+    padding: 22,
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 14,
+  },
+  cancelIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  cancelModalTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  cancelModalDesc: {
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  cancelModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  cancelKeepBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelKeepText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  cancelConfirmBtn: {
+    flex: 1.2,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#DC2626',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  cancelConfirmText: {
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
