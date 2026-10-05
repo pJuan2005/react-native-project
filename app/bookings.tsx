@@ -756,6 +756,9 @@ export default function BookingsScreen() {
               Bạn có chắc chắn muốn hủy đơn đặt phòng tại{' '}
               <Text style={{ fontWeight: '700', color: colors.text }}>"{cancelTarget?.name}"</Text> không?
               {cancelTarget?.bookingCode ? `\n(Mã đơn: ${cancelTarget.bookingCode})` : ''}
+              {cancelTarget?.paymentStatus === 'completed'
+                ? '\n\n⚠️ Đơn phòng đã chuyển khoản thanh toán: Tiền cọc sẽ được hoàn trả theo chính sách (hoàn 70% cọc nếu hủy trước 3 ngày, hoặc giữ 100% nếu hủy sát ngày để hỗ trợ chủ nhà).'
+                : '\n\n💡 Đơn phòng chưa thanh toán, bạn có thể hủy miễn phí 100%.'}
             </Text>
 
             <View style={s.cancelModalActions}>

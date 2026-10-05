@@ -131,6 +131,25 @@ class HomestayModel {
       [id]
     );
 
+    let bookedRanges = [];
+    try {
+      const [bookedRows] = await db.query(
+        `SELECT
+          DATE_FORMAT(check_in, '%Y-%m-%d') AS check_in,
+          DATE_FORMAT(check_out, '%Y-%m-%d') AS check_out
+         FROM bookings
+         WHERE (homestay_id = ? OR property_id = ?)
+           AND status IN ('pending', 'confirmed')
+           AND check_out >= CURDATE()
+         ORDER BY check_in ASC`,
+        [id, id]
+      );
+      bookedRanges = bookedRows.map((b) => ({
+        checkIn: b.check_in,
+        checkOut: b.check_out,
+      }));
+    } catch (_) {}
+
     return {
       id: String(row.id),
       name: row.name,
@@ -149,6 +168,7 @@ class HomestayModel {
       images: images.length > 0
         ? images.map((i) => i.image_url)
         : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'],
+      bookedRanges,
       isNew: Boolean(row.is_new),
       isFeatured: Boolean(row.is_featured),
     };

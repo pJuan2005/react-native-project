@@ -77,6 +77,7 @@ export default function HomestayDetail() {
 
   const {
     addToBooking,
+    bookings,
     savedHomestays,
     toggleSavedHomestay,
     userVouchers,
@@ -119,6 +120,32 @@ export default function HomestayDetail() {
     return ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'];
   }, [homestay]);
 
+  // Danh sách các khoảng ngày homestay đã kín phòng (từ CSDL và từ local bookings)
+  const occupiedRanges = useMemo(() => {
+    const list: { checkIn: string; checkOut: string }[] = [];
+    if (homestay?.bookedRanges && Array.isArray(homestay.bookedRanges)) {
+      list.push(...homestay.bookedRanges);
+    }
+    if (bookings) {
+      bookings
+        .filter((b) => (String(b.id) === String(id) || String((b as any).homestayId) === String(id)) && b.status !== 'cancelled' && b.checkIn && b.checkOut)
+        .forEach((b) => {
+          list.push({ checkIn: b.checkIn!, checkOut: b.checkOut! });
+        });
+    }
+    return list;
+  }, [homestay?.bookedRanges, bookings, id]);
+
+  // Kiểm tra ngày có nằm trong khoảng đã kín phòng không (checkIn <= date < checkOut)
+  const isDateOccupied = (dateStr: string) => {
+    return occupiedRanges.some((range) => dateStr >= range.checkIn && dateStr < range.checkOut);
+  };
+
+  // Kiểm tra khoảng ngày [start, end] có xung đột với bất kỳ đơn đặt phòng nào không
+  const doesRangeConflict = (startStr: string, endStr: string) => {
+    return occupiedRanges.some((range) => startStr < range.checkOut && endStr > range.checkIn);
+  };
+
   // Calculations
   const nights = useMemo(() => {
     if (!checkIn || !checkOut) return 0;
@@ -145,6 +172,10 @@ export default function HomestayDetail() {
     }
     if (checkOut <= checkIn) {
       Alert.alert('Ngày không hợp lệ', 'Ngày trả phòng phải sau ngày nhận phòng');
+      return;
+    }
+    if (doesRangeConflict(checkIn, checkOut)) {
+      Alert.alert('Trùng lịch phòng 🔒', 'Homestay đã có khách đặt trong khoảng thời gian này. Vui lòng chọn ngày khác.');
       return;
     }
     if (nights <= 0) {
@@ -210,11 +241,20 @@ export default function HomestayDetail() {
       Alert.alert('Ngày không hợp lệ', 'Không thể chọn ngày trong quá khứ.');
       return;
     }
+    if (isDateOccupied(dateStr)) {
+      Alert.alert('Đã kín phòng 🔒', 'Ngày này homestay đã có khách đặt. Vui lòng chọn ngày khác.');
+      return;
+    }
+
     if (!checkIn || (checkIn && checkOut)) {
       setCheckIn(dateStr);
       setCheckOut('');
     } else {
       if (dateStr > checkIn) {
+        if (doesRangeConflict(checkIn, dateStr)) {
+          Alert.alert('Khoảng ngày bị trùng 🔒', 'Khoảng ngày bạn chọn có ngày đã kín phòng. Vui lòng chọn lại.');
+          return;
+        }
         setCheckOut(dateStr);
       } else {
         setCheckIn(dateStr);
@@ -226,11 +266,14 @@ export default function HomestayDetail() {
   const setQuickPreset = (type: 'tonight' | 'weekend' | '3days') => {
     const today = new Date();
 
+    let start = '';
+    let end = '';
+
     if (type === 'tonight') {
       const tomorrow = new Date(today);
       tomorrow.setDate(today.getDate() + 1);
-      setCheckIn(formatLocalDateStr(today));
-      setCheckOut(formatLocalDateStr(tomorrow));
+      start = formatLocalDateStr(today);
+      end = formatLocalDateStr(tomorrow);
     } else if (type === 'weekend') {
       const friday = new Date(today);
       const day = today.getDay();
@@ -238,16 +281,24 @@ export default function HomestayDetail() {
       friday.setDate(today.getDate() + (distToFriday === 0 ? 7 : distToFriday));
       const sunday = new Date(friday);
       sunday.setDate(friday.getDate() + 2);
-      setCheckIn(formatLocalDateStr(friday));
-      setCheckOut(formatLocalDateStr(sunday));
+      start = formatLocalDateStr(friday);
+      end = formatLocalDateStr(sunday);
     } else {
       const d1 = new Date(today);
       d1.setDate(today.getDate() + 3);
       const d2 = new Date(d1);
       d2.setDate(d1.getDate() + 2);
-      setCheckIn(formatLocalDateStr(d1));
-      setCheckOut(formatLocalDateStr(d2));
+      start = formatLocalDateStr(d1);
+      end = formatLocalDateStr(d2);
     }
+
+    if (doesRangeConflict(start, end) || isDateOccupied(start)) {
+      Alert.alert('Đã kín phòng 🔒', 'Lựa chọn nhanh này rơi vào khoảng ngày homestay đã kín phòng.');
+      return;
+    }
+
+    setCheckIn(start);
+    setCheckOut(end);
     setShowDatePicker(false);
   };
 
@@ -538,10 +589,24 @@ export default function HomestayDetail() {
             </View>
             <View style={s.rewardNotice}>
               <Ionicons name="star" size={14} color="#F59E0B" />
-              <Text style={s.rewardNoticeText}>Tích lũy +100 điểm thưởng sau chuyến đi này</Text>
+              <Text style={s.rewardNoticeText}>
+                Tích lũy +{Math.max(10, Math.floor(finalTotalPrice / 10000))} điểm thưởng sau chuyến đi này
+              </Text>
             </View>
           </View>
         )}
+
+        {/* Cancellation Policy Card */}
+        <View style={[s.policyCard, { backgroundColor: isDark ? '#1C2541' : '#F8FAFC', borderColor: colors.cardBorder }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <Ionicons name="shield-checkmark-outline" size={16} color="#0284C7" />
+            <Text style={[s.policyTitle, { color: colors.text }]}>Chính sách hủy phòng & hoàn tiền</Text>
+          </View>
+          <Text style={[s.policyDesc, { color: colors.textSecondary }]}>
+            • Đơn chưa thanh toán: Hủy miễn phí bất kỳ lúc nào.{'\n'}
+            • Đơn đã thanh toán: Hủy trước ngày nhận phòng ≥ 3 ngày hoàn 70% cọc. Hủy trong vòng 3 ngày giữ 100% cọc để bồi thường cho chủ nhà.
+          </Text>
+        </View>
       </ScrollView>
 
       {/* STICKY BOTTOM ACTION BAR (Tối ưu an toàn cho tất cả thiết bị có hoặc không có Home Bar) */}
@@ -640,6 +705,7 @@ export default function HomestayDetail() {
                 }
 
                 const isPast = cell.dateStr < todayStr;
+                const isOccupied = isDateOccupied(cell.dateStr);
                 const isCheckIn = cell.dateStr === checkIn;
                 const isCheckOut = cell.dateStr === checkOut;
                 const inRange =
@@ -651,15 +717,16 @@ export default function HomestayDetail() {
                 return (
                   <Pressable
                     key={idx}
-                    disabled={isPast}
+                    disabled={isPast || isOccupied}
                     style={[
                       s.calendarCell,
                       isPast && { opacity: 0.28 },
+                      isOccupied && { backgroundColor: isDark ? '#450A0A' : '#FEE2E2', borderRadius: 19 },
                       inRange && { backgroundColor: isDark ? '#082F49' : '#E0F2FE' },
                       (isCheckIn || isCheckOut) && { backgroundColor: colors.primary, borderRadius: 19 },
                     ]}
                     onPress={() => {
-                      if (!isPast) {
+                      if (!isPast && !isOccupied) {
                         handleDayPress(cell.dateStr);
                       }
                     }}
@@ -667,14 +734,18 @@ export default function HomestayDetail() {
                     <Text
                       style={[
                         s.calendarDayText,
-                        { color: isPast ? (isDark ? '#475569' : '#94A3B8') : colors.text },
+                        { color: isOccupied ? '#DC2626' : isPast ? (isDark ? '#475569' : '#94A3B8') : colors.text },
                         isPast && { textDecorationLine: 'line-through' },
+                        isOccupied && { fontWeight: '700' },
                         inRange && { color: colors.primary, fontWeight: '700' },
                         (isCheckIn || isCheckOut) && { color: '#FFFFFF', fontWeight: '700' },
                       ]}
                     >
                       {cell.dayNum}
                     </Text>
+                    {isOccupied && (
+                      <Text style={{ fontSize: 7.5, color: '#DC2626', fontWeight: '800', marginTop: -2 }}>Kín</Text>
+                    )}
                   </Pressable>
                 );
               })}
@@ -1129,6 +1200,20 @@ const s = StyleSheet.create({
   totalValue: { fontSize: 17, fontWeight: '800' },
   rewardNotice: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, backgroundColor: '#FEF3C7', padding: 6, borderRadius: 6 },
   rewardNoticeText: { fontSize: 11, color: '#92400E', fontWeight: '600' },
+  policyCard: {
+    marginTop: 14,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  policyTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  policyDesc: {
+    fontSize: 11,
+    lineHeight: 17,
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
   centerText: { marginTop: 12, fontSize: 14 },
   centerTitle: { marginTop: 12, fontSize: 15, fontWeight: '600', textAlign: 'center' },

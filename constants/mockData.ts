@@ -16,6 +16,7 @@ export type Homestay = {
   description: string;
   isNew?: boolean;
   isFeatured?: boolean;
+  bookedRanges?: { checkIn: string; checkOut: string }[];
 };
 
 export type Location = {
