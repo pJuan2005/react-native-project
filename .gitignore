@@ -3,6 +3,7 @@
 # =====================================================
 node_modules/
 backend/node_modules/
+backend/uploads/
 web/node_modules/
 web/.next/
 package-lock.json.log
