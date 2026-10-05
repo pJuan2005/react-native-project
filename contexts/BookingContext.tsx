@@ -267,6 +267,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
               checkOut: bookingDetails.checkOut,
               guests: bookingDetails.guests || 2,
               paymentMethod: 'cash',
+              promotionId: bookingDetails.voucherCode || (bookingDetails as any).voucherId || null,
+              voucherCode: bookingDetails.voucherCode || null,
               notes: bookingDetails.voucherCode ? `Áp dụng voucher: ${bookingDetails.voucherCode}` : '',
             }),
           },
@@ -279,6 +281,14 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         console.warn('API POST booking failed, saving to local state:', err);
+      }
+
+      // Xóa voucher đã dùng khỏi ví người dùng ngay lập tức
+      if (bookingDetails.voucherCode) {
+        const usedCode = bookingDetails.voucherCode.trim().toUpperCase();
+        setUserVouchers((prev) =>
+          prev.filter((v) => v.code.trim().toUpperCase() !== usedCode)
+        );
       }
 
       // 2. Update local state

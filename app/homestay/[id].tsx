@@ -168,6 +168,9 @@ export default function HomestayDetail() {
       discountAmount: discountAmount > 0 ? discountAmount : undefined,
     });
 
+    const usedVoucherCode = selectedVoucher?.code;
+    setSelectedVoucher(null);
+
     setBookingSuccessData({
       bookingCode: generatedCode,
       homestayName: homestay.name,
@@ -179,7 +182,7 @@ export default function HomestayDetail() {
       guests,
       totalPrice: finalTotalPrice,
       discountAmount,
-      voucherCode: selectedVoucher?.code,
+      voucherCode: usedVoucherCode,
       bookingTime: new Date().toLocaleString('vi-VN'),
     });
   };

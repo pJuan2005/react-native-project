@@ -8,6 +8,7 @@ class BookingService {
     checkOut,
     guests,
     promotionId,
+    voucherCode,
     paymentMethod,
     notes,
   }) {
@@ -21,6 +22,7 @@ class BookingService {
       checkOut,
       guests,
       promotionId,
+      voucherCode,
       paymentMethod,
       notes,
     });

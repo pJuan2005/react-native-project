@@ -4,7 +4,7 @@ import { useBooking, BookingItem } from '@/contexts/BookingContext';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -55,6 +55,25 @@ export default function BookingsScreen() {
   const [isSubmittingProof, setIsSubmittingProof] = useState(false);
 
   const total = getBookingsTotal();
+
+  // Active bookings (not cancelled)
+  const activeBookings = useMemo(
+    () => bookings.filter((b: BookingItem) => b.status !== 'cancelled'),
+    [bookings]
+  );
+
+  // Unpaid bookings needing payment
+  const unpaidBookings = useMemo(
+    () => activeBookings.filter((b: BookingItem) => b.paymentStatus !== 'completed'),
+    [activeBookings]
+  );
+
+  const unpaidTotal = useMemo(
+    () => unpaidBookings.reduce((sum: number, item: BookingItem) => sum + (item.totalPrice || item.price * item.quantity), 0),
+    [unpaidBookings]
+  );
+
+  const allPaid = activeBookings.length > 0 && unpaidBookings.length === 0;
 
   const handleReviewAndReward = (bookingId: string, name: string) => {
     Alert.alert(
@@ -347,19 +366,43 @@ export default function BookingsScreen() {
                 );
               }}
               ListFooterComponent={
-                <View style={[s.summaryCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-                  <Line label="Tổng giá trị đặt phòng" value={formatPrice(total)} isDark={isDark} />
-                  <View style={s.total}>
-                    <Text style={[s.totalLabel, { color: colors.text }]}>Tổng thanh toán</Text>
-                    <Text style={[s.totalValue, { color: colors.primary }]}>{formatPrice(total)}</Text>
+                activeBookings.length > 0 ? (
+                  <View style={[s.summaryCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+                    <Line label="Tổng giá trị đặt phòng" value={formatPrice(total)} isDark={isDark} />
+
+                    {allPaid ? (
+                      <>
+                        <View style={s.total}>
+                          <Text style={[s.totalLabel, { color: colors.text }]}>Số tiền cần thanh toán</Text>
+                          <Text style={[s.totalValue, { color: '#16A34A' }]}>0 ₫</Text>
+                        </View>
+                        <View style={[s.allPaidBanner, { backgroundColor: isDark ? '#052E16' : '#DCFCE7', borderColor: '#86EFAC' }]}>
+                          <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+                          <Text style={[s.allPaidBannerText, { color: '#16A34A' }]}>
+                            Tất cả đơn phòng đã hoàn tất thanh toán
+                          </Text>
+                        </View>
+                      </>
+                    ) : (
+                      <>
+                        <View style={s.total}>
+                          <Text style={[s.totalLabel, { color: colors.text }]}>
+                            Cần thanh toán ({unpaidBookings.length} đơn)
+                          </Text>
+                          <Text style={[s.totalValue, { color: colors.primary }]}>{formatPrice(unpaidTotal)}</Text>
+                        </View>
+                        <Pressable
+                          style={[s.checkout, { backgroundColor: colors.primary }]}
+                          onPress={handleProceedCheckout}
+                        >
+                          <Text style={s.checkoutText}>
+                            Tiến hành thanh toán ({formatPrice(unpaidTotal)})
+                          </Text>
+                        </Pressable>
+                      </>
+                    )}
                   </View>
-                  <Pressable
-                    style={[s.checkout, { backgroundColor: colors.primary }]}
-                    onPress={handleProceedCheckout}
-                  >
-                    <Text style={s.checkoutText}>Tiến hành thanh toán</Text>
-                  </Pressable>
-                </View>
+                ) : null
               }
             />
           )}
@@ -1039,6 +1082,20 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   checkoutText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
+  allPaidBanner: {
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  allPaidBannerText: {
+    fontWeight: '700',
+    fontSize: 13,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.6)',

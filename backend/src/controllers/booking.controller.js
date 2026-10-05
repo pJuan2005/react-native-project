@@ -10,6 +10,7 @@ const createBooking = async (req, res) => {
       checkOut,
       guests,
       promotionId,
+      voucherCode,
       paymentMethod,
       notes,
     } = req.body;
@@ -20,12 +21,13 @@ const createBooking = async (req, res) => {
       checkIn,
       checkOut,
       guests,
-      promotionId,
+      promotionId: promotionId || voucherCode,
+      voucherCode: voucherCode || (isNaN(Number(promotionId)) ? promotionId : null),
       paymentMethod,
       notes,
     });
 
-    return created(res, data, 'Đặt phòng thành công! Đã cộng +100 điểm thưởng thành viên.');
+    return created(res, data, 'Đặt phòng thành công! Đã tích lũy điểm thưởng thành viên.');
   } catch (err) {
     return badRequest(res, err.message || 'Lỗi khi đặt phòng');
   }

@@ -188,6 +188,7 @@ class BookingModel {
     checkOut,
     guests,
     promotionId = null,
+    voucherCode = null,
     paymentMethod = 'cash',
     notes = '',
   }) {
@@ -255,13 +256,19 @@ class BookingModel {
       let discountAmount = 0;
 
       // 4. Calculate Promotion Discount
-      if (promotionId) {
+      let matchedPromotionId = null;
+      const promoQuery = promotionId || voucherCode;
+      if (promoQuery) {
+        const isNum = !isNaN(Number(promoQuery));
         const [promoRows] = await runner.query(
-          'SELECT id, code, discount_type, discount_value, max_discount_amount, min_booking_amount FROM promotions WHERE id = ? AND is_active = 1 AND NOW() BETWEEN start_date AND end_date',
-          [promotionId]
+          `SELECT id, code, discount_type, discount_value, max_discount_amount, min_booking_amount
+           FROM promotions
+           WHERE (id = ? OR UPPER(code) = ?) AND is_active = 1 AND NOW() BETWEEN start_date AND end_date`,
+          [isNum ? Number(promoQuery) : 0, String(promoQuery).trim().toUpperCase()]
         );
         if (promoRows.length > 0) {
           const promo = promoRows[0];
+          matchedPromotionId = promo.id;
           if (rawTotal >= parseFloat(promo.min_booking_amount || 0)) {
             if (promo.discount_type === 'percent') {
               discountAmount = (rawTotal * parseFloat(promo.discount_value)) / 100;
@@ -314,7 +321,7 @@ class BookingModel {
           guests || 1,
           nights,
           pricePerNight,
-          promotionId || null,
+          matchedPromotionId || null,
           discountAmount,
           finalTotal,
           commissionRate,
