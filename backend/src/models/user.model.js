@@ -19,9 +19,9 @@ class UserModel {
 
   static async create({ name, email, passwordHash, phone, address, avatarUrl }) {
     const [result] = await db.query(
-      `INSERT INTO users (name, email, password_hash, role, phone, address, avatar_url, reward_points, is_active)
-       VALUES (?, ?, ?, 'customer', ?, ?, ?, 30, 1)`,
-      [name, email, passwordHash, phone || '', address || '', avatarUrl || '']
+      `INSERT INTO users (name, full_name, email, password, password_hash, role, phone, address, avatar_url, reward_points, is_active)
+       VALUES (?, ?, ?, ?, ?, 'customer', ?, ?, ?, 30, 1)`,
+      [name, name, email, passwordHash, passwordHash, phone || '', address || '', avatarUrl || '']
     );
     return result.insertId;
   }

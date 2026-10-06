@@ -535,6 +535,12 @@ async function migrateDatabase() {
       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), password = VALUES(password), role = 'host', full_name = VALUES(full_name)
     `, [hashedAdminPassword, hashedAdminPassword]);
 
+    await db.query(`
+      INSERT INTO users (id, name, full_name, email, password_hash, password, role, phone, location, status, is_active)
+      VALUES (8, 'Huong Nguyen', 'Huong Nguyen', 'huong@gmail.com', ?, ?, 'customer', '0912888999', 'Ha Noi', 'active', 1)
+      ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), password = VALUES(password), status = 'active', is_active = 1
+    `, [hashedAdminPassword, hashedAdminPassword]);
+
     // 13. Bảng host_verifications, disputes, audit_logs
     await db.query(`
       CREATE TABLE IF NOT EXISTS host_verifications (
