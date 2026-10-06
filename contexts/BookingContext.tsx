@@ -50,7 +50,7 @@ type BookingContextValue = {
     }
   ) => Promise<{ success: boolean; bookingId?: string; bookingCode?: string }>;
   toggleSavedHomestay: (homestay: Homestay) => boolean;
-  removeFromBooking: (id: string, bookingDbId?: string) => Promise<void>;
+  removeFromBooking: (id: string, bookingDbId?: string, bookingCode?: string) => Promise<void>;
   uploadProof: (bookingId: string, proofImageUrl: string, transactionCode?: string) => Promise<{ success: boolean; message: string }>;
   removeSaved: (id: string) => void;
   clearBookings: () => void;
@@ -362,20 +362,27 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     return nowSaved;
   };
 
-  const removeFromBooking = async (id: string, bookingDbId?: string) => {
+  const removeFromBooking = async (id: string, bookingDbId?: string, bookingCode?: string) => {
     const currentUserId = userProfile.id || '1';
-    const targetBookingId = bookingDbId || id;
 
-    // 1. Remove from local state immediately
+    // 1. Remove from local state immediately with precise target identification
     setBookings((items) =>
       items.filter((item) => {
-        if (targetBookingId && (item.bookingId === targetBookingId || item.id === targetBookingId)) {
+        // High-precision match by database booking ID
+        if (bookingDbId && item.bookingId && item.bookingId === bookingDbId) {
           return false;
         }
-        if (id && item.id + (item.checkIn || '') === id) {
+        // Match by unique booking code
+        if (bookingCode && item.bookingCode && item.bookingCode === bookingCode) {
           return false;
         }
-        if (id && (item.id === id || item.bookingId === id)) {
+        // Match by compound unique key
+        const itemKey = item.bookingId
+          ? `booking-${item.bookingId}`
+          : item.bookingCode
+          ? `code-${item.bookingCode}`
+          : item.id + (item.checkIn || '');
+        if (id && (itemKey === id || item.bookingId === id || item.bookingCode === id)) {
           return false;
         }
         return true;
@@ -383,7 +390,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     );
 
     // 2. Call backend API to cancel in MySQL database
-    if (targetBookingId) {
+    const apiTargetId = bookingDbId || (id && !id.startsWith('booking-') && !id.startsWith('code-') && !id.startsWith('item-') ? id : undefined);
+    if (apiTargetId) {
       try {
         const cancelHeaders: Record<string, string> = {
           'Content-Type': 'application/json',
@@ -393,7 +401,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         }
 
         await fetchWithTimeout(
-          `${API_BASE_URL}/api/bookings/${targetBookingId}/cancel`,
+          `${API_BASE_URL}/api/bookings/${apiTargetId}/cancel`,
           {
             method: 'PUT',
             headers: cancelHeaders,
@@ -472,7 +480,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const clearBookings = () => setBookings([]);
 
   const getBookingsTotal = () =>
-    bookings.reduce((total, item) => total + (item.totalPrice || item.price * item.quantity), 0);
+    bookings
+      .filter((b) => b.status !== 'cancelled')
+      .reduce((total, item) => total + (item.totalPrice || item.price * item.quantity), 0);
 
   const addRewardPoints = (points: number, reason: string) => {
     setRewardPoints((prev) => prev + points);

@@ -54,12 +54,15 @@ export default function BookingsScreen() {
   const [transactionCode, setTransactionCode] = useState('');
   const [isSubmittingProof, setIsSubmittingProof] = useState(false);
 
-  const total = getBookingsTotal();
-
   // Active bookings (not cancelled)
   const activeBookings = useMemo(
     () => bookings.filter((b: BookingItem) => b.status !== 'cancelled'),
     [bookings]
+  );
+
+  const total = useMemo(
+    () => activeBookings.reduce((sum: number, item: BookingItem) => sum + (item.totalPrice || item.price * item.quantity), 0),
+    [activeBookings]
   );
 
   // Unpaid bookings needing payment
@@ -101,12 +104,17 @@ export default function BookingsScreen() {
     if (!cancelTarget) return;
     setIsCancelling(true);
     try {
-      const key = cancelTarget.id + (cancelTarget.checkIn || '');
-      const dbId = cancelTarget.bookingId || cancelTarget.id;
-      await removeFromBooking(key, dbId);
+      const key = cancelTarget.bookingId
+        ? `booking-${cancelTarget.bookingId}`
+        : cancelTarget.bookingCode
+        ? `code-${cancelTarget.bookingCode}`
+        : cancelTarget.id + (cancelTarget.checkIn || '');
+      const dbId = cancelTarget.bookingId;
+      await removeFromBooking(key, dbId, cancelTarget.bookingCode);
       if (
-        selectedBookingDetail?.id === cancelTarget.id ||
-        selectedBookingDetail?.bookingId === cancelTarget.bookingId
+        selectedBookingDetail?.bookingId === cancelTarget.bookingId ||
+        (selectedBookingDetail?.bookingCode && selectedBookingDetail?.bookingCode === cancelTarget.bookingCode) ||
+        (selectedBookingDetail?.id === cancelTarget.id && selectedBookingDetail?.checkIn === cancelTarget.checkIn)
       ) {
         setSelectedBookingDetail(null);
       }
@@ -256,8 +264,14 @@ export default function BookingsScreen() {
             </View>
           ) : (
             <FlatList
-              data={bookings}
-              keyExtractor={(item) => item.id + (item.checkIn || '')}
+              data={activeBookings}
+              keyExtractor={(item, index) =>
+                item.bookingId
+                  ? `booking-${item.bookingId}`
+                  : item.bookingCode
+                  ? `code-${item.bookingCode}`
+                  : `item-${item.id}-${item.checkIn || ''}-${index}`
+              }
               contentContainerStyle={s.contentList}
               showsVerticalScrollIndicator={false}
               renderItem={({ item: booking }) => {
@@ -426,7 +440,7 @@ export default function BookingsScreen() {
           ) : (
             <FlatList
               data={savedHomestays}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item, index) => `wishlist-${item.id}-${index}`}
               contentContainerStyle={s.contentList}
               showsVerticalScrollIndicator={false}
               renderItem={({ item: homestay }) => (
