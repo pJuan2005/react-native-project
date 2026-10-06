@@ -90,9 +90,9 @@ class PropertyRankingService {
     if (sortBy === 'distance' && Number.isFinite(userLat)) {
       list.sort((a, b) => (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999));
     } else if (sortBy === 'price_asc') {
-      list.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      list.sort((a, b) => parseFloat(a.price_per_night || a.price) - parseFloat(b.price_per_night || b.price));
     } else if (sortBy === 'price_desc') {
-      list.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+      list.sort((a, b) => parseFloat(b.price_per_night || b.price) - parseFloat(a.price_per_night || a.price));
     } else if (sortBy === 'rating') {
       list.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
     } else {

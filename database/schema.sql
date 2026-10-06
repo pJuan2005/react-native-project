@@ -126,20 +126,18 @@ CREATE TABLE `amenities` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
--- 5. PROPERTIES TABLE (Thực thể Chỗ nghỉ chính duy nhất)
+-- 5. PROPERTIES TABLE (Thực thể Chỗ nghỉ duy nhất - Canonical Schema)
+-- Không lưu các cột duplicate: title, property_type, price, featured, approval_status
 -- =====================================================
 CREATE TABLE `properties` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `host_id` BIGINT UNSIGNED NULL,
-  `title` VARCHAR(255) NOT NULL,
   `name` VARCHAR(255) NOT NULL,
   `description` TEXT NULL,
-  `property_type` VARCHAR(100) NOT NULL DEFAULT 'Homestay',
+  `type_id` BIGINT UNSIGNED NOT NULL,
   `price_per_night` DECIMAL(12,2) NOT NULL,
-  `price` DECIMAL(12,2) NOT NULL,
   `old_price` DECIMAL(12,2) NULL,
   `location_id` BIGINT UNSIGNED NULL,
-  `type_id` BIGINT UNSIGNED NULL,
   `street_address` VARCHAR(255) NOT NULL DEFAULT 'Vietnam',
   `city` VARCHAR(100) NOT NULL DEFAULT 'Vietnam',
   `country` VARCHAR(100) NOT NULL DEFAULT 'Vietnam',
@@ -152,11 +150,9 @@ CREATE TABLE `properties` (
   `review_count` INT UNSIGNED NOT NULL DEFAULT 0,
   `is_new` TINYINT(1) NOT NULL DEFAULT 0,
   `is_featured` TINYINT(1) NOT NULL DEFAULT 0,
-  `featured` TINYINT(1) NOT NULL DEFAULT 0,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
   `status` ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'approved',
-  `approval_status` ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'approved',
   `cover_image` VARCHAR(500) NULL,
   `manage_token` VARCHAR(80) NULL,
   `manage_token_active` TINYINT(1) NOT NULL DEFAULT 1,
@@ -174,7 +170,7 @@ CREATE TABLE `properties` (
   KEY `idx_properties_rating` (`rating`),
   CONSTRAINT `fk_properties_host` FOREIGN KEY (`host_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_properties_location` FOREIGN KEY (`location_id`) REFERENCES `locations` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_properties_type` FOREIGN KEY (`type_id`) REFERENCES `homestay_types` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+  CONSTRAINT `fk_properties_type` FOREIGN KEY (`type_id`) REFERENCES `homestay_types` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
@@ -487,23 +483,23 @@ CREATE TABLE `audit_logs` (
 -- VIEWS FOR MOBILE & WEB ADMIN
 -- =====================================================
 
--- VIEW 1: Chi tiết property/chỗ nghỉ đầy đủ
+-- VIEW 1: Chi tiết property/chỗ nghỉ đầy đủ (Ánh xạ DTO tương thích cho cả Mobile & Web)
 CREATE OR REPLACE VIEW `v_properties_detail` AS
 SELECT
   p.`id`,
   p.`host_id`,
-  p.`title`,
+  p.`name` AS `title`,
   p.`name`,
   p.`description`,
-  p.`property_type`,
+  COALESCE(t.`name`, 'Homestay') AS `property_type`,
+  COALESCE(t.`name`, 'Homestay') AS `type_name`,
   p.`price_per_night`,
-  p.`price`,
+  p.`price_per_night` AS `price`,
   p.`old_price`,
   p.`location_id`,
   COALESCE(l.`name`, p.`city`) AS `location_name`,
   l.`image_url` AS `location_image`,
   p.`type_id`,
-  COALESCE(t.`name`, p.`property_type`) AS `type_name`,
   p.`street_address`,
   p.`city`,
   p.`country`,
@@ -516,12 +512,15 @@ SELECT
   p.`bathrooms`,
   p.`is_new`,
   p.`is_featured`,
-  p.`featured`,
+  p.`is_featured` AS `featured`,
   p.`is_active`,
+  p.`is_deleted`,
   p.`status`,
-  p.`approval_status`,
+  p.`status` AS `approval_status`,
   p.`cover_image`,
   p.`manage_token`,
+  p.`manage_token_active`,
+  p.`manage_token_expires_at`,
   p.`created_at`,
   p.`updated_at`
 FROM `properties` p
@@ -529,7 +528,7 @@ LEFT JOIN `locations` l ON p.`location_id` = l.`id`
 LEFT JOIN `homestay_types` t ON p.`type_id` = t.`id`
 WHERE p.`is_deleted` = 0;
 
--- Alias View cho tương thích lùi nếu có component cũ tham chiếu
+-- Alias View cho tương thích ngược nếu còn client cũ tham chiếu
 CREATE OR REPLACE VIEW `v_homestays_detail` AS
 SELECT * FROM `v_properties_detail`;
 
@@ -544,7 +543,7 @@ SELECT
   u.`phone` AS `user_phone`,
   b.`property_id`,
   b.`property_id` AS `homestay_id`,
-  p.`title` AS `property_title`,
+  p.`name` AS `property_title`,
   p.`name` AS `homestay_name`,
   p.`price_per_night` AS `property_price`,
   p.`price_per_night` AS `homestay_price`,
@@ -553,7 +552,7 @@ SELECT
   p.`location_id`,
   COALESCE(l.`name`, p.`city`) AS `location_name`,
   p.`type_id`,
-  COALESCE(t.`name`, p.`property_type`) AS `type_name`,
+  COALESCE(t.`name`, 'Homestay') AS `type_name`,
   b.`check_in`,
   b.`check_out`,
   b.`guests`,

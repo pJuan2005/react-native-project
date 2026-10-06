@@ -229,7 +229,8 @@ async function getHostProperties(hostId, limit = 5) {
   const [rows] = await db.promise().query(
     `SELECT
       p.id,
-      p.title,
+      p.name,
+      p.name AS title,
       p.cover_image AS image,
       p.price_per_night AS price,
       p.status,
@@ -246,7 +247,8 @@ async function getHostProperties(hostId, limit = 5) {
 
   return rows.map((row) => ({
     id: toNumber(row.id),
-    title: row.title,
+    title: row.name,
+    name: row.name,
     image: buildVariantUrl(row.image, "thumb"),
     price: toNumber(row.price),
     status: row.status,

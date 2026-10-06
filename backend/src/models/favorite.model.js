@@ -5,16 +5,14 @@ class FavoriteModel {
     const [rows] = await db.query(
       `SELECT
         p.id,
-        COALESCE(p.title, p.name) AS name,
-        p.title,
+        p.name,
         p.description,
-        p.price_per_night AS price,
         p.price_per_night,
         p.old_price,
         p.location_id,
         COALESCE(l.name, p.city) AS location,
         p.type_id,
-        COALESCE(t.name, p.property_type) AS type,
+        COALESCE(t.name, 'Homestay') AS type,
         p.rating,
         p.review_count,
         p.max_guests,
@@ -53,14 +51,15 @@ class FavoriteModel {
     return rows.map((row) => ({
       id: String(row.id),
       name: row.name,
-      title: row.title,
+      title: row.name, // DTO compatibility
       description: row.description || '',
-      price: parseFloat(row.price),
-      pricePerNight: parseFloat(row.price_per_night || row.price),
+      price: parseFloat(row.price_per_night), // DTO compatibility
+      pricePerNight: parseFloat(row.price_per_night),
       oldPrice: row.old_price ? parseFloat(row.old_price) : undefined,
       locationId: String(row.location_id || 1),
       location: row.location,
       type: row.type,
+      propertyType: row.type, // DTO compatibility
       rating: parseFloat(row.rating),
       reviewCount: row.review_count,
       maxGuests: row.max_guests,

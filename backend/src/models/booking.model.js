@@ -16,8 +16,8 @@ class BookingModel {
         b.guest_phone,
         b.property_id,
         b.property_id AS homestay_id,
-        COALESCE(p.title, p.name) AS property_title,
-        COALESCE(p.title, p.name) AS homestay_name,
+        p.name AS property_title,
+        p.name AS homestay_name,
         p.host_id,
         COALESCE(l.name, p.city) AS location_name,
         b.check_in,
@@ -67,8 +67,8 @@ class BookingModel {
       params.push(targetPropertyId);
     }
     if (search) {
-      sql += ' AND (b.booking_code LIKE ? OR u.name LIKE ? OR b.guest_name LIKE ? OR p.title LIKE ? OR p.name LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+      sql += ' AND (b.booking_code LIKE ? OR u.name LIKE ? OR b.guest_name LIKE ? OR p.name LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     sql += ' ORDER BY b.created_at DESC';
@@ -96,13 +96,13 @@ class BookingModel {
         b.guest_phone,
         b.property_id,
         b.property_id AS homestay_id,
-        COALESCE(p.title, p.name) AS property_title,
-        COALESCE(p.title, p.name) AS homestay_name,
+        p.name AS property_title,
+        p.name AS homestay_name,
         p.host_id,
         COALESCE(pi.image_url, p.cover_image) AS property_image,
         COALESCE(pi.image_url, p.cover_image) AS homestay_image,
         COALESCE(l.name, p.city) AS location_name,
-        COALESCE(t.name, p.property_type) AS type_name,
+        COALESCE(t.name, 'Homestay') AS type_name,
         b.check_in,
         b.check_out,
         b.guests,
@@ -151,12 +151,12 @@ class BookingModel {
         b.user_id,
         b.property_id,
         b.property_id AS homestay_id,
-        COALESCE(p.title, p.name) AS homestay_name,
-        COALESCE(p.title, p.name) AS property_title,
+        p.name AS homestay_name,
+        p.name AS property_title,
         COALESCE(pi.image_url, p.cover_image) AS homestay_image,
         COALESCE(pi.image_url, p.cover_image) AS property_image,
         COALESCE(l.name, p.city) AS location_name,
-        COALESCE(t.name, p.property_type) AS type_name,
+        COALESCE(t.name, 'Homestay') AS type_name,
         b.check_in,
         b.check_out,
         b.guests,
@@ -227,14 +227,14 @@ class BookingModel {
     try {
       // 1. Get Property with row lock
       const [pRows] = await runner.query(
-        'SELECT id, title, name, price_per_night, price, max_guests, is_active, host_id FROM properties WHERE id = ? AND is_deleted = 0 FOR UPDATE',
+        'SELECT id, name, price_per_night, max_guests, is_active, host_id FROM properties WHERE id = ? AND is_deleted = 0 FOR UPDATE',
         [targetPropertyId]
       );
       if (pRows.length === 0 || !pRows[0].is_active) {
         throw new Error('Chỗ nghỉ không tồn tại hoặc đã ngừng kinh doanh');
       }
       const property = pRows[0];
-      const propertyTitle = property.title || property.name;
+      const propertyTitle = property.name;
 
       if (guests > property.max_guests) {
         throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${property.max_guests} người)`);
@@ -462,14 +462,14 @@ class BookingModel {
     try {
       // 1. Get Property with row lock
       const [pRows] = await runner.query(
-        'SELECT id, title, name, price_per_night, price, max_guests, is_active, host_id FROM properties WHERE id = ? AND is_deleted = 0 FOR UPDATE',
+        'SELECT id, name, price_per_night, max_guests, is_active, host_id FROM properties WHERE id = ? AND is_deleted = 0 FOR UPDATE',
         [targetPropertyId]
       );
       if (pRows.length === 0 || !pRows[0].is_active) {
         throw new Error('Chỗ nghỉ không tồn tại hoặc đã ngừng kinh doanh');
       }
       const property = pRows[0];
-      const propertyTitle = property.title || property.name;
+      const propertyTitle = property.name;
 
       if (guests > property.max_guests) {
         throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${property.max_guests} người)`);

@@ -79,19 +79,27 @@ function parseNumber(rawValue, defaultValue = 0) {
 }
 
 function normalizePropertyPayload(body, hostId = null) {
+  const nameVal = String(body.name || body.title || "").trim();
+  const priceVal = parseNumber(body.price_per_night || body.price);
+  const featuredVal = parseBoolean(body.is_featured !== undefined ? body.is_featured : body.featured);
+
   return {
     hostId,
-    title: String(body.title || "").trim(),
+    name: nameVal,
+    title: nameVal,
     description: String(body.description || "").trim(),
     type: String(body.type || body.propertyType || "").trim(),
-    price: parseNumber(body.price),
+    typeId: parseInteger(body.typeId || body.type_id),
+    price: priceVal,
+    price_per_night: priceVal,
     address: String(body.address || body.streetAddress || "").trim(),
     city: String(body.city || "").trim(),
     country: String(body.country || "").trim(),
     maxGuests: parseInteger(body.maxGuests || body.max_guests),
     bedrooms: parseInteger(body.bedrooms),
     bathrooms: parseInteger(body.bathrooms),
-    featured: parseBoolean(body.featured),
+    featured: featuredVal,
+    is_featured: featuredVal,
     status: String(body.status || "pending").trim().toLowerCase(),
     amenities: parseArrayInput(body.amenities),
     coverImagePath: String(body.coverImagePath || "").trim(),
@@ -105,7 +113,7 @@ function validatePropertyPayload(payload, options = {}) {
   const requireCoverImage = options.requireCoverImage || false;
   const validStatuses = ["pending", "approved", "rejected"];
 
-  if (!payload.title) {
+  if (!payload.name && !payload.title) {
     errors.title = "Property title is required.";
   }
 

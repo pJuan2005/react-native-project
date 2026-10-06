@@ -43,6 +43,7 @@ const createProperty = async (req, res) => {
       title,
       description,
       price,
+      price_per_night,
       old_price,
       location_id,
       type_id,
@@ -54,16 +55,18 @@ const createProperty = async (req, res) => {
       is_new,
     } = req.body;
 
-    const finalTitle = title || name;
-    if (!finalTitle || !price || !location_id || !type_id) {
+    const finalName = name || title;
+    const finalPrice = price_per_night || price;
+    if (!finalName || !finalPrice || !location_id || !type_id) {
       return badRequest(res, 'Vui lòng điền đầy đủ các trường bắt buộc');
     }
 
     const propertyId = await AdminService.createProperty({
-      name: finalTitle,
-      title: finalTitle,
+      name: finalName,
+      title: finalName,
       description,
-      price,
+      price: finalPrice,
+      price_per_night: finalPrice,
       old_price,
       location_id,
       type_id,

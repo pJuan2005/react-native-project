@@ -19,6 +19,8 @@ export type Homestay = {
   bookedRanges?: { checkIn: string; checkOut: string }[];
 };
 
+export type Property = Homestay;
+
 export type Location = {
   id: string;
   name: string;

@@ -18,24 +18,24 @@ function normalizePublicPropertyFilters(filters = {}) {
 
 function buildPublicPropertyWhereClause(filters = {}) {
   const normalizedFilters = normalizePublicPropertyFilters(filters);
-  const clauses = ["p.status = 'approved'", "p.is_deleted = 0"];
+  const clauses = ["p.status = 'approved'", "p.is_deleted = 0", "p.is_active = 1"];
   const params = [];
 
   if (normalizedFilters.location) {
     const likeValue = `%${normalizedFilters.location}%`;
     clauses.push(`(
-      p.title LIKE ?
+      p.name LIKE ?
       OR p.street_address LIKE ?
       OR p.city LIKE ?
       OR p.country LIKE ?
-      OR p.property_type LIKE ?
+      OR t.name LIKE ?
     )`);
     params.push(likeValue, likeValue, likeValue, likeValue, likeValue);
   }
 
   if (normalizedFilters.type) {
-    clauses.push("p.property_type = ?");
-    params.push(normalizedFilters.type);
+    clauses.push("(t.name = ? OR p.type_id = ?)");
+    params.push(normalizedFilters.type, normalizedFilters.type);
   }
 
   if (normalizedFilters.guests > 0) {
@@ -69,10 +69,14 @@ function mapPropertySummaryRow(row, options = {}) {
   const summary = {
     id: Number(row.id),
     hostId: Number(row.hostId),
-    title: row.title,
-    description: row.description,
-    type: row.type,
-    price: Number(row.price),
+    title: row.name,
+    name: row.name,
+    description: row.description || "",
+    type: row.type || "Homestay",
+    propertyType: row.type || "Homestay",
+    typeId: Number(row.typeId || 1),
+    price: Number(row.price_per_night || row.price || 0),
+    pricePerNight: Number(row.price_per_night || row.price || 0),
     location: row.location,
     city: row.city,
     country: row.country,
@@ -80,8 +84,10 @@ function mapPropertySummaryRow(row, options = {}) {
     bedrooms: Number(row.bedrooms || 0),
     bathrooms: Number(row.bathrooms || 0),
     status: row.status,
+    approvalStatus: row.status,
     image: buildVariantUrl(row.image, "thumb"),
-    featured: Boolean(row.featured),
+    featured: Boolean(row.is_featured !== undefined ? row.is_featured : row.featured),
+    isFeatured: Boolean(row.is_featured !== undefined ? row.is_featured : row.featured),
     hostName: row.hostName,
     reviews: Number(row.reviews || 0),
     rating: Number(row.rating || 0),
@@ -133,7 +139,7 @@ async function getReviewList(propertyId) {
       r.created_at AS date,
       u.full_name AS authorName
      FROM reviews r
-     JOIN users u ON r.guest_id = u.id
+     JOIN users u ON COALESCE(r.guest_id, r.user_id) = u.id
      WHERE r.property_id = ?
      ORDER BY r.created_at DESC`,
     [propertyId],
@@ -160,10 +166,14 @@ async function buildPropertyDetail(row, options = {}) {
   const detail = {
     id: Number(row.id),
     hostId: Number(row.host_id),
-    title: row.title,
+    title: row.name,
+    name: row.name,
     description: row.description,
-    type: row.property_type,
+    type: row.property_type || "Homestay",
+    propertyType: row.property_type || "Homestay",
+    typeId: Number(row.type_id || 1),
     price: Number(row.price_per_night),
+    pricePerNight: Number(row.price_per_night),
     address: row.street_address,
     location: `${row.street_address}, ${row.city}, ${row.country}`,
     city: row.city,
@@ -172,6 +182,7 @@ async function buildPropertyDetail(row, options = {}) {
     bedrooms: Number(row.bedrooms || 0),
     bathrooms: Number(row.bathrooms || 0),
     status: row.status,
+    approvalStatus: row.status,
     image: buildVariantUrl(row.cover_image, "medium"),
     coverImageOriginal: row.cover_image,
     images: images.map((image) => buildVariantUrl(image, "medium")),
@@ -180,7 +191,8 @@ async function buildPropertyDetail(row, options = {}) {
     reviews,
     reviewCount: Number(row.reviewCount || 0),
     rating: Number(row.rating || 0),
-    featured: Boolean(row.featured),
+    featured: Boolean(row.is_featured),
+    isFeatured: Boolean(row.is_featured),
     hostName: row.hostName,
   };
 
@@ -197,10 +209,12 @@ async function getPropertyDetail(whereClause, params, options = {}) {
   const [rows] = await db.promise().query(
     `SELECT
       p.*,
+      COALESCE(t.name, 'Homestay') AS property_type,
       u.full_name AS hostName,
       COUNT(r.id) AS reviewCount,
       COALESCE(AVG(r.rating), 0) AS rating
      FROM properties p
+     LEFT JOIN homestay_types t ON p.type_id = t.id
      JOIN users u ON p.host_id = u.id
      LEFT JOIN reviews r ON r.property_id = p.id
      WHERE ${whereClause}
@@ -220,9 +234,12 @@ const FALLBACK_PROPERTIES = [
     id: 1,
     hostId: 2,
     title: 'Villa Lavender Dream',
+    name: 'Villa Lavender Dream',
     description: 'Biệt thự phong cách Pháp cổ điển nép mình bên sườn đồi Đà Lạt ngập tràn sắc hoa lavender.',
     type: 'Villa',
+    propertyType: 'Villa',
     price: 2500000,
+    pricePerNight: 2500000,
     location: 'Đà Lạt, Vietnam',
     city: 'Đà Lạt',
     country: 'Vietnam',
@@ -232,54 +249,11 @@ const FALLBACK_PROPERTIES = [
     status: 'approved',
     image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80',
     featured: true,
+    isFeatured: true,
     hostName: 'Nguyen Van A',
     reviews: 128,
     rating: 4.9,
     manageToken: 'HMTOKEN_0001',
-    manageTokenActive: true,
-  },
-  {
-    id: 2,
-    hostId: 2,
-    title: 'Homestay Cloud Nine Sapa',
-    description: 'Căn nhà gỗ pơ-mu giữa thung lũng Mường Hoa, nơi bạn có thể chạm tay vào biển mây mỗi sáng thức giấc.',
-    type: 'Homestay',
-    price: 1800000,
-    location: 'Sa Pa, Vietnam',
-    city: 'Sa Pa',
-    country: 'Vietnam',
-    maxGuests: 6,
-    bedrooms: 3,
-    bathrooms: 2,
-    status: 'approved',
-    image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80',
-    featured: true,
-    hostName: 'Nguyen Van A',
-    reviews: 96,
-    rating: 4.8,
-    manageToken: 'HMTOKEN_0002',
-    manageTokenActive: true,
-  },
-  {
-    id: 3,
-    hostId: 3,
-    title: 'Ocean Breeze Villa Phu Quoc',
-    description: 'Khu biệt thự hướng thẳng bờ biển Bãi Dài với hồ bơi vô cực riêng biệt, ngắm trọn vẹn hoàng hôn Phú Quốc.',
-    type: 'Villa',
-    price: 3800000,
-    location: 'Phú Quốc, Vietnam',
-    city: 'Phú Quốc',
-    country: 'Vietnam',
-    maxGuests: 10,
-    bedrooms: 5,
-    bathrooms: 5,
-    status: 'approved',
-    image: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=900&q=80',
-    featured: true,
-    hostName: 'Tran Thi B',
-    reviews: 142,
-    rating: 5.0,
-    manageToken: 'HMTOKEN_0003',
     manageTokenActive: true,
   },
 ];
@@ -297,10 +271,13 @@ async function getPropertyList(whereClause, params = [], options = {}) {
       `SELECT
         p.id,
         p.host_id AS hostId,
-        p.title,
+        p.name,
+        p.name AS title,
         p.description,
-        p.property_type AS type,
+        COALESCE(t.name, 'Homestay') AS type,
+        p.type_id AS typeId,
         p.price_per_night AS price,
+        p.price_per_night,
         CONCAT(p.street_address, ', ', p.city, ', ', p.country) AS location,
         p.city,
         p.country,
@@ -309,7 +286,8 @@ async function getPropertyList(whereClause, params = [], options = {}) {
         p.bathrooms,
         p.status,
         p.cover_image AS image,
-        p.featured,
+        p.is_featured,
+        p.is_featured AS featured,
         ${options.includeManageAccess ? "p.manage_token AS manageToken," : ""}
         ${options.includeManageAccess ? "p.manage_token_active AS manageTokenActive," : ""}
         ${options.includeManageAccess ? "p.manage_token_expires_at AS manageTokenExpiresAt," : ""}
@@ -317,6 +295,7 @@ async function getPropertyList(whereClause, params = [], options = {}) {
         COUNT(r.id) AS reviews,
         COALESCE(AVG(r.rating), 0) AS rating
        FROM properties p
+       LEFT JOIN homestay_types t ON p.type_id = t.id
        JOIN users u ON p.host_id = u.id
        LEFT JOIN reviews r ON r.property_id = p.id
        WHERE ${whereClause}
@@ -344,7 +323,7 @@ Property.getById = async (id) =>
 Property.checkAvailability = async (id, filters = {}) => {
   const normalizedFilters = normalizePublicPropertyFilters(filters);
   const [propertyRows] = await db.promise().query(
-    `SELECT id, status, is_deleted, max_guests
+    `SELECT id, status, is_deleted, is_active, max_guests
      FROM properties
      WHERE id = ?
      LIMIT 1`,
@@ -361,11 +340,19 @@ Property.checkAvailability = async (id, filters = {}) => {
 
   const property = propertyRows[0];
 
-  if (property.is_deleted || property.status !== "approved") {
+  if (property.is_deleted || property.status !== "approved" || !property.is_active) {
     return {
       exists: true,
       available: false,
-      reason: "This property is not available for public booking.",
+      reason: "This property is not currently active for reservations.",
+    };
+  }
+
+  if (normalizedFilters.guests > Number(property.max_guests || 0)) {
+    return {
+      exists: true,
+      available: false,
+      reason: `This property accepts up to ${property.max_guests} guests.`,
     };
   }
 
@@ -384,18 +371,17 @@ Property.checkAvailability = async (id, filters = {}) => {
        AND status IN ('pending', 'confirmed')
        AND ? < check_out
        AND ? > check_in`,
-    [id, normalizedFilters.checkIn, normalizedFilters.checkOut],
+    [id, normalizedFilters.checkOut, normalizedFilters.checkIn],
   );
 
-  const conflictCount = Number(conflictRows[0]?.total || 0);
+  const hasConflict = Number(conflictRows[0]?.total || 0) > 0;
 
   return {
     exists: true,
-    available: conflictCount === 0,
-    reason:
-      conflictCount === 0
-        ? ""
-        : "The selected dates are no longer available. Please choose another stay period.",
+    available: !hasConflict,
+    reason: hasConflict
+      ? "Selected dates are no longer available. Please choose another stay period."
+      : "",
   };
 };
 
@@ -469,12 +455,25 @@ Property.getHostById = async (id, hostId) =>
 
 Property.create = async (payload) => {
   const manageToken = createManageToken();
+  let typeId = payload.typeId || payload.type_id;
+  if (!typeId && payload.type) {
+    const [typeRows] = await db.promise().query(
+      "SELECT id FROM homestay_types WHERE name = ? LIMIT 1",
+      [payload.type]
+    );
+    if (typeRows.length > 0) {
+      typeId = typeRows[0].id;
+    } else {
+      typeId = 1;
+    }
+  }
+
   const [result] = await db.promise().query(
     `INSERT INTO properties (
       host_id,
-      title,
+      name,
       description,
-      property_type,
+      type_id,
       price_per_night,
       street_address,
       city,
@@ -484,17 +483,17 @@ Property.create = async (payload) => {
       bathrooms,
       status,
       cover_image,
-      featured,
+      is_featured,
       manage_token,
       manage_token_active,
       manage_token_expires_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NULL)`,
     [
       payload.hostId,
-      payload.title,
+      payload.name || payload.title,
       payload.description,
-      payload.type,
-      payload.price,
+      typeId || 1,
+      payload.price_per_night || payload.price,
       payload.address,
       payload.city,
       payload.country,
@@ -503,7 +502,7 @@ Property.create = async (payload) => {
       payload.bathrooms,
       payload.status || "pending",
       payload.coverImage || null,
-      payload.featured ? 1 : 0,
+      (payload.is_featured || payload.featured) ? 1 : 0,
       manageToken,
     ],
   );
@@ -579,26 +578,37 @@ Property.getManagedUnavailableDateRanges = async (propertyId) => {
 };
 
 Property.update = async (id, payload, hostId = null) => {
+  let typeId = payload.typeId || payload.type_id;
+  if (!typeId && payload.type) {
+    const [typeRows] = await db.promise().query(
+      "SELECT id FROM homestay_types WHERE name = ? LIMIT 1",
+      [payload.type]
+    );
+    if (typeRows.length > 0) {
+      typeId = typeRows[0].id;
+    }
+  }
+
   const params = [
-    payload.title,
+    payload.name || payload.title,
     payload.description,
-    payload.type,
-    payload.price,
+    typeId || 1,
+    payload.price_per_night || payload.price,
     payload.address,
     payload.city,
     payload.country,
     payload.maxGuests,
     payload.bedrooms,
     payload.bathrooms,
-    payload.featured ? 1 : 0,
+    (payload.is_featured || payload.featured) ? 1 : 0,
     id,
   ];
 
   let sql = `UPDATE properties
              SET
-               title = ?,
+               name = ?,
                description = ?,
-               property_type = ?,
+               type_id = ?,
                price_per_night = ?,
                street_address = ?,
                city = ?,
@@ -606,7 +616,7 @@ Property.update = async (id, payload, hostId = null) => {
                max_guests = ?,
                bedrooms = ?,
                bathrooms = ?,
-               featured = ?
+               is_featured = ?
              WHERE id = ? AND is_deleted = 0`;
 
   if (hostId !== null) {

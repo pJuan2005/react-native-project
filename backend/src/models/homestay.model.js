@@ -5,16 +5,14 @@ class HomestayModel {
     let sql = `
       SELECT
         p.id,
-        COALESCE(p.title, p.name) AS name,
-        p.title,
+        p.name,
         p.description,
-        p.price_per_night AS price,
         p.price_per_night,
         p.old_price,
         p.location_id,
         COALESCE(l.name, p.city) AS location,
         p.type_id,
-        COALESCE(t.name, p.property_type) AS type,
+        COALESCE(t.name, 'Homestay') AS type,
         p.rating,
         p.review_count,
         p.max_guests,
@@ -38,14 +36,14 @@ class HomestayModel {
       params.push(typeId);
     }
     if (isFeatured) {
-      sql += ' AND (p.is_featured = 1 OR p.featured = 1)';
+      sql += ' AND p.is_featured = 1';
     }
     if (isNew) {
       sql += ' AND p.is_new = 1';
     }
     if (search) {
-      sql += ' AND (p.title LIKE ? OR p.name LIKE ? OR l.name LIKE ? OR p.city LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+      sql += ' AND (p.name LIKE ? OR l.name LIKE ? OR p.city LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     sql += ' ORDER BY p.created_at DESC';
@@ -75,13 +73,15 @@ class HomestayModel {
     return rows.map((row) => ({
       id: String(row.id),
       name: row.name,
-      title: row.title,
-      price: parseFloat(row.price),
-      pricePerNight: parseFloat(row.price_per_night || row.price),
+      title: row.name, // DTO compatibility for Web
+      price: parseFloat(row.price_per_night), // DTO compatibility for Mobile
+      pricePerNight: parseFloat(row.price_per_night),
       oldPrice: row.old_price ? parseFloat(row.old_price) : undefined,
       locationId: String(row.location_id || 1),
       location: row.location,
       type: row.type,
+      propertyType: row.type, // DTO compatibility
+      typeId: String(row.type_id || 1),
       rating: parseFloat(row.rating),
       reviewCount: row.review_count,
       maxGuests: row.max_guests,
@@ -94,6 +94,7 @@ class HomestayModel {
       description: row.description || '',
       isNew: Boolean(row.is_new),
       isFeatured: Boolean(row.is_featured),
+      featured: Boolean(row.is_featured), // DTO compatibility
     }));
   }
 
@@ -101,16 +102,14 @@ class HomestayModel {
     const [rows] = await db.query(
       `SELECT
         p.id,
-        COALESCE(p.title, p.name) AS name,
-        p.title,
+        p.name,
         p.description,
-        p.price_per_night AS price,
         p.price_per_night,
         p.old_price,
         p.location_id,
         COALESCE(l.name, p.city) AS location,
         p.type_id,
-        COALESCE(t.name, p.property_type) AS type,
+        COALESCE(t.name, 'Homestay') AS type,
         p.rating,
         p.review_count,
         p.max_guests,
@@ -159,14 +158,16 @@ class HomestayModel {
     return {
       id: String(row.id),
       name: row.name,
-      title: row.title,
+      title: row.name, // DTO compatibility
       description: row.description || '',
-      price: parseFloat(row.price),
-      pricePerNight: parseFloat(row.price_per_night || row.price),
+      price: parseFloat(row.price_per_night), // DTO compatibility
+      pricePerNight: parseFloat(row.price_per_night),
       oldPrice: row.old_price ? parseFloat(row.old_price) : undefined,
       locationId: String(row.location_id || 1),
       location: row.location,
       type: row.type,
+      propertyType: row.type, // DTO compatibility
+      typeId: String(row.type_id || 1),
       rating: parseFloat(row.rating),
       reviewCount: row.review_count,
       maxGuests: row.max_guests,
@@ -179,6 +180,7 @@ class HomestayModel {
       bookedRanges,
       isNew: Boolean(row.is_new),
       isFeatured: Boolean(row.is_featured),
+      featured: Boolean(row.is_featured), // DTO compatibility
     };
   }
 
@@ -199,25 +201,23 @@ class HomestayModel {
     isNew,
     hostId = 2,
   }) {
-    const finalTitle = title || name;
-    const finalPrice = pricePerNight || price;
+    const canonicalName = name || title;
+    const canonicalPrice = pricePerNight || price || 0;
 
     const [result] = await db.query(
       `INSERT INTO properties (
-        title, name, description, price_per_night, price, old_price,
-        location_id, type_id, host_id, max_guests, bedrooms, bathrooms,
-        is_featured, is_new, status, approval_status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', 'approved')`,
+        host_id, name, description, type_id, price_per_night, old_price,
+        location_id, max_guests, bedrooms, bathrooms,
+        is_featured, is_new, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved')`,
       [
-        finalTitle,
-        finalTitle,
+        hostId,
+        canonicalName,
         description || '',
-        finalPrice,
-        finalPrice,
+        typeId || 1,
+        canonicalPrice,
         oldPrice || null,
         locationId || 1,
-        typeId || 1,
-        hostId,
         maxGuests || 2,
         bedrooms || 1,
         bathrooms || 1,
@@ -245,16 +245,14 @@ class HomestayModel {
     const [rows] = await db.query(
       `SELECT
         p.id,
-        COALESCE(p.title, p.name) AS name,
-        p.title,
+        p.name,
         p.description,
-        p.price_per_night AS price,
         p.price_per_night,
         p.old_price,
         p.location_id,
         COALESCE(l.name, p.city) AS location,
         p.type_id,
-        COALESCE(t.name, p.property_type) AS type,
+        COALESCE(t.name, 'Homestay') AS type,
         p.rating,
         p.review_count,
         p.max_guests,
@@ -265,7 +263,6 @@ class HomestayModel {
         p.is_active,
         p.host_id,
         p.status,
-        p.approval_status,
         p.manage_token,
         p.created_at
       FROM properties p
@@ -287,9 +284,13 @@ class HomestayModel {
 
     return rows.map((row) => ({
       ...row,
-      price: parseFloat(row.price),
-      pricePerNight: parseFloat(row.price_per_night || row.price),
+      title: row.name, // DTO compatibility
+      price: parseFloat(row.price_per_night), // DTO compatibility
+      pricePerNight: parseFloat(row.price_per_night),
       oldPrice: row.old_price ? parseFloat(row.old_price) : undefined,
+      propertyType: row.type, // DTO compatibility
+      featured: Boolean(row.is_featured), // DTO compatibility
+      approval_status: row.status, // DTO compatibility
       images: imageMap[row.id] && imageMap[row.id].length > 0
         ? imageMap[row.id]
         : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'],
@@ -300,16 +301,14 @@ class HomestayModel {
     const [rows] = await db.query(
       `SELECT
         p.id,
-        COALESCE(p.title, p.name) AS name,
-        p.title,
+        p.name,
         p.description,
-        p.price_per_night AS price,
         p.price_per_night,
         p.old_price,
         p.location_id,
         COALESCE(l.name, p.city) AS location,
         p.type_id,
-        COALESCE(t.name, p.property_type) AS type,
+        COALESCE(t.name, 'Homestay') AS type,
         p.rating,
         p.review_count,
         p.max_guests,
@@ -320,7 +319,6 @@ class HomestayModel {
         p.is_active,
         p.host_id,
         p.status,
-        p.approval_status,
         p.manage_token
       FROM properties p
       LEFT JOIN locations l ON p.location_id = l.id
@@ -339,17 +337,21 @@ class HomestayModel {
 
     return {
       ...row,
-      price: parseFloat(row.price),
-      pricePerNight: parseFloat(row.price_per_night || row.price),
+      title: row.name, // DTO compatibility
+      price: parseFloat(row.price_per_night), // DTO compatibility
+      pricePerNight: parseFloat(row.price_per_night),
       oldPrice: row.old_price ? parseFloat(row.old_price) : undefined,
+      propertyType: row.type, // DTO compatibility
+      featured: Boolean(row.is_featured), // DTO compatibility
+      approval_status: row.status, // DTO compatibility
       images: images.length > 0 ? images.map((i) => i.image_url) : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'],
     };
   }
 
   static async updateApprovalStatus(id, status) {
     const [result] = await db.query(
-      'UPDATE properties SET status = ?, approval_status = ? WHERE id = ?',
-      [status, status, id]
+      'UPDATE properties SET status = ? WHERE id = ?',
+      [status, id]
     );
     return result.affectedRows > 0;
   }

@@ -41,20 +41,31 @@ async function migrateDatabase() {
       await db.query('UPDATE users SET full_name = COALESCE(full_name, name), password = COALESCE(password, password_hash), status = IF(is_active=1, "active", "blocked")');
     } catch (_) {}
 
-    // 2. Tạo hoặc kiểm tra bảng properties (Nguồn sự thật duy nhất)
+    // 2. Tạo bảng homestay_types nếu chưa có
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS homestay_types (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(50) NOT NULL UNIQUE,
+        description TEXT NULL,
+        icon VARCHAR(50) NULL,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // 3. Tạo hoặc kiểm tra bảng properties (Nguồn sự thật duy nhất - Canonical Schema)
     await db.query(`
       CREATE TABLE IF NOT EXISTS properties (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         host_id BIGINT UNSIGNED NULL,
-        title VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
         description TEXT DEFAULT NULL,
-        property_type VARCHAR(100) NOT NULL DEFAULT 'Homestay',
-        price_per_night DECIMAL(12,2) NOT NULL,
-        price DECIMAL(12,2) NOT NULL,
+        type_id BIGINT UNSIGNED NOT NULL DEFAULT 1,
+        price_per_night DECIMAL(12,2) NOT NULL DEFAULT 0.00,
         old_price DECIMAL(12,2) NULL,
         location_id BIGINT UNSIGNED NULL,
-        type_id BIGINT UNSIGNED NULL,
         street_address VARCHAR(255) NOT NULL DEFAULT 'Vietnam',
         city VARCHAR(100) NOT NULL DEFAULT 'Vietnam',
         country VARCHAR(100) NOT NULL DEFAULT 'Vietnam',
@@ -67,11 +78,9 @@ async function migrateDatabase() {
         review_count INT UNSIGNED NOT NULL DEFAULT 0,
         is_new TINYINT(1) NOT NULL DEFAULT 0,
         is_featured TINYINT(1) NOT NULL DEFAULT 0,
-        featured TINYINT(1) NOT NULL DEFAULT 0,
         is_active TINYINT(1) NOT NULL DEFAULT 1,
         is_deleted TINYINT(1) NOT NULL DEFAULT 0,
         status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved',
-        approval_status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved',
         cover_image VARCHAR(500) DEFAULT NULL,
         manage_token VARCHAR(80) DEFAULT NULL,
         manage_token_active TINYINT(1) NOT NULL DEFAULT 1,
@@ -82,7 +91,7 @@ async function migrateDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    // Bổ sung các cột nếu bảng properties đã có từ trước nhưng thiếu
+    // Bổ sung các cột canonical nếu thiếu
     const safeAddColumn = async (colName, colDef) => {
       try {
         const [chk] = await db.query(`SHOW COLUMNS FROM properties LIKE '${colName}'`);
@@ -94,24 +103,92 @@ async function migrateDatabase() {
       }
     };
 
-    await safeAddColumn('name', 'name VARCHAR(255) NULL AFTER title');
-    await safeAddColumn('price', 'price DECIMAL(12,2) NULL AFTER price_per_night');
-    await safeAddColumn('old_price', 'old_price DECIMAL(12,2) NULL AFTER price');
+    await safeAddColumn('name', 'name VARCHAR(255) NOT NULL DEFAULT "Homestay" AFTER host_id');
+    await safeAddColumn('type_id', 'type_id BIGINT UNSIGNED NOT NULL DEFAULT 1 AFTER description');
+    await safeAddColumn('price_per_night', 'price_per_night DECIMAL(12,2) NOT NULL DEFAULT 0.00 AFTER type_id');
+    await safeAddColumn('old_price', 'old_price DECIMAL(12,2) NULL AFTER price_per_night');
     await safeAddColumn('location_id', 'location_id BIGINT UNSIGNED NULL AFTER old_price');
-    await safeAddColumn('type_id', 'type_id BIGINT UNSIGNED NULL AFTER location_id');
+    await safeAddColumn('street_address', "street_address VARCHAR(255) NOT NULL DEFAULT 'Vietnam' AFTER location_id");
+    await safeAddColumn('city', "city VARCHAR(100) NOT NULL DEFAULT 'Vietnam' AFTER street_address");
+    await safeAddColumn('country', "country VARCHAR(100) NOT NULL DEFAULT 'Vietnam' AFTER city");
+    await safeAddColumn('latitude', 'latitude DECIMAL(10,8) NULL AFTER country');
+    await safeAddColumn('longitude', 'longitude DECIMAL(11,8) NULL AFTER latitude');
+    await safeAddColumn('max_guests', 'max_guests INT UNSIGNED NOT NULL DEFAULT 2');
+    await safeAddColumn('bedrooms', 'bedrooms INT UNSIGNED NOT NULL DEFAULT 1');
+    await safeAddColumn('bathrooms', 'bathrooms INT UNSIGNED NOT NULL DEFAULT 1');
+    await safeAddColumn('rating', 'rating DECIMAL(3,2) NOT NULL DEFAULT 5.00');
+    await safeAddColumn('review_count', 'review_count INT UNSIGNED NOT NULL DEFAULT 0');
     await safeAddColumn('is_new', 'is_new TINYINT(1) NOT NULL DEFAULT 0');
     await safeAddColumn('is_featured', 'is_featured TINYINT(1) NOT NULL DEFAULT 0');
     await safeAddColumn('is_active', 'is_active TINYINT(1) NOT NULL DEFAULT 1');
-    await safeAddColumn('approval_status', "approval_status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved'");
-    await safeAddColumn('rating', 'rating DECIMAL(3,2) NOT NULL DEFAULT 5.00');
-    await safeAddColumn('review_count', 'review_count INT UNSIGNED NOT NULL DEFAULT 0');
+    await safeAddColumn('is_deleted', 'is_deleted TINYINT(1) NOT NULL DEFAULT 0');
+    await safeAddColumn('status', "status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved'");
+    await safeAddColumn('cover_image', 'cover_image VARCHAR(500) NULL');
+    await safeAddColumn('manage_token', 'manage_token VARCHAR(80) NULL');
+    await safeAddColumn('manage_token_active', 'manage_token_active TINYINT(1) NOT NULL DEFAULT 1');
+    await safeAddColumn('manage_token_expires_at', 'manage_token_expires_at DATETIME NULL');
 
+    // 4. Migrate Data from Duplicate Columns if they still exist in properties
     try {
-      await db.query('UPDATE properties SET name = title WHERE name IS NULL');
-      await db.query('UPDATE properties SET price = price_per_night WHERE price IS NULL');
+      const [titleChk] = await db.query("SHOW COLUMNS FROM properties LIKE 'title'");
+      if (titleChk.length > 0) {
+        await db.query("UPDATE properties SET name = COALESCE(NULLIF(name, ''), title) WHERE title IS NOT NULL");
+      }
     } catch (_) {}
 
-    // 3. Tạo bảng property_images & property_amenities nếu chưa có
+    try {
+      const [priceChk] = await db.query("SHOW COLUMNS FROM properties LIKE 'price'");
+      if (priceChk.length > 0) {
+        await db.query("UPDATE properties SET price_per_night = COALESCE(NULLIF(price_per_night, 0), price) WHERE price IS NOT NULL");
+      }
+    } catch (_) {}
+
+    try {
+      const [featChk] = await db.query("SHOW COLUMNS FROM properties LIKE 'featured'");
+      if (featChk.length > 0) {
+        await db.query("UPDATE properties SET is_featured = featured WHERE featured IS NOT NULL");
+      }
+    } catch (_) {}
+
+    try {
+      const [apprChk] = await db.query("SHOW COLUMNS FROM properties LIKE 'approval_status'");
+      if (apprChk.length > 0) {
+        await db.query("UPDATE properties SET status = approval_status WHERE approval_status IS NOT NULL");
+      }
+    } catch (_) {}
+
+    // 5. Migrate property_type to type_id if needed
+    try {
+      const [ptChk] = await db.query("SHOW COLUMNS FROM properties LIKE 'property_type'");
+      if (ptChk.length > 0) {
+        await db.query(`
+          UPDATE properties p
+          JOIN homestay_types t ON LOWER(t.name) = LOWER(p.property_type)
+          SET p.type_id = t.id
+          WHERE p.type_id IS NULL OR p.type_id = 0 OR p.type_id = 1
+        `);
+      }
+    } catch (_) {}
+
+    // 6. DROP DUPLICATE COLUMNS from properties table
+    const safeDropColumn = async (colName) => {
+      try {
+        const [chk] = await db.query(`SHOW COLUMNS FROM properties LIKE '${colName}'`);
+        if (chk.length > 0) {
+          await db.query(`ALTER TABLE properties DROP COLUMN ${colName}`);
+        }
+      } catch (err) {
+        console.warn(`safeDropColumn ${colName} notice:`, err.message);
+      }
+    };
+
+    await safeDropColumn('title');
+    await safeDropColumn('property_type');
+    await safeDropColumn('price');
+    await safeDropColumn('featured');
+    await safeDropColumn('approval_status');
+
+    // 7. Tạo bảng property_images & property_amenities nếu chưa có
     await db.query(`
       CREATE TABLE IF NOT EXISTS property_images (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -124,7 +201,6 @@ async function migrateDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    // Bổ sung các cột nếu bảng property_images đã có nhưng thiếu
     try {
       const [piCols] = await db.query("SHOW COLUMNS FROM property_images LIKE 'is_primary'");
       if (piCols.length === 0) {
@@ -147,29 +223,26 @@ async function migrateDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    // 4. Nếu còn bảng homestays cũ, di chuyển dữ liệu sang properties
+    // 8. Nếu còn bảng homestays cũ, di chuyển dữ liệu sang properties rồi xóa homestays
     try {
       const [hsTable] = await db.query("SHOW TABLES LIKE 'homestays'");
       if (hsTable.length > 0) {
         await db.query(`
           INSERT INTO properties (
-            id, host_id, title, name, description, property_type, price_per_night, price, old_price,
-            location_id, type_id, street_address, city, country, max_guests, bedrooms, bathrooms,
-            rating, review_count, is_new, is_featured, featured, is_active, status, approval_status,
+            id, host_id, name, description, type_id, price_per_night, old_price,
+            location_id, street_address, city, country, max_guests, bedrooms, bathrooms,
+            rating, review_count, is_new, is_featured, is_active, is_deleted, status,
             cover_image, manage_token
           )
           SELECT
             h.id,
             COALESCE(h.host_id, 2),
             h.name,
-            h.name,
             h.description,
-            COALESCE(t.name, 'Homestay'),
-            h.price,
+            COALESCE(h.type_id, 1),
             h.price,
             h.old_price,
             h.location_id,
-            h.type_id,
             COALESCE(l.name, 'Vietnam'),
             COALESCE(l.name, 'Vietnam'),
             'Vietnam',
@@ -180,21 +253,17 @@ async function migrateDatabase() {
             h.review_count,
             h.is_new,
             h.is_featured,
-            h.is_featured,
             h.is_active,
-            COALESCE(h.approval_status, 'approved'),
+            0,
             COALESCE(h.approval_status, 'approved'),
             COALESCE(hi.image_url, 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'),
             COALESCE(h.manage_token, CONCAT('HMTOKEN_', LPAD(h.id, 4, '0')))
           FROM homestays h
           LEFT JOIN locations l ON h.location_id = l.id
-          LEFT JOIN homestay_types t ON h.type_id = t.id
           LEFT JOIN homestay_images hi ON hi.homestay_id = h.id AND hi.is_primary = 1
           ON DUPLICATE KEY UPDATE
-            title = VALUES(title),
             name = VALUES(name),
             price_per_night = VALUES(price_per_night),
-            price = VALUES(price),
             location_id = VALUES(location_id),
             type_id = VALUES(type_id),
             cover_image = VALUES(cover_image)
@@ -215,34 +284,24 @@ async function migrateDatabase() {
             SELECT homestay_id, amenity_id FROM homestay_amenities
           `);
         } catch (_) {}
+
+        // Drop các khóa ngoại cũ trỏ vào homestays
+        try { await db.query('ALTER TABLE bookings DROP FOREIGN KEY fk_bookings_homestay'); } catch (_) {}
+        try { await db.query('ALTER TABLE favorites DROP FOREIGN KEY fk_favorites_homestay'); } catch (_) {}
+        try { await db.query('ALTER TABLE reviews DROP FOREIGN KEY fk_reviews_homestay'); } catch (_) {}
+        try { await db.query('ALTER TABLE homestay_images DROP FOREIGN KEY fk_homestay_images_homestay'); } catch (_) {}
+        try { await db.query('ALTER TABLE homestay_amenities DROP FOREIGN KEY fk_homestay_amenities_homestay'); } catch (_) {}
+
+        // Drop bảng homestays và child tables cũ
+        try { await db.query('DROP TABLE IF EXISTS homestay_amenities'); } catch (_) {}
+        try { await db.query('DROP TABLE IF EXISTS homestay_images'); } catch (_) {}
+        try { await db.query('DROP TABLE IF EXISTS homestays'); } catch (_) {}
       }
     } catch (err) {
       console.warn('Sync homestays to properties notice:', err.message);
     }
 
-    // 5. Cập nhật khóa ngoại trong bookings, favorites, reviews sang property_id
-    try {
-      await db.query('ALTER TABLE bookings DROP FOREIGN KEY fk_bookings_homestay');
-    } catch (_) {}
-    try {
-      await db.query('ALTER TABLE favorites DROP FOREIGN KEY fk_favorites_homestay');
-    } catch (_) {}
-    try {
-      await db.query('ALTER TABLE reviews DROP FOREIGN KEY fk_reviews_homestay');
-    } catch (_) {}
-    try {
-      await db.query('ALTER TABLE homestay_images DROP FOREIGN KEY fk_homestay_images_homestay');
-    } catch (_) {}
-    try {
-      await db.query('ALTER TABLE homestay_amenities DROP FOREIGN KEY fk_homestay_amenities_homestay');
-    } catch (_) {}
-
-    try {
-      await db.query('ALTER TABLE bookings MODIFY COLUMN homestay_id BIGINT UNSIGNED NULL');
-      await db.query('ALTER TABLE favorites MODIFY COLUMN homestay_id BIGINT UNSIGNED NULL');
-      await db.query('ALTER TABLE reviews MODIFY COLUMN homestay_id BIGINT UNSIGNED NULL');
-    } catch (_) {}
-
+    // 9. Cập nhật khóa ngoại trong bookings, favorites, reviews sang property_id
     try {
       const [bCols] = await db.query("SHOW COLUMNS FROM bookings LIKE 'property_id'");
       if (bCols.length === 0) {
@@ -278,6 +337,7 @@ async function migrateDatabase() {
       }
     } catch (_) {}
 
+    // Bổ sung các foreign keys chuẩn vào properties
     try {
       await db.query('ALTER TABLE bookings ADD CONSTRAINT fk_bookings_property FOREIGN KEY (property_id) REFERENCES properties (id) ON DELETE RESTRICT ON UPDATE CASCADE');
     } catch (_) {}
@@ -315,19 +375,48 @@ async function migrateDatabase() {
     await safeAddBookingCol('checkin_instructions', 'checkin_instructions TEXT NULL');
     await safeAddBookingCol('commission_rate_applied', 'commission_rate_applied DECIMAL(6,4) NOT NULL DEFAULT 0.1000');
 
-    // Cập nhật view v_properties_detail và v_user_bookings
+    // 10. Cập nhật view v_properties_detail, v_homestays_detail và v_user_bookings
     try {
       await db.query(`
         CREATE OR REPLACE VIEW v_properties_detail AS
         SELECT
-          p.id, p.host_id, p.title, p.name, p.description, p.property_type,
-          p.price_per_night, p.price, p.old_price, p.location_id,
-          COALESCE(l.name, p.city) AS location_name, l.image_url AS location_image,
-          p.type_id, COALESCE(t.name, p.property_type) AS type_name,
-          p.street_address, p.city, p.country, p.latitude, p.longitude,
-          p.rating, p.review_count, p.max_guests, p.bedrooms, p.bathrooms,
-          p.is_new, p.is_featured, p.featured, p.is_active, p.status, p.approval_status,
-          p.cover_image, p.manage_token, p.created_at, p.updated_at
+          p.id,
+          p.host_id,
+          p.name AS title,
+          p.name,
+          p.description,
+          COALESCE(t.name, 'Homestay') AS property_type,
+          COALESCE(t.name, 'Homestay') AS type_name,
+          p.price_per_night,
+          p.price_per_night AS price,
+          p.old_price,
+          p.location_id,
+          COALESCE(l.name, p.city) AS location_name,
+          l.image_url AS location_image,
+          p.type_id,
+          p.street_address,
+          p.city,
+          p.country,
+          p.latitude,
+          p.longitude,
+          p.rating,
+          p.review_count,
+          p.max_guests,
+          p.bedrooms,
+          p.bathrooms,
+          p.is_new,
+          p.is_featured,
+          p.is_featured AS featured,
+          p.is_active,
+          p.is_deleted,
+          p.status,
+          p.status AS approval_status,
+          p.cover_image,
+          p.manage_token,
+          p.manage_token_active,
+          p.manage_token_expires_at,
+          p.created_at,
+          p.updated_at
         FROM properties p
         LEFT JOIN locations l ON p.location_id = l.id
         LEFT JOIN homestay_types t ON p.type_id = t.id
@@ -339,21 +428,45 @@ async function migrateDatabase() {
       await db.query(`
         CREATE OR REPLACE VIEW v_user_bookings AS
         SELECT
-          b.id, b.booking_code, b.user_id,
-          u.name AS user_name, u.email AS user_email, u.phone AS user_phone,
-          b.property_id, b.property_id AS homestay_id,
-          p.title AS property_title, p.name AS homestay_name,
-          p.price_per_night AS property_price, p.price_per_night AS homestay_price,
+          b.id,
+          b.booking_code,
+          b.user_id,
+          u.name AS user_name,
+          u.email AS user_email,
+          u.phone AS user_phone,
+          b.property_id,
+          b.property_id AS homestay_id,
+          p.name AS property_title,
+          p.name AS homestay_name,
+          p.price_per_night AS property_price,
+          p.price_per_night AS homestay_price,
           COALESCE(pi.image_url, p.cover_image) AS property_image,
           COALESCE(pi.image_url, p.cover_image) AS homestay_image,
-          p.location_id, COALESCE(l.name, p.city) AS location_name,
-          p.type_id, COALESCE(t.name, p.property_type) AS type_name,
-          b.check_in, b.check_out, b.guests, b.nights, b.price_per_night,
-          b.promotion_id, prom.code AS promotion_code, prom.title AS promotion_title,
-          b.discount_amount, b.total_price, b.status, b.payment_status,
-          b.payment_proof_image, b.notes, b.cancelled_at, b.cancelled_reason,
-          pay.payment_method, pay.status AS payment_transaction_status,
-          pay.transaction_code, b.created_at, b.updated_at
+          p.location_id,
+          COALESCE(l.name, p.city) AS location_name,
+          p.type_id,
+          COALESCE(t.name, 'Homestay') AS type_name,
+          b.check_in,
+          b.check_out,
+          b.guests,
+          b.nights,
+          b.price_per_night,
+          b.promotion_id,
+          prom.code AS promotion_code,
+          prom.title AS promotion_title,
+          b.discount_amount,
+          b.total_price,
+          b.status,
+          b.payment_status,
+          b.payment_proof_image,
+          b.notes,
+          b.cancelled_at,
+          b.cancelled_reason,
+          pay.payment_method,
+          pay.status AS payment_transaction_status,
+          pay.transaction_code,
+          b.created_at,
+          b.updated_at
         FROM bookings b
         LEFT JOIN users u ON b.user_id = u.id
         JOIN properties p ON b.property_id = p.id
@@ -363,9 +476,11 @@ async function migrateDatabase() {
         LEFT JOIN promotions prom ON b.promotion_id = prom.id
         LEFT JOIN payments pay ON pay.booking_id = b.id
       `);
-    } catch (_) {}
+    } catch (viewErr) {
+      console.warn('View update notice:', viewErr.message);
+    }
 
-    // 6. Cấu hình bảng app_settings
+    // 11. Cấu hình bảng app_settings
     await db.query(`
       CREATE TABLE IF NOT EXISTS app_settings (
         id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -383,7 +498,7 @@ async function migrateDatabase() {
       ('usd_to_vnd_rate', '25000', 'Tỷ giá quy đổi USD sang VND')
     `);
 
-    // 7. Seed tài khoản Admin & Host
+    // 12. Seed tài khoản Admin & Host
     const hashedAdminPassword = await bcrypt.hash('123456', 10);
     await db.query(`
       INSERT INTO users (id, name, full_name, email, password_hash, password, role, phone, location, status, is_active)
@@ -403,7 +518,7 @@ async function migrateDatabase() {
       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), password = VALUES(password), role = 'host', full_name = VALUES(full_name)
     `, [hashedAdminPassword, hashedAdminPassword]);
 
-    // 8. Bảng host_verifications, disputes, audit_logs
+    // 13. Bảng host_verifications, disputes, audit_logs
     await db.query(`
       CREATE TABLE IF NOT EXISTS host_verifications (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,

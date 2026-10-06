@@ -65,10 +65,10 @@ async function testFullPlatform() {
 
     const [propRes] = await db.query(
       `INSERT INTO properties (
-        host_id, location_id, type_id, title, name, price_per_night, price, max_guests,
-        rating, review_count, is_active, status, approval_status, manage_token,
+        host_id, location_id, type_id, name, price_per_night, max_guests,
+        rating, review_count, is_active, status, manage_token,
         description
-       ) VALUES (?, ?, ?, 'Villa Nghỉ Dưỡng Test', 'Villa Nghỉ Dưỡng Test', 1500000, 1500000, 4, 5.0, 1, 1, 'approved', 'approved', ?, 'Mô tả không gian villa test đầy đủ tiện nghi')`,
+       ) VALUES (?, ?, ?, 'Villa Nghỉ Dưỡng Test', 1500000, 4, 5.0, 1, 1, 'approved', ?, 'Mô tả không gian villa test đầy đủ tiện nghi')`,
       [testHostId, locationId, typeId, testToken]
     );
     testPropertyId = propRes.insertId;

@@ -103,7 +103,7 @@ async function getBookingList(whereClause, params = []) {
         CONCAT('BK', DATE_FORMAT(b.created_at, '%Y%m%d'), LPAD(b.id, 4, '0'))
       ) AS bookingCode,
       b.property_id AS propertyId,
-      p.title AS propertyTitle,
+      p.name AS propertyTitle,
       CONCAT(p.street_address, ', ', p.city, ', ', p.country) AS propertyLocation,
       p.cover_image AS propertyImage,
       p.host_id AS hostId,
@@ -172,7 +172,8 @@ Booking.getBookableProperty = async (propertyId) => {
     `SELECT
       id,
       host_id AS hostId,
-      title,
+      name,
+      name AS title,
       price_per_night AS pricePerNight,
       max_guests AS maxGuests,
       status
@@ -189,7 +190,8 @@ Booking.getBookableProperty = async (propertyId) => {
   return {
     id: Number(rows[0].id),
     hostId: Number(rows[0].hostId),
-    title: rows[0].title,
+    title: rows[0].name,
+    name: rows[0].name,
     pricePerNight: Number(rows[0].pricePerNight || 0),
     maxGuests: Number(rows[0].maxGuests || 0),
     status: rows[0].status,
