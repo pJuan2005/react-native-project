@@ -50,24 +50,28 @@ class HomestayModel {
 
     const [rows] = await db.query(sql, params);
 
-    // Fetch images and amenities from property child tables
+    // Fetch images and amenities from property child tables (deduplicated)
     const [images] = await db.query(
-      'SELECT property_id, image_url FROM property_images ORDER BY is_primary DESC, sort_order ASC'
+      'SELECT DISTINCT property_id, image_url FROM property_images ORDER BY is_primary DESC, sort_order ASC, id ASC'
     );
     const [amenities] = await db.query(
-      'SELECT pa.property_id, a.name FROM property_amenities pa JOIN amenities a ON pa.amenity_id = a.id'
+      'SELECT DISTINCT pa.property_id, a.name FROM property_amenities pa JOIN amenities a ON pa.amenity_id = a.id'
     );
 
     const imageMap = {};
     images.forEach((img) => {
       if (!imageMap[img.property_id]) imageMap[img.property_id] = [];
-      imageMap[img.property_id].push(img.image_url);
+      if (!imageMap[img.property_id].includes(img.image_url) && imageMap[img.property_id].length < 10) {
+        imageMap[img.property_id].push(img.image_url);
+      }
     });
 
     const amenityMap = {};
     amenities.forEach((a) => {
       if (!amenityMap[a.property_id]) amenityMap[a.property_id] = [];
-      amenityMap[a.property_id].push(a.name);
+      if (!amenityMap[a.property_id].includes(a.name)) {
+        amenityMap[a.property_id].push(a.name);
+      }
     });
 
     return rows.map((row) => ({
@@ -128,11 +132,11 @@ class HomestayModel {
     const row = rows[0];
 
     const [images] = await db.query(
-      'SELECT image_url FROM property_images WHERE property_id = ? ORDER BY is_primary DESC, sort_order ASC',
+      'SELECT DISTINCT image_url FROM property_images WHERE property_id = ? ORDER BY is_primary DESC, sort_order ASC, id ASC LIMIT 10',
       [id]
     );
     const [amenities] = await db.query(
-      'SELECT a.name FROM property_amenities pa JOIN amenities a ON pa.amenity_id = a.id WHERE pa.property_id = ?',
+      'SELECT DISTINCT a.name FROM property_amenities pa JOIN amenities a ON pa.amenity_id = a.id WHERE pa.property_id = ?',
       [id]
     );
 
@@ -274,12 +278,14 @@ class HomestayModel {
     );
 
     const [images] = await db.query(
-      'SELECT property_id, image_url FROM property_images ORDER BY is_primary DESC, sort_order ASC'
+      'SELECT DISTINCT property_id, image_url FROM property_images ORDER BY is_primary DESC, sort_order ASC, id ASC'
     );
     const imageMap = {};
     images.forEach((img) => {
       if (!imageMap[img.property_id]) imageMap[img.property_id] = [];
-      imageMap[img.property_id].push(img.image_url);
+      if (!imageMap[img.property_id].includes(img.image_url) && imageMap[img.property_id].length < 10) {
+        imageMap[img.property_id].push(img.image_url);
+      }
     });
 
     return rows.map((row) => ({
@@ -331,7 +337,7 @@ class HomestayModel {
     const row = rows[0];
 
     const [images] = await db.query(
-      'SELECT image_url FROM property_images WHERE property_id = ? ORDER BY is_primary DESC, sort_order ASC',
+      'SELECT DISTINCT image_url FROM property_images WHERE property_id = ? ORDER BY is_primary DESC, sort_order ASC, id ASC LIMIT 10',
       [row.id]
     );
 

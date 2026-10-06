@@ -115,7 +115,8 @@ export default function HomestayDetail() {
 
   const imagesList = useMemo(() => {
     if (homestay && homestay.images && homestay.images.length > 0) {
-      return homestay.images;
+      const uniqueImages = Array.from(new Set(homestay.images.filter(Boolean)));
+      return uniqueImages.slice(0, 8);
     }
     return ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'];
   }, [homestay]);

@@ -215,6 +215,23 @@ async function migrateDatabase() {
       }
     } catch (_) {}
 
+    // Deduplicate any repeated image_url in property_images
+    try {
+      await db.query(`
+        DELETE p1 FROM property_images p1
+        JOIN property_images p2
+          ON p1.property_id = p2.property_id
+         AND p1.image_url = p2.image_url
+         AND p1.id > p2.id
+      `);
+    } catch (_) {}
+
+    try {
+      await db.query(`
+        ALTER TABLE property_images ADD UNIQUE KEY uk_property_images_url (property_id, image_url(250))
+      `);
+    } catch (_) {}
+
     await db.query(`
       CREATE TABLE IF NOT EXISTS property_amenities (
         property_id BIGINT UNSIGNED NOT NULL,

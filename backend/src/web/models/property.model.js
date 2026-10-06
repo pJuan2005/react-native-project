@@ -117,10 +117,12 @@ async function getAmenities(propertyId) {
 
 async function getImageList(propertyId) {
   const [rows] = await db.promise().query(
-    `SELECT id, image_url
+    `SELECT MIN(id) AS id, image_url
      FROM property_images
      WHERE property_id = ?
-     ORDER BY id ASC`,
+     GROUP BY image_url
+     ORDER BY is_primary DESC, sort_order ASC, id ASC
+     LIMIT 10`,
     [propertyId],
   );
 

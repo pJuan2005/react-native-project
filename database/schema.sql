@@ -184,6 +184,7 @@ CREATE TABLE `property_images` (
   `sort_order` INT UNSIGNED NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_property_images_url` (`property_id`, `image_url`(250)),
   KEY `idx_property_images_property` (`property_id`),
   KEY `idx_property_images_primary` (`property_id`, `is_primary`),
   CONSTRAINT `fk_property_images_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
