@@ -101,10 +101,10 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         const mappedBookings = bJson.data
           .filter((b: any) => b.status !== 'cancelled')
           .map((b: any) => ({
-            id: String(b.homestay_id || b.id),
+            id: String(b.property_id || b.homestay_id || b.id),
             bookingId: String(b.id),
             bookingCode: b.booking_code,
-            name: b.homestay_name || 'Homestay',
+            name: b.property_title || b.homestay_name || 'Chỗ nghỉ',
             price: parseFloat(b.price_per_night || 0),
             location: b.location_name || '',
             type: b.type_name || '',
@@ -114,7 +114,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             bedrooms: 2,
             bathrooms: 1,
             amenities: [],
-            images: b.homestay_image ? [b.homestay_image] : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'],
+            images: b.property_image || b.homestay_image ? [b.property_image || b.homestay_image] : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'],
             description: '',
             quantity: 1,
             checkIn: b.check_in ? b.check_in.split('T')[0] : '',
@@ -127,7 +127,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             status: b.status || 'pending',
             paymentStatus: b.payment_status || 'pending',
             proofImageUrl: b.proof_image_url || undefined,
-            homestayImage: b.homestay_image,
+            homestayImage: b.property_image || b.homestay_image,
           }));
         setBookings(mappedBookings);
       }
@@ -262,6 +262,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             headers: postHeaders,
             body: JSON.stringify({
               userId: parseInt(currentUserId, 10) || 1,
+              propertyId: parseInt(homestay.id, 10) || 1,
               homestayId: parseInt(homestay.id, 10) || 1,
               checkIn: bookingDetails.checkIn,
               checkOut: bookingDetails.checkOut,
@@ -351,6 +352,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: parseInt(currentUserId, 10) || 1,
+          propertyId: parseInt(homestay.id, 10) || 1,
           homestayId: parseInt(homestay.id, 10) || 1,
         }),
       },

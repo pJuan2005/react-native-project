@@ -4,78 +4,82 @@ class HomestayModel {
   static async findAll({ locationId, typeId, search, isFeatured, isNew } = {}) {
     let sql = `
       SELECT
-        h.id,
-        h.name,
-        h.description,
-        h.price,
-        h.old_price,
-        h.location_id,
-        l.name AS location,
-        h.type_id,
-        t.name AS type,
-        h.rating,
-        h.review_count,
-        h.max_guests,
-        h.bedrooms,
-        h.bathrooms,
-        h.is_new,
-        h.is_featured
-      FROM homestays h
-      JOIN locations l ON h.location_id = l.id
-      JOIN homestay_types t ON h.type_id = t.id
-      WHERE h.is_active = 1
+        p.id,
+        COALESCE(p.title, p.name) AS name,
+        p.title,
+        p.description,
+        p.price_per_night AS price,
+        p.price_per_night,
+        p.old_price,
+        p.location_id,
+        COALESCE(l.name, p.city) AS location,
+        p.type_id,
+        COALESCE(t.name, p.property_type) AS type,
+        p.rating,
+        p.review_count,
+        p.max_guests,
+        p.bedrooms,
+        p.bathrooms,
+        p.is_new,
+        p.is_featured
+      FROM properties p
+      LEFT JOIN locations l ON p.location_id = l.id
+      LEFT JOIN homestay_types t ON p.type_id = t.id
+      WHERE p.is_active = 1 AND p.is_deleted = 0
     `;
     const params = [];
 
     if (locationId) {
-      sql += ' AND h.location_id = ?';
+      sql += ' AND p.location_id = ?';
       params.push(locationId);
     }
     if (typeId) {
-      sql += ' AND h.type_id = ?';
+      sql += ' AND p.type_id = ?';
       params.push(typeId);
     }
     if (isFeatured) {
-      sql += ' AND h.is_featured = 1';
+      sql += ' AND (p.is_featured = 1 OR p.featured = 1)';
     }
     if (isNew) {
-      sql += ' AND h.is_new = 1';
+      sql += ' AND p.is_new = 1';
     }
     if (search) {
-      sql += ' AND (h.name LIKE ? OR l.name LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+      sql += ' AND (p.title LIKE ? OR p.name LIKE ? OR l.name LIKE ? OR p.city LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    sql += ' ORDER BY h.created_at DESC';
+    sql += ' ORDER BY p.created_at DESC';
 
     const [rows] = await db.query(sql, params);
 
-    // Fetch images and amenities in parallel
+    // Fetch images and amenities from property child tables
     const [images] = await db.query(
-      'SELECT homestay_id, image_url FROM homestay_images ORDER BY is_primary DESC, sort_order ASC'
+      'SELECT property_id, image_url FROM property_images ORDER BY is_primary DESC, sort_order ASC'
     );
     const [amenities] = await db.query(
-      'SELECT ha.homestay_id, a.name FROM homestay_amenities ha JOIN amenities a ON ha.amenity_id = a.id'
+      'SELECT pa.property_id, a.name FROM property_amenities pa JOIN amenities a ON pa.amenity_id = a.id'
     );
 
     const imageMap = {};
     images.forEach((img) => {
-      if (!imageMap[img.homestay_id]) imageMap[img.homestay_id] = [];
-      imageMap[img.homestay_id].push(img.image_url);
+      if (!imageMap[img.property_id]) imageMap[img.property_id] = [];
+      imageMap[img.property_id].push(img.image_url);
     });
 
     const amenityMap = {};
     amenities.forEach((a) => {
-      if (!amenityMap[a.homestay_id]) amenityMap[a.homestay_id] = [];
-      amenityMap[a.homestay_id].push(a.name);
+      if (!amenityMap[a.property_id]) amenityMap[a.property_id] = [];
+      amenityMap[a.property_id].push(a.name);
     });
 
     return rows.map((row) => ({
       id: String(row.id),
       name: row.name,
+      title: row.title,
       price: parseFloat(row.price),
+      pricePerNight: parseFloat(row.price_per_night || row.price),
       oldPrice: row.old_price ? parseFloat(row.old_price) : undefined,
-      locationId: String(row.location_id),
+      locationId: String(row.location_id || 1),
       location: row.location,
       type: row.type,
       rating: parseFloat(row.rating),
@@ -96,26 +100,28 @@ class HomestayModel {
   static async findById(id) {
     const [rows] = await db.query(
       `SELECT
-        h.id,
-        h.name,
-        h.description,
-        h.price,
-        h.old_price,
-        h.location_id,
-        l.name AS location,
-        h.type_id,
-        t.name AS type,
-        h.rating,
-        h.review_count,
-        h.max_guests,
-        h.bedrooms,
-        h.bathrooms,
-        h.is_new,
-        h.is_featured
-      FROM homestays h
-      JOIN locations l ON h.location_id = l.id
-      JOIN homestay_types t ON h.type_id = t.id
-      WHERE h.id = ? AND h.is_active = 1`,
+        p.id,
+        COALESCE(p.title, p.name) AS name,
+        p.title,
+        p.description,
+        p.price_per_night AS price,
+        p.price_per_night,
+        p.old_price,
+        p.location_id,
+        COALESCE(l.name, p.city) AS location,
+        p.type_id,
+        COALESCE(t.name, p.property_type) AS type,
+        p.rating,
+        p.review_count,
+        p.max_guests,
+        p.bedrooms,
+        p.bathrooms,
+        p.is_new,
+        p.is_featured
+      FROM properties p
+      LEFT JOIN locations l ON p.location_id = l.id
+      LEFT JOIN homestay_types t ON p.type_id = t.id
+      WHERE p.id = ? AND p.is_active = 1 AND p.is_deleted = 0`,
       [id]
     );
 
@@ -123,11 +129,11 @@ class HomestayModel {
     const row = rows[0];
 
     const [images] = await db.query(
-      'SELECT image_url FROM homestay_images WHERE homestay_id = ? ORDER BY is_primary DESC, sort_order ASC',
+      'SELECT image_url FROM property_images WHERE property_id = ? ORDER BY is_primary DESC, sort_order ASC',
       [id]
     );
     const [amenities] = await db.query(
-      'SELECT a.name FROM homestay_amenities ha JOIN amenities a ON ha.amenity_id = a.id WHERE ha.homestay_id = ?',
+      'SELECT a.name FROM property_amenities pa JOIN amenities a ON pa.amenity_id = a.id WHERE pa.property_id = ?',
       [id]
     );
 
@@ -138,11 +144,11 @@ class HomestayModel {
           DATE_FORMAT(check_in, '%Y-%m-%d') AS check_in,
           DATE_FORMAT(check_out, '%Y-%m-%d') AS check_out
          FROM bookings
-         WHERE (homestay_id = ? OR property_id = ?)
+         WHERE property_id = ?
            AND status IN ('pending', 'confirmed')
            AND check_out >= CURDATE()
          ORDER BY check_in ASC`,
-        [id, id]
+        [id]
       );
       bookedRanges = bookedRows.map((b) => ({
         checkIn: b.check_in,
@@ -153,10 +159,12 @@ class HomestayModel {
     return {
       id: String(row.id),
       name: row.name,
+      title: row.title,
       description: row.description || '',
       price: parseFloat(row.price),
+      pricePerNight: parseFloat(row.price_per_night || row.price),
       oldPrice: row.old_price ? parseFloat(row.old_price) : undefined,
-      locationId: String(row.location_id),
+      locationId: String(row.location_id || 1),
       location: row.location,
       type: row.type,
       rating: parseFloat(row.rating),
@@ -176,8 +184,10 @@ class HomestayModel {
 
   static async create({
     name,
+    title,
     description,
     price,
+    pricePerNight,
     oldPrice,
     locationId,
     typeId,
@@ -187,17 +197,27 @@ class HomestayModel {
     imageUrl,
     isFeatured,
     isNew,
+    hostId = 2,
   }) {
+    const finalTitle = title || name;
+    const finalPrice = pricePerNight || price;
+
     const [result] = await db.query(
-      `INSERT INTO homestays (name, description, price, old_price, location_id, type_id, max_guests, bedrooms, bathrooms, is_featured, is_new)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO properties (
+        title, name, description, price_per_night, price, old_price,
+        location_id, type_id, host_id, max_guests, bedrooms, bathrooms,
+        is_featured, is_new, status, approval_status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', 'approved')`,
       [
-        name,
+        finalTitle,
+        finalTitle,
         description || '',
-        price,
+        finalPrice,
+        finalPrice,
         oldPrice || null,
-        locationId,
-        typeId,
+        locationId || 1,
+        typeId || 1,
+        hostId,
         maxGuests || 2,
         bedrooms || 1,
         bathrooms || 1,
@@ -205,66 +225,70 @@ class HomestayModel {
         isNew ? 1 : 0,
       ]
     );
-    const homestayId = result.insertId;
+    const propertyId = result.insertId;
 
     if (imageUrl) {
       await db.query(
-        'INSERT INTO homestay_images (homestay_id, image_url, is_primary, sort_order) VALUES (?, ?, 1, 1)',
-        [homestayId, imageUrl]
+        'INSERT INTO property_images (property_id, image_url, is_primary, sort_order) VALUES (?, ?, 1, 1)',
+        [propertyId, imageUrl]
       );
     }
-    return homestayId;
+    return propertyId;
   }
 
   static async softDelete(id) {
-    const [result] = await db.query('UPDATE homestays SET is_active = 0 WHERE id = ?', [id]);
+    const [result] = await db.query('UPDATE properties SET is_active = 0, is_deleted = 1 WHERE id = ?', [id]);
     return result.affectedRows > 0;
   }
 
   static async findByHostId(hostId) {
     const [rows] = await db.query(
       `SELECT
-        h.id,
-        h.name,
-        h.description,
-        h.price,
-        h.old_price,
-        h.location_id,
-        l.name AS location,
-        h.type_id,
-        t.name AS type,
-        h.rating,
-        h.review_count,
-        h.max_guests,
-        h.bedrooms,
-        h.bathrooms,
-        h.is_new,
-        h.is_featured,
-        h.is_active,
-        h.host_id,
-        h.approval_status,
-        h.manage_token,
-        h.created_at
-      FROM homestays h
-      JOIN locations l ON h.location_id = l.id
-      JOIN homestay_types t ON h.type_id = t.id
-      WHERE h.host_id = ?
-      ORDER BY h.created_at DESC`,
+        p.id,
+        COALESCE(p.title, p.name) AS name,
+        p.title,
+        p.description,
+        p.price_per_night AS price,
+        p.price_per_night,
+        p.old_price,
+        p.location_id,
+        COALESCE(l.name, p.city) AS location,
+        p.type_id,
+        COALESCE(t.name, p.property_type) AS type,
+        p.rating,
+        p.review_count,
+        p.max_guests,
+        p.bedrooms,
+        p.bathrooms,
+        p.is_new,
+        p.is_featured,
+        p.is_active,
+        p.host_id,
+        p.status,
+        p.approval_status,
+        p.manage_token,
+        p.created_at
+      FROM properties p
+      LEFT JOIN locations l ON p.location_id = l.id
+      LEFT JOIN homestay_types t ON p.type_id = t.id
+      WHERE p.host_id = ? AND p.is_deleted = 0
+      ORDER BY p.created_at DESC`,
       [hostId]
     );
 
     const [images] = await db.query(
-      'SELECT homestay_id, image_url FROM homestay_images ORDER BY is_primary DESC, sort_order ASC'
+      'SELECT property_id, image_url FROM property_images ORDER BY is_primary DESC, sort_order ASC'
     );
     const imageMap = {};
     images.forEach((img) => {
-      if (!imageMap[img.homestay_id]) imageMap[img.homestay_id] = [];
-      imageMap[img.homestay_id].push(img.image_url);
+      if (!imageMap[img.property_id]) imageMap[img.property_id] = [];
+      imageMap[img.property_id].push(img.image_url);
     });
 
     return rows.map((row) => ({
       ...row,
       price: parseFloat(row.price),
+      pricePerNight: parseFloat(row.price_per_night || row.price),
       oldPrice: row.old_price ? parseFloat(row.old_price) : undefined,
       images: imageMap[row.id] && imageMap[row.id].length > 0
         ? imageMap[row.id]
@@ -275,30 +299,33 @@ class HomestayModel {
   static async findByToken(token) {
     const [rows] = await db.query(
       `SELECT
-        h.id,
-        h.name,
-        h.description,
-        h.price,
-        h.old_price,
-        h.location_id,
-        l.name AS location,
-        h.type_id,
-        t.name AS type,
-        h.rating,
-        h.review_count,
-        h.max_guests,
-        h.bedrooms,
-        h.bathrooms,
-        h.is_new,
-        h.is_featured,
-        h.is_active,
-        h.host_id,
-        h.approval_status,
-        h.manage_token
-      FROM homestays h
-      JOIN locations l ON h.location_id = l.id
-      JOIN homestay_types t ON h.type_id = t.id
-      WHERE h.manage_token = ? AND h.is_active = 1`,
+        p.id,
+        COALESCE(p.title, p.name) AS name,
+        p.title,
+        p.description,
+        p.price_per_night AS price,
+        p.price_per_night,
+        p.old_price,
+        p.location_id,
+        COALESCE(l.name, p.city) AS location,
+        p.type_id,
+        COALESCE(t.name, p.property_type) AS type,
+        p.rating,
+        p.review_count,
+        p.max_guests,
+        p.bedrooms,
+        p.bathrooms,
+        p.is_new,
+        p.is_featured,
+        p.is_active,
+        p.host_id,
+        p.status,
+        p.approval_status,
+        p.manage_token
+      FROM properties p
+      LEFT JOIN locations l ON p.location_id = l.id
+      LEFT JOIN homestay_types t ON p.type_id = t.id
+      WHERE p.manage_token = ? AND p.is_active = 1 AND p.is_deleted = 0`,
       [token]
     );
 
@@ -306,13 +333,14 @@ class HomestayModel {
     const row = rows[0];
 
     const [images] = await db.query(
-      'SELECT image_url FROM homestay_images WHERE homestay_id = ? ORDER BY is_primary DESC, sort_order ASC',
+      'SELECT image_url FROM property_images WHERE property_id = ? ORDER BY is_primary DESC, sort_order ASC',
       [row.id]
     );
 
     return {
       ...row,
       price: parseFloat(row.price),
+      pricePerNight: parseFloat(row.price_per_night || row.price),
       oldPrice: row.old_price ? parseFloat(row.old_price) : undefined,
       images: images.length > 0 ? images.map((i) => i.image_url) : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'],
     };
@@ -320,14 +348,14 @@ class HomestayModel {
 
   static async updateApprovalStatus(id, status) {
     const [result] = await db.query(
-      'UPDATE homestays SET approval_status = ? WHERE id = ?',
-      [status, id]
+      'UPDATE properties SET status = ?, approval_status = ? WHERE id = ?',
+      [status, status, id]
     );
     return result.affectedRows > 0;
   }
 
   static async countActive() {
-    const [[{ count }]] = await db.query('SELECT COUNT(*) AS count FROM homestays WHERE is_active = 1');
+    const [[{ count }]] = await db.query('SELECT COUNT(*) AS count FROM properties WHERE is_active = 1 AND is_deleted = 0');
     return count;
   }
 }

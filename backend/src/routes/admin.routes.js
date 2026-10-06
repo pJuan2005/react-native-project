@@ -4,8 +4,8 @@ const {
   getDashboardStats,
   getAllBookings,
   updateBookingStatus,
-  createHomestay,
-  deleteHomestay,
+  createProperty,
+  deleteProperty,
 } = require('../controllers/admin.controller');
 
 // Dashboard & Analytics
@@ -15,8 +15,10 @@ router.get('/dashboard', getDashboardStats);
 router.get('/bookings', getAllBookings);
 router.put('/bookings/:id/status', updateBookingStatus);
 
-// Homestay Management
-router.post('/homestays', createHomestay);
-router.delete('/homestays/:id', deleteHomestay);
+// Property Management
+router.post('/properties', createProperty);
+router.delete('/properties/:id', deleteProperty);
+router.post('/homestays', createProperty);
+router.delete('/homestays/:id', deleteProperty);
 
 module.exports = router;

@@ -1,15 +1,20 @@
 const ReviewModel = require('../models/review.model');
 
 class ReviewService {
-  static async getReviewsByHomestay(homestayId) {
-    return ReviewModel.findByHomestayId(homestayId);
+  static async getReviewsByProperty(propertyId) {
+    return ReviewModel.findByPropertyId(propertyId);
   }
 
-  static async createReview({ userId, homestayId, bookingId, rating, comment }) {
-    if (!homestayId || !rating) {
+  static async getReviewsByHomestay(homestayId) {
+    return ReviewModel.findByPropertyId(homestayId);
+  }
+
+  static async createReview({ userId, propertyId, homestayId, bookingId, rating, comment }) {
+    const targetPropertyId = propertyId || homestayId;
+    if (!targetPropertyId || !rating) {
       throw new Error('Vui lòng chọn số sao và chỗ nghỉ muốn đánh giá');
     }
-    return ReviewModel.create({ userId, homestayId, bookingId, rating, comment });
+    return ReviewModel.create({ userId, propertyId: targetPropertyId, bookingId, rating, comment });
   }
 }
 

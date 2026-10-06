@@ -1,21 +1,25 @@
 const db = require('../config/database');
 
 class BookingModel {
-  static async findAll({ status, source, hostId, homestayId, search, limit, offset } = {}) {
+  static async findAll({ status, source, hostId, propertyId, homestayId, search, limit, offset } = {}) {
+    const targetPropertyId = propertyId || homestayId;
     let sql = `
       SELECT
         b.id,
         b.booking_code,
         b.user_id,
-        COALESCE(u.name, b.guest_name, 'Khách tại quầy') AS customer_name,
+        b.guest_id,
+        COALESCE(u.name, b.guest_name_snapshot, b.guest_name, 'Khách tại quầy') AS customer_name,
         COALESCE(u.email, '') AS customer_email,
-        COALESCE(u.phone, b.guest_phone, '') AS customer_phone,
+        COALESCE(u.phone, b.guest_phone_snapshot, b.guest_phone, '') AS customer_phone,
         b.guest_name,
         b.guest_phone,
-        b.homestay_id,
-        h.name AS homestay_name,
-        h.host_id,
-        l.name AS location_name,
+        b.property_id,
+        b.property_id AS homestay_id,
+        COALESCE(p.title, p.name) AS property_title,
+        COALESCE(p.title, p.name) AS homestay_name,
+        p.host_id,
+        COALESCE(l.name, p.city) AS location_name,
         b.check_in,
         b.check_out,
         b.guests,
@@ -28,17 +32,19 @@ class BookingModel {
         b.host_payout_amount,
         b.status,
         b.source,
+        b.payment_status,
         b.notes,
         b.host_note,
         pay.payment_method,
-        pay.status AS payment_status,
+        COALESCE(pay.status, b.payment_status) AS payment_status,
+        COALESCE(pay.status, b.payment_status) AS payment_status_display,
         pay.proof_image_url,
         pay.transaction_code,
         b.created_at
       FROM bookings b
       LEFT JOIN users u ON b.user_id = u.id
-      JOIN homestays h ON b.homestay_id = h.id
-      JOIN locations l ON h.location_id = l.id
+      JOIN properties p ON b.property_id = p.id
+      LEFT JOIN locations l ON p.location_id = l.id
       LEFT JOIN payments pay ON pay.booking_id = b.id
       WHERE 1=1
     `;
@@ -53,16 +59,16 @@ class BookingModel {
       params.push(source);
     }
     if (hostId) {
-      sql += ' AND h.host_id = ?';
+      sql += ' AND p.host_id = ?';
       params.push(hostId);
     }
-    if (homestayId) {
-      sql += ' AND b.homestay_id = ?';
-      params.push(homestayId);
+    if (targetPropertyId) {
+      sql += ' AND b.property_id = ?';
+      params.push(targetPropertyId);
     }
     if (search) {
-      sql += ' AND (b.booking_code LIKE ? OR u.name LIKE ? OR b.guest_name LIKE ? OR h.name LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+      sql += ' AND (b.booking_code LIKE ? OR u.name LIKE ? OR b.guest_name LIKE ? OR p.title LIKE ? OR p.name LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     sql += ' ORDER BY b.created_at DESC';
@@ -82,25 +88,29 @@ class BookingModel {
         b.id,
         b.booking_code,
         b.user_id,
-        COALESCE(u.name, b.guest_name, 'Khách tại quầy') AS customer_name,
+        b.guest_id,
+        COALESCE(u.name, b.guest_name_snapshot, b.guest_name, 'Khách tại quầy') AS customer_name,
         COALESCE(u.email, '') AS customer_email,
-        COALESCE(u.phone, b.guest_phone, '') AS customer_phone,
+        COALESCE(u.phone, b.guest_phone_snapshot, b.guest_phone, '') AS customer_phone,
         b.guest_name,
         b.guest_phone,
-        b.homestay_id,
-        h.name AS homestay_name,
-        h.host_id,
-        hi.image_url AS homestay_image,
-        l.name AS location_name,
-        t.name AS type_name,
+        b.property_id,
+        b.property_id AS homestay_id,
+        COALESCE(p.title, p.name) AS property_title,
+        COALESCE(p.title, p.name) AS homestay_name,
+        p.host_id,
+        COALESCE(pi.image_url, p.cover_image) AS property_image,
+        COALESCE(pi.image_url, p.cover_image) AS homestay_image,
+        COALESCE(l.name, p.city) AS location_name,
+        COALESCE(t.name, p.property_type) AS type_name,
         b.check_in,
         b.check_out,
         b.guests,
         b.nights,
         b.price_per_night,
         b.promotion_id,
-        p.code AS promotion_code,
-        p.title AS promotion_title,
+        prom.code AS promotion_code,
+        prom.title AS promotion_title,
         b.discount_amount,
         b.total_price,
         b.commission_rate,
@@ -108,22 +118,24 @@ class BookingModel {
         b.host_payout_amount,
         b.status,
         b.source,
+        b.payment_status,
         b.notes,
         b.host_note,
         b.cancelled_at,
         b.cancelled_reason,
         pay.payment_method,
-        pay.status AS payment_status,
+        COALESCE(pay.status, b.payment_status) AS payment_status,
+        COALESCE(pay.status, b.payment_status) AS payment_status_display,
         pay.proof_image_url,
         pay.transaction_code,
         b.created_at
       FROM bookings b
       LEFT JOIN users u ON b.user_id = u.id
-      JOIN homestays h ON b.homestay_id = h.id
-      JOIN locations l ON h.location_id = l.id
-      JOIN homestay_types t ON h.type_id = t.id
-      LEFT JOIN homestay_images hi ON hi.homestay_id = h.id AND hi.is_primary = 1
-      LEFT JOIN promotions p ON b.promotion_id = p.id
+      JOIN properties p ON b.property_id = p.id
+      LEFT JOIN locations l ON p.location_id = l.id
+      LEFT JOIN homestay_types t ON p.type_id = t.id
+      LEFT JOIN property_images pi ON pi.property_id = p.id AND pi.is_primary = 1
+      LEFT JOIN promotions prom ON b.promotion_id = prom.id
       LEFT JOIN payments pay ON pay.booking_id = b.id
       WHERE b.id = ? OR b.booking_code = ?`,
       [id, id]
@@ -137,33 +149,38 @@ class BookingModel {
         b.id,
         b.booking_code,
         b.user_id,
-        b.homestay_id,
-        h.name AS homestay_name,
-        hi.image_url AS homestay_image,
-        l.name AS location_name,
-        t.name AS type_name,
+        b.property_id,
+        b.property_id AS homestay_id,
+        COALESCE(p.title, p.name) AS homestay_name,
+        COALESCE(p.title, p.name) AS property_title,
+        COALESCE(pi.image_url, p.cover_image) AS homestay_image,
+        COALESCE(pi.image_url, p.cover_image) AS property_image,
+        COALESCE(l.name, p.city) AS location_name,
+        COALESCE(t.name, p.property_type) AS type_name,
         b.check_in,
         b.check_out,
         b.guests,
         b.nights,
         b.price_per_night,
         b.promotion_id,
-        p.code AS voucher_code,
+        prom.code AS voucher_code,
         b.discount_amount,
         b.total_price,
         b.status,
         b.source,
+        b.payment_status,
         b.notes,
         pay.payment_method,
-        pay.status AS payment_status,
+        COALESCE(pay.status, b.payment_status) AS payment_status,
+        COALESCE(pay.status, b.payment_status) AS payment_status_display,
         pay.proof_image_url,
         b.created_at
       FROM bookings b
-      JOIN homestays h ON b.homestay_id = h.id
-      JOIN locations l ON h.location_id = l.id
-      JOIN homestay_types t ON h.type_id = t.id
-      LEFT JOIN homestay_images hi ON hi.homestay_id = h.id AND hi.is_primary = 1
-      LEFT JOIN promotions p ON b.promotion_id = p.id
+      JOIN properties p ON b.property_id = p.id
+      LEFT JOIN locations l ON p.location_id = l.id
+      LEFT JOIN homestay_types t ON p.type_id = t.id
+      LEFT JOIN property_images pi ON pi.property_id = p.id AND pi.is_primary = 1
+      LEFT JOIN promotions prom ON b.promotion_id = prom.id
       LEFT JOIN payments pay ON pay.booking_id = b.id
       WHERE b.user_id = ?
     `;
@@ -180,18 +197,24 @@ class BookingModel {
     return rows;
   }
 
-  // Khách đặt phòng từ Mobile App (Online) - Concurrency Safe với MySQL Transaction & Row Locking (FOR UPDATE)
+  // Khách đặt phòng (Online) - Concurrency Safe với MySQL Transaction & Row Locking (FOR UPDATE)
   static async createBooking({
     userId,
+    propertyId,
     homestayId,
     checkIn,
     checkOut,
     guests,
     promotionId = null,
     voucherCode = null,
-    paymentMethod = 'cash',
+    paymentMethod = 'bank_transfer',
     notes = '',
   }) {
+    const targetPropertyId = propertyId || homestayId;
+    if (!targetPropertyId) {
+      throw new Error('Chỗ nghỉ không hợp lệ');
+    }
+
     let conn;
     try {
       conn = await db.getConnection();
@@ -202,18 +225,19 @@ class BookingModel {
     const runner = conn || db;
 
     try {
-      // 1. Get Homestay with row lock
-      const [hRows] = await runner.query(
-        'SELECT id, name, price, max_guests, is_active, host_id FROM homestays WHERE id = ? FOR UPDATE',
-        [homestayId]
+      // 1. Get Property with row lock
+      const [pRows] = await runner.query(
+        'SELECT id, title, name, price_per_night, price, max_guests, is_active, host_id FROM properties WHERE id = ? AND is_deleted = 0 FOR UPDATE',
+        [targetPropertyId]
       );
-      if (hRows.length === 0 || !hRows[0].is_active) {
-        throw new Error('Homestay không tồn tại hoặc đã ngừng kinh doanh');
+      if (pRows.length === 0 || !pRows[0].is_active) {
+        throw new Error('Chỗ nghỉ không tồn tại hoặc đã ngừng kinh doanh');
       }
-      const homestay = hRows[0];
+      const property = pRows[0];
+      const propertyTitle = property.title || property.name;
 
-      if (guests > homestay.max_guests) {
-        throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${homestay.max_guests} người)`);
+      if (guests > property.max_guests) {
+        throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${property.max_guests} người)`);
       }
 
       const today = new Date();
@@ -233,25 +257,25 @@ class BookingModel {
         throw new Error('Ngày trả phòng phải sau ngày nhận phòng');
       }
 
-      // 2. Check Overbooking (Chống trùng lịch với cả đơn online và đơn tại quầy) với row lock FOR UPDATE
+      // 2. Check Overbooking với row lock FOR UPDATE
       const [conflicts] = await runner.query(
         `SELECT COUNT(*) AS conflict_count
          FROM bookings
-         WHERE homestay_id = ?
+         WHERE property_id = ?
            AND status IN ('pending', 'confirmed')
            AND check_in < ?
            AND check_out > ?
          FOR UPDATE`,
-        [homestayId, checkOut, checkIn]
+        [targetPropertyId, checkOut, checkIn]
       );
 
       if (conflicts[0].conflict_count > 0) {
-        throw new Error('Homestay đã có khách đặt trong khoảng thời gian này');
+        throw new Error('Chỗ nghỉ đã có khách đặt trong khoảng thời gian này');
       }
 
       // 3. Compute Nights and Raw Total
       const nights = Math.max(1, Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)));
-      const pricePerNight = parseFloat(homestay.price);
+      const pricePerNight = parseFloat(property.price_per_night || property.price);
       const rawTotal = pricePerNight * nights;
       let discountAmount = 0;
 
@@ -307,15 +331,16 @@ class BookingModel {
       // 5. Insert Booking
       const [result] = await runner.query(
         `INSERT INTO bookings (
-          booking_code, user_id, homestay_id, check_in, check_out,
+          booking_code, user_id, guest_id, property_id, check_in, check_out,
           guests, nights, price_per_night, promotion_id, discount_amount,
           total_price, commission_rate, commission_amount, host_payout_amount,
-          status, source, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'guest_online', ?)`,
+          status, source, payment_method, payment_status, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'guest_online', ?, 'unpaid', ?)`,
         [
           bookingCode,
           userId,
-          homestayId,
+          userId,
+          targetPropertyId,
           checkIn,
           checkOut,
           guests || 1,
@@ -327,6 +352,7 @@ class BookingModel {
           commissionRate,
           commissionAmount,
           hostPayoutAmount,
+          paymentMethod || 'bank_transfer',
           notes || '',
         ]
       );
@@ -337,16 +363,16 @@ class BookingModel {
       await runner.query(
         `INSERT INTO payments (booking_id, payment_method, amount, status, paid_at)
          VALUES (?, ?, ?, 'pending', NULL)`,
-        [bookingId, paymentMethod || 'cash', finalTotal]
+        [bookingId, paymentMethod || 'bank_transfer', finalTotal]
       );
 
-      // 7. Reward Points (Kinh tế thực tế: 10.000₫ chi tiêu = 1 điểm, tương đương hoàn ~1% vào điểm thưởng)
+      // 7. Reward Points
       const earnedPoints = Math.max(10, Math.floor(finalTotal / 10000));
       if (userId) {
         await runner.query('UPDATE users SET reward_points = reward_points + ? WHERE id = ?', [earnedPoints, userId]);
         await runner.query(
           'INSERT INTO point_transactions (user_id, title, points, type, reference_id) VALUES (?, ?, ?, "earn", ?)',
-          [userId, `Tích lũy ${earnedPoints} điểm từ đơn đặt phòng ${bookingCode} (${homestay.name})`, earnedPoints, bookingId]
+          [userId, `Tích lũy ${earnedPoints} điểm từ đơn đặt phòng ${bookingCode} (${propertyTitle})`, earnedPoints, bookingId]
         );
 
         // 8. In-App Notification
@@ -355,7 +381,7 @@ class BookingModel {
            VALUES (?, 'Đã tạo đơn đặt phòng! ⏳', ?, 'booking_status', ?)`,
           [
             userId,
-            `Đơn đặt phòng ${bookingCode} tại ${homestay.name} đã được ghi nhận (+${earnedPoints} điểm thưởng). Vui lòng thanh toán để Admin duyệt đơn.`,
+            `Đơn đặt phòng ${bookingCode} tại ${propertyTitle} đã được ghi nhận (+${earnedPoints} điểm thưởng). Vui lòng thanh toán để Admin duyệt đơn.`,
             bookingId,
           ]
         );
@@ -368,7 +394,8 @@ class BookingModel {
       return {
         id: String(bookingId),
         bookingCode,
-        homestayName: homestay.name,
+        homestayName: propertyTitle,
+        propertyTitle,
         checkIn,
         checkOut,
         guests,
@@ -395,8 +422,9 @@ class BookingModel {
     }
   }
 
-  // Chủ Homestay tạo đơn đặt phòng trực tiếp tại quầy (Walk-in Direct Booking) - Concurrency Safe
+  // Chủ Chỗ nghỉ tạo đơn đặt phòng trực tiếp tại quầy (Walk-in Direct Booking)
   static async createDirectBooking({
+    propertyId,
     homestayId,
     guestName,
     guestPhone,
@@ -408,6 +436,10 @@ class BookingModel {
     hostNote = '',
     createdBy = null,
   }) {
+    const targetPropertyId = propertyId || homestayId;
+    if (!targetPropertyId) {
+      throw new Error('Chỗ nghỉ không hợp lệ');
+    }
     if (!guestName || !guestName.trim()) {
       throw new Error('Vui lòng nhập họ và tên khách hàng');
     }
@@ -428,18 +460,19 @@ class BookingModel {
     const runner = conn || db;
 
     try {
-      // 1. Get Homestay with row lock
-      const [hRows] = await runner.query(
-        'SELECT id, name, price, max_guests, is_active, host_id FROM homestays WHERE id = ? FOR UPDATE',
-        [homestayId]
+      // 1. Get Property with row lock
+      const [pRows] = await runner.query(
+        'SELECT id, title, name, price_per_night, price, max_guests, is_active, host_id FROM properties WHERE id = ? AND is_deleted = 0 FOR UPDATE',
+        [targetPropertyId]
       );
-      if (hRows.length === 0 || !hRows[0].is_active) {
-        throw new Error('Homestay không tồn tại hoặc đã ngừng kinh doanh');
+      if (pRows.length === 0 || !pRows[0].is_active) {
+        throw new Error('Chỗ nghỉ không tồn tại hoặc đã ngừng kinh doanh');
       }
-      const homestay = hRows[0];
+      const property = pRows[0];
+      const propertyTitle = property.title || property.name;
 
-      if (guests > homestay.max_guests) {
-        throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${homestay.max_guests} người)`);
+      if (guests > property.max_guests) {
+        throw new Error(`Số lượng khách vượt quá sức chứa tối đa (${property.max_guests} người)`);
       }
 
       const today = new Date();
@@ -459,28 +492,28 @@ class BookingModel {
         throw new Error('Ngày trả phòng phải sau ngày nhận phòng');
       }
 
-      // 2. Check Overbooking with row lock
+      // 2. Check Overbooking
       const [conflicts] = await runner.query(
         `SELECT COUNT(*) AS conflict_count
          FROM bookings
-         WHERE homestay_id = ?
+         WHERE property_id = ?
            AND status IN ('pending', 'confirmed')
            AND check_in < ?
            AND check_out > ?
          FOR UPDATE`,
-        [homestayId, checkOut, checkIn]
+        [targetPropertyId, checkOut, checkIn]
       );
 
       if (conflicts[0].conflict_count > 0) {
-        throw new Error('Homestay đã có khách đặt trong khoảng thời gian này. Vui lòng chọn ngày khác.');
+        throw new Error('Chỗ nghỉ đã có khách đặt trong khoảng thời gian này');
       }
 
-      // 3. Compute nights & amounts
+      // 3. Compute Nights and Pricing
       const nights = Math.max(1, Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)));
-      const pricePerNight = parseFloat(homestay.price);
+      const pricePerNight = parseFloat(property.price_per_night || property.price);
       const totalPrice = pricePerNight * nights;
 
-      // Hoa hồng cho đơn tại quầy (Mặc định 5%)
+      // Hoa hồng tại quầy (Direct: 5%)
       let directCommissionRate = 5.00;
       try {
         const [settingRows] = await runner.query(
@@ -502,16 +535,18 @@ class BookingModel {
       // 4. Insert Booking
       const [result] = await runner.query(
         `INSERT INTO bookings (
-          booking_code, user_id, guest_name, guest_phone, homestay_id, check_in, check_out,
-          guests, nights, price_per_night, discount_amount, total_price,
-          commission_rate, commission_amount, host_payout_amount,
-          status, source, notes, host_note, created_by
-        ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, 0.00, ?, ?, ?, ?, ?, 'host_direct', 'Khách đặt trực tiếp tại quầy homestay', ?, ?)`,
+          booking_code, user_id, guest_name, guest_name_snapshot, guest_phone, guest_phone_snapshot,
+          property_id, check_in, check_out, guests, nights, price_per_night,
+          discount_amount, total_price, commission_rate, commission_amount, host_payout_amount,
+          status, source, payment_method, payment_status, notes, host_note, created_by
+        ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0.00, ?, ?, ?, ?, ?, 'host_direct', ?, ?, 'Khách đặt trực tiếp tại quầy', ?, ?)`,
         [
           bookingCode,
           guestName.trim(),
+          guestName.trim(),
           guestPhone.trim(),
-          homestayId,
+          guestPhone.trim(),
+          targetPropertyId,
           checkIn,
           checkOut,
           guests,
@@ -522,8 +557,10 @@ class BookingModel {
           commissionAmount,
           hostPayoutAmount,
           status || 'confirmed',
+          paymentMethod || 'cash',
+          status === 'confirmed' ? 'verified' : 'unpaid',
           hostNote || '',
-          createdBy || homestay.host_id || null,
+          createdBy || property.host_id || null,
         ]
       );
 
@@ -550,7 +587,8 @@ class BookingModel {
       return {
         id: String(bookingId),
         bookingCode,
-        homestayName: homestay.name,
+        homestayName: propertyTitle,
+        propertyTitle,
         guestName,
         guestPhone,
         checkIn,
@@ -601,9 +639,10 @@ class BookingModel {
 
     await db.query(
       `UPDATE bookings
-       SET notes = CONCAT(IFNULL(notes, ''), ' [Đã thanh toán CK, chờ Admin duyệt]')
+       SET payment_status = 'proof_uploaded', payment_proof_image = ?, payment_submitted_at = NOW(),
+           notes = CONCAT(IFNULL(notes, ''), ' [Đã thanh toán CK, chờ Admin duyệt]')
        WHERE id = ?`,
-      [booking.id]
+      [proofImageUrl, booking.id]
     );
 
     if (booking.user_id) {
@@ -648,7 +687,7 @@ class BookingModel {
     }
 
     await db.query(
-      'UPDATE bookings SET status = "cancelled", cancelled_at = NOW(), cancelled_reason = ? WHERE id = ?',
+      'UPDATE bookings SET status = "cancelled", payment_status = "rejected", cancelled_at = NOW(), cancelled_reason = ? WHERE id = ?',
       [reason, booking.id]
     );
 
@@ -663,7 +702,7 @@ class BookingModel {
   static async updateStatus(id, status, cancelledReason = null) {
     if (status === 'cancelled') {
       const [result] = await db.query(
-        'UPDATE bookings SET status = ?, cancelled_at = NOW(), cancelled_reason = ? WHERE id = ?',
+        'UPDATE bookings SET status = ?, payment_status = "rejected", cancelled_at = NOW(), cancelled_reason = ? WHERE id = ?',
         [status, cancelledReason || 'Quản trị viên hủy đơn', id]
       );
       return result.affectedRows > 0;
@@ -676,18 +715,22 @@ class BookingModel {
         "UPDATE payments SET status = 'completed', paid_at = COALESCE(paid_at, NOW()) WHERE booking_id = ?",
         [id]
       );
+      await db.query(
+        "UPDATE bookings SET payment_status = 'verified' WHERE id = ?",
+        [id]
+      );
     }
 
     return result.affectedRows > 0;
   }
 
-  static async getUnavailableDates(homestayId) {
+  static async getUnavailableDates(propertyId) {
     const [rows] = await db.query(
       `SELECT check_in, check_out, booking_code, status, source
        FROM bookings
-       WHERE homestay_id = ? AND status IN ('pending', 'confirmed')
+       WHERE property_id = ? AND status IN ('pending', 'confirmed')
        ORDER BY check_in ASC`,
-      [homestayId]
+      [propertyId]
     );
     return rows;
   }
@@ -699,66 +742,31 @@ class BookingModel {
         DATE_FORMAT(created_at, '%Y-%m') AS raw_month,
         COUNT(id) AS booking_count,
         SUM(CASE WHEN status IN ('confirmed', 'completed') THEN total_price ELSE 0 END) AS revenue,
-        SUM(CASE WHEN status IN ('confirmed', 'completed') THEN commission_amount ELSE 0 END) AS commission_revenue,
-        SUM(CASE WHEN status IN ('confirmed', 'completed') THEN host_payout_amount ELSE 0 END) AS host_payout
+        SUM(CASE WHEN status IN ('confirmed', 'completed') THEN commission_amount ELSE 0 END) AS commission
       FROM bookings
       GROUP BY raw_month, month
-      ORDER BY raw_month ASC
-      LIMIT 12
+      ORDER BY raw_month DESC
+      LIMIT 6
     `);
-    return rows;
+    return rows.reverse();
   }
 
   static async getCounts() {
-    const [[{ total }]] = await db.query('SELECT COUNT(*) AS total FROM bookings');
-    const [[{ pending }]] = await db.query("SELECT COUNT(*) AS pending FROM bookings WHERE status = 'pending'");
-    const [[{ grossRevenue, commissionEarned, hostPayouts }]] = await db.query(`
+    const [rows] = await db.query(`
       SELECT
-        IFNULL(SUM(total_price), 0) AS grossRevenue,
-        IFNULL(SUM(commission_amount), 0) AS commissionEarned,
-        IFNULL(SUM(host_payout_amount), 0) AS hostPayouts
+        COUNT(*) AS total,
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending,
+        SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) AS confirmed,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
+        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
+        SUM(CASE WHEN source = 'guest_online' THEN 1 ELSE 0 END) AS onlineCount,
+        SUM(CASE WHEN source = 'host_direct' THEN 1 ELSE 0 END) AS directCount,
+        SUM(CASE WHEN status IN ('confirmed', 'completed') THEN total_price ELSE 0 END) AS grossRevenue,
+        SUM(CASE WHEN status IN ('confirmed', 'completed') THEN commission_amount ELSE 0 END) AS commissionEarned,
+        SUM(CASE WHEN status IN ('confirmed', 'completed') THEN host_payout_amount ELSE 0 END) AS hostPayouts
       FROM bookings
-      WHERE status IN ('confirmed', 'completed')
     `);
-    const [[{ onlineCount }]] = await db.query("SELECT COUNT(*) AS onlineCount FROM bookings WHERE source = 'guest_online'");
-    const [[{ directCount }]] = await db.query("SELECT COUNT(*) AS directCount FROM bookings WHERE source = 'host_direct'");
-
-    return {
-      total,
-      pending,
-      onlineCount,
-      directCount,
-      grossRevenue: parseFloat(grossRevenue),
-      commissionEarned: parseFloat(commissionEarned),
-      hostPayouts: parseFloat(hostPayouts),
-    };
-  }
-
-  static async getHostStats(hostId) {
-    const [rows] = await db.query(
-      `SELECT
-        COUNT(b.id) AS total_bookings,
-        SUM(CASE WHEN b.status IN ('confirmed', 'completed') THEN b.total_price ELSE 0 END) AS gross_revenue,
-        SUM(CASE WHEN b.status IN ('confirmed', 'completed') THEN b.commission_amount ELSE 0 END) AS platform_commission_fee,
-        SUM(CASE WHEN b.status IN ('confirmed', 'completed') THEN b.host_payout_amount ELSE 0 END) AS net_payout,
-        SUM(CASE WHEN b.status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
-        SUM(CASE WHEN b.source = 'host_direct' THEN 1 ELSE 0 END) AS direct_count,
-        SUM(CASE WHEN b.source = 'guest_online' THEN 1 ELSE 0 END) AS online_count
-      FROM bookings b
-      JOIN homestays h ON b.homestay_id = h.id
-      WHERE h.host_id = ?`,
-      [hostId]
-    );
-
-    return rows[0] || {
-      total_bookings: 0,
-      gross_revenue: 0,
-      platform_commission_fee: 0,
-      net_payout: 0,
-      pending_count: 0,
-      direct_count: 0,
-      online_count: 0,
-    };
+    return rows[0] || {};
   }
 }
 

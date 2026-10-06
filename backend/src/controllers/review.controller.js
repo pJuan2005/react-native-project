@@ -1,10 +1,10 @@
 const ReviewService = require('../services/review.service');
 const { success, created, badRequest, error } = require('../utils/response');
 
-const getHomestayReviews = async (req, res) => {
+const getReviews = async (req, res) => {
   try {
-    const { homestayId } = req.params;
-    const data = await ReviewService.getReviewsByHomestay(homestayId);
+    const propertyId = req.params.propertyId || req.params.homestayId;
+    const data = await ReviewService.getReviewsByProperty(propertyId);
     return success(res, data, 'Lấy danh sách đánh giá thành công');
   } catch (err) {
     return error(res, 'Lỗi khi lấy danh sách đánh giá');
@@ -14,11 +14,11 @@ const getHomestayReviews = async (req, res) => {
 const createReview = async (req, res) => {
   try {
     const userId = req.user?.id || req.body.userId || '1';
-    const { homestayId, bookingId, rating, comment } = req.body;
+    const { propertyId, homestayId, bookingId, rating, comment } = req.body;
 
     const reviewId = await ReviewService.createReview({
       userId,
-      homestayId,
+      propertyId: propertyId || homestayId,
       bookingId,
       rating: parseInt(rating, 10),
       comment,
@@ -31,6 +31,7 @@ const createReview = async (req, res) => {
 };
 
 module.exports = {
-  getHomestayReviews,
+  getReviews,
+  getHomestayReviews: getReviews,
   createReview,
 };

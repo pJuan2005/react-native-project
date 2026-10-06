@@ -6,7 +6,7 @@ const db = require('../config/database');
 class AdminService {
   static async getDashboardStats() {
     try {
-      const totalHomestays = await HomestayModel.countActive();
+      const totalProperties = await HomestayModel.countActive();
       const totalCustomers = await UserModel.countCustomers();
       const counts = await BookingModel.getCounts();
       const monthlyRevenue = await BookingModel.getMonthlyRevenueStats();
@@ -14,13 +14,14 @@ class AdminService {
 
       return {
         summary: {
-          totalHomestays,
+          totalProperties,
+          totalHomestays: totalProperties,
           totalCustomers,
-          totalBookings: counts.total,
-          pendingBookings: counts.pending,
-          grossRevenue: counts.grossRevenue,
-          commissionEarned: counts.commissionEarned || Math.round(counts.grossRevenue * 0.10),
-          hostPayouts: counts.hostPayouts || Math.round(counts.grossRevenue * 0.90),
+          totalBookings: counts.total || 0,
+          pendingBookings: counts.pending || 0,
+          grossRevenue: counts.grossRevenue || 0,
+          commissionEarned: counts.commissionEarned || Math.round((counts.grossRevenue || 0) * 0.10),
+          hostPayouts: counts.hostPayouts || Math.round((counts.grossRevenue || 0) * 0.90),
           onlineCount: counts.onlineCount || 0,
           directCount: counts.directCount || 0,
         },
@@ -31,6 +32,7 @@ class AdminService {
       console.warn('DB error in admin dashboard stats, using mock stats:', err.message);
       return {
         summary: {
+          totalProperties: 10,
           totalHomestays: 10,
           totalCustomers: 4,
           totalBookings: 6,
@@ -61,16 +63,53 @@ class AdminService {
   }
 
   static async updateBookingStatus(id, status, cancelledReason) {
-    const success = await BookingModel.updateStatus(id, status, cancelledReason);
-    return success;
+    return await BookingModel.updateStatus(id, status, cancelledReason);
+  }
+
+  static async createProperty({
+    name,
+    title,
+    description,
+    price,
+    price_per_night,
+    old_price,
+    location_id,
+    type_id,
+    max_guests,
+    bedrooms,
+    bathrooms,
+    image_url,
+    is_featured,
+    is_new,
+  }) {
+    return await HomestayModel.create({
+      name: name || title,
+      title: title || name,
+      description,
+      price: price || price_per_night,
+      pricePerNight: price_per_night || price,
+      oldPrice: old_price,
+      locationId: location_id,
+      typeId: type_id,
+      maxGuests: max_guests,
+      bedrooms,
+      bathrooms,
+      imageUrl: image_url,
+      isFeatured: is_featured,
+      isNew: is_new,
+    });
   }
 
   static async createHomestay(payload) {
-    return HomestayModel.create(payload);
+    return this.createProperty(payload);
+  }
+
+  static async deleteProperty(id) {
+    return await HomestayModel.softDelete(id);
   }
 
   static async deleteHomestay(id) {
-    return HomestayModel.softDelete(id);
+    return this.deleteProperty(id);
   }
 }
 

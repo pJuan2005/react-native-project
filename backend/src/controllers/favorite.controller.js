@@ -14,9 +14,9 @@ const getFavorites = async (req, res) => {
 const toggleFavorite = async (req, res) => {
   try {
     const userId = req.body.userId || req.query.userId || req.user?.id || '1';
-    const { homestayId } = req.body;
+    const propertyId = req.body.propertyId || req.body.homestayId;
 
-    const result = await FavoriteService.toggleFavorite(userId, homestayId);
+    const result = await FavoriteService.toggleFavorite(userId, propertyId);
     return success(res, result, result.message);
   } catch (err) {
     return badRequest(res, err.message || 'Lỗi khi thao tác yêu thích');
@@ -26,9 +26,9 @@ const toggleFavorite = async (req, res) => {
 const removeFavorite = async (req, res) => {
   try {
     const userId = req.query.userId || req.body.userId || req.user?.id || '1';
-    const { homestayId } = req.params;
+    const propertyId = req.params.propertyId || req.params.homestayId;
 
-    await FavoriteService.removeFavorite(userId, homestayId);
+    await FavoriteService.removeFavorite(userId, propertyId);
     return success(res, null, 'Đã xóa khỏi danh sách yêu thích');
   } catch (err) {
     return error(res, 'Lỗi khi xóa homestay yêu thích');

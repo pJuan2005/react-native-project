@@ -11,10 +11,11 @@ class LocationService {
     if (!location) {
       throw new Error('Không tìm thấy địa điểm');
     }
-    const homestays = await HomestayModel.findAll({ locationId: id });
+    const properties = await HomestayModel.findAll({ locationId: id });
     return {
       ...location,
-      homestays,
+      properties,
+      homestays: properties,
     };
   }
 }

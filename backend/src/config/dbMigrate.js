@@ -28,142 +28,344 @@ async function migrateDatabase() {
       }
     } catch (_) {}
 
+    try {
+      await db.query('ALTER TABLE users MODIFY COLUMN avatar_url TEXT NULL');
+      const [vCols] = await db.query("SHOW COLUMNS FROM users LIKE 'is_verified'");
+      if (vCols.length === 0) {
+        await db.query('ALTER TABLE users ADD COLUMN is_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active');
+      }
+    } catch (_) {}
+
     // Đồng bộ name <-> full_name, password_hash <-> password
     try {
       await db.query('UPDATE users SET full_name = COALESCE(full_name, name), password = COALESCE(password, password_hash), status = IF(is_active=1, "active", "blocked")');
     } catch (_) {}
 
-    // 2. Tạo hoặc kiểm tra bảng properties (dành cho Web Admin & Host Portal)
+    // 2. Tạo hoặc kiểm tra bảng properties (Nguồn sự thật duy nhất)
     await db.query(`
       CREATE TABLE IF NOT EXISTS properties (
-        id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        host_id INT(11) NOT NULL,
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        host_id BIGINT UNSIGNED NULL,
         title VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
         description TEXT DEFAULT NULL,
-        property_type VARCHAR(100) NOT NULL,
-        price_per_night DECIMAL(10,2) NOT NULL,
-        street_address VARCHAR(255) NOT NULL,
-        city VARCHAR(100) NOT NULL,
+        property_type VARCHAR(100) NOT NULL DEFAULT 'Homestay',
+        price_per_night DECIMAL(12,2) NOT NULL,
+        price DECIMAL(12,2) NOT NULL,
+        old_price DECIMAL(12,2) NULL,
+        location_id BIGINT UNSIGNED NULL,
+        type_id BIGINT UNSIGNED NULL,
+        street_address VARCHAR(255) NOT NULL DEFAULT 'Vietnam',
+        city VARCHAR(100) NOT NULL DEFAULT 'Vietnam',
         country VARCHAR(100) NOT NULL DEFAULT 'Vietnam',
-        max_guests INT(11) DEFAULT 2,
-        bedrooms INT(11) DEFAULT 1,
-        bathrooms INT(11) DEFAULT 1,
-        status ENUM('pending','approved','rejected') DEFAULT 'approved',
+        latitude DECIMAL(10,8) NULL,
+        longitude DECIMAL(11,8) NULL,
+        max_guests INT UNSIGNED DEFAULT 2,
+        bedrooms INT UNSIGNED DEFAULT 1,
+        bathrooms INT UNSIGNED DEFAULT 1,
+        rating DECIMAL(3,2) NOT NULL DEFAULT 5.00,
+        review_count INT UNSIGNED NOT NULL DEFAULT 0,
+        is_new TINYINT(1) NOT NULL DEFAULT 0,
+        is_featured TINYINT(1) NOT NULL DEFAULT 0,
+        featured TINYINT(1) NOT NULL DEFAULT 0,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+        status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved',
+        approval_status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved',
         cover_image VARCHAR(500) DEFAULT NULL,
         manage_token VARCHAR(80) DEFAULT NULL,
         manage_token_active TINYINT(1) NOT NULL DEFAULT 1,
         manage_token_expires_at DATETIME DEFAULT NULL,
-        featured TINYINT(1) NOT NULL DEFAULT 0,
-        is_deleted TINYINT(1) DEFAULT 0,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         UNIQUE KEY uk_properties_manage_token (manage_token)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // Bổ sung các cột nếu bảng properties đã có từ trước nhưng thiếu
+    const safeAddColumn = async (colName, colDef) => {
+      try {
+        const [chk] = await db.query(`SHOW COLUMNS FROM properties LIKE '${colName}'`);
+        if (chk.length === 0) {
+          await db.query(`ALTER TABLE properties ADD COLUMN ${colDef}`);
+        }
+      } catch (err) {
+        console.warn(`safeAddColumn ${colName} notice:`, err.message);
+      }
+    };
+
+    await safeAddColumn('name', 'name VARCHAR(255) NULL AFTER title');
+    await safeAddColumn('price', 'price DECIMAL(12,2) NULL AFTER price_per_night');
+    await safeAddColumn('old_price', 'old_price DECIMAL(12,2) NULL AFTER price');
+    await safeAddColumn('location_id', 'location_id BIGINT UNSIGNED NULL AFTER old_price');
+    await safeAddColumn('type_id', 'type_id BIGINT UNSIGNED NULL AFTER location_id');
+    await safeAddColumn('is_new', 'is_new TINYINT(1) NOT NULL DEFAULT 0');
+    await safeAddColumn('is_featured', 'is_featured TINYINT(1) NOT NULL DEFAULT 0');
+    await safeAddColumn('is_active', 'is_active TINYINT(1) NOT NULL DEFAULT 1');
+    await safeAddColumn('approval_status', "approval_status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'approved'");
+    await safeAddColumn('rating', 'rating DECIMAL(3,2) NOT NULL DEFAULT 5.00');
+    await safeAddColumn('review_count', 'review_count INT UNSIGNED NOT NULL DEFAULT 0');
+
+    try {
+      await db.query('UPDATE properties SET name = title WHERE name IS NULL');
+      await db.query('UPDATE properties SET price = price_per_night WHERE price IS NULL');
+    } catch (_) {}
+
     // 3. Tạo bảng property_images & property_amenities nếu chưa có
     await db.query(`
       CREATE TABLE IF NOT EXISTS property_images (
-        id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        property_id INT(11) NOT NULL,
-        image_url VARCHAR(500) DEFAULT NULL
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        property_id BIGINT UNSIGNED NOT NULL,
+        image_url VARCHAR(500) NOT NULL,
+        is_primary TINYINT(1) NOT NULL DEFAULT 0,
+        sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_pi_property (property_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // Bổ sung các cột nếu bảng property_images đã có nhưng thiếu
+    try {
+      const [piCols] = await db.query("SHOW COLUMNS FROM property_images LIKE 'is_primary'");
+      if (piCols.length === 0) {
+        await db.query('ALTER TABLE property_images ADD COLUMN is_primary TINYINT(1) NOT NULL DEFAULT 0 AFTER image_url');
+      }
+    } catch (_) {}
+
+    try {
+      const [soCols] = await db.query("SHOW COLUMNS FROM property_images LIKE 'sort_order'");
+      if (soCols.length === 0) {
+        await db.query('ALTER TABLE property_images ADD COLUMN sort_order INT UNSIGNED NOT NULL DEFAULT 0 AFTER is_primary');
+      }
+    } catch (_) {}
+
     await db.query(`
       CREATE TABLE IF NOT EXISTS property_amenities (
-        property_id INT(11) NOT NULL,
-        amenity_id INT(11) NOT NULL,
+        property_id BIGINT UNSIGNED NOT NULL,
+        amenity_id BIGINT UNSIGNED NOT NULL,
         PRIMARY KEY (property_id, amenity_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    // 4. Thêm các cột Host vào homestays
+    // 4. Nếu còn bảng homestays cũ, di chuyển dữ liệu sang properties
     try {
-      const [hsCols] = await db.query("SHOW COLUMNS FROM homestays LIKE 'host_id'");
-      if (hsCols.length === 0) {
-        await db.query('ALTER TABLE homestays ADD COLUMN host_id BIGINT UNSIGNED NULL AFTER type_id');
+      const [hsTable] = await db.query("SHOW TABLES LIKE 'homestays'");
+      if (hsTable.length > 0) {
+        await db.query(`
+          INSERT INTO properties (
+            id, host_id, title, name, description, property_type, price_per_night, price, old_price,
+            location_id, type_id, street_address, city, country, max_guests, bedrooms, bathrooms,
+            rating, review_count, is_new, is_featured, featured, is_active, status, approval_status,
+            cover_image, manage_token
+          )
+          SELECT
+            h.id,
+            COALESCE(h.host_id, 2),
+            h.name,
+            h.name,
+            h.description,
+            COALESCE(t.name, 'Homestay'),
+            h.price,
+            h.price,
+            h.old_price,
+            h.location_id,
+            h.type_id,
+            COALESCE(l.name, 'Vietnam'),
+            COALESCE(l.name, 'Vietnam'),
+            'Vietnam',
+            h.max_guests,
+            h.bedrooms,
+            h.bathrooms,
+            h.rating,
+            h.review_count,
+            h.is_new,
+            h.is_featured,
+            h.is_featured,
+            h.is_active,
+            COALESCE(h.approval_status, 'approved'),
+            COALESCE(h.approval_status, 'approved'),
+            COALESCE(hi.image_url, 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'),
+            COALESCE(h.manage_token, CONCAT('HMTOKEN_', LPAD(h.id, 4, '0')))
+          FROM homestays h
+          LEFT JOIN locations l ON h.location_id = l.id
+          LEFT JOIN homestay_types t ON h.type_id = t.id
+          LEFT JOIN homestay_images hi ON hi.homestay_id = h.id AND hi.is_primary = 1
+          ON DUPLICATE KEY UPDATE
+            title = VALUES(title),
+            name = VALUES(name),
+            price_per_night = VALUES(price_per_night),
+            price = VALUES(price),
+            location_id = VALUES(location_id),
+            type_id = VALUES(type_id),
+            cover_image = VALUES(cover_image)
+        `);
+
+        // Di chuyển homestay_images -> property_images
+        try {
+          await db.query(`
+            INSERT IGNORE INTO property_images (property_id, image_url, is_primary, sort_order)
+            SELECT homestay_id, image_url, is_primary, sort_order FROM homestay_images
+          `);
+        } catch (_) {}
+
+        // Di chuyển homestay_amenities -> property_amenities
+        try {
+          await db.query(`
+            INSERT IGNORE INTO property_amenities (property_id, amenity_id)
+            SELECT homestay_id, amenity_id FROM homestay_amenities
+          `);
+        } catch (_) {}
       }
+    } catch (err) {
+      console.warn('Sync homestays to properties notice:', err.message);
+    }
+
+    // 5. Cập nhật khóa ngoại trong bookings, favorites, reviews sang property_id
+    try {
+      await db.query('ALTER TABLE bookings DROP FOREIGN KEY fk_bookings_homestay');
+    } catch (_) {}
+    try {
+      await db.query('ALTER TABLE favorites DROP FOREIGN KEY fk_favorites_homestay');
+    } catch (_) {}
+    try {
+      await db.query('ALTER TABLE reviews DROP FOREIGN KEY fk_reviews_homestay');
+    } catch (_) {}
+    try {
+      await db.query('ALTER TABLE homestay_images DROP FOREIGN KEY fk_homestay_images_homestay');
+    } catch (_) {}
+    try {
+      await db.query('ALTER TABLE homestay_amenities DROP FOREIGN KEY fk_homestay_amenities_homestay');
     } catch (_) {}
 
     try {
-      const [tokenCols] = await db.query("SHOW COLUMNS FROM homestays LIKE 'manage_token'");
-      if (tokenCols.length === 0) {
-        await db.query('ALTER TABLE homestays ADD COLUMN manage_token VARCHAR(80) NULL UNIQUE AFTER is_active');
-      }
-    } catch (_) {}
-
-    try {
-      const [statusCols] = await db.query("SHOW COLUMNS FROM homestays LIKE 'approval_status'");
-      if (statusCols.length === 0) {
-        await db.query(
-          "ALTER TABLE homestays ADD COLUMN approval_status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'approved' AFTER is_active"
-        );
-      }
-    } catch (_) {}
-
-    // 5. Nâng cấp bảng bookings hỗ trợ cả Mobile và Web Host Walk-in
-    try {
-      await db.query('ALTER TABLE bookings MODIFY COLUMN user_id BIGINT UNSIGNED NULL');
+      await db.query('ALTER TABLE bookings MODIFY COLUMN homestay_id BIGINT UNSIGNED NULL');
+      await db.query('ALTER TABLE favorites MODIFY COLUMN homestay_id BIGINT UNSIGNED NULL');
+      await db.query('ALTER TABLE reviews MODIFY COLUMN homestay_id BIGINT UNSIGNED NULL');
     } catch (_) {}
 
     try {
       const [bCols] = await db.query("SHOW COLUMNS FROM bookings LIKE 'property_id'");
       if (bCols.length === 0) {
         await db.query('ALTER TABLE bookings ADD COLUMN property_id BIGINT UNSIGNED NULL AFTER booking_code');
-        await db.query('ALTER TABLE bookings ADD COLUMN guest_id BIGINT UNSIGNED NULL AFTER user_id');
-        await db.query('ALTER TABLE bookings ADD COLUMN guest_name_snapshot VARCHAR(120) NULL AFTER guest_name');
-        await db.query('ALTER TABLE bookings ADD COLUMN guest_phone_snapshot VARCHAR(30) NULL AFTER guest_phone');
-        await db.query('ALTER TABLE bookings ADD COLUMN payment_reference VARCHAR(80) NULL AFTER notes');
-        await db.query("ALTER TABLE bookings ADD COLUMN payment_status ENUM('unpaid','proof_uploaded','verified','rejected') NOT NULL DEFAULT 'unpaid'");
-        await db.query('ALTER TABLE bookings ADD COLUMN payment_proof_image VARCHAR(500) NULL');
-        await db.query('ALTER TABLE bookings ADD COLUMN payment_submitted_at DATETIME NULL');
-        await db.query('ALTER TABLE bookings ADD COLUMN confirmed_by BIGINT UNSIGNED NULL');
-        await db.query('ALTER TABLE bookings ADD COLUMN confirmed_at DATETIME NULL');
-        await db.query('ALTER TABLE bookings ADD COLUMN rejection_reason TEXT NULL');
-        await db.query('ALTER TABLE bookings ADD COLUMN checkin_instructions TEXT NULL');
-        await db.query('ALTER TABLE bookings ADD COLUMN commission_rate_applied DECIMAL(6,4) NOT NULL DEFAULT 0.1000');
+        await db.query('UPDATE bookings SET property_id = homestay_id WHERE property_id IS NULL AND homestay_id IS NOT NULL');
+      } else {
+        await db.query('UPDATE bookings SET property_id = homestay_id WHERE property_id IS NULL AND homestay_id IS NOT NULL');
       }
     } catch (_) {}
 
-    // Bổ sung các cột direct walk-in nếu chưa có
     try {
-      const [bSource] = await db.query("SHOW COLUMNS FROM bookings LIKE 'source'");
-      if (bSource.length === 0) {
-        await db.query(
-          "ALTER TABLE bookings ADD COLUMN source ENUM('guest_online', 'host_direct', 'admin_manual') NOT NULL DEFAULT 'guest_online' AFTER status"
-        );
-      }
-      const [bName] = await db.query("SHOW COLUMNS FROM bookings LIKE 'guest_name'");
-      if (bName.length === 0) {
-        await db.query('ALTER TABLE bookings ADD COLUMN guest_name VARCHAR(120) NULL AFTER user_id');
-        await db.query('ALTER TABLE bookings ADD COLUMN guest_phone VARCHAR(30) NULL AFTER guest_name');
-        await db.query(
-          'ALTER TABLE bookings ADD COLUMN commission_rate DECIMAL(5,2) NOT NULL DEFAULT 10.00 AFTER total_price'
-        );
-        await db.query(
-          'ALTER TABLE bookings ADD COLUMN commission_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00 AFTER commission_rate'
-        );
-        await db.query(
-          'ALTER TABLE bookings ADD COLUMN host_payout_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00 AFTER commission_amount'
-        );
-        await db.query('ALTER TABLE bookings ADD COLUMN host_note TEXT NULL AFTER notes');
-        await db.query('ALTER TABLE bookings ADD COLUMN created_by BIGINT UNSIGNED NULL AFTER host_note');
+      const [fCols] = await db.query("SHOW COLUMNS FROM favorites LIKE 'property_id'");
+      if (fCols.length === 0) {
+        await db.query('ALTER TABLE favorites ADD COLUMN property_id BIGINT UNSIGNED NULL AFTER user_id');
+        await db.query('UPDATE favorites SET property_id = homestay_id WHERE property_id IS NULL AND homestay_id IS NOT NULL');
+      } else {
+        await db.query('UPDATE favorites SET property_id = homestay_id WHERE property_id IS NULL AND homestay_id IS NOT NULL');
       }
     } catch (_) {}
 
-    // Bổ sung các cột trong bảng payments nếu chưa có
     try {
-      const [pCols] = await db.query("SHOW COLUMNS FROM payments LIKE 'proof_image_url'");
-      if (pCols.length === 0) {
-        await db.query('ALTER TABLE payments ADD COLUMN proof_image_url VARCHAR(500) NULL AFTER amount');
+      const [rCols] = await db.query("SHOW COLUMNS FROM reviews LIKE 'property_id'");
+      if (rCols.length === 0) {
+        await db.query('ALTER TABLE reviews ADD COLUMN property_id BIGINT UNSIGNED NULL AFTER user_id');
+        await db.query('UPDATE reviews SET property_id = homestay_id WHERE property_id IS NULL AND homestay_id IS NOT NULL');
+      } else {
+        await db.query('UPDATE reviews SET property_id = homestay_id WHERE property_id IS NULL AND homestay_id IS NOT NULL');
       }
-      const [tCols] = await db.query("SHOW COLUMNS FROM payments LIKE 'transaction_code'");
-      if (tCols.length === 0) {
-        await db.query('ALTER TABLE payments ADD COLUMN transaction_code VARCHAR(100) NULL AFTER payment_method');
+      const [rgCols] = await db.query("SHOW COLUMNS FROM reviews LIKE 'guest_id'");
+      if (rgCols.length === 0) {
+        await db.query('ALTER TABLE reviews ADD COLUMN guest_id BIGINT UNSIGNED NULL AFTER user_id');
+        await db.query('UPDATE reviews SET guest_id = user_id WHERE guest_id IS NULL AND user_id IS NOT NULL');
       }
     } catch (_) {}
 
-    // 6. Tạo bảng app_settings (Cấu hình hoa hồng nền tảng)
+    try {
+      await db.query('ALTER TABLE bookings ADD CONSTRAINT fk_bookings_property FOREIGN KEY (property_id) REFERENCES properties (id) ON DELETE RESTRICT ON UPDATE CASCADE');
+    } catch (_) {}
+    try {
+      await db.query('ALTER TABLE favorites ADD CONSTRAINT fk_favorites_property FOREIGN KEY (property_id) REFERENCES properties (id) ON DELETE CASCADE ON UPDATE CASCADE');
+    } catch (_) {}
+    try {
+      await db.query('ALTER TABLE reviews ADD CONSTRAINT fk_reviews_property FOREIGN KEY (property_id) REFERENCES properties (id) ON DELETE CASCADE ON UPDATE CASCADE');
+    } catch (_) {}
+
+    // Bổ sung các cột mở rộng cho bookings nếu thiếu
+    const safeAddBookingCol = async (colName, colDef) => {
+      try {
+        const [chk] = await db.query(`SHOW COLUMNS FROM bookings LIKE '${colName}'`);
+        if (chk.length === 0) {
+          await db.query(`ALTER TABLE bookings ADD COLUMN ${colDef}`);
+        }
+      } catch (err) {
+        console.warn(`safeAddBookingCol ${colName} notice:`, err.message);
+      }
+    };
+
+    await safeAddBookingCol('property_id', 'property_id BIGINT UNSIGNED NULL AFTER booking_code');
+    await safeAddBookingCol('guest_id', 'guest_id BIGINT UNSIGNED NULL AFTER user_id');
+    await safeAddBookingCol('guest_name_snapshot', 'guest_name_snapshot VARCHAR(120) NULL AFTER guest_name');
+    await safeAddBookingCol('guest_phone_snapshot', 'guest_phone_snapshot VARCHAR(30) NULL AFTER guest_phone');
+    await safeAddBookingCol('payment_method', "payment_method ENUM('cash','bank_transfer','vnpay','momo') NOT NULL DEFAULT 'bank_transfer'");
+    await safeAddBookingCol('payment_reference', 'payment_reference VARCHAR(80) NULL AFTER notes');
+    await safeAddBookingCol('payment_status', "payment_status ENUM('unpaid','proof_uploaded','verified','rejected') NOT NULL DEFAULT 'unpaid'");
+    await safeAddBookingCol('payment_proof_image', 'payment_proof_image VARCHAR(500) NULL');
+    await safeAddBookingCol('payment_submitted_at', 'payment_submitted_at DATETIME NULL');
+    await safeAddBookingCol('confirmed_by', 'confirmed_by BIGINT UNSIGNED NULL');
+    await safeAddBookingCol('confirmed_at', 'confirmed_at DATETIME NULL');
+    await safeAddBookingCol('rejection_reason', 'rejection_reason TEXT NULL');
+    await safeAddBookingCol('checkin_instructions', 'checkin_instructions TEXT NULL');
+    await safeAddBookingCol('commission_rate_applied', 'commission_rate_applied DECIMAL(6,4) NOT NULL DEFAULT 0.1000');
+
+    // Cập nhật view v_properties_detail và v_user_bookings
+    try {
+      await db.query(`
+        CREATE OR REPLACE VIEW v_properties_detail AS
+        SELECT
+          p.id, p.host_id, p.title, p.name, p.description, p.property_type,
+          p.price_per_night, p.price, p.old_price, p.location_id,
+          COALESCE(l.name, p.city) AS location_name, l.image_url AS location_image,
+          p.type_id, COALESCE(t.name, p.property_type) AS type_name,
+          p.street_address, p.city, p.country, p.latitude, p.longitude,
+          p.rating, p.review_count, p.max_guests, p.bedrooms, p.bathrooms,
+          p.is_new, p.is_featured, p.featured, p.is_active, p.status, p.approval_status,
+          p.cover_image, p.manage_token, p.created_at, p.updated_at
+        FROM properties p
+        LEFT JOIN locations l ON p.location_id = l.id
+        LEFT JOIN homestay_types t ON p.type_id = t.id
+        WHERE p.is_deleted = 0
+      `);
+
+      await db.query(`CREATE OR REPLACE VIEW v_homestays_detail AS SELECT * FROM v_properties_detail`);
+
+      await db.query(`
+        CREATE OR REPLACE VIEW v_user_bookings AS
+        SELECT
+          b.id, b.booking_code, b.user_id,
+          u.name AS user_name, u.email AS user_email, u.phone AS user_phone,
+          b.property_id, b.property_id AS homestay_id,
+          p.title AS property_title, p.name AS homestay_name,
+          p.price_per_night AS property_price, p.price_per_night AS homestay_price,
+          COALESCE(pi.image_url, p.cover_image) AS property_image,
+          COALESCE(pi.image_url, p.cover_image) AS homestay_image,
+          p.location_id, COALESCE(l.name, p.city) AS location_name,
+          p.type_id, COALESCE(t.name, p.property_type) AS type_name,
+          b.check_in, b.check_out, b.guests, b.nights, b.price_per_night,
+          b.promotion_id, prom.code AS promotion_code, prom.title AS promotion_title,
+          b.discount_amount, b.total_price, b.status, b.payment_status,
+          b.payment_proof_image, b.notes, b.cancelled_at, b.cancelled_reason,
+          pay.payment_method, pay.status AS payment_transaction_status,
+          pay.transaction_code, b.created_at, b.updated_at
+        FROM bookings b
+        LEFT JOIN users u ON b.user_id = u.id
+        JOIN properties p ON b.property_id = p.id
+        LEFT JOIN locations l ON p.location_id = l.id
+        LEFT JOIN homestay_types t ON p.type_id = t.id
+        LEFT JOIN property_images pi ON pi.property_id = p.id AND pi.is_primary = 1
+        LEFT JOIN promotions prom ON b.promotion_id = prom.id
+        LEFT JOIN payments pay ON pay.booking_id = b.id
+      `);
+    } catch (_) {}
+
+    // 6. Cấu hình bảng app_settings
     await db.query(`
       CREATE TABLE IF NOT EXISTS app_settings (
         id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -181,97 +383,27 @@ async function migrateDatabase() {
       ('usd_to_vnd_rate', '25000', 'Tỷ giá quy đổi USD sang VND')
     `);
 
-    // 7. Seed các tài khoản Admin & Host chuẩn cho Web Portal
+    // 7. Seed tài khoản Admin & Host
     const hashedAdminPassword = await bcrypt.hash('123456', 10);
-
-    // Tài khoản Admin: admin@mail.com / 123456
     await db.query(`
       INSERT INTO users (id, name, full_name, email, password_hash, password, role, phone, location, status, is_active)
       VALUES (1, 'Admin User', 'Admin User', 'admin@mail.com', ?, ?, 'admin', '0900000001', 'Vietnam', 'active', 1)
       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), password = VALUES(password), role = 'admin', full_name = VALUES(full_name)
     `, [hashedAdminPassword, hashedAdminPassword]);
 
-    // Tài khoản Host 1: host1@mail.com / 123456
     await db.query(`
       INSERT INTO users (id, name, full_name, email, password_hash, password, role, phone, location, status, is_active)
       VALUES (2, 'Nguyen Van A (Host)', 'Nguyen Van A', 'host1@mail.com', ?, ?, 'host', '0900000002', 'Ha Noi', 'active', 1)
       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), password = VALUES(password), role = 'host', full_name = VALUES(full_name)
     `, [hashedAdminPassword, hashedAdminPassword]);
 
-    // Tài khoản Host 2: host2@mail.com / 123456
     await db.query(`
       INSERT INTO users (id, name, full_name, email, password_hash, password, role, phone, location, status, is_active)
       VALUES (3, 'Tran Thi B (Host)', 'Tran Thi B', 'host2@mail.com', ?, ?, 'host', '0900000003', 'Da Nang', 'active', 1)
       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), password = VALUES(password), role = 'host', full_name = VALUES(full_name)
     `, [hashedAdminPassword, hashedAdminPassword]);
 
-    // 8. Tự động đồng bộ các homestay hiện có sang properties để Web hiển thị
-    try {
-      await db.query(`
-        INSERT INTO properties (id, host_id, title, description, property_type, price_per_night, street_address, city, country, max_guests, bedrooms, bathrooms, status, cover_image, manage_token)
-        SELECT
-          h.id,
-          COALESCE(h.host_id, 2),
-          h.name,
-          h.description,
-          COALESCE(t.name, 'Homestay'),
-          h.price,
-          COALESCE(l.name, 'Vietnam'),
-          COALESCE(l.name, 'Vietnam'),
-          'Vietnam',
-          h.max_guests,
-          h.bedrooms,
-          h.bathrooms,
-          'approved',
-          COALESCE(hi.image_url, 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'),
-          COALESCE(h.manage_token, CONCAT('HMTOKEN_', LPAD(h.id, 4, '0')))
-        FROM homestays h
-        LEFT JOIN locations l ON h.location_id = l.id
-        LEFT JOIN homestay_types t ON h.type_id = t.id
-        LEFT JOIN homestay_images hi ON hi.homestay_id = h.id AND hi.is_primary = 1
-        ON DUPLICATE KEY UPDATE
-          title = VALUES(title),
-          price_per_night = VALUES(price_per_night),
-          status = 'approved',
-          cover_image = VALUES(cover_image)
-      `);
-    } catch (_) {}
-
-    // Đồng bộ hình ảnh từ homestay_images sang property_images
-    try {
-      await db.query(`
-        INSERT IGNORE INTO property_images (property_id, image_url)
-        SELECT homestay_id, image_url FROM homestay_images
-      `);
-    } catch (_) {}
-
-    // 9. Bổ sung tọa độ latitude, longitude cho homestays & properties
-    try {
-      const [latCols] = await db.query("SHOW COLUMNS FROM homestays LIKE 'latitude'");
-      if (latCols.length === 0) {
-        await db.query('ALTER TABLE homestays ADD COLUMN latitude DECIMAL(10,8) NULL AFTER max_guests');
-        await db.query('ALTER TABLE homestays ADD COLUMN longitude DECIMAL(11,8) NULL AFTER latitude');
-      }
-    } catch (_) {}
-
-    try {
-      const [pLatCols] = await db.query("SHOW COLUMNS FROM properties LIKE 'latitude'");
-      if (pLatCols.length === 0) {
-        await db.query('ALTER TABLE properties ADD COLUMN latitude DECIMAL(10,8) NULL AFTER max_guests');
-        await db.query('ALTER TABLE properties ADD COLUMN longitude DECIMAL(11,8) NULL AFTER latitude');
-      }
-    } catch (_) {}
-
-    // Bổ sung is_verified cho users và nâng cấp avatar_url lên TEXT
-    try {
-      await db.query('ALTER TABLE users MODIFY COLUMN avatar_url TEXT NULL');
-      const [vCols] = await db.query("SHOW COLUMNS FROM users LIKE 'is_verified'");
-      if (vCols.length === 0) {
-        await db.query('ALTER TABLE users ADD COLUMN is_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active');
-      }
-    } catch (_) {}
-
-    // 10. Tạo bảng host_verifications
+    // 8. Bảng host_verifications, disputes, audit_logs
     await db.query(`
       CREATE TABLE IF NOT EXISTS host_verifications (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -290,7 +422,6 @@ async function migrateDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    // 11. Tạo bảng disputes (Báo cáo & Khiếu nại)
     await db.query(`
       CREATE TABLE IF NOT EXISTS disputes (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -308,12 +439,10 @@ async function migrateDatabase() {
         resolved_by BIGINT UNSIGNED NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         resolved_at DATETIME NULL,
-        KEY idx_disputes_status (status),
-        KEY idx_disputes_target (target_type, target_id)
+        KEY idx_disputes_status (status)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    // 12. Tạo bảng audit_logs
     await db.query(`
       CREATE TABLE IF NOT EXISTS audit_logs (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -326,129 +455,13 @@ async function migrateDatabase() {
         ip_address VARCHAR(100) NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         KEY idx_audit_entity (entity_type, entity_id),
-        KEY idx_audit_actor (actor_id)
+        KEY idx_audit_actor (actor_id),
+        KEY idx_audit_action (action)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    // 13. Đồng bộ bookings: cập nhật property_id, guest_id, snapshot
-    try {
-      await db.query(`
-        UPDATE bookings
-        SET property_id = COALESCE(property_id, homestay_id),
-            homestay_id = COALESCE(homestay_id, property_id),
-            guest_id = COALESCE(guest_id, user_id),
-            guest_name_snapshot = COALESCE(guest_name_snapshot, guest_name),
-            guest_phone_snapshot = COALESCE(guest_phone_snapshot, guest_phone),
-            payment_reference = COALESCE(payment_reference, booking_code),
-            commission_rate = COALESCE(commission_rate, 10.00),
-            commission_amount = IF(commission_amount = 0 AND total_price > 0, ROUND(total_price * 0.10, 2), commission_amount),
-            host_payout_amount = IF(host_payout_amount = 0 AND total_price > 0, ROUND(total_price * 0.90, 2), host_payout_amount),
-            source = COALESCE(source, 'guest_online')
-        WHERE id > 0
-      `);
-    } catch (_) {}
-
-    // 14. Bổ sung bộ ảnh đầy đủ 6-8 ảnh sắc nét cho từng homestay
-    try {
-      const [imgCount] = await db.query('SELECT COUNT(*) AS total FROM homestay_images WHERE homestay_id = 1');
-      if (imgCount[0]?.total < 6) {
-        const richImages = [
-          // Homestay 1: Villa Lavender Dream (7 ảnh)
-          [1, 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80', 1, 1],
-          [1, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 2],
-          [1, 'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?auto=format&fit=crop&w=900&q=80', 0, 3],
-          [1, 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80', 0, 4],
-          [1, 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80', 0, 5],
-          [1, 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=80', 0, 6],
-          [1, 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80', 0, 7],
-
-          // Homestay 2: Homestay Cloud Nine (7 ảnh)
-          [2, 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80', 1, 1],
-          [2, 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80', 0, 2],
-          [2, 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=900&q=80', 0, 3],
-          [2, 'https://images.unsplash.com/photo-1540518614846-7ede433c4b13?auto=format&fit=crop&w=900&q=80', 0, 4],
-          [2, 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=900&q=80', 0, 5],
-          [2, 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80', 0, 6],
-          [2, 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80', 0, 7],
-
-          // Homestay 3: Seaside Bliss Luxury Villa (7 ảnh)
-          [3, 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80', 1, 1],
-          [3, 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=900&q=80', 0, 2],
-          [3, 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80', 0, 3],
-          [3, 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80', 0, 4],
-          [3, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 5],
-          [3, 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=80', 0, 6],
-          [3, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80', 0, 7],
-
-          // Homestay 4: Rice Terrace Mountain Homestay (6 ảnh)
-          [4, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80', 1, 1],
-          [4, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80', 0, 2],
-          [4, 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80', 0, 3],
-          [4, 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80', 0, 4],
-          [4, 'https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=900&q=80', 0, 5],
-          [4, 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=900&q=80', 0, 6],
-
-          // Homestay 5: Ancient Town Riverside Homestay (6 ảnh)
-          [5, 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80', 1, 1],
-          [5, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80', 0, 2],
-          [5, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 3],
-          [5, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 4],
-          [5, 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&w=900&q=80', 0, 5],
-          [5, 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80', 0, 6],
-
-          // Homestay 6: Ocean View Nha Trang Resort (6 ảnh)
-          [6, 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=900&q=80', 1, 1],
-          [6, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80', 0, 2],
-          [6, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 3],
-          [6, 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80', 0, 4],
-          [6, 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=900&q=80', 0, 5],
-          [6, 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80', 0, 6],
-
-          // Homestay 7: Pine Hill Rustic Cabin (6 ảnh)
-          [7, 'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=900&q=80', 1, 1],
-          [7, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80', 0, 2],
-          [7, 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80', 0, 3],
-          [7, 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=80', 0, 4],
-          [7, 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=900&q=80', 0, 5],
-          [7, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 6],
-
-          // Homestay 8: Bamboo Eco Green House (6 ảnh)
-          [8, 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80', 1, 1],
-          [8, 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80', 0, 2],
-          [8, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 3],
-          [8, 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&w=900&q=80', 0, 4],
-          [8, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 5],
-          [8, 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=900&q=80', 0, 6],
-
-          // Homestay 9: Tràng An Valley Lotus Retreat (6 ảnh)
-          [9, 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=900&q=80', 1, 1],
-          [9, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80', 0, 2],
-          [9, 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=900&q=80', 0, 3],
-          [9, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80', 0, 4],
-          [9, 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80', 0, 5],
-          [9, 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80', 0, 6],
-
-          // Homestay 10: Sunset Cliff Villa Nha Trang (7 ảnh)
-          [10, 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80', 1, 1],
-          [10, 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=900&q=80', 0, 2],
-          [10, 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=900&q=80', 0, 3],
-          [10, 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80', 0, 4],
-          [10, 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80', 0, 5],
-          [10, 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=80', 0, 6],
-          [10, 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=900&q=80', 0, 7],
-        ];
-
-        await db.query('DELETE FROM homestay_images WHERE homestay_id BETWEEN 1 AND 10');
-        await db.query(
-          'INSERT INTO homestay_images (homestay_id, image_url, is_primary, sort_order) VALUES ?',
-          [richImages]
-        );
-      }
-    } catch (_) {}
-
-    console.log('✅ Database schema migration verified & fully synchronized for Web Admin, Host Portal, and Mobile App.');
   } catch (err) {
-    console.warn('⚠️ DB Migration notice (DB might be offline or using mock):', err.message);
+    console.error('Database migration error:', err);
   }
 }
 

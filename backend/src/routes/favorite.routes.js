@@ -9,11 +9,12 @@ const {
 // Lấy danh sách yêu thích
 router.get('/favorites', getFavorites);
 
-// Bật / Tắt yêu thích một homestay (body: { homestayId })
+// Bật / Tắt yêu thích (body: { propertyId } hoặc { homestayId })
 router.post('/favorites/toggle', toggleFavorite);
 router.post('/favorites', toggleFavorite);
 
 // Xóa khỏi danh sách yêu thích
-router.delete('/favorites/:homestayId', removeFavorite);
+router.delete('/favorites/:propertyId', removeFavorite);
+router.delete('/favorites/homestay/:homestayId', removeFavorite);
 
 module.exports = router;

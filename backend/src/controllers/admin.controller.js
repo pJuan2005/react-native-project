@@ -36,10 +36,11 @@ const updateBookingStatus = async (req, res) => {
   }
 };
 
-const createHomestay = async (req, res) => {
+const createProperty = async (req, res) => {
   try {
     const {
       name,
+      title,
       description,
       price,
       old_price,
@@ -53,38 +54,43 @@ const createHomestay = async (req, res) => {
       is_new,
     } = req.body;
 
-    if (!name || !price || !location_id || !type_id) {
+    const finalTitle = title || name;
+    if (!finalTitle || !price || !location_id || !type_id) {
       return badRequest(res, 'Vui lòng điền đầy đủ các trường bắt buộc');
     }
 
-    const homestayId = await AdminService.createHomestay({
-      name,
+    const propertyId = await AdminService.createProperty({
+      name: finalTitle,
+      title: finalTitle,
       description,
       price,
-      oldPrice: old_price,
-      locationId: location_id,
-      typeId: type_id,
-      maxGuests: max_guests,
+      old_price,
+      location_id,
+      type_id,
+      max_guests,
       bedrooms,
       bathrooms,
-      imageUrl: image_url,
-      isFeatured: is_featured,
-      isNew: is_new,
+      image_url,
+      is_featured,
+      is_new,
     });
 
-    return created(res, { id: homestayId }, 'Thêm homestay mới thành công');
+    return created(res, { id: propertyId }, 'Thêm mới chỗ nghỉ thành công');
   } catch (err) {
-    return error(res, 'Lỗi khi thêm homestay mới');
+    return error(res, 'Lỗi khi thêm mới chỗ nghỉ');
   }
 };
 
-const deleteHomestay = async (req, res) => {
+const deleteProperty = async (req, res) => {
   try {
     const { id } = req.params;
-    await AdminService.deleteHomestay(id);
-    return success(res, null, 'Đã ngừng kinh doanh homestay thành công');
+    const ok = await AdminService.deleteProperty(id);
+    if (!ok) {
+      return notFound(res, 'Không tìm thấy chỗ nghỉ với ID yêu cầu');
+    }
+    return success(res, null, 'Đã ẩn/xóa chỗ nghỉ thành công');
   } catch (err) {
-    return error(res, 'Lỗi khi xóa homestay');
+    return error(res, 'Lỗi khi xóa chỗ nghỉ');
   }
 };
 
@@ -92,6 +98,8 @@ module.exports = {
   getDashboardStats,
   getAllBookings,
   updateBookingStatus,
-  createHomestay,
-  deleteHomestay,
+  createProperty,
+  createHomestay: createProperty,
+  deleteProperty,
+  deleteHomestay: deleteProperty,
 };

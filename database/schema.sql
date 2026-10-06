@@ -1,8 +1,8 @@
 -- =====================================================
--- HOMESTAY BOOKING COMPREHENSIVE DATABASE SCHEMA
+-- PROPERTY & HOMESTAY BOOKING COMPREHENSIVE DATABASE SCHEMA
 -- Database: homestay_db
 -- Target: MariaDB / MySQL 8.0+
--- Architecture: 15 Core Tables + Views + Triggers + Functions + Stored Procedures
+-- Architecture: Single Source of Truth `properties` + Core Tables + Views + Triggers + Functions + Stored Procedures
 -- =====================================================
 
 CREATE DATABASE IF NOT EXISTS `homestay_db`
@@ -14,9 +14,14 @@ USE `homestay_db`;
 -- Drop old views if exist
 DROP VIEW IF EXISTS `v_admin_revenue_stats`;
 DROP VIEW IF EXISTS `v_user_bookings`;
+DROP VIEW IF EXISTS `v_properties_detail`;
 DROP VIEW IF EXISTS `v_homestays_detail`;
 
 -- Drop tables with foreign keys in correct order
+DROP TABLE IF EXISTS `audit_logs`;
+DROP TABLE IF EXISTS `disputes`;
+DROP TABLE IF EXISTS `host_verifications`;
+DROP TABLE IF EXISTS `app_settings`;
 DROP TABLE IF EXISTS `point_transactions`;
 DROP TABLE IF EXISTS `user_devices`;
 DROP TABLE IF EXISTS `notifications`;
@@ -25,9 +30,12 @@ DROP TABLE IF EXISTS `favorites`;
 DROP TABLE IF EXISTS `payments`;
 DROP TABLE IF EXISTS `bookings`;
 DROP TABLE IF EXISTS `promotions`;
+DROP TABLE IF EXISTS `property_amenities`;
+DROP TABLE IF EXISTS `property_images`;
 DROP TABLE IF EXISTS `homestay_amenities`;
 DROP TABLE IF EXISTS `homestay_images`;
 DROP TABLE IF EXISTS `homestays`;
+DROP TABLE IF EXISTS `properties`;
 DROP TABLE IF EXISTS `amenities`;
 DROP TABLE IF EXISTS `homestay_types`;
 DROP TABLE IF EXISTS `locations`;
@@ -39,14 +47,22 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NOT NULL,
+  `full_name` VARCHAR(120) NULL,
   `email` VARCHAR(191) NOT NULL,
+  `password` VARCHAR(255) NULL,
   `password_hash` VARCHAR(255) NOT NULL,
-  `role` ENUM('admin', 'staff', 'customer', 'host') NOT NULL DEFAULT 'customer',
+  `role` ENUM('admin', 'staff', 'customer', 'host', 'guest') NOT NULL DEFAULT 'customer',
+  `status` ENUM('active', 'blocked') NOT NULL DEFAULT 'active',
   `phone` VARCHAR(20) NULL,
   `address` VARCHAR(255) NULL,
+  `location` VARCHAR(255) NULL,
+  `website` VARCHAR(255) NULL,
+  `languages` VARCHAR(255) NULL,
+  `bio` TEXT NULL,
   `birth_date` DATE NULL,
-  `avatar_url` VARCHAR(500) NULL,
+  `avatar_url` TEXT NULL,
   `reward_points` INT UNSIGNED NOT NULL DEFAULT 0,
+  `is_verified` TINYINT(1) NOT NULL DEFAULT 0,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -65,6 +81,7 @@ CREATE TABLE `locations` (
   `description` TEXT NULL,
   `icon` VARCHAR(50) NULL,
   `image_url` VARCHAR(500) NULL,
+  `property_count` INT UNSIGNED NOT NULL DEFAULT 0,
   `homestay_count` INT UNSIGNED NOT NULL DEFAULT 0,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `sort_order` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -109,68 +126,82 @@ CREATE TABLE `amenities` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
--- 5. HOMESTAYS TABLE (Danh sách chỗ nghỉ homestay)
+-- 5. PROPERTIES TABLE (Thực thể Chỗ nghỉ chính duy nhất)
 -- =====================================================
-CREATE TABLE `homestays` (
+CREATE TABLE `properties` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(200) NOT NULL,
+  `host_id` BIGINT UNSIGNED NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
   `description` TEXT NULL,
+  `property_type` VARCHAR(100) NOT NULL DEFAULT 'Homestay',
+  `price_per_night` DECIMAL(12,2) NOT NULL,
   `price` DECIMAL(12,2) NOT NULL,
   `old_price` DECIMAL(12,2) NULL,
-  `location_id` BIGINT UNSIGNED NOT NULL,
-  `type_id` BIGINT UNSIGNED NOT NULL,
-  `host_id` BIGINT UNSIGNED NULL,
-  `rating` DECIMAL(3,2) NOT NULL DEFAULT 5.00,
-  `review_count` INT UNSIGNED NOT NULL DEFAULT 0,
-  `max_guests` INT UNSIGNED NOT NULL DEFAULT 1,
+  `location_id` BIGINT UNSIGNED NULL,
+  `type_id` BIGINT UNSIGNED NULL,
+  `street_address` VARCHAR(255) NOT NULL DEFAULT 'Vietnam',
+  `city` VARCHAR(100) NOT NULL DEFAULT 'Vietnam',
+  `country` VARCHAR(100) NOT NULL DEFAULT 'Vietnam',
+  `latitude` DECIMAL(10,8) NULL,
+  `longitude` DECIMAL(11,8) NULL,
+  `max_guests` INT UNSIGNED NOT NULL DEFAULT 2,
   `bedrooms` INT UNSIGNED NOT NULL DEFAULT 1,
   `bathrooms` INT UNSIGNED NOT NULL DEFAULT 1,
+  `rating` DECIMAL(3,2) NOT NULL DEFAULT 5.00,
+  `review_count` INT UNSIGNED NOT NULL DEFAULT 0,
   `is_new` TINYINT(1) NOT NULL DEFAULT 0,
   `is_featured` TINYINT(1) NOT NULL DEFAULT 0,
+  `featured` TINYINT(1) NOT NULL DEFAULT 0,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,
+  `status` ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'approved',
   `approval_status` ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'approved',
+  `cover_image` VARCHAR(500) NULL,
   `manage_token` VARCHAR(80) NULL,
+  `manage_token_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `manage_token_expires_at` DATETIME NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_homestays_manage_token` (`manage_token`),
-  KEY `idx_homestays_location` (`location_id`),
-  KEY `idx_homestays_type` (`type_id`),
-  KEY `idx_homestays_host` (`host_id`),
-  KEY `idx_homestays_active` (`is_active`),
-  KEY `idx_homestays_featured` (`is_featured`),
-  KEY `idx_homestays_price` (`price`),
-  KEY `idx_homestays_rating` (`rating`),
-  CONSTRAINT `fk_homestays_location` FOREIGN KEY (`location_id`) REFERENCES `locations` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `fk_homestays_type` FOREIGN KEY (`type_id`) REFERENCES `homestay_types` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `fk_homestays_host` FOREIGN KEY (`host_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+  UNIQUE KEY `uk_properties_manage_token` (`manage_token`),
+  KEY `idx_properties_host` (`host_id`),
+  KEY `idx_properties_location` (`location_id`),
+  KEY `idx_properties_type` (`type_id`),
+  KEY `idx_properties_status` (`status`),
+  KEY `idx_properties_active` (`is_active`, `is_deleted`),
+  KEY `idx_properties_price` (`price_per_night`),
+  KEY `idx_properties_rating` (`rating`),
+  CONSTRAINT `fk_properties_host` FOREIGN KEY (`host_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_properties_location` FOREIGN KEY (`location_id`) REFERENCES `locations` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_properties_type` FOREIGN KEY (`type_id`) REFERENCES `homestay_types` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
--- 6. HOMESTAY IMAGES TABLE (Thư viện hình ảnh)
+-- 6. PROPERTY IMAGES TABLE (Thư viện hình ảnh Chỗ nghỉ)
 -- =====================================================
-CREATE TABLE `homestay_images` (
+CREATE TABLE `property_images` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `homestay_id` BIGINT UNSIGNED NOT NULL,
+  `property_id` BIGINT UNSIGNED NOT NULL,
   `image_url` VARCHAR(500) NOT NULL,
   `is_primary` TINYINT(1) NOT NULL DEFAULT 0,
   `sort_order` INT UNSIGNED NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_homestay_images_homestay` (`homestay_id`),
-  KEY `idx_homestay_images_primary` (`homestay_id`, `is_primary`),
-  CONSTRAINT `fk_homestay_images_homestay` FOREIGN KEY (`homestay_id`) REFERENCES `homestays` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `idx_property_images_property` (`property_id`),
+  KEY `idx_property_images_primary` (`property_id`, `is_primary`),
+  CONSTRAINT `fk_property_images_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
--- 7. HOMESTAY AMENITIES TABLE (Liên kết N-N Tiện nghi)
+-- 7. PROPERTY AMENITIES TABLE (Liên kết N-N Tiện nghi Chỗ nghỉ)
 -- =====================================================
-CREATE TABLE `homestay_amenities` (
-  `homestay_id` BIGINT UNSIGNED NOT NULL,
+CREATE TABLE `property_amenities` (
+  `property_id` BIGINT UNSIGNED NOT NULL,
   `amenity_id` BIGINT UNSIGNED NOT NULL,
-  PRIMARY KEY (`homestay_id`, `amenity_id`),
-  CONSTRAINT `fk_homestay_amenities_homestay` FOREIGN KEY (`homestay_id`) REFERENCES `homestays` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_homestay_amenities_amenity` FOREIGN KEY (`amenity_id`) REFERENCES `amenities` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  PRIMARY KEY (`property_id`, `amenity_id`),
+  CONSTRAINT `fk_property_amenities_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_property_amenities_amenity` FOREIGN KEY (`amenity_id`) REFERENCES `amenities` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
@@ -203,10 +234,13 @@ CREATE TABLE `promotions` (
 CREATE TABLE `bookings` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `booking_code` VARCHAR(30) NOT NULL,
+  `property_id` BIGINT UNSIGNED NOT NULL,
   `user_id` BIGINT UNSIGNED NULL,
+  `guest_id` BIGINT UNSIGNED NULL,
   `guest_name` VARCHAR(120) NULL,
+  `guest_name_snapshot` VARCHAR(120) NULL,
   `guest_phone` VARCHAR(30) NULL,
-  `homestay_id` BIGINT UNSIGNED NOT NULL,
+  `guest_phone_snapshot` VARCHAR(30) NULL,
   `check_in` DATE NOT NULL,
   `check_out` DATE NOT NULL,
   `guests` INT UNSIGNED NOT NULL DEFAULT 1,
@@ -216,10 +250,20 @@ CREATE TABLE `bookings` (
   `discount_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `total_price` DECIMAL(12,2) NOT NULL,
   `commission_rate` DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+  `commission_rate_applied` DECIMAL(6,4) NOT NULL DEFAULT 0.1000,
   `commission_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `host_payout_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `status` ENUM('pending', 'confirmed', 'cancelled', 'completed') NOT NULL DEFAULT 'pending',
   `source` ENUM('guest_online', 'host_direct', 'admin_manual') NOT NULL DEFAULT 'guest_online',
+  `payment_method` ENUM('cash', 'bank_transfer', 'vnpay', 'momo') NOT NULL DEFAULT 'bank_transfer',
+  `payment_reference` VARCHAR(80) NULL,
+  `payment_status` ENUM('unpaid', 'proof_uploaded', 'verified', 'rejected') NOT NULL DEFAULT 'unpaid',
+  `payment_proof_image` VARCHAR(500) NULL,
+  `payment_submitted_at` DATETIME NULL,
+  `confirmed_by` BIGINT UNSIGNED NULL,
+  `confirmed_at` DATETIME NULL,
+  `rejection_reason` TEXT NULL,
+  `checkin_instructions` TEXT NULL,
   `notes` TEXT NULL,
   `host_note` TEXT NULL,
   `created_by` BIGINT UNSIGNED NULL,
@@ -229,14 +273,16 @@ CREATE TABLE `bookings` (
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_bookings_code` (`booking_code`),
+  KEY `idx_bookings_property` (`property_id`),
   KEY `idx_bookings_user` (`user_id`),
-  KEY `idx_bookings_homestay` (`homestay_id`),
+  KEY `idx_bookings_guest` (`guest_id`),
   KEY `idx_bookings_status` (`status`),
   KEY `idx_bookings_source` (`source`),
+  KEY `idx_bookings_payment_status` (`payment_status`),
   KEY `idx_bookings_dates` (`check_in`, `check_out`),
   KEY `idx_bookings_promotion` (`promotion_id`),
+  CONSTRAINT `fk_bookings_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_bookings_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_bookings_homestay` FOREIGN KEY (`homestay_id`) REFERENCES `homestays` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `fk_bookings_promotion` FOREIGN KEY (`promotion_id`) REFERENCES `promotions` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `chk_bookings_dates` CHECK (`check_out` > `check_in`),
   CONSTRAINT `chk_bookings_guests` CHECK (`guests` > 0)
@@ -248,7 +294,7 @@ CREATE TABLE `bookings` (
 CREATE TABLE `payments` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `booking_id` BIGINT UNSIGNED NOT NULL,
-  `payment_method` ENUM('cash', 'bank_transfer', 'vnpay', 'momo') NOT NULL DEFAULT 'cash',
+  `payment_method` ENUM('cash', 'bank_transfer', 'vnpay', 'momo') NOT NULL DEFAULT 'bank_transfer',
   `transaction_code` VARCHAR(100) NULL COMMENT 'Mã tham chiếu ngân hàng hoặc mã cổng thanh toán',
   `proof_image_url` VARCHAR(500) NULL COMMENT 'Ảnh chụp biên lai chuyển khoản ngân hàng',
   `amount` DECIMAL(12,2) NOT NULL,
@@ -268,14 +314,14 @@ CREATE TABLE `payments` (
 CREATE TABLE `favorites` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT UNSIGNED NOT NULL,
-  `homestay_id` BIGINT UNSIGNED NOT NULL,
+  `property_id` BIGINT UNSIGNED NOT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_favorites_user_homestay` (`user_id`, `homestay_id`),
+  UNIQUE KEY `uk_favorites_user_property` (`user_id`, `property_id`),
   KEY `idx_favorites_user` (`user_id`),
-  KEY `idx_favorites_homestay` (`homestay_id`),
+  KEY `idx_favorites_property` (`property_id`),
   CONSTRAINT `fk_favorites_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_favorites_homestay` FOREIGN KEY (`homestay_id`) REFERENCES `homestays` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `fk_favorites_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
@@ -283,8 +329,9 @@ CREATE TABLE `favorites` (
 -- =====================================================
 CREATE TABLE `reviews` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `user_id` BIGINT UNSIGNED NOT NULL,
-  `homestay_id` BIGINT UNSIGNED NOT NULL,
+  `user_id` BIGINT UNSIGNED NULL,
+  `guest_id` BIGINT UNSIGNED NULL,
+  `property_id` BIGINT UNSIGNED NOT NULL,
   `booking_id` BIGINT UNSIGNED NULL,
   `rating` TINYINT UNSIGNED NOT NULL,
   `comment` TEXT NULL,
@@ -293,11 +340,11 @@ CREATE TABLE `reviews` (
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_reviews_homestay` (`homestay_id`),
+  KEY `idx_reviews_property` (`property_id`),
   KEY `idx_reviews_user` (`user_id`),
   KEY `idx_reviews_booking` (`booking_id`),
   CONSTRAINT `fk_reviews_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_reviews_homestay` FOREIGN KEY (`homestay_id`) REFERENCES `homestays` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_reviews_property` FOREIGN KEY (`property_id`) REFERENCES `properties` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_reviews_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `chk_reviews_rating` CHECK (`rating` BETWEEN 1 AND 5)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -354,7 +401,7 @@ CREATE TABLE `point_transactions` (
 -- =====================================================
 -- 16. APP SETTINGS TABLE (Cấu hình tài chính & hoa hồng nền tảng)
 -- =====================================================
-CREATE TABLE IF NOT EXISTS `app_settings` (
+CREATE TABLE `app_settings` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `setting_key` VARCHAR(100) NOT NULL,
   `setting_value` VARCHAR(255) NOT NULL,
@@ -366,12 +413,13 @@ CREATE TABLE IF NOT EXISTS `app_settings` (
 
 INSERT IGNORE INTO `app_settings` (`setting_key`, `setting_value`, `description`) VALUES
 ('platform_commission_rate', '10', 'Tỷ lệ hoa hồng nền tảng thu từ đơn online (%)'),
-('direct_commission_rate', '5', 'Tỷ lệ hoa hồng nền tảng thu từ đơn tại quầy do chủ nhà tạo (%)');
+('direct_commission_rate', '5', 'Tỷ lệ hoa hồng nền tảng thu từ đơn tại quầy do chủ nhà tạo (%)'),
+('usd_to_vnd_rate', '25000', 'Tỷ giá quy đổi USD sang VND');
 
 -- =====================================================
 -- 17. HOST VERIFICATIONS TABLE (Hồ sơ xác minh danh tính Chủ nhà)
 -- =====================================================
-CREATE TABLE IF NOT EXISTS `host_verifications` (
+CREATE TABLE `host_verifications` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `host_id` BIGINT UNSIGNED NOT NULL,
   `id_card_number` VARCHAR(50) NOT NULL,
@@ -393,7 +441,7 @@ CREATE TABLE IF NOT EXISTS `host_verifications` (
 -- =====================================================
 -- 18. DISPUTES TABLE (Báo cáo & Khiếu nại Trust & Safety)
 -- =====================================================
-CREATE TABLE IF NOT EXISTS `disputes` (
+CREATE TABLE `disputes` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `reporter_id` BIGINT UNSIGNED NOT NULL,
   `reporter_role` ENUM('guest', 'host') NOT NULL DEFAULT 'guest',
@@ -419,7 +467,7 @@ CREATE TABLE IF NOT EXISTS `disputes` (
 -- =====================================================
 -- 19. AUDIT LOGS TABLE (Nhật ký kiểm toán hệ thống)
 -- =====================================================
-CREATE TABLE IF NOT EXISTS `audit_logs` (
+CREATE TABLE `audit_logs` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `actor_id` BIGINT UNSIGNED NULL,
   `actor_role` VARCHAR(50) NULL,
@@ -439,34 +487,53 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
 -- VIEWS FOR MOBILE & WEB ADMIN
 -- =====================================================
 
--- VIEW 1: Chi tiết homestay đầy đủ (Mobile listing & Detail)
-CREATE OR REPLACE VIEW `v_homestays_detail` AS
+-- VIEW 1: Chi tiết property/chỗ nghỉ đầy đủ
+CREATE OR REPLACE VIEW `v_properties_detail` AS
 SELECT
-  h.`id`,
-  h.`name`,
-  h.`description`,
-  h.`price`,
-  h.`old_price`,
-  h.`location_id`,
-  l.`name` AS `location_name`,
+  p.`id`,
+  p.`host_id`,
+  p.`title`,
+  p.`name`,
+  p.`description`,
+  p.`property_type`,
+  p.`price_per_night`,
+  p.`price`,
+  p.`old_price`,
+  p.`location_id`,
+  COALESCE(l.`name`, p.`city`) AS `location_name`,
   l.`image_url` AS `location_image`,
-  h.`type_id`,
-  t.`name` AS `type_name`,
-  h.`rating`,
-  h.`review_count`,
-  h.`max_guests`,
-  h.`bedrooms`,
-  h.`bathrooms`,
-  h.`is_new`,
-  h.`is_featured`,
-  h.`is_active`,
-  h.`created_at`,
-  h.`updated_at`
-FROM `homestays` h
-JOIN `locations` l ON h.`location_id` = l.`id`
-JOIN `homestay_types` t ON h.`type_id` = t.`id`;
+  p.`type_id`,
+  COALESCE(t.`name`, p.`property_type`) AS `type_name`,
+  p.`street_address`,
+  p.`city`,
+  p.`country`,
+  p.`latitude`,
+  p.`longitude`,
+  p.`rating`,
+  p.`review_count`,
+  p.`max_guests`,
+  p.`bedrooms`,
+  p.`bathrooms`,
+  p.`is_new`,
+  p.`is_featured`,
+  p.`featured`,
+  p.`is_active`,
+  p.`status`,
+  p.`approval_status`,
+  p.`cover_image`,
+  p.`manage_token`,
+  p.`created_at`,
+  p.`updated_at`
+FROM `properties` p
+LEFT JOIN `locations` l ON p.`location_id` = l.`id`
+LEFT JOIN `homestay_types` t ON p.`type_id` = t.`id`
+WHERE p.`is_deleted` = 0;
 
--- VIEW 2: Lịch sử đặt phòng người dùng (Bao gồm mọi trạng thái để Mobile hiển thị theo tab)
+-- Alias View cho tương thích lùi nếu có component cũ tham chiếu
+CREATE OR REPLACE VIEW `v_homestays_detail` AS
+SELECT * FROM `v_properties_detail`;
+
+-- VIEW 2: Lịch sử đặt phòng người dùng
 CREATE OR REPLACE VIEW `v_user_bookings` AS
 SELECT
   b.`id`,
@@ -475,40 +542,46 @@ SELECT
   u.`name` AS `user_name`,
   u.`email` AS `user_email`,
   u.`phone` AS `user_phone`,
-  b.`homestay_id`,
-  h.`name` AS `homestay_name`,
-  h.`price` AS `homestay_price`,
-  hi.`image_url` AS `homestay_image`,
-  h.`location_id`,
-  l.`name` AS `location_name`,
-  h.`type_id`,
-  t.`name` AS `type_name`,
+  b.`property_id`,
+  b.`property_id` AS `homestay_id`,
+  p.`title` AS `property_title`,
+  p.`name` AS `homestay_name`,
+  p.`price_per_night` AS `property_price`,
+  p.`price_per_night` AS `homestay_price`,
+  COALESCE(pi.`image_url`, p.`cover_image`) AS `property_image`,
+  COALESCE(pi.`image_url`, p.`cover_image`) AS `homestay_image`,
+  p.`location_id`,
+  COALESCE(l.`name`, p.`city`) AS `location_name`,
+  p.`type_id`,
+  COALESCE(t.`name`, p.`property_type`) AS `type_name`,
   b.`check_in`,
   b.`check_out`,
   b.`guests`,
   b.`nights`,
   b.`price_per_night`,
   b.`promotion_id`,
-  p.`code` AS `promotion_code`,
-  p.`title` AS `promotion_title`,
+  prom.`code` AS `promotion_code`,
+  prom.`title` AS `promotion_title`,
   b.`discount_amount`,
   b.`total_price`,
   b.`status`,
+  b.`payment_status`,
+  b.`payment_proof_image`,
   b.`notes`,
   b.`cancelled_at`,
   b.`cancelled_reason`,
   pay.`payment_method`,
-  pay.`status` AS `payment_status`,
+  pay.`status` AS `payment_transaction_status`,
   pay.`transaction_code`,
   b.`created_at`,
   b.`updated_at`
 FROM `bookings` b
-JOIN `users` u ON b.`user_id` = u.`id`
-JOIN `homestays` h ON b.`homestay_id` = h.`id`
-JOIN `locations` l ON h.`location_id` = l.`id`
-JOIN `homestay_types` t ON h.`type_id` = t.`id`
-LEFT JOIN `homestay_images` hi ON hi.`homestay_id` = h.`id` AND hi.`is_primary` = 1
-LEFT JOIN `promotions` p ON b.`promotion_id` = p.`id`
+LEFT JOIN `users` u ON b.`user_id` = u.`id`
+JOIN `properties` p ON b.`property_id` = p.`id`
+LEFT JOIN `locations` l ON p.`location_id` = l.`id`
+LEFT JOIN `homestay_types` t ON p.`type_id` = t.`id`
+LEFT JOIN `property_images` pi ON pi.`property_id` = p.`id` AND pi.`is_primary` = 1
+LEFT JOIN `promotions` prom ON b.`promotion_id` = prom.`id`
 LEFT JOIN `payments` pay ON pay.`booking_id` = b.`id`;
 
 -- VIEW 3: Thống kê doanh thu cho Web Admin
@@ -531,42 +604,64 @@ ORDER BY `month_year` DESC;
 -- =====================================================
 DELIMITER //
 
--- Trigger 1: Tăng số lượng homestay khi thêm mới
-CREATE TRIGGER `trg_homestays_after_insert`
-AFTER INSERT ON `homestays`
+-- Trigger 1: Tăng số lượng property theo địa điểm khi thêm mới
+CREATE TRIGGER `trg_properties_after_insert`
+AFTER INSERT ON `properties`
 FOR EACH ROW
 BEGIN
-  IF NEW.is_active = 1 THEN
-    UPDATE `locations` SET `homestay_count` = `homestay_count` + 1 WHERE `id` = NEW.location_id;
+  IF NEW.is_active = 1 AND NEW.is_deleted = 0 AND NEW.location_id IS NOT NULL THEN
+    UPDATE `locations`
+    SET `property_count` = `property_count` + 1,
+        `homestay_count` = `homestay_count` + 1
+    WHERE `id` = NEW.location_id;
   END IF;
 END//
 
--- Trigger 2: Cập nhật số lượng homestay khi thay đổi trạng thái hoặc địa điểm
-CREATE TRIGGER `trg_homestays_after_update`
-AFTER UPDATE ON `homestays`
+-- Trigger 2: Cập nhật số lượng property khi thay đổi trạng thái hoặc địa điểm
+CREATE TRIGGER `trg_properties_after_update`
+AFTER UPDATE ON `properties`
 FOR EACH ROW
 BEGIN
-  IF OLD.is_active != NEW.is_active THEN
-    IF NEW.is_active = 1 THEN
-      UPDATE `locations` SET `homestay_count` = `homestay_count` + 1 WHERE `id` = NEW.location_id;
-    ELSE
-      UPDATE `locations` SET `homestay_count` = `homestay_count` - 1 WHERE `id` = NEW.location_id;
+  IF (OLD.is_active != NEW.is_active OR OLD.is_deleted != NEW.is_deleted) THEN
+    IF NEW.is_active = 1 AND NEW.is_deleted = 0 AND NEW.location_id IS NOT NULL THEN
+      UPDATE `locations`
+      SET `property_count` = `property_count` + 1,
+          `homestay_count` = `homestay_count` + 1
+      WHERE `id` = NEW.location_id;
+    ELSEIF OLD.location_id IS NOT NULL THEN
+      UPDATE `locations`
+      SET `property_count` = GREATEST(0, `property_count` - 1),
+          `homestay_count` = GREATEST(0, `homestay_count` - 1)
+      WHERE `id` = OLD.location_id;
     END IF;
   END IF;
 
-  IF OLD.location_id != NEW.location_id AND NEW.is_active = 1 THEN
-    UPDATE `locations` SET `homestay_count` = `homestay_count` - 1 WHERE `id` = OLD.location_id;
-    UPDATE `locations` SET `homestay_count` = `homestay_count` + 1 WHERE `id` = NEW.location_id;
+  IF OLD.location_id != NEW.location_id AND NEW.is_active = 1 AND NEW.is_deleted = 0 THEN
+    IF OLD.location_id IS NOT NULL THEN
+      UPDATE `locations`
+      SET `property_count` = GREATEST(0, `property_count` - 1),
+          `homestay_count` = GREATEST(0, `homestay_count` - 1)
+      WHERE `id` = OLD.location_id;
+    END IF;
+    IF NEW.location_id IS NOT NULL THEN
+      UPDATE `locations`
+      SET `property_count` = `property_count` + 1,
+          `homestay_count` = `homestay_count` + 1
+      WHERE `id` = NEW.location_id;
+    END IF;
   END IF;
 END//
 
--- Trigger 3: Giảm số lượng homestay khi xóa
-CREATE TRIGGER `trg_homestays_after_delete`
-AFTER DELETE ON `homestays`
+-- Trigger 3: Giảm số lượng property khi xóa
+CREATE TRIGGER `trg_properties_after_delete`
+AFTER DELETE ON `properties`
 FOR EACH ROW
 BEGIN
-  IF OLD.is_active = 1 THEN
-    UPDATE `locations` SET `homestay_count` = `homestay_count` - 1 WHERE `id` = OLD.location_id;
+  IF OLD.is_active = 1 AND OLD.is_deleted = 0 AND OLD.location_id IS NOT NULL THEN
+    UPDATE `locations`
+    SET `property_count` = GREATEST(0, `property_count` - 1),
+        `homestay_count` = GREATEST(0, `homestay_count` - 1)
+    WHERE `id` = OLD.location_id;
   END IF;
 END//
 
@@ -581,23 +676,23 @@ BEGIN
   SELECT AVG(rating), COUNT(id)
   INTO v_avg_rating, v_count
   FROM `reviews`
-  WHERE `homestay_id` = NEW.homestay_id AND `is_active` = 1;
+  WHERE `property_id` = NEW.property_id AND `is_active` = 1;
 
-  UPDATE `homestays`
+  UPDATE `properties`
   SET `rating` = IFNULL(v_avg_rating, 5.00),
       `review_count` = v_count
-  WHERE `id` = NEW.homestay_id;
+  WHERE `id` = NEW.property_id;
 END//
 
 DELIMITER ;
 
 -- =====================================================
--- FUNCTION: fn_check_homestay_available
+-- FUNCTION: fn_check_property_available
 -- =====================================================
 DELIMITER //
 
-CREATE FUNCTION `fn_check_homestay_available`(
-  p_homestay_id BIGINT UNSIGNED,
+CREATE FUNCTION `fn_check_property_available`(
+  p_property_id BIGINT UNSIGNED,
   p_check_in DATE,
   p_check_out DATE
 ) RETURNS TINYINT(1)
@@ -609,7 +704,7 @@ BEGIN
   SELECT COUNT(*)
   INTO v_conflicts
   FROM `bookings`
-  WHERE `homestay_id` = p_homestay_id
+  WHERE `property_id` = p_property_id
     AND `status` IN ('pending', 'confirmed')
     AND `check_in` < p_check_out
     AND `check_out` > p_check_in;
@@ -617,17 +712,28 @@ BEGIN
   RETURN CASE WHEN v_conflicts = 0 THEN 1 ELSE 0 END;
 END//
 
+-- Alias function cho tương thích ngược
+CREATE FUNCTION `fn_check_homestay_available`(
+  p_homestay_id BIGINT UNSIGNED,
+  p_check_in DATE,
+  p_check_out DATE
+) RETURNS TINYINT(1)
+READS SQL DATA
+DETERMINISTIC
+BEGIN
+  RETURN fn_check_property_available(p_homestay_id, p_check_in, p_check_out);
+END//
+
 DELIMITER ;
 
 -- =====================================================
 -- STORED PROCEDURE: sp_create_booking
--- Nhận thêm p_promotion_id, p_payment_method, p_notes và tính chiết khấu
 -- =====================================================
 DELIMITER //
 
 CREATE PROCEDURE `sp_create_booking`(
   IN p_user_id BIGINT UNSIGNED,
-  IN p_homestay_id BIGINT UNSIGNED,
+  IN p_property_id BIGINT UNSIGNED,
   IN p_check_in DATE,
   IN p_check_out DATE,
   IN p_guests INT UNSIGNED,
@@ -660,15 +766,15 @@ BEGIN
 
   START TRANSACTION;
 
-  -- 1. Get Homestay Info
-  SELECT `price`, `max_guests`
+  -- 1. Get Property Info
+  SELECT `price_per_night`, `max_guests`
   INTO v_price, v_max_guests
-  FROM `homestays`
-  WHERE `id` = p_homestay_id AND `is_active` = 1
+  FROM `properties`
+  WHERE `id` = p_property_id AND `is_active` = 1 AND `is_deleted` = 0
   FOR UPDATE;
 
   IF v_price IS NULL THEN
-    SET p_error_message = 'Homestay không tồn tại hoặc đã tạm dừng hoạt động';
+    SET p_error_message = 'Chỗ nghỉ không tồn tại hoặc đã tạm dừng hoạt động';
     SET p_booking_id = 0;
     ROLLBACK;
   ELSEIF p_guests > v_max_guests THEN
@@ -681,9 +787,9 @@ BEGIN
     ROLLBACK;
   ELSE
     -- 2. Check Overbooking
-    SET v_available = fn_check_homestay_available(p_homestay_id, p_check_in, p_check_out);
+    SET v_available = fn_check_property_available(p_property_id, p_check_in, p_check_out);
     IF v_available = 0 THEN
-      SET p_error_message = 'Homestay đã có khách đặt trong khoảng thời gian này';
+      SET p_error_message = 'Chỗ nghỉ đã có khách đặt trong khoảng thời gian này';
       SET p_booking_id = 0;
       ROLLBACK;
     ELSE
@@ -717,12 +823,12 @@ BEGIN
 
       -- 5. Insert Booking
       INSERT INTO `bookings` (
-        `booking_code`, `user_id`, `homestay_id`,
+        `booking_code`, `user_id`, `guest_id`, `property_id`,
         `check_in`, `check_out`, `guests`, `nights`,
         `price_per_night`, `promotion_id`, `discount_amount`,
         `total_price`, `status`, `notes`
       ) VALUES (
-        p_booking_code, p_user_id, p_homestay_id,
+        p_booking_code, p_user_id, p_user_id, p_property_id,
         p_check_in, p_check_out, p_guests, v_nights,
         v_price, p_promotion_id, v_discount,
         p_final_total, 'confirmed', p_notes
@@ -735,17 +841,17 @@ BEGIN
         `booking_id`, `payment_method`, `amount`, `status`, `paid_at`
       ) VALUES (
         p_booking_id,
-        IFNULL(p_payment_method, 'cash'),
+        IFNULL(p_payment_method, 'bank_transfer'),
         p_final_total,
         IF(p_payment_method IN ('vnpay', 'momo'), 'completed', 'pending'),
         IF(p_payment_method IN ('vnpay', 'momo'), NOW(), NULL)
       );
 
-      -- 7. Add Reward Points for user (+100 points)
-      UPDATE `users` SET `reward_points` = `reward_points` + 100 WHERE `id` = p_user_id;
+      -- 7. Add Reward Points for user
+      UPDATE `users` SET `reward_points` = `reward_points` + GREATEST(10, FLOOR(p_final_total / 10000)) WHERE `id` = p_user_id;
 
       INSERT INTO `point_transactions` (`user_id`, `title`, `points`, `type`, `reference_id`)
-      VALUES (p_user_id, CONCAT('Thưởng đặt phòng ', p_booking_code), 100, 'earn', p_booking_id);
+      VALUES (p_user_id, CONCAT('Thưởng đặt phòng ', p_booking_code), GREATEST(10, FLOOR(p_final_total / 10000)), 'earn', p_booking_id);
 
       -- 8. Add In-app Notification for user
       INSERT INTO `notifications` (`user_id`, `title`, `content`, `type`, `reference_id`)

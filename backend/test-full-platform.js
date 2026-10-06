@@ -13,7 +13,7 @@ async function testFullPlatform() {
 
   let testUserId = null;
   let testHostId = null;
-  let testHomestayId = null;
+  let testPropertyId = null;
   let onlineBookingId = null;
   let walkInBookingId = null;
 
@@ -54,26 +54,26 @@ async function testFullPlatform() {
     console.log('   ✓ User creation & Bcrypt Password Authentication PASSED!\n');
 
     // -------------------------------------------------------------
-    // TEST 3: Homestay Creation & Quick-Manage Token
+    // TEST 3: Property Creation & Quick-Manage Token
     // -------------------------------------------------------------
-    console.log('TEST 3: Homestay Listing & Desk Quick-Manage Token Generation');
+    console.log('TEST 3: Property Listing & Desk Quick-Manage Token Generation');
     const [locRows] = await db.query('SELECT id FROM locations LIMIT 1');
     const [typeRows] = await db.query('SELECT id FROM homestay_types LIMIT 1');
     const locationId = locRows[0]?.id || 1;
     const typeId = typeRows[0]?.id || 1;
     const testToken = `TEST_TOKEN_${Date.now()}`;
 
-    const [homeRes] = await db.query(
-      `INSERT INTO homestays (
-        host_id, location_id, type_id, name, price, max_guests,
-        rating, review_count, is_active, approval_status, manage_token,
+    const [propRes] = await db.query(
+      `INSERT INTO properties (
+        host_id, location_id, type_id, title, name, price_per_night, price, max_guests,
+        rating, review_count, is_active, status, approval_status, manage_token,
         description
-       ) VALUES (?, ?, ?, 'Villa Nghỉ Dưỡng Test', 1500000, 4, 5.0, 1, 1, 'approved', ?, 'Mô tả không gian villa test đầy đủ tiện nghi')`,
+       ) VALUES (?, ?, ?, 'Villa Nghỉ Dưỡng Test', 'Villa Nghỉ Dưỡng Test', 1500000, 1500000, 4, 5.0, 1, 1, 'approved', 'approved', ?, 'Mô tả không gian villa test đầy đủ tiện nghi')`,
       [testHostId, locationId, typeId, testToken]
     );
-    testHomestayId = homeRes.insertId;
-    console.log(`   Created test homestay ID: ${testHomestayId} with token: ${testToken}`);
-    console.log('   ✓ Homestay listing & Token generation PASSED!\n');
+    testPropertyId = propRes.insertId;
+    console.log(`   Created test property ID: ${testPropertyId} with token: ${testToken}`);
+    console.log('   ✓ Property listing & Token generation PASSED!\n');
 
     // -------------------------------------------------------------
     // TEST 4: Online Guest Booking with Concurrency Row Lock
@@ -84,7 +84,7 @@ async function testFullPlatform() {
 
     const bookingResult = await BookingModel.createBooking({
       userId: testUserId,
-      homestayId: testHomestayId,
+      propertyId: testPropertyId,
       checkIn: checkInDate,
       checkOut: checkOutDate,
       guests: 2,
@@ -108,7 +108,7 @@ async function testFullPlatform() {
     try {
       await BookingModel.createBooking({
         userId: testUserId,
-        homestayId: testHomestayId,
+        propertyId: testPropertyId,
         checkIn: '2026-11-11',
         checkOut: '2026-11-14', // Overlaps with 10-13!
         guests: 2,
@@ -122,7 +122,7 @@ async function testFullPlatform() {
     // Case 2: Checkout day equals checkin day (13-16) must SUCCEED without overlap!
     const nonConflictingBooking = await BookingModel.createBooking({
       userId: testUserId,
-      homestayId: testHomestayId,
+      propertyId: testPropertyId,
       checkIn: '2026-11-13',
       checkOut: '2026-11-16',
       guests: 2,
@@ -164,8 +164,8 @@ async function testFullPlatform() {
 
     const confirmedBooking = await BookingModel.findById(onlineBookingId);
     assert.strictEqual(confirmedBooking.status, 'confirmed');
-    assert.strictEqual(confirmedBooking.payment_status, 'completed');
-    console.log('   Trạng thái đơn:', confirmedBooking.status, 'Thanh toán:', confirmedBooking.payment_status);
+    assert.strictEqual(confirmedBooking.payment_status_display, 'completed');
+    console.log('   Trạng thái đơn:', confirmedBooking.status, 'Thanh toán:', confirmedBooking.payment_status_display);
     console.log('   ✓ Booking Confirmation Workflow PASSED!\n');
 
     // -------------------------------------------------------------
@@ -173,7 +173,7 @@ async function testFullPlatform() {
     // -------------------------------------------------------------
     console.log('TEST 8: Walk-in Desk Booking (Quick Manage / Host Direct)');
     const walkInResult = await BookingModel.createDirectBooking({
-      homestayId: testHomestayId,
+      propertyId: testPropertyId,
       guestName: 'Nguyễn Văn Khách Vãng Lai',
       guestPhone: '0909090909',
       checkIn: '2026-11-20',
@@ -201,14 +201,14 @@ async function testFullPlatform() {
     // -------------------------------------------------------------
     console.log('TEST 9: Review Creation & Property Rating Recalculation');
     await db.query(
-      `INSERT INTO reviews (booking_id, user_id, homestay_id, rating, comment, is_verified, is_active)
-       VALUES (?, ?, ?, 5.0, 'Phòng rất đẹp và thoáng mát, chủ nhà đón tiếp chu đáo.', 1, 1)`,
-      [onlineBookingId, testUserId, testHomestayId]
+      `INSERT INTO reviews (booking_id, user_id, guest_id, property_id, rating, comment, is_verified, is_active)
+       VALUES (?, ?, ?, ?, 5.0, 'Phòng rất đẹp và thoáng mát, chủ nhà đón tiếp chu đáo.', 1, 1)`,
+      [onlineBookingId, testUserId, testUserId, testPropertyId]
     );
 
     const [reviewRows] = await db.query(
-      'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM reviews WHERE homestay_id = ?',
-      [testHomestayId]
+      'SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM reviews WHERE property_id = ?',
+      [testPropertyId]
     );
     assert.strictEqual(Number(reviewRows[0].avg_rating), 5.0);
     console.log('   Đánh giá mới đã được ghi nhận. Điểm TB:', reviewRows[0].avg_rating);
@@ -276,11 +276,11 @@ async function testFullPlatform() {
     // -------------------------------------------------------------
     console.log('\n🧹 Cleaning up test artifacts from database...');
     try {
-      if (testHomestayId) {
-        await db.query('DELETE FROM payments WHERE booking_id IN (SELECT id FROM bookings WHERE homestay_id = ?)', [testHomestayId]);
-        await db.query('DELETE FROM reviews WHERE homestay_id = ?', [testHomestayId]);
-        await db.query('DELETE FROM bookings WHERE homestay_id = ?', [testHomestayId]);
-        await db.query('DELETE FROM homestays WHERE id = ?', [testHomestayId]);
+      if (testPropertyId) {
+        await db.query('DELETE FROM payments WHERE booking_id IN (SELECT id FROM bookings WHERE property_id = ?)', [testPropertyId]);
+        await db.query('DELETE FROM reviews WHERE property_id = ?', [testPropertyId]);
+        await db.query('DELETE FROM bookings WHERE property_id = ?', [testPropertyId]);
+        await db.query('DELETE FROM properties WHERE id = ?', [testPropertyId]);
       }
       if (testUserId) {
         await db.query('DELETE FROM notifications WHERE user_id = ?', [testUserId]);

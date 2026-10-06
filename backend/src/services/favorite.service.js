@@ -5,15 +5,15 @@ class FavoriteService {
     return FavoriteModel.findByUserId(userId);
   }
 
-  static async toggleFavorite(userId, homestayId) {
-    if (!homestayId) {
-      throw new Error('Thiếu mã homestay');
+  static async toggleFavorite(userId, propertyId) {
+    if (!propertyId) {
+      throw new Error('Thiếu mã chỗ nghỉ');
     }
-    return FavoriteModel.toggle(userId, homestayId);
+    return FavoriteModel.toggle(userId, propertyId);
   }
 
-  static async removeFavorite(userId, homestayId) {
-    return FavoriteModel.remove(userId, homestayId);
+  static async removeFavorite(userId, propertyId) {
+    return FavoriteModel.remove(userId, propertyId);
   }
 }
 

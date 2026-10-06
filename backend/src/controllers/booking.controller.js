@@ -5,6 +5,7 @@ const createBooking = async (req, res) => {
   try {
     const userId = req.body.userId || req.user?.id || '1';
     const {
+      propertyId,
       homestayId,
       checkIn,
       checkOut,
@@ -17,7 +18,8 @@ const createBooking = async (req, res) => {
 
     const data = await BookingService.createBooking({
       userId,
-      homestayId,
+      propertyId: propertyId || homestayId,
+      homestayId: propertyId || homestayId,
       checkIn,
       checkOut,
       guests,
@@ -35,7 +37,6 @@ const createBooking = async (req, res) => {
 
 const getMyBookings = async (req, res) => {
   try {
-    // Ưu tiên query param userId để thuận tiện test trên Postman / Mobile
     const userId = req.query.userId || req.user?.id || '1';
     const { status } = req.query;
     const data = await BookingService.getMyBookings(userId, status);
@@ -58,8 +59,8 @@ const getBookingById = async (req, res) => {
 const cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.body.userId || req.query.userId || req.user?.id;
-    const { reason } = req.body;
+    const userId = req.user?.id || req.body.userId || null;
+    const reason = req.body.reason || 'Khách yêu cầu hủy';
 
     await BookingService.cancelBooking(id, userId, reason);
     return success(res, null, 'Hủy đơn đặt phòng thành công');
@@ -71,23 +72,19 @@ const cancelBooking = async (req, res) => {
 const uploadPaymentProof = async (req, res) => {
   try {
     const bookingId = req.params.id || req.body.bookingId;
-    const userId = req.body.userId || req.query.userId || req.user?.id;
+    const userId = req.user?.id || req.body.userId || null;
     const { proofImageUrl, transactionCode } = req.body;
 
-    const data = await BookingService.uploadPaymentProof({
+    const result = await BookingService.uploadPaymentProof({
       bookingId,
       userId,
       proofImageUrl,
       transactionCode,
     });
 
-    return success(
-      res,
-      data,
-      'Thanh toán thành công! Đã gửi minh chứng chuyển khoản. Đơn phòng đang chờ Web Admin duyệt để hoàn tất.'
-    );
+    return success(res, result, result.message);
   } catch (err) {
-    return badRequest(res, err.message || 'Lỗi khi gửi minh chứng thanh toán');
+    return badRequest(res, err.message || 'Lỗi khi cập nhật minh chứng thanh toán');
   }
 };
 

@@ -47,14 +47,14 @@ class RiskScoringService {
         riskFactors.push(`Có ${activeDisputes} khiếu nại từ khách hàng chưa được giải quyết`);
       }
 
-      // 3. Kiểm tra tỷ lệ hủy đơn phòng của Host
+      // 3. Kiểm tra tỷ lệ hủy đơn phòng của Host trên properties
       const [bookingRows] = await db.query(
         `SELECT
           COUNT(*) AS total,
           SUM(CASE WHEN b.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled
          FROM bookings b
-         JOIN homestays h ON b.homestay_id = h.id
-         WHERE h.host_id = ?`,
+         JOIN properties p ON b.property_id = p.id
+         WHERE p.host_id = ?`,
         [hostId]
       );
       const totalBookings = bookingRows[0]?.total || 0;
@@ -97,14 +97,25 @@ class RiskScoringService {
       riskFactors.push('Thời gian lưu trú dài ngày (> 14 đêm) nhưng chưa có thanh toán');
     }
 
-    // Giá trị đơn rất lớn (> 30 triệu đồng)
+    // Giá trị đơn rất lớn (> 30 triệu đồng) nhưng thanh toán chưa verified
     if (totalPrice > 30000000 && booking.payment_status !== 'verified') {
       riskScore += 20;
-      riskFactors.push('Giá trị đơn đặt phòng lớn (> 30.000.000₫), cần lưu ý đối soát');
+      riskFactors.push('Giá trị đơn đặt phòng rất lớn (> 30.000.000₫)');
+    }
+
+    // Đặt phòng sát giờ (trong vòng 6 tiếng) đối với khách hàng mới
+    if (booking.check_in && booking.created_at) {
+      const checkInTime = new Date(booking.check_in).getTime();
+      const createdAtTime = new Date(booking.created_at).getTime();
+      const diffHours = (checkInTime - createdAtTime) / (1000 * 60 * 60);
+      if (diffHours < 6 && diffHours >= 0 && booking.payment_status === 'unpaid') {
+        riskScore += 20;
+        riskFactors.push('Đặt phòng gấp nhận trong vòng 6 giờ nhưng chưa thanh toán');
+      }
     }
 
     riskScore = Math.min(100, riskScore);
-    const riskLevel = riskScore >= 50 ? 'HIGH' : riskScore >= 25 ? 'MEDIUM' : 'LOW';
+    const riskLevel = riskScore >= 50 ? 'HIGH' : riskScore >= 30 ? 'MEDIUM' : 'LOW';
 
     return {
       riskScore,

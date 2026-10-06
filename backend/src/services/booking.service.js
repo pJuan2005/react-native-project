@@ -3,6 +3,7 @@ const BookingModel = require('../models/booking.model');
 class BookingService {
   static async createBooking({
     userId,
+    propertyId,
     homestayId,
     checkIn,
     checkOut,
@@ -12,12 +13,14 @@ class BookingService {
     paymentMethod,
     notes,
   }) {
-    if (!homestayId || !checkIn || !checkOut) {
+    const targetPropertyId = propertyId || homestayId;
+    if (!targetPropertyId || !checkIn || !checkOut) {
       throw new Error('Vui lòng chọn chỗ nghỉ và ngày nhận/trả phòng');
     }
     return BookingModel.createBooking({
       userId,
-      homestayId,
+      propertyId: targetPropertyId,
+      homestayId: targetPropertyId,
       checkIn,
       checkOut,
       guests,

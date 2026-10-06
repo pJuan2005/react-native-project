@@ -2,19 +2,20 @@ const express = require('express');
 const router = express.Router();
 const {
   createDirectBooking,
-  getHostHomestays,
+  getHostProperties,
   getHostBookings,
   getHostDashboard,
   getQuickManageByToken,
 } = require('../controllers/host.controller');
 const { optionalAuth } = require('../middlewares/auth.middleware');
 
-// 1. Tạo đơn đặt phòng trực tiếp tại quầy homestay (Khách Walk-in)
+// 1. Tạo đơn đặt phòng trực tiếp tại quầy chỗ nghỉ (Khách Walk-in)
 router.post('/direct-booking', optionalAuth, createDirectBooking);
 router.post('/direct-bookings', optionalAuth, createDirectBooking);
 
-// 2. Danh sách homestay của Host
-router.get('/homestays', optionalAuth, getHostHomestays);
+// 2. Danh sách property/homestay của Host
+router.get('/properties', optionalAuth, getHostProperties);
+router.get('/homestays', optionalAuth, getHostProperties);
 
 // 3. Danh sách đơn phòng của Host
 router.get('/bookings', optionalAuth, getHostBookings);
