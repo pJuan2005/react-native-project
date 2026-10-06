@@ -1,4 +1,5 @@
 const Booking = require("../models/booking.model");
+const AuditService = require("../../services/audit.service");
 const { buildPaymentInfo } = require("../common/paymentConfig");
 const { savePaymentProof } = require("../common/bookingUpload");
 const { removeManagedFile } = require("../common/propertyUpload");
@@ -438,8 +439,26 @@ exports.reviewBookingByAdmin = async (req, res) => {
 
     if (payload.decision === "approve") {
       await Booking.confirmByAdmin(booking.id, req.currentUser.id, payload);
+      AuditService.log({
+        actorId: req.currentUser.id,
+        actorRole: "admin",
+        action: "booking_confirmed",
+        entityType: "booking",
+        entityId: booking.id,
+        metadata: payload.hostNote ? `Duyệt đơn: ${payload.hostNote}` : "Đã duyệt thanh toán thành công",
+        ipAddress: req.ip,
+      }).catch(() => {});
     } else {
       await Booking.rejectByAdmin(booking.id, req.currentUser.id, payload);
+      AuditService.log({
+        actorId: req.currentUser.id,
+        actorRole: "admin",
+        action: "booking_rejected",
+        entityType: "booking",
+        entityId: booking.id,
+        metadata: payload.rejectionReason ? `Từ chối: ${payload.rejectionReason}` : "Từ chối thanh toán",
+        ipAddress: req.ip,
+      }).catch(() => {});
     }
 
     const updatedBooking = await Booking.getAdminById(booking.id);

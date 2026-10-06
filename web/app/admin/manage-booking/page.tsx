@@ -22,6 +22,25 @@ function formatCurrency(value: number | string | undefined) {
   return `${amount.toLocaleString("vi-VN")} ₫`;
 }
 
+function evaluateBookingRisk(booking: BookingRecord) {
+  let score = 0;
+  const factors: string[] = [];
+
+  if (booking.nights > 14 && booking.paymentStatus !== "verified") {
+    score += 25;
+    factors.push("Lưu trú dài ngày (>14 đêm) chưa đối soát");
+  }
+
+  if (booking.totalPrice > 30000000 && booking.paymentStatus !== "verified") {
+    score += 20;
+    factors.push("Giá trị đơn rất lớn (>30 triệu)");
+  }
+
+  score = Math.min(100, score);
+  const level = score >= 40 ? "HIGH" : score >= 20 ? "MEDIUM" : "LOW";
+  return { score, level, factors };
+}
+
 export default function ManageBookingsPage() {
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -215,6 +234,7 @@ export default function ManageBookingsPage() {
                 <th>Chủ nhà</th>
                 <th>Chỗ nghỉ</th>
                 <th>Tổng tiền</th>
+                <th>Đánh giá rủi ro</th>
                 <th>Trạng thái đơn</th>
                 <th>Thanh toán</th>
                 <th>Thao tác</th>
@@ -223,51 +243,81 @@ export default function ManageBookingsPage() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
+                  <td colSpan={9} style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
                     Đang tải danh sách đặt phòng...
                   </td>
                 </tr>
               ) : filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
+                  <td colSpan={9} style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
                     Không tìm thấy đơn đặt phòng nào phù hợp
                   </td>
                 </tr>
               ) : (
-                paginatedBookings.map((booking) => (
-                  <tr key={booking.id}>
-                    <td>
-                      <div style={{ fontWeight: 700, color: "#2563EB", fontSize: "0.87rem" }}>
-                        {booking.bookingCode}
-                      </div>
-                      <div style={{ color: "#94a3b8", fontSize: "0.75rem" }}>
-                        {booking.checkIn} → {booking.checkOut}
-                      </div>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 600, color: "#1e293b", fontSize: "0.87rem" }}>{booking.guestName}</div>
-                      <div style={{ color: "#94a3b8", fontSize: "0.75rem" }}>{booking.guestEmail}</div>
-                    </td>
-                    <td style={{ fontSize: "0.85rem", color: "#475569" }}>{booking.hostName}</td>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <Image
-                          src={booking.propertyImage}
-                          alt={booking.propertyTitle}
-                          width={40}
-                          height={40}
-                          sizes="40px"
-                          unoptimized={isBackendUploadImage(booking.propertyImage)}
-                          style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
-                        />
-                        <span style={{ fontSize: "0.85rem", color: "#475569", maxWidth: 160, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {booking.propertyTitle}
+                paginatedBookings.map((booking) => {
+                  const risk = evaluateBookingRisk(booking);
+                  return (
+                    <tr key={booking.id}>
+                      <td>
+                        <div style={{ fontWeight: 700, color: "#2563EB", fontSize: "0.87rem" }}>
+                          {booking.bookingCode}
+                        </div>
+                        <div style={{ color: "#94a3b8", fontSize: "0.75rem" }}>
+                          {booking.checkIn} → {booking.checkOut}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600, color: "#1e293b", fontSize: "0.87rem" }}>{booking.guestName}</div>
+                        <div style={{ color: "#94a3b8", fontSize: "0.75rem" }}>{booking.guestEmail}</div>
+                      </td>
+                      <td style={{ fontSize: "0.85rem", color: "#475569" }}>{booking.hostName}</td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <Image
+                            src={booking.propertyImage}
+                            alt={booking.propertyTitle}
+                            width={40}
+                            height={40}
+                            sizes="40px"
+                            unoptimized={isBackendUploadImage(booking.propertyImage)}
+                            style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
+                          />
+                          <span style={{ fontSize: "0.85rem", color: "#475569", maxWidth: 160, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {booking.propertyTitle}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ fontWeight: 800, color: "#1e293b" }}>{formatCurrency(booking.totalPrice)}</td>
+                      <td>
+                        <span
+                          title={risk.factors.length ? risk.factors.join(" • ") : "Đơn phòng an toàn"}
+                          style={{
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                            padding: "3px 9px",
+                            borderRadius: 14,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            background:
+                              risk.level === "HIGH"
+                                ? "#fee2e2"
+                                : risk.level === "MEDIUM"
+                                ? "#fef3c7"
+                                : "#dcfce7",
+                            color:
+                              risk.level === "HIGH"
+                                ? "#dc2626"
+                                : risk.level === "MEDIUM"
+                                ? "#d97706"
+                                : "#16a34a",
+                          }}
+                        >
+                          {risk.level === "HIGH" ? "🔴 Cảnh báo" : risk.level === "MEDIUM" ? "🟡 Lưu ý" : "🟢 An toàn"}
                         </span>
-                      </div>
-                    </td>
-                    <td style={{ fontWeight: 800, color: "#1e293b" }}>{formatCurrency(booking.totalPrice)}</td>
-                    <td><StatusBadge status={booking.status} /></td>
-                    <td><PaymentStatusBadge status={booking.paymentStatus} /></td>
+                      </td>
+                      <td><StatusBadge status={booking.status} /></td>
+                      <td><PaymentStatusBadge status={booking.paymentStatus} /></td>
                     <td>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {canReviewBooking(booking) && (
@@ -300,8 +350,9 @@ export default function ManageBookingsPage() {
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
+                );
+              })
+            )}
             </tbody>
           </table>
         </div>

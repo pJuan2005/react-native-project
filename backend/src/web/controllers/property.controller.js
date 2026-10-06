@@ -1,4 +1,5 @@
 const Property = require("../models/property.model");
+const AuditService = require("../../services/audit.service");
 const {
   saveImageFile,
   saveFileList,
@@ -634,6 +635,17 @@ exports.updatePropertyStatus = async (req, res) => {
         message: "Property not found.",
       });
     }
+
+    // Ghi nhật ký kiểm toán (Audit Trail)
+    AuditService.log({
+      actorId: req.currentUser?.id || 2,
+      actorRole: "admin",
+      action: status === "approved" ? "property_approved" : "property_rejected",
+      entityType: "property",
+      entityId: req.params.id,
+      metadata: req.body?.rejectionReason ? `Lý do từ chối: ${req.body.rejectionReason}` : `Đã chuyển trạng thái sang ${status}`,
+      ipAddress: req.ip,
+    }).catch(() => {});
 
     res.json({
       message: "Property status updated successfully.",

@@ -12,6 +12,7 @@ const hostDashboardRouter = require("./host-dashboard.route");
 const adminDashboardRouter = require("./admin-dashboard.route");
 const adminReportRouter = require("./admin-report.route");
 const quickManageRouter = require("./quick-manage.route");
+const adminAuditRouter = require("./admin-audit.route");
 
 const router = express.Router();
 
@@ -28,6 +29,7 @@ router.use("/admin/settings", adminSettingRouter);
 router.use("/admin/bookings", adminBookingRouter);
 router.use("/admin/dashboard", adminDashboardRouter);
 router.use("/admin/reports", adminReportRouter);
+router.use("/admin/audit-logs", adminAuditRouter);
 
 module.exports = router;
 

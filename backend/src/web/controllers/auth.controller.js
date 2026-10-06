@@ -114,7 +114,7 @@ function isBcryptHash(value) {
 }
 
 async function verifyPassword(user, plainPassword) {
-  const storedPassword = String(user.password || "");
+  const storedPassword = String(user.password || user.password_hash || "");
 
   if (isBcryptHash(storedPassword)) {
     return bcrypt.compare(plainPassword, storedPassword);
@@ -131,6 +131,11 @@ async function verifyPassword(user, plainPassword) {
 
 function saveSession(req, userId) {
   return new Promise((resolve, reject) => {
+    if (!req.session) {
+      resolve();
+      return;
+    }
+
     req.session.regenerate((regenerateError) => {
       if (regenerateError) {
         reject(regenerateError);
@@ -168,7 +173,8 @@ async function handleRegister(req, res) {
 
   if (Object.keys(errors).length > 0) {
     return res.status(400).json({
-      message: "Registration payload is invalid",
+      success: false,
+      message: "Thông tin đăng ký không hợp lệ",
       errors,
     });
   }
@@ -177,7 +183,8 @@ async function handleRegister(req, res) {
     const existingUser = await User.findByEmail(payload.email);
     if (existingUser) {
       return res.status(409).json({
-        message: "This email is already in use",
+        success: false,
+        message: "Email này đã được sử dụng",
       });
     }
 
@@ -193,15 +200,32 @@ async function handleRegister(req, res) {
     });
 
     const user = await User.findById(userId);
+    const token = `token_${userId}_${Date.now()}`;
     await saveSession(req, userId);
 
     return res.status(201).json({
-      message: "Account registered successfully",
+      success: true,
+      message: "Đăng ký tài khoản thành công",
       user: mapUserResponse(user),
+      data: {
+        user: {
+          id: String(user.id),
+          name: user.name || user.full_name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone || "",
+          address: user.address || user.location || "",
+          birthDate: user.birth_date ? new Date(user.birth_date).toISOString().split("T")[0] : "",
+          avatar: user.avatar_url || "",
+          rewardPoints: user.reward_points || 0,
+        },
+        token,
+      },
     });
   } catch (_error) {
     return res.status(500).json({
-      message: "Unable to register account right now",
+      success: false,
+      message: "Không thể đăng ký tài khoản lúc này",
     });
   }
 }
@@ -212,7 +236,8 @@ async function handleLogin(req, res) {
 
   if (!email || !password) {
     return res.status(400).json({
-      message: "Email and password are required",
+      success: false,
+      message: "Vui lòng nhập email và mật khẩu",
     });
   }
 
@@ -221,13 +246,15 @@ async function handleLogin(req, res) {
 
     if (!user) {
       return res.status(400).json({
-        message: "Email does not exist",
+        success: false,
+        message: "Email không tồn tại trên hệ thống",
       });
     }
 
-    if (user.status === "blocked") {
+    if (user.status === "blocked" || user.is_active === 0) {
       return res.status(403).json({
-        message: "Your account has been blocked",
+        success: false,
+        message: "Tài khoản của bạn đã bị khóa",
       });
     }
 
@@ -235,20 +262,38 @@ async function handleLogin(req, res) {
 
     if (!isValidPassword) {
       return res.status(400).json({
-        message: "Password is incorrect",
+        success: false,
+        message: "Mật khẩu không chính xác",
       });
     }
 
     const refreshedUser = await User.findById(user.id);
+    const token = `token_${refreshedUser.id}_${Date.now()}`;
     await saveSession(req, refreshedUser.id);
 
     return res.json({
-      message: "Login successful",
+      success: true,
+      message: "Đăng nhập thành công",
       user: mapUserResponse(refreshedUser),
+      data: {
+        user: {
+          id: String(refreshedUser.id),
+          name: refreshedUser.name || refreshedUser.full_name,
+          email: refreshedUser.email,
+          role: refreshedUser.role,
+          phone: refreshedUser.phone || "",
+          address: refreshedUser.address || refreshedUser.location || "",
+          birthDate: refreshedUser.birth_date ? new Date(refreshedUser.birth_date).toISOString().split("T")[0] : "",
+          avatar: refreshedUser.avatar_url || "",
+          rewardPoints: refreshedUser.reward_points || 0,
+        },
+        token,
+      },
     });
   } catch (_error) {
     return res.status(500).json({
-      message: "Unable to login right now",
+      success: false,
+      message: "Không thể đăng nhập lúc này",
     });
   }
 }

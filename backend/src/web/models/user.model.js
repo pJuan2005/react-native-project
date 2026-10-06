@@ -187,9 +187,11 @@ User.updateByAdmin = async (id, payload) => {
 User.create = async (payload) => {
   const [result] = await db.promise().query(
     `INSERT INTO users (
+      name,
       full_name,
       email,
       password,
+      password_hash,
       role,
       phone,
       location,
@@ -197,10 +199,12 @@ User.create = async (payload) => {
       languages,
       bio,
       status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      payload.fullName,
+      payload.fullName || payload.name,
+      payload.fullName || payload.name,
       payload.email,
+      payload.password,
       payload.password,
       payload.role,
       payload.phone,
@@ -217,8 +221,8 @@ User.create = async (payload) => {
 
 User.updatePassword = async (id, password) => {
   const [result] = await db.promise().query(
-    "UPDATE users SET password = ? WHERE id = ?",
-    [password, id],
+    "UPDATE users SET password = ?, password_hash = ? WHERE id = ?",
+    [password, password, id],
   );
 
   return result.affectedRows > 0;
