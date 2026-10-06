@@ -267,9 +267,9 @@ export default function BookingsScreen() {
               data={activeBookings}
               keyExtractor={(item, index) =>
                 item.bookingId
-                  ? `booking-${item.bookingId}`
+                  ? `booking-${item.bookingId}-${index}`
                   : item.bookingCode
-                  ? `code-${item.bookingCode}`
+                  ? `code-${item.bookingCode}-${index}`
                   : `item-${item.id}-${item.checkIn || ''}-${index}`
               }
               contentContainerStyle={s.contentList}

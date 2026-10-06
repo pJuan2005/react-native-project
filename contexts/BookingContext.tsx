@@ -98,8 +98,15 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       );
       const bJson = await bRes.json();
       if (bJson.success && Array.isArray(bJson.data)) {
+        const seenBookingIds = new Set<string>();
         const mappedBookings = bJson.data
-          .filter((b: any) => b.status !== 'cancelled')
+          .filter((b: any) => {
+            if (b.status === 'cancelled') return false;
+            const uniqueKey = String(b.id || b.booking_code);
+            if (seenBookingIds.has(uniqueKey)) return false;
+            seenBookingIds.add(uniqueKey);
+            return true;
+          })
           .map((b: any) => ({
             id: String(b.property_id || b.homestay_id || b.id),
             bookingId: String(b.id),
@@ -140,10 +147,18 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       );
       const fJson = await fRes.json();
       if (fJson.success && Array.isArray(fJson.data)) {
-        const mappedFavs = fJson.data.map((f: any) => ({
-          ...f,
-          quantity: 1,
-        }));
+        const seenFavIds = new Set<string>();
+        const mappedFavs = fJson.data
+          .filter((f: any) => {
+            const fid = String(f.id);
+            if (seenFavIds.has(fid)) return false;
+            seenFavIds.add(fid);
+            return true;
+          })
+          .map((f: any) => ({
+            ...f,
+            quantity: 1,
+          }));
         setSavedHomestays(mappedFavs);
       }
 

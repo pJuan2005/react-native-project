@@ -36,9 +36,9 @@ class BookingModel {
         b.notes,
         b.host_note,
         pay.payment_method,
-        COALESCE(pay.status, b.payment_status) AS payment_status,
-        COALESCE(pay.status, b.payment_status) AS payment_status_display,
-        pay.proof_image_url,
+        COALESCE(MAX(pay.status), b.payment_status) AS payment_status,
+        COALESCE(MAX(pay.status), b.payment_status) AS payment_status_display,
+        COALESCE(MAX(pay.proof_image_url), b.payment_proof_image) AS proof_image_url,
         pay.transaction_code,
         b.created_at
       FROM bookings b
@@ -71,7 +71,7 @@ class BookingModel {
       params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    sql += ' ORDER BY b.created_at DESC';
+    sql += ' GROUP BY b.id ORDER BY b.created_at DESC';
 
     if (limit) {
       sql += ' LIMIT ? OFFSET ?';
@@ -137,7 +137,8 @@ class BookingModel {
       LEFT JOIN property_images pi ON pi.property_id = p.id AND pi.is_primary = 1
       LEFT JOIN promotions prom ON b.promotion_id = prom.id
       LEFT JOIN payments pay ON pay.booking_id = b.id
-      WHERE b.id = ? OR b.booking_code = ?`,
+      WHERE b.id = ? OR b.booking_code = ?
+      GROUP BY b.id`,
       [id, id]
     );
     return rows[0] || null;
@@ -153,8 +154,8 @@ class BookingModel {
         b.property_id AS homestay_id,
         p.name AS homestay_name,
         p.name AS property_title,
-        COALESCE(pi.image_url, p.cover_image) AS homestay_image,
-        COALESCE(pi.image_url, p.cover_image) AS property_image,
+        COALESCE(p.cover_image, MAX(pi.image_url)) AS homestay_image,
+        COALESCE(p.cover_image, MAX(pi.image_url)) AS property_image,
         COALESCE(l.name, p.city) AS location_name,
         COALESCE(t.name, 'Homestay') AS type_name,
         b.check_in,
@@ -170,10 +171,10 @@ class BookingModel {
         b.source,
         b.payment_status,
         b.notes,
-        pay.payment_method,
-        COALESCE(pay.status, b.payment_status) AS payment_status,
-        COALESCE(pay.status, b.payment_status) AS payment_status_display,
-        pay.proof_image_url,
+        COALESCE(MAX(pay.payment_method), b.payment_method, 'bank_transfer') AS payment_method,
+        COALESCE(MAX(pay.status), b.payment_status, 'unpaid') AS payment_status,
+        COALESCE(MAX(pay.status), b.payment_status, 'unpaid') AS payment_status_display,
+        COALESCE(MAX(pay.proof_image_url), b.payment_proof_image) AS proof_image_url,
         b.created_at
       FROM bookings b
       JOIN properties p ON b.property_id = p.id
@@ -191,7 +192,7 @@ class BookingModel {
       params.push(status);
     }
 
-    sql += ' ORDER BY b.created_at DESC';
+    sql += ' GROUP BY b.id ORDER BY b.created_at DESC';
 
     const [rows] = await db.query(sql, params);
     return rows;
