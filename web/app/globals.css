@@ -438,3 +438,29 @@ body {
   }
 }
 
+/* ── Auth Pages (Login & Register) ── */
+.hs-auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+}
+
+.hs-auth-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 36px 32px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 576px) {
+  .hs-auth-card {
+    padding: 28px 20px;
+    border-radius: 16px;
+  }
+}
+
+
