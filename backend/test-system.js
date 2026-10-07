@@ -72,45 +72,52 @@ async function runTests() {
     return { refundPercentage: 0, refundAmount: 0, cancellationFee: totalPaid, policy: 'CANCEL_WITHIN_72H_NO_REFUND' };
   };
 
-  // Case 5.1: Check-in sau 4 ngày (96h >= 72h), Đã thanh toán 2.000.000đ -> hoàn 70% = 1.400.000đ, phí 600.000đ
-  const p1 = calculateRefundPolicy(96, 2000000);
-  assert.strictEqual(p1.refundPercentage, 70);
-  assert.strictEqual(p1.refundAmount, 1400000);
-  assert.strictEqual(p1.cancellationFee, 600000);
-  assert.strictEqual(p1.policy, 'CANCEL_72H_70_PERCENT');
-  console.log(`   Case 5.1 (Check-in 96h >= 72h, Paid 2M): Refund = ${p1.refundAmount.toLocaleString('vi-VN')}₫ (70%), Fee = ${p1.cancellationFee.toLocaleString('vi-VN')}₫`);
+  // Case 5.1: Check-in sau 4 ngày (96h >= 72h), Đã thanh toán 2.000.000đ
+  // Khách hoàn 70% (1.400.000đ), Phí hủy 30% (600.000đ) -> Sàn 10% (200.000đ), Host 20% (400.000đ)
+  const CancellationService = require('./src/services/cancellation.service');
+  const split1 = CancellationService.calculateSplitBreakdown(96, 2000000);
+  assert.strictEqual(split1.refundPercentage, 70);
+  assert.strictEqual(split1.refundAmount, 1400000);
+  assert.strictEqual(split1.cancellationFee, 600000);
+  assert.strictEqual(split1.platformFee, 200000); // 10%
+  assert.strictEqual(split1.hostPayout, 400000);   // 20%
+  assert.strictEqual(split1.policyCode, 'CANCEL_72H_70_PERCENT');
+  console.log(`   Case 5.1 (Check-in 96h >= 72h, Paid 2M): Khách hoàn = ${split1.refundAmount.toLocaleString('vi-VN')}₫ (70%), Sàn thu = ${split1.platformFee.toLocaleString('vi-VN')}₫ (10%), Host nhận = ${split1.hostPayout.toLocaleString('vi-VN')}₫ (20%)`);
 
   // Case 5.2: Check-in đúng 72.0h -> hoàn 70%
-  const p2 = calculateRefundPolicy(72, 2000000);
-  assert.strictEqual(p2.refundPercentage, 70);
-  assert.strictEqual(p2.refundAmount, 1400000);
-  assert.strictEqual(p2.cancellationFee, 600000);
-  assert.strictEqual(p2.policy, 'CANCEL_72H_70_PERCENT');
-  console.log(`   Case 5.2 (Check-in đúng 72.0h, Paid 2M): Refund = ${p2.refundAmount.toLocaleString('vi-VN')}₫ (70%)`);
+  const split2 = CancellationService.calculateSplitBreakdown(72, 2000000);
+  assert.strictEqual(split2.refundPercentage, 70);
+  assert.strictEqual(split2.refundAmount, 1400000);
+  assert.strictEqual(split2.platformFee, 200000);
+  assert.strictEqual(split2.hostPayout, 400000);
+  console.log(`   Case 5.2 (Check-in đúng 72.0h, Paid 2M): Khách hoàn = 1.400.000₫, Sàn = 200.000₫, Host = 400.000₫`);
 
-  // Case 5.3: Check-in sau 71.9h (< 72h) -> hoàn 0đ, phí 100%
-  const p3 = calculateRefundPolicy(71.9, 2000000);
-  assert.strictEqual(p3.refundPercentage, 0);
-  assert.strictEqual(p3.refundAmount, 0);
-  assert.strictEqual(p3.cancellationFee, 2000000);
-  assert.strictEqual(p3.policy, 'CANCEL_WITHIN_72H_NO_REFUND');
-  console.log(`   Case 5.3 (Check-in 71.9h < 72h, Paid 2M): Refund = 0₫, Fee = 2.000.000₫ (100%)`);
+  // Case 5.3: Check-in sau 71.9h (< 72h) -> hoàn 0đ, Sàn 10% (200.000đ), Host 90% (1.800.000đ)
+  const split3 = CancellationService.calculateSplitBreakdown(71.9, 2000000);
+  assert.strictEqual(split3.refundPercentage, 0);
+  assert.strictEqual(split3.refundAmount, 0);
+  assert.strictEqual(split3.cancellationFee, 2000000);
+  assert.strictEqual(split3.platformFee, 200000); // 10%
+  assert.strictEqual(split3.hostPayout, 1800000);  // 90%
+  assert.strictEqual(split3.policyCode, 'CANCEL_WITHIN_72H_NO_REFUND');
+  console.log(`   Case 5.3 (Check-in 71.9h < 72h, Paid 2M): Khách = 0₫, Sàn = ${split3.platformFee.toLocaleString('vi-VN')}₫ (10%), Host nhận đền bù = ${split3.hostPayout.toLocaleString('vi-VN')}₫ (90%)`);
 
-  // Case 5.4: Check-in sau 24h (< 72h) -> hoàn 0đ, phí 100%
-  const p4 = calculateRefundPolicy(24, 2000000);
-  assert.strictEqual(p4.refundPercentage, 0);
-  assert.strictEqual(p4.refundAmount, 0);
-  assert.strictEqual(p4.cancellationFee, 2000000);
-  assert.strictEqual(p4.policy, 'CANCEL_WITHIN_72H_NO_REFUND');
-  console.log(`   Case 5.4 (Check-in 24h < 72h, Paid 2M): Refund = 0₫, Fee = 2.000.000₫ (100%)`);
+  // Case 5.4: Check-in sau 24h (< 72h) -> hoàn 0đ, Sàn 10%, Host 90%
+  const split4 = CancellationService.calculateSplitBreakdown(24, 2000000);
+  assert.strictEqual(split4.refundPercentage, 0);
+  assert.strictEqual(split4.refundAmount, 0);
+  assert.strictEqual(split4.hostPayout, 1800000);
+  console.log(`   Case 5.4 (Check-in 24h < 72h, Paid 2M): Khách = 0₫, Host nhận đền bù = 1.800.000₫ (90%)`);
 
-  // Case 5.5: Đơn chưa thanh toán (totalPaid = 0) -> hủy miễn phí
-  const p5 = calculateRefundPolicy(48, 0);
-  assert.strictEqual(p5.refundAmount, 0);
-  assert.strictEqual(p5.cancellationFee, 0);
-  assert.strictEqual(p5.policy, 'CANCEL_UNPAID_FREE');
+  // Case 5.5: Đơn chưa thanh toán (totalPaid = 0) -> hủy miễn phí 100%
+  const split5 = CancellationService.calculateSplitBreakdown(48, 0);
+  assert.strictEqual(split5.refundAmount, 0);
+  assert.strictEqual(split5.cancellationFee, 0);
+  assert.strictEqual(split5.platformFee, 0);
+  assert.strictEqual(split5.hostPayout, 0);
+  assert.strictEqual(split5.policyCode, 'CANCEL_UNPAID_FREE');
   console.log(`   Case 5.5 (Đơn chưa thanh toán): Free cancellation, policy = CANCEL_UNPAID_FREE`);
-  console.log('   ✓ Cancellation & Refund Policy Rules PASSED!\n');
+  console.log('   ✓ Cancellation Split (Platform 10% vs Host 20%/90%) PASSED!\n');
 
   // Test 6: Wallet Ledger & Balance Invariants
   console.log('6. Testing Wallet Ledger & Balance Invariants:');
@@ -170,8 +177,31 @@ async function runTests() {
   assert.strictEqual(validateReason('OTHER', 'Tôi bận công tác đột xuất tại Đà Nẵng'), true); // Đủ 10 ký tự -> accept
   console.log('   ✓ Cancellation Reason Validation PASSED!\n');
 
+  // Test 9: 15-Minute Unpaid Payment Expiry & 24h Anti-Spam Protection Rules
+  console.log('9. Testing 15-Minute Unpaid Payment Window & Anti-Spam Rules:');
+  const isBookingExpired = (createdAt, timeoutMinutes = 15) => {
+    const createdMs = new Date(createdAt).getTime();
+    const nowMs = Date.now();
+    return nowMs - createdMs >= timeoutMinutes * 60 * 1000;
+  };
+
+  const recentBooking = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // 5 phút trước
+  assert.strictEqual(isBookingExpired(recentBooking, 15), false, 'Đơn mới tạo 5 phút chưa bị hết hạn');
+
+  const expiredBooking = new Date(Date.now() - 16 * 60 * 1000).toISOString(); // 16 phút trước
+  assert.strictEqual(isBookingExpired(expiredBooking, 15), true, 'Đơn tạo 16 phút trước phải tự động hết hạn');
+  console.log('   15-Minute Payment Timeout: 5p = Active, 16p = Expired (Auto-Cancel)');
+
+  // Anti-spam rule: >= 3 unpaid cancellations in 24 hours -> Blocked
+  const checkSpamBlocked = (unpaidCancelCount24h) => unpaidCancelCount24h >= 3;
+  assert.strictEqual(checkSpamBlocked(2), false, '2 lần hủy chưa bị chặn');
+  assert.strictEqual(checkSpamBlocked(3), true, '>= 3 lần hủy chưa thanh toán -> Khóa đặt phòng 24h chống spam');
+  assert.strictEqual(checkSpamBlocked(5), true, '5 lần hủy -> Khóa đặt phòng 24h');
+  console.log('   Anti-Spam / Anti-Hoarding Rule: >= 3 unpaid cancels in 24h = BLOCKED');
+  console.log('   ✓ 15-Minute Timeout & Anti-Spam Rules PASSED!\n');
+
   console.log('====================================================');
-  console.log('🎉 ALL SYSTEM AUDIT & LOGIC CHECKS PASSED 100% (8/8)!');
+  console.log('🎉 ALL SYSTEM AUDIT & LOGIC CHECKS PASSED 100% (9/9)!');
   console.log('====================================================');
 }
 

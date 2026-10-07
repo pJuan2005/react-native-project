@@ -17,6 +17,17 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
 
   // Run DB Schema Auto-Migration
   await migrateDatabase();
+
+  // Background Worker: Tự động quét và giải phóng các phòng giữ chỗ quá 15 phút chưa thanh toán mỗi 60 giây
+  const BookingModel = require('./models/booking.model');
+  setInterval(async () => {
+    try {
+      const purged = await BookingModel.cleanupExpiredPendingBookings();
+      if (purged > 0) {
+        console.log(`[Auto-Expire Worker] Đã tự động giải phóng ${purged} đơn phòng quá hạn thanh toán 15 phút.`);
+      }
+    } catch (_) {}
+  }, 60000);
 });
 
 // Graceful shutdown

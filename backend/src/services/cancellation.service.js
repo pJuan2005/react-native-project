@@ -17,6 +17,69 @@ function formatCurrency(val) {
 
 class CancellationService {
   /**
+   * Tính toán phân chia phí hủy phòng (Cancellation Split) giữa Sàn và Chủ nhà:
+   * - Hủy >= 72h: Khách hoàn 70%, 30% phí hủy chia Sàn 10% + Host 20%.
+   * - Hủy < 72h: Khách hoàn 0%, 100% tiền giữ lại chia Sàn 10% + Host 90%.
+   */
+  static calculateSplitBreakdown(hoursUntilCheckIn, totalPaid) {
+    if (totalPaid <= 0) {
+      return {
+        refundPercentage: 0,
+        refundAmount: 0,
+        cancellationFee: 0,
+        platformFee: 0,
+        platformPercentage: 0,
+        hostPayout: 0,
+        hostPercentage: 0,
+        policyCode: 'CANCEL_UNPAID_FREE',
+        policyDescription: 'Đơn phòng chưa thanh toán chuyển khoản: Hủy miễn phí 100%.',
+      };
+    }
+
+    if (hoursUntilCheckIn >= 72) {
+      // CASE 1: Hủy >= 72h
+      // Khách nhận: 70% | Sàn thu: 10% | Host nhận: 20%
+      const refundPercentage = 70;
+      const refundAmount = Math.round(totalPaid * 0.70);
+      const cancellationFee = totalPaid - refundAmount; // 30%
+      const platformFee = Math.round(totalPaid * 0.10); // 10%
+      const hostPayout = cancellationFee - platformFee; // 20%
+
+      return {
+        refundPercentage,
+        refundAmount,
+        cancellationFee,
+        platformFee,
+        platformPercentage: 10,
+        hostPayout,
+        hostPercentage: 20,
+        policyCode: 'CANCEL_72H_70_PERCENT',
+        policyDescription: `Hủy trước giờ nhận phòng ≥ 72 giờ (${hoursUntilCheckIn}h trước nhận phòng): Khách được hoàn 70% (${formatCurrency(refundAmount)}) vào Ví. 30% phí hủy (${formatCurrency(cancellationFee)}) được chia: Nền tảng thu 10% hoa hồng (${formatCurrency(platformFee)}), Chủ nhà nhận bồi thường 20% (${formatCurrency(hostPayout)}).`,
+      };
+    }
+
+    // CASE 2: Hủy < 72h
+    // Khách nhận: 0% | Sàn thu: 10% | Host nhận: 90%
+    const refundPercentage = 0;
+    const refundAmount = 0;
+    const cancellationFee = totalPaid; // 100%
+    const platformFee = Math.round(totalPaid * 0.10); // 10%
+    const hostPayout = totalPaid - platformFee; // 90%
+
+    return {
+      refundPercentage,
+      refundAmount,
+      cancellationFee,
+      platformFee,
+      platformPercentage: 10,
+      hostPayout,
+      hostPercentage: 90,
+      policyCode: 'CANCEL_WITHIN_72H_NO_REFUND',
+      policyDescription: `Hủy trong vòng 72 giờ trước giờ nhận phòng (${hoursUntilCheckIn}h trước nhận phòng): Không hoàn tiền. Toàn bộ tiền phòng (${formatCurrency(totalPaid)}) được giữ làm phí hủy: Nền tảng thu 10% hoa hồng (${formatCurrency(platformFee)}), Chủ nhà nhận bồi thường 90% (${formatCurrency(hostPayout)}) do hủy sát ngày khó bán lại phòng.`,
+    };
+  }
+
+  /**
    * Tính toán trước chính sách hoàn tiền cho một đơn đặt phòng dựa trên thời gian thực của Server.
    * Mobile gọi API này để hiển thị rõ cho khách trước khi khách xác nhận hủy.
    */
@@ -33,7 +96,8 @@ class CancellationService {
         b.status,
         b.payment_status,
         b.created_at,
-        p.name AS property_name
+        p.name AS property_name,
+        p.host_id
        FROM bookings b
        JOIN properties p ON b.property_id = p.id
        WHERE b.id = ? OR b.booking_code = ?`,
@@ -97,34 +161,7 @@ class CancellationService {
       totalPaid = parseFloat(booking.total_price || 0);
     }
 
-    let refundPercentage = 0;
-    let refundAmount = 0;
-    let cancellationFee = 0;
-    let policyCode = '';
-    let policyDescription = '';
-
-    if (totalPaid <= 0) {
-      // Đơn chưa thanh toán tiền: Hủy miễn phí 100%
-      refundPercentage = 0;
-      refundAmount = 0;
-      cancellationFee = 0;
-      policyCode = 'CANCEL_UNPAID_FREE';
-      policyDescription = 'Đơn phòng chưa thanh toán chuyển khoản: Hủy miễn phí 100%.';
-    } else if (hoursUntilCheckIn >= 72) {
-      // CASE A: Hủy trước hoặc bằng 72 giờ (>= 72h) -> Hoàn 70%, phí hủy 30%
-      refundPercentage = 70;
-      refundAmount = Math.round(totalPaid * 0.70);
-      cancellationFee = totalPaid - refundAmount;
-      policyCode = 'CANCEL_72H_70_PERCENT';
-      policyDescription = `Hủy trước giờ nhận phòng ≥ 72 giờ (${hoursUntilCheckIn}h trước nhận phòng): Được hoàn 70% (${formatCurrency(refundAmount)}) vào ví. Phí hủy dịch vụ 30% (${formatCurrency(cancellationFee)}).`;
-    } else {
-      // CASE B: Hủy dưới 72 giờ (< 72h) -> Không hoàn tiền, phí hủy 100%
-      refundPercentage = 0;
-      refundAmount = 0;
-      cancellationFee = totalPaid;
-      policyCode = 'CANCEL_WITHIN_72H_NO_REFUND';
-      policyDescription = `Hủy trong vòng 72 giờ trước giờ nhận phòng (${hoursUntilCheckIn}h trước nhận phòng): Không hoàn tiền. Toàn bộ tiền phòng (${formatCurrency(totalPaid)}) được giữ làm phí bồi thường cho chủ nhà.`;
-    }
+    const split = this.calculateSplitBreakdown(hoursUntilCheckIn, totalPaid);
 
     return {
       bookingId: booking.id,
@@ -134,11 +171,15 @@ class CancellationService {
       serverTime: now.toISOString(),
       hoursUntilCheckIn,
       totalPaid,
-      refundPercentage,
-      refundAmount,
-      cancellationFee,
-      policy: policyCode,
-      policyDescription,
+      refundPercentage: split.refundPercentage,
+      refundAmount: split.refundAmount,
+      cancellationFee: split.cancellationFee,
+      platformFee: split.platformFee,
+      platformPercentage: split.platformPercentage,
+      hostPayout: split.hostPayout,
+      hostPercentage: split.hostPercentage,
+      policy: split.policyCode,
+      policyDescription: split.policyDescription,
       currency: 'VND',
       canCancel: true,
       reasonOptions: Object.entries(REASON_MAP).map(([code, label]) => ({ code, label })),
@@ -147,7 +188,13 @@ class CancellationService {
 
   /**
    * Thực hiện hủy đặt phòng chính thức trong DB Transaction.
-   * Tự động cộng tiền hoàn vào Ví (Wallet) và ghi sổ Ledger (wallet_transactions), tạo system chat message.
+   * Tự động:
+   * 1. Cập nhật trạng thái booking & payment
+   * 2. Hoàn tiền vào Ví Khách (nếu có refundAmount)
+   * 3. Chuyển tiền bồi thường vào Ví Chủ nhà (nếu có hostPayout)
+   * 4. Ghi nhận sổ cái Ledger (wallet_transactions)
+   * 5. Tạo tin nhắn hệ thống (Chat System Message)
+   * 6. Ghi Audit Log & Notification
    */
   static async executeCancellation({ bookingId, userId, reasonCode, reasonText = '' }) {
     if (!reasonCode) {
@@ -234,42 +281,21 @@ class CancellationService {
                      booking.payment_status === 'proof_uploaded';
 
       const totalPaid = isPaid ? parseFloat(booking.total_price || 0) : 0;
-
-      let refundPercentage = 0;
-      let refundAmount = 0;
-      let cancellationFee = 0;
-      let policyCode = '';
-
-      if (totalPaid <= 0) {
-        refundPercentage = 0;
-        refundAmount = 0;
-        cancellationFee = 0;
-        policyCode = 'CANCEL_UNPAID_FREE';
-      } else if (hoursUntilCheckIn >= 72) {
-        refundPercentage = 70;
-        refundAmount = Math.round(totalPaid * 0.70);
-        cancellationFee = totalPaid - refundAmount;
-        policyCode = 'CANCEL_72H_70_PERCENT';
-      } else {
-        refundPercentage = 0;
-        refundAmount = 0;
-        cancellationFee = totalPaid;
-        policyCode = 'CANCEL_WITHIN_72H_NO_REFUND';
-      }
+      const split = this.calculateSplitBreakdown(hoursUntilCheckIn, totalPaid);
 
       // Xác định trạng thái thanh toán mới
       let newPaymentStatus = 'unpaid';
       if (totalPaid > 0) {
-        if (refundAmount >= totalPaid) {
+        if (split.refundAmount >= totalPaid) {
           newPaymentStatus = 'refunded';
-        } else if (refundAmount > 0) {
+        } else if (split.refundAmount > 0) {
           newPaymentStatus = 'partially_refunded';
         } else {
-          newPaymentStatus = 'verified'; // Tiền được giữ làm cancellation fee
+          newPaymentStatus = 'verified'; // Tiền được giữ làm phí bồi thường
         }
       }
 
-      // 3. Cập nhật booking
+      // 3. Cập nhật booking với các trường phân chia hoa hồng & phí bồi thường rõ ràng
       await runner.query(
         `UPDATE bookings SET
           status = 'cancelled',
@@ -278,6 +304,8 @@ class CancellationService {
           cancellation_reason_text = ?,
           refund_amount = ?,
           cancellation_fee = ?,
+          commission_amount = ?,
+          host_payout_amount = ?,
           refund_percentage = ?,
           cancellation_policy_applied = ?,
           cancelled_by = ?,
@@ -288,10 +316,12 @@ class CancellationService {
           newPaymentStatus,
           normalizedReasonCode,
           reasonText ? reasonText.trim() : null,
-          refundAmount,
-          cancellationFee,
-          refundPercentage,
-          policyCode,
+          split.refundAmount,
+          split.cancellationFee,
+          split.platformFee,
+          split.hostPayout,
+          split.refundPercentage,
+          split.policyCode,
           userId || booking.user_id,
           finalReasonDesc,
           booking.id,
@@ -300,7 +330,7 @@ class CancellationService {
 
       // Cập nhật bảng payments
       if (totalPaid > 0) {
-        const paymentState = refundAmount >= totalPaid ? 'refunded' : refundAmount > 0 ? 'partially_refunded' : 'completed';
+        const paymentState = split.refundAmount >= totalPaid ? 'refunded' : split.refundAmount > 0 ? 'partially_refunded' : 'completed';
         await runner.query(
           `UPDATE payments SET status = ?, updated_at = NOW() WHERE booking_id = ?`,
           [paymentState, booking.id]
@@ -309,9 +339,8 @@ class CancellationService {
 
       let walletTxId = null;
 
-      // 4. Nếu có tiền hoàn (refundAmount > 0) -> Hoàn vào Ví (Wallet) của Khách qua Ledger
-      if (refundAmount > 0 && booking.user_id) {
-        // Đảm bảo ví tồn tại
+      // 4. Nếu khách được hoàn tiền (refundAmount > 0) -> Hoàn vào Ví (Wallet) của Khách qua Ledger
+      if (split.refundAmount > 0 && booking.user_id) {
         await runner.query(
           `INSERT INTO wallets (user_id, balance, currency, status)
            VALUES (?, 0.00, 'VND', 'active')
@@ -319,7 +348,6 @@ class CancellationService {
           [booking.user_id]
         );
 
-        // Khóa hàng ví bằng FOR UPDATE
         const [wRows] = await runner.query(
           `SELECT id, balance FROM wallets WHERE user_id = ? FOR UPDATE`,
           [booking.user_id]
@@ -327,15 +355,13 @@ class CancellationService {
 
         const wallet = wRows[0];
         const balanceBefore = parseFloat(wallet.balance || 0);
-        const balanceAfter = balanceBefore + refundAmount;
+        const balanceAfter = balanceBefore + split.refundAmount;
 
-        // Cập nhật số dư ví
         await runner.query(
           `UPDATE wallets SET balance = ?, updated_at = NOW() WHERE id = ?`,
           [balanceAfter, wallet.id]
         );
 
-        // Ghi lịch sử biến động số dư (Ledger transaction)
         const [txResult] = await runner.query(
           `INSERT INTO wallet_transactions (
             wallet_id, user_id, type, amount, balance_before, balance_after,
@@ -344,7 +370,7 @@ class CancellationService {
           [
             wallet.id,
             booking.user_id,
-            refundAmount,
+            split.refundAmount,
             balanceBefore,
             balanceAfter,
             booking.id,
@@ -354,7 +380,53 @@ class CancellationService {
         walletTxId = txResult.insertId;
       }
 
-      // 5. Ghi nhận vào bảng refunds
+      // 5. Nếu Chủ nhà nhận được tiền bồi thường (hostPayout > 0) -> Cộng trực tiếp vào Ví của Chủ nhà!
+      if (split.hostPayout > 0 && booking.host_id) {
+        try {
+          await runner.query(
+            `INSERT INTO wallets (user_id, balance, currency, status)
+             VALUES (?, 0.00, 'VND', 'active')
+             ON DUPLICATE KEY UPDATE updated_at = NOW()`,
+            [booking.host_id]
+          );
+
+          const [hostWRows] = await runner.query(
+            `SELECT id, balance FROM wallets WHERE user_id = ? FOR UPDATE`,
+            [booking.host_id]
+          );
+
+          if (hostWRows.length > 0) {
+            const hostWallet = hostWRows[0];
+            const hostBalBefore = parseFloat(hostWallet.balance || 0);
+            const hostBalAfter = hostBalBefore + split.hostPayout;
+
+            await runner.query(
+              `UPDATE wallets SET balance = ?, updated_at = NOW() WHERE id = ?`,
+              [hostBalAfter, hostWallet.id]
+            );
+
+            await runner.query(
+              `INSERT INTO wallet_transactions (
+                wallet_id, user_id, type, amount, balance_before, balance_after,
+                reference_type, reference_id, description, status, created_at
+              ) VALUES (?, ?, 'DEPOSIT', ?, ?, ?, 'cancellation_compensation', ?, ?, 'completed', NOW())`,
+              [
+                hostWallet.id,
+                booking.host_id,
+                split.hostPayout,
+                hostBalBefore,
+                hostBalAfter,
+                booking.id,
+                `Bồi thường ${split.hostPercentage}% tiền phòng do khách hủy đơn ${booking.booking_code}`,
+              ]
+            );
+          }
+        } catch (hostWalletErr) {
+          console.warn('Host wallet compensation notice:', hostWalletErr.message);
+        }
+      }
+
+      // 6. Ghi nhận vào bảng refunds
       await runner.query(
         `INSERT INTO refunds (
           booking_id, user_id, total_paid, refund_amount, cancellation_fee,
@@ -369,17 +441,17 @@ class CancellationService {
           booking.id,
           booking.user_id,
           totalPaid,
-          refundAmount,
-          cancellationFee,
-          refundPercentage,
-          policyCode,
+          split.refundAmount,
+          split.cancellationFee,
+          split.refundPercentage,
+          split.policyCode,
           normalizedReasonCode,
           reasonText ? reasonText.trim() : null,
           walletTxId,
         ]
       );
 
-      // 6. Tạo cuộc hội thoại Chat và tin nhắn hệ thống (System Messages)
+      // 7. Tạo cuộc hội thoại Chat và tin nhắn hệ thống
       try {
         await runner.query(
           `INSERT IGNORE INTO booking_conversations (booking_id) VALUES (?)`,
@@ -405,14 +477,14 @@ class CancellationService {
             ]
           );
 
-          if (refundAmount > 0) {
+          if (split.refundAmount > 0) {
             await runner.query(
               `INSERT INTO booking_messages (conversation_id, sender_id, message, message_type)
                VALUES (?, ?, ?, 'system')`,
               [
                 convId,
                 senderId,
-                `Khoản hoàn tiền ${formatCurrency(refundAmount)} đã được cộng vào Ví của bạn thành công.`,
+                `Khoản hoàn tiền ${formatCurrency(split.refundAmount)} đã được cộng vào Ví của bạn thành công.`,
               ]
             );
           }
@@ -421,7 +493,7 @@ class CancellationService {
         console.warn('Chat system message notice:', chatErr.message);
       }
 
-      // 7. Ghi Audit Log
+      // 8. Ghi Audit Log
       await AuditService.log({
         actorId: userId || booking.user_id,
         actorRole: 'guest',
@@ -431,17 +503,19 @@ class CancellationService {
         metadata: {
           bookingCode: booking.booking_code,
           totalPaid,
-          refundAmount,
-          cancellationFee,
-          policyCode,
+          refundAmount: split.refundAmount,
+          cancellationFee: split.cancellationFee,
+          platformFee: split.platformFee,
+          hostPayout: split.hostPayout,
+          policyCode: split.policyCode,
           reason: finalReasonDesc,
         },
       }).catch(() => {});
 
-      // 8. Tạo thông báo In-app cho người dùng
+      // 9. Tạo thông báo In-app cho khách
       if (booking.user_id) {
-        const notifContent = refundAmount > 0
-          ? `Đơn đặt phòng ${booking.booking_code} đã được hủy. ${formatCurrency(refundAmount)} (70%) đã được hoàn về Ví của bạn.`
+        const notifContent = split.refundAmount > 0
+          ? `Đơn đặt phòng ${booking.booking_code} đã được hủy. ${formatCurrency(split.refundAmount)} (70%) đã được hoàn về Ví của bạn.`
           : `Đơn đặt phòng ${booking.booking_code} đã được hủy theo yêu cầu.`;
 
         await runner.query(
@@ -461,13 +535,15 @@ class CancellationService {
         status: 'cancelled',
         paymentStatus: newPaymentStatus,
         totalPaid,
-        refundAmount,
-        cancellationFee,
-        refundPercentage,
-        policyCode,
-        refundToWallet: refundAmount > 0,
-        message: refundAmount > 0
-          ? `Hủy phòng thành công! Số tiền ${formatCurrency(refundAmount)} (70%) đã được hoàn vào Ví của bạn.`
+        refundAmount: split.refundAmount,
+        cancellationFee: split.cancellationFee,
+        platformFee: split.platformFee,
+        hostPayout: split.hostPayout,
+        refundPercentage: split.refundPercentage,
+        policyCode: split.policyCode,
+        refundToWallet: split.refundAmount > 0,
+        message: split.refundAmount > 0
+          ? `Hủy phòng thành công! Số tiền ${formatCurrency(split.refundAmount)} (70%) đã được hoàn vào Ví của bạn.`
           : 'Hủy phòng thành công.',
       };
     } catch (err) {

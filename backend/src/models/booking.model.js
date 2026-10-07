@@ -1,7 +1,32 @@
 const db = require('../config/database');
 
 class BookingModel {
+  /**
+   * Tự động quét và giải phóng các phòng giữ chỗ quá 15 phút chưa hoàn tất thanh toán.
+   * Chấm dứt triệt để tình trạng giữ chỗ ảo, treo phòng cản trở khách khác đặt.
+   */
+  static async cleanupExpiredPendingBookings(runner = db) {
+    try {
+      const [result] = await runner.query(
+        `UPDATE bookings
+         SET status = 'cancelled',
+             payment_status = 'rejected',
+             cancelled_reason = 'Hết thời hạn thanh toán giữ chỗ (15 phút)',
+             cancelled_at = NOW()
+         WHERE status = 'pending'
+           AND payment_status = 'unpaid'
+           AND source = 'guest_online'
+           AND created_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)`
+      );
+      return result.affectedRows || 0;
+    } catch (err) {
+      console.warn('Cleanup expired bookings notice:', err.message);
+      return 0;
+    }
+  }
+
   static async findAll({ status, source, hostId, propertyId, homestayId, search, limit, offset } = {}) {
+    await this.cleanupExpiredPendingBookings();
     const targetPropertyId = propertyId || homestayId;
     let sql = `
       SELECT
@@ -145,6 +170,7 @@ class BookingModel {
   }
 
   static async findByUserId(userId, status = null) {
+    await this.cleanupExpiredPendingBookings();
     let sql = `
       SELECT
         b.id,
@@ -226,6 +252,25 @@ class BookingModel {
     const runner = conn || db;
 
     try {
+      // 0. Tự động quét và giải phóng các phòng giữ chỗ quá 15 phút chưa thanh toán
+      await this.cleanupExpiredPendingBookings(runner);
+
+      // Chống Spam / Chống găm phòng: Kiểm tra nếu tài khoản có >= 3 đơn hủy chưa thanh toán trong 24h qua
+      if (userId) {
+        const [spamRows] = await runner.query(
+          `SELECT COUNT(*) AS unpaid_spam_count
+           FROM bookings
+           WHERE user_id = ?
+             AND status = 'cancelled'
+             AND payment_status IN ('unpaid', 'rejected')
+             AND cancelled_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
+          [userId]
+        );
+        if (spamRows[0]?.unpaid_spam_count >= 3) {
+          throw new Error('Tài khoản của bạn đã có 3 đơn giữ chỗ bị hủy do quá hạn thanh toán trong 24 giờ qua. Để phòng ngừa hành vi spam giữ phòng và bảo vệ chủ nhà, hệ thống tạm khóa quyền tạo đơn mới trong 24h. Vui lòng thử lại sau.');
+        }
+      }
+
       // 1. Get Property with row lock
       const [pRows] = await runner.query(
         'SELECT id, name, price_per_night, max_guests, is_active, host_id FROM properties WHERE id = ? AND is_deleted = 0 FOR UPDATE',
@@ -726,6 +771,7 @@ class BookingModel {
   }
 
   static async getUnavailableDates(propertyId) {
+    await this.cleanupExpiredPendingBookings();
     const [rows] = await db.query(
       `SELECT check_in, check_out, booking_code, status, source
        FROM bookings

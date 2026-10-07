@@ -385,10 +385,16 @@ export default function BookingsScreen() {
                               <Text style={s.paidBadgeText}>Đã thanh toán CK</Text>
                             </View>
                           ) : (
-                            <View style={s.unpaidBadge}>
-                              <Ionicons name="card-outline" size={11} color="#D97706" />
-                              <Text style={s.unpaidBadgeText}>Chưa thanh toán</Text>
-                            </View>
+                            <>
+                              <View style={s.unpaidBadge}>
+                                <Ionicons name="card-outline" size={11} color="#D97706" />
+                                <Text style={s.unpaidBadgeText}>Chưa thanh toán</Text>
+                              </View>
+                              <View style={s.holdBadge}>
+                                <Ionicons name="hourglass-outline" size={10} color="#C2410C" />
+                                <Text style={s.holdBadgeText}>Hạn 15 phút</Text>
+                              </View>
+                            </>
                           )}
 
                           {isConfirmed ? (
@@ -766,6 +772,14 @@ export default function BookingsScreen() {
             </View>
 
             <ScrollView style={{ maxHeight: height * 0.65 }} showsVerticalScrollIndicator={false}>
+              {/* Payment Deadline 15-Minute Notice */}
+              <View style={[s.paymentDeadlineBox, { backgroundColor: isDark ? '#3E1F03' : '#FEF3C7', borderColor: '#F59E0B' }]}>
+                <Ionicons name="time" size={16} color="#D97706" />
+                <Text style={[s.paymentDeadlineText, { color: isDark ? '#FEF08A' : '#92400E' }]}>
+                  Thời hạn giữ phòng: 15 phút. Quá 15 phút không thanh toán, hệ thống sẽ tự động hủy đơn và mở lại lịch cho khách khác. Hủy quá 3 lần/24h tài khoản sẽ bị hạn chế đặt phòng.
+                </Text>
+              </View>
+
               {/* QR Code Section */}
               <View style={[s.qrBox, { backgroundColor: isDark ? '#0B132B' : '#F8FAFC', borderColor: colors.cardBorder }]}>
                 <Text style={[s.qrTitle, { color: colors.text }]}>Quét mã VietQR chuyển khoản</Text>
@@ -1201,6 +1215,16 @@ const s = StyleSheet.create({
     borderRadius: 6,
   },
   unpaidBadgeText: { fontSize: 9, fontWeight: '700', color: '#B45309' },
+  holdBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#FFEDD5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  holdBadgeText: { fontSize: 9, fontWeight: '700', color: '#C2410C' },
   confirmedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1499,6 +1523,21 @@ const s = StyleSheet.create({
     fontWeight: '700',
   },
   // QR & Payment Modal
+  paymentDeadlineBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  paymentDeadlineText: {
+    fontSize: 11,
+    lineHeight: 16,
+    flex: 1,
+    fontWeight: '600',
+  },
   qrBox: {
     alignItems: 'center',
     padding: 12,
