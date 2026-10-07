@@ -154,6 +154,7 @@ DELETE FROM \`bank_accounts\`;
 DELETE FROM \`refunds\`;
 DELETE FROM \`wallet_transactions\`;
 DELETE FROM \`wallets\`;
+DELETE FROM \`app_settings\`;
 DELETE FROM \`audit_logs\`;
 DELETE FROM \`disputes\`;
 DELETE FROM \`host_verifications\`;
@@ -180,6 +181,7 @@ ALTER TABLE \`bank_accounts\` AUTO_INCREMENT = 1;
 ALTER TABLE \`refunds\` AUTO_INCREMENT = 1;
 ALTER TABLE \`wallet_transactions\` AUTO_INCREMENT = 1;
 ALTER TABLE \`wallets\` AUTO_INCREMENT = 1;
+ALTER TABLE \`app_settings\` AUTO_INCREMENT = 1;
 ALTER TABLE \`point_transactions\` AUTO_INCREMENT = 1;
 ALTER TABLE \`user_devices\` AUTO_INCREMENT = 1;
 ALTER TABLE \`notifications\` AUTO_INCREMENT = 1;
@@ -202,10 +204,11 @@ SET FOREIGN_KEY_CHECKS = 1;
 sql += `-- =====================================================
 -- 1. APP SETTINGS
 -- =====================================================
-INSERT INTO \`app_settings\` (\`id\`, \`setting_key\`, \`setting_value\`, \`description\`) VALUES
+INSERT IGNORE INTO \`app_settings\` (\`id\`, \`setting_key\`, \`setting_value\`, \`description\`) VALUES
 (1, 'platform_commission_rate', '10', 'Tỷ lệ hoa hồng nền tảng thu từ đơn online (%)'),
 (2, 'direct_commission_rate', '5', 'Tỷ lệ hoa hồng nền tảng thu từ đơn tại quầy do chủ nhà tạo (%)'),
-(3, 'usd_to_vnd_rate', '25000', 'Tỷ giá quy đổi USD sang VND');
+(3, 'usd_to_vnd_rate', '25000', 'Tỷ giá quy đổi USD sang VND')
+ON DUPLICATE KEY UPDATE \`setting_value\` = VALUES(\`setting_value\`);
 \n`;
 
 // 2. SEED LOCATIONS (20 Điểm đến du lịch)
