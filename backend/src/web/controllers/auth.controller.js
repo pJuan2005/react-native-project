@@ -15,6 +15,23 @@ function normalizeRole(role) {
     : "guest";
 }
 
+function formatBirthDate(val) {
+  if (!val) return "";
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return "";
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, "0");
+    const d = String(val.getDate()).padStart(2, "0");
+    return `${d}/${m}/${y}`;
+  }
+  const str = String(val).trim();
+  const ymdMatch = str.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
+  if (ymdMatch) {
+    return `${ymdMatch[3].padStart(2, "0")}/${ymdMatch[2].padStart(2, "0")}/${ymdMatch[1]}`;
+  }
+  return str;
+}
+
 function mapUserResponse(user) {
   return {
     id: Number(user.id),
@@ -240,7 +257,7 @@ async function handleRegister(req, res) {
           role: user.role,
           phone: user.phone || "",
           address: user.address || user.location || "",
-          birthDate: user.birth_date ? new Date(user.birth_date).toISOString().split("T")[0] : "",
+          birthDate: formatBirthDate(user.birth_date),
           avatar: user.avatar_url || "",
           rewardPoints: user.reward_points || 0,
         },
@@ -326,7 +343,7 @@ async function handleLogin(req, res) {
           role: refreshedUser.role,
           phone: refreshedUser.phone || "",
           address: refreshedUser.address || refreshedUser.location || "",
-          birthDate: refreshedUser.birth_date ? new Date(refreshedUser.birth_date).toISOString().split("T")[0] : "",
+          birthDate: formatBirthDate(refreshedUser.birth_date),
           avatar: refreshedUser.avatar_url || "",
           rewardPoints: refreshedUser.reward_points || 0,
         },

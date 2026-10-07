@@ -53,6 +53,63 @@ const DISNEY_AVATARS = [
   },
 ];
 
+function formatDisplayDate(dateStr: string | undefined): string {
+  if (!dateStr) return '';
+  const trimmed = String(dateStr).trim();
+  // If DD/MM/YYYY
+  const dmy = trimmed.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (dmy) {
+    const d = dmy[1].padStart(2, '0');
+    const m = dmy[2].padStart(2, '0');
+    let y = parseInt(dmy[3], 10);
+    if (y < 1920) y = 1999;
+    return `${d}/${m}/${y}`;
+  }
+  // If YYYY-MM-DD
+  const ymd = trimmed.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
+  if (ymd) {
+    let y = parseInt(ymd[1], 10);
+    if (y < 1920) y = 1999;
+    const m = ymd[2].padStart(2, '0');
+    const d = ymd[3].padStart(2, '0');
+    return `${d}/${m}/${y}`;
+  }
+  return trimmed;
+}
+
+function parseBirthDateParts(dateStr: string | undefined) {
+  let day = 15;
+  let month = 5;
+  let year = 2000;
+
+  if (!dateStr) return { day, month, year };
+  const trimmed = String(dateStr).trim();
+
+  // If DD/MM/YYYY
+  const dmy = trimmed.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (dmy) {
+    day = Math.min(31, Math.max(1, parseInt(dmy[1], 10) || 1));
+    month = Math.min(12, Math.max(1, parseInt(dmy[2], 10) || 1));
+    let y = parseInt(dmy[3], 10) || 2000;
+    if (y < 1920) y = 1999;
+    year = Math.min(2026, y);
+    return { day, month, year };
+  }
+
+  // If YYYY-MM-DD
+  const ymd = trimmed.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/);
+  if (ymd) {
+    let y = parseInt(ymd[1], 10) || 2000;
+    if (y < 1920) y = 1999;
+    year = Math.min(2026, y);
+    month = Math.min(12, Math.max(1, parseInt(ymd[2], 10) || 1));
+    day = Math.min(31, Math.max(1, parseInt(ymd[3], 10) || 1));
+    return { day, month, year };
+  }
+
+  return { day, month, year };
+}
+
 export default function ProfileScreen() {
   const { logout } = useAuth();
   const { themeMode, isDark, setThemeMode, colors } = useAppTheme();
@@ -74,7 +131,7 @@ export default function ProfileScreen() {
     phone: userProfile.phone,
     address: userProfile.address,
     avatar: userProfile.avatar,
-    birthDate: userProfile.birthDate || '',
+    birthDate: formatDisplayDate(userProfile.birthDate),
   });
   const [activeTab, setActiveTab] = useState<'profile' | 'bookings' | 'wishlist' | 'vouchers'>('profile');
   const [saving, setSaving] = useState(false);
@@ -85,6 +142,35 @@ export default function ProfileScreen() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showBirthDateModal, setShowBirthDateModal] = useState(false);
+
+  // Interactive Birth Date Picker State
+  const [pickerDay, setPickerDay] = useState(15);
+  const [pickerMonth, setPickerMonth] = useState(5);
+  const [pickerYear, setPickerYear] = useState(2000);
+  const [pickerMode, setPickerMode] = useState<'day' | 'month' | 'year'>('day');
+
+  const maxDaysInPickerMonth = useMemo(() => {
+    return new Date(pickerYear, pickerMonth, 0).getDate();
+  }, [pickerYear, pickerMonth]);
+
+  const openDatePicker = () => {
+    const parts = parseBirthDateParts(form.birthDate);
+    setPickerDay(parts.day);
+    setPickerMonth(parts.month);
+    setPickerYear(parts.year);
+    setPickerMode('day');
+    setShowBirthDateModal(true);
+  };
+
+  const confirmBirthDate = () => {
+    const safeDay = Math.min(pickerDay, maxDaysInPickerMonth);
+    const dStr = String(safeDay).padStart(2, '0');
+    const mStr = String(pickerMonth).padStart(2, '0');
+    const formatted = `${dStr}/${mStr}/${pickerYear}`;
+    setForm((prev) => ({ ...prev, birthDate: formatted }));
+    setShowBirthDateModal(false);
+  };
 
   useEffect(() => {
     setForm({
@@ -93,7 +179,7 @@ export default function ProfileScreen() {
       phone: userProfile.phone,
       address: userProfile.address,
       avatar: userProfile.avatar,
-      birthDate: userProfile.birthDate || '',
+      birthDate: formatDisplayDate(userProfile.birthDate),
     });
   }, [userProfile]);
 
@@ -178,9 +264,15 @@ export default function ProfileScreen() {
   const saveProfile = async () => {
     setSaving(true);
     try {
-      await updateUserProfile(form);
+      const formattedBirthDate = formatDisplayDate(form.birthDate);
+      const payload = {
+        ...form,
+        birthDate: formattedBirthDate,
+      };
+      await updateUserProfile(payload);
+      setForm((prev) => ({ ...prev, birthDate: formattedBirthDate }));
       setIsEditing(false);
-      Alert.alert('Thành công! 🎉', 'Hồ sơ và ảnh đại diện đã được cập nhật đồng bộ.');
+      Alert.alert('Thành công! 🎉', 'Hồ sơ cá nhân và ngày sinh đã được cập nhật thành công.');
     } catch {
       setIsEditing(false);
       Alert.alert('Thành công', 'Đã lưu thay đổi hồ sơ.');
@@ -310,7 +402,26 @@ export default function ProfileScreen() {
                 <Field label="Email" value={form.email} onChangeText={(email) => setForm({ ...form, email })} keyboardType="email-address" />
                 <Field label="Số điện thoại" value={form.phone} onChangeText={(phone) => setForm({ ...form, phone })} keyboardType="phone-pad" />
                 <Field label="Địa chỉ" value={form.address} onChangeText={(address) => setForm({ ...form, address })} />
-                <Field label="Ngày sinh" value={form.birthDate} onChangeText={(birthDate) => setForm({ ...form, birthDate })} placeholder="VD: 15/05/2000" />
+
+                <View style={{ marginBottom: 10 }}>
+                  <Text style={styles.fieldLabel}>Ngày sinh</Text>
+                  <View style={styles.birthDateInputRow}>
+                    <TextInput
+                      value={form.birthDate}
+                      onChangeText={(birthDate) => setForm({ ...form, birthDate })}
+                      placeholder="VD: 15/05/2000"
+                      placeholderTextColor="#94A3B8"
+                      style={[styles.input, { flex: 1, paddingRight: 42 }]}
+                    />
+                    <Pressable
+                      style={styles.calendarTriggerBtn}
+                      onPress={openDatePicker}
+                      hitSlop={8}
+                    >
+                      <Ionicons name="calendar" size={20} color="#0284C7" />
+                    </Pressable>
+                  </View>
+                </View>
 
                 <Pressable style={[styles.saveButton, saving && { opacity: 0.6 }]} onPress={saveProfile} disabled={saving}>
                   <Text style={styles.saveText}>{saving ? 'Đang lưu...' : 'Lưu thay đổi'}</Text>
@@ -323,7 +434,7 @@ export default function ProfileScreen() {
                 <Info label="Email" value={userProfile.email} isDark={isDark} />
                 <Info label="Số điện thoại" value={userProfile.phone} isDark={isDark} />
                 <Info label="Địa chỉ" value={userProfile.address} isDark={isDark} />
-                <Info label="Ngày sinh" value={userProfile.birthDate} isDark={isDark} />
+                <Info label="Ngày sinh" value={formatDisplayDate(userProfile.birthDate)} isDark={isDark} />
               </View>
             )}
           </>
@@ -684,6 +795,170 @@ export default function ProfileScreen() {
                 }}
               >
                 <Text style={styles.confirmLogoutText}>Đăng xuất</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* MODAL 6: CHỌN NGÀY SINH TRỰC QUAN (NGÀY, THÁNG, NĂM) */}
+      <Modal
+        visible={showBirthDateModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowBirthDateModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowBirthDateModal(false)}>
+          <Pressable
+            style={[styles.birthDateModalContent, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Chọn ngày sinh 🎂</Text>
+                <Text style={styles.modalSubtitle}>
+                  Ngày đang chọn:{' '}
+                  <Text style={{ color: '#0284C7', fontWeight: '800' }}>
+                    {String(Math.min(pickerDay, maxDaysInPickerMonth)).padStart(2, '0')}/{String(pickerMonth).padStart(2, '0')}/{pickerYear}
+                  </Text>
+                </Text>
+              </View>
+              <Pressable onPress={() => setShowBirthDateModal(false)} hitSlop={8}>
+                <Ionicons name="close" size={22} color="#64748B" />
+              </Pressable>
+            </View>
+
+            {/* Quick Segmented Tabs: [Ngày] [Tháng] [Năm] */}
+            <View style={[styles.pickerTabsRow, isDark && { backgroundColor: '#0B132B' }]}>
+              <Pressable
+                style={[styles.pickerTabBtn, pickerMode === 'day' && styles.pickerTabBtnActive]}
+                onPress={() => setPickerMode('day')}
+              >
+                <Text style={[styles.pickerTabBtnText, pickerMode === 'day' && styles.pickerTabBtnTextActive]}>
+                  📅 Ngày {pickerDay}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.pickerTabBtn, pickerMode === 'month' && styles.pickerTabBtnActive]}
+                onPress={() => setPickerMode('month')}
+              >
+                <Text style={[styles.pickerTabBtnText, pickerMode === 'month' && styles.pickerTabBtnTextActive]}>
+                  🗓️ Tháng {pickerMonth}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.pickerTabBtn, pickerMode === 'year' && styles.pickerTabBtnActive]}
+                onPress={() => setPickerMode('year')}
+              >
+                <Text style={[styles.pickerTabBtnText, pickerMode === 'year' && styles.pickerTabBtnTextActive]}>
+                  🎂 Năm {pickerYear}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* TAB CONTENT: CHỌN NGÀY */}
+            {pickerMode === 'day' && (
+              <View style={{ maxHeight: 260 }}>
+                <Text style={styles.pickerGuideText}>Chọn ngày trong Tháng {pickerMonth}:</Text>
+                <ScrollView contentContainerStyle={styles.daysGrid} showsVerticalScrollIndicator={false}>
+                  {Array.from({ length: maxDaysInPickerMonth }, (_, i) => i + 1).map((d) => {
+                    const isSelected = pickerDay === d;
+                    return (
+                      <Pressable
+                        key={d}
+                        style={[
+                          styles.dayGridCell,
+                          isDark && { backgroundColor: '#334155' },
+                          isSelected && styles.dayGridCellActive,
+                        ]}
+                        onPress={() => setPickerDay(d)}
+                      >
+                        <Text style={[styles.dayGridCellText, isDark && { color: '#E2E8F0' }, isSelected && styles.dayGridCellTextActive]}>
+                          {d}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* TAB CONTENT: CHỌN THÁNG */}
+            {pickerMode === 'month' && (
+              <View style={{ maxHeight: 260 }}>
+                <Text style={styles.pickerGuideText}>Chọn tháng sinh:</Text>
+                <View style={styles.monthsGrid}>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
+                    const isSelected = pickerMonth === m;
+                    return (
+                      <Pressable
+                        key={m}
+                        style={[
+                          styles.monthGridCell,
+                          isDark && { backgroundColor: '#334155' },
+                          isSelected && styles.monthGridCellActive,
+                        ]}
+                        onPress={() => {
+                          setPickerMonth(m);
+                          setPickerMode('day');
+                        }}
+                      >
+                        <Text style={[styles.monthGridCellText, isDark && { color: '#E2E8F0' }, isSelected && styles.monthGridCellTextActive]}>
+                          Tháng {m}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* TAB CONTENT: CHỌN NĂM */}
+            {pickerMode === 'year' && (
+              <View style={{ maxHeight: 260 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <Text style={styles.pickerGuideText}>Chọn năm sinh (1940 - 2026):</Text>
+                </View>
+                <ScrollView contentContainerStyle={styles.yearsGrid} showsVerticalScrollIndicator={true}>
+                  {Array.from({ length: 2026 - 1940 + 1 }, (_, i) => 2026 - i).map((y) => {
+                    const isSelected = pickerYear === y;
+                    return (
+                      <Pressable
+                        key={y}
+                        style={[
+                          styles.yearGridCell,
+                          isDark && { backgroundColor: '#334155' },
+                          isSelected && styles.yearGridCellActive,
+                        ]}
+                        onPress={() => {
+                          setPickerYear(y);
+                          setPickerMode('month');
+                        }}
+                      >
+                        <Text style={[styles.yearGridCellText, isDark && { color: '#E2E8F0' }, isSelected && styles.yearGridCellTextActive]}>
+                          {y}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Modal Bottom Actions */}
+            <View style={styles.birthDateActions}>
+              <Pressable
+                style={[styles.cancelBirthDateBtn, isDark && { backgroundColor: '#334155' }]}
+                onPress={() => setShowBirthDateModal(false)}
+              >
+                <Text style={[styles.cancelBirthDateText, isDark && { color: '#CBD5E1' }]}>Đóng</Text>
+              </Pressable>
+              <Pressable
+                style={styles.confirmBirthDateBtn}
+                onPress={confirmBirthDate}
+              >
+                <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
+                <Text style={styles.confirmBirthDateText}>Áp dụng ngày này</Text>
               </Pressable>
             </View>
           </Pressable>
@@ -1303,6 +1578,177 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   confirmLogoutText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  // Birth Date Picker Styles
+  birthDateInputRow: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  calendarTriggerBtn: {
+    position: 'absolute',
+    right: 12,
+    height: 42,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  birthDateModalContent: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 18,
+    maxHeight: '85%',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  pickerTabsRow: {
+    flexDirection: 'row',
+    backgroundColor: '#E0F2FE',
+    borderRadius: 14,
+    padding: 3,
+    marginBottom: 12,
+  },
+  pickerTabBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  pickerTabBtnActive: {
+    backgroundColor: '#0284C7',
+  },
+  pickerTabBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0369A1',
+  },
+  pickerTabBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  pickerGuideText: {
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: 10,
+    fontWeight: '600',
+  },
+  daysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'flex-start',
+    paddingBottom: 10,
+  },
+  dayGridCell: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayGridCellActive: {
+    backgroundColor: '#0284C7',
+  },
+  dayGridCellText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  dayGridCellTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  monthsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'space-between',
+  },
+  monthGridCell: {
+    width: '31%',
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  monthGridCellActive: {
+    backgroundColor: '#0284C7',
+  },
+  monthGridCellText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  monthGridCellTextActive: {
+    color: '#FFFFFF',
+  },
+  yearsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'space-between',
+    paddingBottom: 12,
+  },
+  yearGridCell: {
+    width: '23%',
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  yearGridCellActive: {
+    backgroundColor: '#0284C7',
+  },
+  yearGridCellText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  yearGridCellTextActive: {
+    color: '#FFFFFF',
+  },
+  birthDateActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+    borderTopWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingTop: 12,
+  },
+  cancelBirthDateBtn: {
+    flex: 1,
+    paddingVertical: 11,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBirthDateText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  confirmBirthDateBtn: {
+    flex: 2,
+    flexDirection: 'row',
+    gap: 6,
+    paddingVertical: 11,
+    borderRadius: 20,
+    backgroundColor: '#0284C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmBirthDateText: {
     fontSize: 13,
     fontWeight: '700',
     color: '#FFFFFF',
