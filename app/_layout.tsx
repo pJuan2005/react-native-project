@@ -50,6 +50,11 @@ function NavigationGate() {
         <Stack.Screen name="homestay/[id]" />
         <Stack.Screen name="location/[id]" />
         <Stack.Screen name="bookings" />
+        <Stack.Screen name="wallet" />
+        <Stack.Screen name="bank-accounts" />
+        <Stack.Screen name="chat/[id]" />
+        <Stack.Screen name="dispute/[id]" />
+        <Stack.Screen name="disputes" />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'auto'} />
     </NavigationThemeProvider>

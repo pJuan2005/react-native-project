@@ -24,6 +24,15 @@ import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
 import { useResponsive } from '@/utils/responsive';
 
+const CANCELLATION_REASONS = [
+  { code: 'CHANGE_OF_PLAN', label: 'Tôi thay đổi kế hoạch' },
+  { code: 'FOUND_ANOTHER_PLACE', label: 'Tìm được chỗ ở khác' },
+  { code: 'PRICE_ISSUE', label: 'Giá không phù hợp' },
+  { code: 'PROPERTY_ISSUE', label: 'Có vấn đề với chỗ nghỉ' },
+  { code: 'SCHEDULE_ISSUE', label: 'Có vấn đề với lịch trình' },
+  { code: 'OTHER', label: 'Lý do khác' },
+];
+
 export default function BookingsScreen() {
   const { isDark, colors } = useAppTheme();
   const { width, height, scale, isSmallDevice, moderateScale, getModalWidth } = useResponsive();
@@ -35,6 +44,9 @@ export default function BookingsScreen() {
     bookings,
     savedHomestays,
     removeFromBooking,
+    previewCancellation,
+    cancelBookingWithPolicy,
+    refreshBookings,
     uploadProof,
     removeSaved,
     getBookingsTotal,
@@ -47,6 +59,18 @@ export default function BookingsScreen() {
   // Cancel Confirmation Modal State
   const [cancelTarget, setCancelTarget] = useState<BookingItem | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelPreview, setCancelPreview] = useState<{
+    totalPaid?: number;
+    refundPercentage?: number;
+    refundAmount?: number;
+    cancellationFee?: number;
+    policyDescription?: string;
+    hoursUntilCheckIn?: number;
+    loading?: boolean;
+  }>({});
+  const [selectedReasonCode, setSelectedReasonCode] = useState('CHANGE_OF_PLAN');
+  const [otherReasonText, setOtherReasonText] = useState('');
+  const [agreePolicy, setAgreePolicy] = useState(false);
 
   // Payment Modal State
   const [paymentBooking, setPaymentBooking] = useState<BookingItem | null>(null);
@@ -95,34 +119,78 @@ export default function BookingsScreen() {
     );
   };
 
-  // Safe Cancel Confirmation with Dedicated Cross-Platform Modal
-  const handlePromptCancel = (booking: BookingItem) => {
+  // Safe Cancel Confirmation with Server-Driven Policy & Reason
+  const handlePromptCancel = async (booking: BookingItem) => {
     setCancelTarget(booking);
+    setSelectedReasonCode('CHANGE_OF_PLAN');
+    setOtherReasonText('');
+    setAgreePolicy(false);
+    setCancelPreview({ loading: true });
+
+    const targetId = booking.bookingId || booking.id;
+    try {
+      const res = await previewCancellation(targetId);
+      if (res && res.canCancel !== undefined) {
+        setCancelPreview({
+          totalPaid: res.totalPaid || 0,
+          refundPercentage: res.refundPercentage || 0,
+          refundAmount: res.refundAmount || 0,
+          cancellationFee: res.cancellationFee || 0,
+          policyDescription: res.policyDescription || '',
+          hoursUntilCheckIn: res.hoursUntilCheckIn || 0,
+          loading: false,
+        });
+      } else {
+        setCancelPreview({ loading: false });
+      }
+    } catch (_) {
+      setCancelPreview({ loading: false });
+    }
   };
 
   const confirmCancelBooking = async () => {
     if (!cancelTarget) return;
+
+    if (!agreePolicy) {
+      Alert.alert('Chính sách hủy phòng', 'Vui lòng đọc và tích chọn đồng ý với chính sách hủy phòng trước khi tiếp tục.');
+      return;
+    }
+
+    if (selectedReasonCode === 'OTHER' && otherReasonText.trim().length < 10) {
+      Alert.alert('Lý do hủy phòng', 'Vui lòng nhập chi tiết lý do hủy phòng (tối thiểu 10 ký tự).');
+      return;
+    }
+
     setIsCancelling(true);
     try {
-      const key = cancelTarget.bookingId
-        ? `booking-${cancelTarget.bookingId}`
-        : cancelTarget.bookingCode
-        ? `code-${cancelTarget.bookingCode}`
-        : cancelTarget.id + (cancelTarget.checkIn || '');
-      const dbId = cancelTarget.bookingId;
-      await removeFromBooking(key, dbId, cancelTarget.bookingCode);
+      const targetId = cancelTarget.bookingId || cancelTarget.id;
+      const res = await cancelBookingWithPolicy(
+        targetId,
+        selectedReasonCode,
+        selectedReasonCode === 'OTHER' ? otherReasonText.trim() : undefined
+      );
+
+      setIsCancelling(false);
+      setCancelTarget(null);
       if (
         selectedBookingDetail?.bookingId === cancelTarget.bookingId ||
-        (selectedBookingDetail?.bookingCode && selectedBookingDetail?.bookingCode === cancelTarget.bookingCode) ||
-        (selectedBookingDetail?.id === cancelTarget.id && selectedBookingDetail?.checkIn === cancelTarget.checkIn)
+        selectedBookingDetail?.id === cancelTarget.id
       ) {
         setSelectedBookingDetail(null);
       }
-      setCancelTarget(null);
+
+      if (res && (res.success || res.status === 'cancelled')) {
+        const msg = res.refundAmount && res.refundAmount > 0
+          ? `Hủy phòng thành công! Số tiền ${formatPrice(res.refundAmount)} (70%) đã được hoàn về Ví của bạn.`
+          : 'Hủy phòng thành công.';
+        Alert.alert('Đã hủy phòng ✅', msg);
+        refreshBookings();
+      } else {
+        Alert.alert('Lỗi hủy phòng', res?.message || 'Không thể hủy phòng lúc này.');
+      }
     } catch (err) {
-      console.warn('Cancel booking error:', err);
-    } finally {
       setIsCancelling(false);
+      Alert.alert('Lỗi kết nối', 'Không thể gửi yêu cầu hủy phòng tới máy chủ.');
     }
   };
 
@@ -613,6 +681,36 @@ export default function BookingsScreen() {
                 </Pressable>
               )}
 
+              {/* Chat với chủ nhà */}
+              <Pressable
+                style={[s.chatInDetailBtn, { backgroundColor: '#E0F2FE', borderColor: '#BAE6FD' }]}
+                onPress={() => {
+                  const bId = selectedBookingDetail?.bookingId || selectedBookingDetail?.id;
+                  setSelectedBookingDetail(null);
+                  if (bId) {
+                    router.push({ pathname: '/chat/[id]' as any, params: { id: bId } });
+                  }
+                }}
+              >
+                <Ionicons name="chatbubbles-outline" size={15} color="#0284C7" />
+                <Text style={s.chatInDetailText}>Nhắn tin với chủ nhà</Text>
+              </Pressable>
+
+              {/* Trợ giúp & Khiếu nại */}
+              <Pressable
+                style={[s.disputeInDetailBtn, { backgroundColor: isDark ? '#1C2541' : '#F8FAFC', borderColor: colors.cardBorder }]}
+                onPress={() => {
+                  const bId = selectedBookingDetail?.bookingId || selectedBookingDetail?.id;
+                  setSelectedBookingDetail(null);
+                  if (bId) {
+                    router.push({ pathname: '/dispute/[id]' as any, params: { id: bId } });
+                  }
+                }}
+              >
+                <Ionicons name="shield-outline" size={15} color="#D97706" />
+                <Text style={s.disputeInDetailText}>Trợ giúp & Khiếu nại</Text>
+              </Pressable>
+
               <Pressable
                 style={[s.viewHomestayBtn, { backgroundColor: isDark ? '#0B132B' : '#E0F2FE' }]}
                 onPress={() => {
@@ -623,8 +721,8 @@ export default function BookingsScreen() {
                   }
                 }}
               >
-                <Ionicons name="eye-outline" size={16} color={colors.primary} />
-                <Text style={[s.viewHomestayText, { color: colors.primary }]}>Xem Homestay</Text>
+                <Ionicons name="eye-outline" size={15} color={colors.primary} />
+                <Text style={[s.viewHomestayText, { color: colors.primary }]}>Xem chi tiết chỗ nghỉ</Text>
               </Pressable>
 
               <Pressable
@@ -633,12 +731,12 @@ export default function BookingsScreen() {
                   if (selectedBookingDetail) {
                     const item = selectedBookingDetail;
                     setSelectedBookingDetail(null);
-                    setCancelTarget(item);
+                    handlePromptCancel(item);
                   }
                 }}
               >
-                <Ionicons name="trash-outline" size={16} color="#FFFFFF" />
-                <Text style={s.cancelBookingText}>Hủy phòng</Text>
+                <Ionicons name="trash-outline" size={15} color="#FFFFFF" />
+                <Text style={s.cancelBookingText}>Hủy đặt phòng</Text>
               </Pressable>
             </View>
           </View>
@@ -749,31 +847,122 @@ export default function BookingsScreen() {
         </View>
       </Modal>
 
-      {/* MODAL 3: XÁC NHẬN HỦY ĐẶT PHÒNG (CROSS-PLATFORM POPUP) */}
+      {/* MODAL 3: XÁC NHẬN HỦY ĐẶT PHÒNG & CHÍNH SÁCH HOÀN TIỀN CỦA SERVER */}
       <Modal
         visible={!!cancelTarget}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setCancelTarget(null)}
       >
         <View style={s.modalOverlay}>
           <View style={[s.cancelModalCard, { width: modalCardWidth, backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
-            <View style={s.cancelIconCircle}>
-              <Ionicons name="trash" size={28} color="#DC2626" />
+            <View style={s.cancelModalHeader}>
+              <View style={s.cancelIconCircle}>
+                <Ionicons name="alert-circle" size={24} color="#DC2626" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.cancelModalTitle, { color: colors.text }]}>Hủy đặt phòng & Hoàn tiền</Text>
+                <Text style={s.cancelModalCodeText}>
+                  Đơn phòng: {cancelTarget?.bookingCode || '#' + cancelTarget?.id} • {cancelTarget?.name}
+                </Text>
+              </View>
+              <Pressable onPress={() => setCancelTarget(null)} hitSlop={8}>
+                <Ionicons name="close" size={22} color="#64748B" />
+              </Pressable>
             </View>
 
-            <Text style={[s.cancelModalTitle, { color: colors.text }]}>
-              Xác nhận hủy đặt phòng
-            </Text>
+            <ScrollView style={{ maxHeight: height * 0.58 }} showsVerticalScrollIndicator={false}>
+              {/* Server-computed Policy Breakdown */}
+              <View style={[s.policyBreakdownCard, { backgroundColor: isDark ? '#0F172A' : '#F8FAFC', borderColor: colors.cardBorder }]}>
+                <Text style={[s.policyCardTitle, { color: colors.text }]}>Bảng tính hoàn tiền (Server tính toán):</Text>
 
-            <Text style={[s.cancelModalDesc, { color: colors.textSecondary }]}>
-              Bạn có chắc chắn muốn hủy đơn đặt phòng tại{' '}
-              <Text style={{ fontWeight: '700', color: colors.text }}>"{cancelTarget?.name}"</Text> không?
-              {cancelTarget?.bookingCode ? `\n(Mã đơn: ${cancelTarget.bookingCode})` : ''}
-              {cancelTarget?.paymentStatus === 'completed'
-                ? '\n\n⚠️ Đơn phòng đã chuyển khoản thanh toán: Tiền cọc sẽ được hoàn trả theo chính sách (hoàn 70% cọc nếu hủy trước 3 ngày, hoặc giữ 100% nếu hủy sát ngày để hỗ trợ chủ nhà).'
-                : '\n\n💡 Đơn phòng chưa thanh toán, bạn có thể hủy miễn phí 100%.'}
-            </Text>
+                {cancelPreview.loading ? (
+                  <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 12 }} />
+                ) : (
+                  <>
+                    <View style={s.calcRow}>
+                      <Text style={s.calcLabel}>Số tiền đã thanh toán:</Text>
+                      <Text style={[s.calcVal, { color: colors.text }]}>{formatPrice(cancelPreview.totalPaid || 0)}</Text>
+                    </View>
+                    <View style={s.calcRow}>
+                      <Text style={s.calcLabel}>Tỷ lệ hoàn tiền:</Text>
+                      <Text style={[s.calcVal, { color: (cancelPreview.refundPercentage || 0) > 0 ? '#16A34A' : '#DC2626' }]}>
+                        {cancelPreview.refundPercentage || 0}%
+                      </Text>
+                    </View>
+                    <View style={s.calcRow}>
+                      <Text style={s.calcLabel}>Số tiền được hoàn vào Ví:</Text>
+                      <Text style={[s.calcVal, { color: '#16A34A', fontSize: 14, fontWeight: '800' }]}>
+                        {formatPrice(cancelPreview.refundAmount || 0)}
+                      </Text>
+                    </View>
+                    <View style={s.calcRow}>
+                      <Text style={s.calcLabel}>Phí hủy phòng nền tảng:</Text>
+                      <Text style={[s.calcVal, { color: '#DC2626' }]}>
+                        {formatPrice(cancelPreview.cancellationFee || 0)}
+                      </Text>
+                    </View>
+                    <View style={s.policyDescBox}>
+                      <Ionicons name="information-circle-outline" size={14} color="#0284C7" />
+                      <Text style={s.policyDescText}>{cancelPreview.policyDescription}</Text>
+                    </View>
+                  </>
+                )}
+              </View>
+
+              {/* Bắt buộc chọn lý do hủy */}
+              <Text style={[s.reasonSelectLabel, { color: colors.text }]}>Lý do hủy phòng (*):</Text>
+              <View style={s.reasonList}>
+                {CANCELLATION_REASONS.map((r) => {
+                  const isSelected = selectedReasonCode === r.code;
+                  return (
+                    <Pressable
+                      key={r.code}
+                      style={[
+                        s.reasonChip,
+                        { backgroundColor: isDark ? '#0F172A' : '#F8FAFC', borderColor: isSelected ? colors.primary : '#E2E8F0' },
+                        isSelected && { backgroundColor: isDark ? '#082F49' : '#EFF6FF', borderWidth: 1.8 },
+                      ]}
+                      onPress={() => setSelectedReasonCode(r.code)}
+                    >
+                      <View style={[s.reasonRadio, isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+                        {isSelected && <View style={s.reasonRadioDot} />}
+                      </View>
+                      <Text style={[s.reasonChipText, { color: colors.text }, isSelected && { fontWeight: '700', color: colors.primary }]}>
+                        {r.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {/* Nếu chọn lý do khác thì bắt buộc nhập chi tiết */}
+              {selectedReasonCode === 'OTHER' && (
+                <View style={{ marginTop: 10 }}>
+                  <Text style={[s.reasonSelectLabel, { color: colors.text }]}>Nhập chi tiết lý do (10 - 500 ký tự):</Text>
+                  <TextInput
+                    style={[s.otherReasonInput, { backgroundColor: colors.inputBg, borderColor: colors.primary, color: colors.text }]}
+                    placeholder="Vui lòng cho biết lý do hủy cụ thể của bạn..."
+                    placeholderTextColor="#94A3B8"
+                    value={otherReasonText}
+                    onChangeText={setOtherReasonText}
+                    multiline
+                    numberOfLines={3}
+                    maxLength={500}
+                  />
+                </View>
+              )}
+
+              {/* Checkbox cam kết */}
+              <Pressable style={s.agreeRow} onPress={() => setAgreePolicy(!agreePolicy)}>
+                <View style={[s.agreeCheckbox, agreePolicy && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+                  {agreePolicy && <Ionicons name="checkmark" size={12} color="#FFFFFF" />}
+                </View>
+                <Text style={[s.agreeText, { color: colors.text }]}>
+                  Tôi đã đọc và đồng ý với chính sách hủy phòng & hoàn tiền.
+                </Text>
+              </Pressable>
+            </ScrollView>
 
             <View style={s.cancelModalActions}>
               <Pressable
@@ -787,16 +976,19 @@ export default function BookingsScreen() {
               </Pressable>
 
               <Pressable
-                style={[s.cancelConfirmBtn, isCancelling && { opacity: 0.6 }]}
+                style={[
+                  s.cancelConfirmBtn,
+                  (!agreePolicy || isCancelling || (selectedReasonCode === 'OTHER' && otherReasonText.trim().length < 10)) && { opacity: 0.5 },
+                ]}
                 onPress={confirmCancelBooking}
-                disabled={isCancelling}
+                disabled={!agreePolicy || isCancelling || (selectedReasonCode === 'OTHER' && otherReasonText.trim().length < 10)}
               >
                 {isCancelling ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
                   <>
                     <Ionicons name="trash-outline" size={15} color="#FFFFFF" />
-                    <Text style={s.cancelConfirmText}>Xác nhận hủy</Text>
+                    <Text style={s.cancelConfirmText}>Xác nhận hủy phòng</Text>
                   </>
                 )}
               </Pressable>
@@ -1234,46 +1426,72 @@ const s = StyleSheet.create({
     fontWeight: '600',
   },
   detailModalActions: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: 8,
     marginTop: 14,
   },
   payInDetailBtn: {
-    flex: 1.2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: 11,
+    borderRadius: 14,
   },
   payInDetailText: {
     color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  chatInDetailBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  chatInDetailText: {
+    color: '#0284C7',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  disputeInDetailBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  disputeInDetailText: {
+    color: '#D97706',
     fontSize: 12,
     fontWeight: '700',
   },
   viewHomestayBtn: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 14,
   },
   viewHomestayText: {
     fontSize: 12,
     fontWeight: '700',
   },
   cancelBookingBtn: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
     backgroundColor: '#DC2626',
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: 11,
+    borderRadius: 14,
+    marginTop: 2,
   },
   cancelBookingText: {
     color: '#FFFFFF',
@@ -1428,44 +1646,157 @@ const s = StyleSheet.create({
   // Cancel Confirmation Modal Styles
   cancelModalCard: {
     borderRadius: 22,
-    padding: 22,
-    alignItems: 'center',
+    padding: 20,
     elevation: 8,
     shadowColor: '#DC2626',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 14,
   },
+  cancelModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
   cancelIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#FEE2E2',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 14,
   },
   cancelModalTitle: {
-    fontSize: 17,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  cancelModalCodeText: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  policyBreakdownCard: {
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  policyCardTitle: {
+    fontSize: 12,
     fontWeight: '800',
     marginBottom: 8,
-    textAlign: 'center',
   },
-  cancelModalDesc: {
-    fontSize: 13,
-    lineHeight: 19,
-    textAlign: 'center',
-    marginBottom: 20,
+  calcRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 3,
+  },
+  calcLabel: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+  calcVal: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  policyDescBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  policyDescText: {
+    fontSize: 10,
+    color: '#0369A1',
+    lineHeight: 14,
+    flex: 1,
+    fontWeight: '500',
+  },
+  reasonSelectLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  reasonList: {
+    gap: 6,
+  },
+  reasonChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  reasonRadio: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: '#94A3B8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reasonRadioDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+  },
+  reasonChipText: {
+    fontSize: 11,
+    fontWeight: '500',
+    flex: 1,
+  },
+  otherReasonInput: {
+    minHeight: 70,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    padding: 10,
+    fontSize: 12,
+    lineHeight: 16,
+    textAlignVertical: 'top',
+  },
+  agreeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 14,
+    marginBottom: 4,
+  },
+  agreeCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#94A3B8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  agreeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    flex: 1,
+    lineHeight: 16,
   },
   cancelModalActions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     width: '100%',
+    marginTop: 14,
+    borderTopWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingTop: 12,
   },
   cancelKeepBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1474,9 +1805,9 @@ const s = StyleSheet.create({
     fontWeight: '700',
   },
   cancelConfirmBtn: {
-    flex: 1.2,
+    flex: 1.6,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 20,
     backgroundColor: '#DC2626',
     flexDirection: 'row',
     alignItems: 'center',

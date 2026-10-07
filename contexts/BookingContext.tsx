@@ -51,6 +51,9 @@ type BookingContextValue = {
   ) => Promise<{ success: boolean; bookingId?: string; bookingCode?: string }>;
   toggleSavedHomestay: (homestay: Homestay) => boolean;
   removeFromBooking: (id: string, bookingDbId?: string, bookingCode?: string) => Promise<void>;
+  previewCancellation: (bookingId: string) => Promise<any>;
+  cancelBookingWithPolicy: (bookingId: string, reasonCode: string, reasonText?: string) => Promise<any>;
+  refreshBookings: () => Promise<void>;
   uploadProof: (bookingId: string, proofImageUrl: string, transactionCode?: string) => Promise<{ success: boolean; message: string }>;
   removeSaved: (id: string) => void;
   clearBookings: () => void;
@@ -554,6 +557,54 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     addRewardPoints(150, 'Hoàn thành chuyến đi & Đánh giá dịch vụ 5★');
   };
 
+  const previewCancellation = async (bookingId: string) => {
+    try {
+      const authHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (authToken) authHeaders['Authorization'] = `Bearer ${authToken}`;
+      const res = await fetchWithTimeout(
+        `${API_BASE_URL}/api/bookings/${bookingId}/cancellation-preview`,
+        { headers: authHeaders },
+        4000
+      );
+      return await res.json();
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Không thể kiểm tra chính sách hủy phòng' };
+    }
+  };
+
+  const cancelBookingWithPolicy = async (bookingId: string, reasonCode: string, reasonText?: string) => {
+    try {
+      const authHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (authToken) authHeaders['Authorization'] = `Bearer ${authToken}`;
+      const res = await fetchWithTimeout(
+        `${API_BASE_URL}/api/bookings/${bookingId}/cancel`,
+        {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            userId: userProfile.id,
+            reasonCode,
+            reasonText,
+          }),
+        },
+        5000
+      );
+      const json = await res.json();
+      if (json.success) {
+        setBookings((prev) => prev.filter((b) => b.bookingId !== bookingId && b.id !== bookingId));
+      }
+      return json;
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Lỗi khi hủy đặt phòng' };
+    }
+  };
+
+  const refreshBookings = async () => {
+    if (userProfile.id) {
+      await fetchUserData(userProfile.id);
+    }
+  };
+
   const value = useMemo(
     () => ({
       userProfile,
@@ -567,6 +618,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       addToBooking,
       toggleSavedHomestay,
       removeFromBooking,
+      previewCancellation,
+      cancelBookingWithPolicy,
+      refreshBookings,
       uploadProof,
       removeSaved,
       clearBookings,

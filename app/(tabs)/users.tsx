@@ -556,15 +556,27 @@ export default function ProfileScreen() {
         {/* Menu Options */}
         <View style={[styles.menuCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
           <MenuItem
-            icon="settings-outline"
-            label="Cài đặt giao diện & Hệ thống"
-            onPress={() => setShowSettingsModal(true)}
+            icon="wallet-outline"
+            label="Ví của tôi (Số dư & Rút tiền)"
+            onPress={() => router.push('/wallet' as any)}
             isDark={isDark}
           />
           <MenuItem
-            icon="help-circle-outline"
-            label="Trợ giúp & Hỗ trợ"
-            onPress={() => Alert.alert('Trợ giúp', 'Liên hệ tổng đài CSKH: 1900 8888 (24/7)')}
+            icon="card-outline"
+            label="Tài khoản ngân hàng liên kết"
+            onPress={() => router.push('/bank-accounts' as any)}
+            isDark={isDark}
+          />
+          <MenuItem
+            icon="shield-checkmark-outline"
+            label="Khiếu nại & Trợ giúp đơn phòng"
+            onPress={() => router.push('/disputes' as any)}
+            isDark={isDark}
+          />
+          <MenuItem
+            icon="settings-outline"
+            label="Cài đặt giao diện & Hệ thống"
+            onPress={() => setShowSettingsModal(true)}
             isDark={isDark}
           />
           <MenuItem

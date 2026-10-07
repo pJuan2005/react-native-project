@@ -10,6 +10,13 @@ USE `homestay_db`;
 -- Disable Foreign Key checks temporarily for clean seed execution
 SET FOREIGN_KEY_CHECKS = 0;
 
+DELETE FROM `booking_messages`;
+DELETE FROM `booking_conversations`;
+DELETE FROM `withdrawals`;
+DELETE FROM `bank_accounts`;
+DELETE FROM `refunds`;
+DELETE FROM `wallet_transactions`;
+DELETE FROM `wallets`;
 DELETE FROM `audit_logs`;
 DELETE FROM `disputes`;
 DELETE FROM `host_verifications`;
@@ -29,6 +36,13 @@ DELETE FROM `homestay_types`;
 DELETE FROM `locations`;
 DELETE FROM `users`;
 
+ALTER TABLE `booking_messages` AUTO_INCREMENT = 1;
+ALTER TABLE `booking_conversations` AUTO_INCREMENT = 1;
+ALTER TABLE `withdrawals` AUTO_INCREMENT = 1;
+ALTER TABLE `bank_accounts` AUTO_INCREMENT = 1;
+ALTER TABLE `refunds` AUTO_INCREMENT = 1;
+ALTER TABLE `wallet_transactions` AUTO_INCREMENT = 1;
+ALTER TABLE `wallets` AUTO_INCREMENT = 1;
 ALTER TABLE `point_transactions` AUTO_INCREMENT = 1;
 ALTER TABLE `user_devices` AUTO_INCREMENT = 1;
 ALTER TABLE `notifications` AUTO_INCREMENT = 1;
@@ -318,3 +332,52 @@ INSERT INTO `host_verifications` (`host_id`, `id_card_number`, `id_card_front_ur
 
 INSERT INTO `audit_logs` (`actor_id`, `actor_role`, `action`, `entity_type`, `entity_id`, `metadata`, `ip_address`, `created_at`) VALUES
 (1, 'admin', 'system_init', 'platform', 1, 'Khởi tạo hệ thống hợp nhất Single Source of Truth Properties', '127.0.0.1', NOW());
+
+-- =====================================================
+-- 16. SEED WALLETS & TRANSACTIONS
+-- =====================================================
+INSERT INTO `wallets` (`id`, `user_id`, `balance`, `currency`, `status`, `created_at`) VALUES
+(1, 1, 0.00, 'VND', 'active', NOW()),
+(2, 2, 5700000.00, 'VND', 'active', NOW()),
+(3, 3, 4860000.00, 'VND', 'active', NOW()),
+(4, 4, 1400000.00, 'VND', 'active', NOW()),
+(5, 5, 0.00, 'VND', 'active', NOW()),
+(6, 6, 0.00, 'VND', 'active', NOW()),
+(7, 7, 0.00, 'VND', 'active', NOW()),
+(8, 8, 2100000.00, 'VND', 'active', NOW());
+
+INSERT INTO `wallet_transactions` (`id`, `wallet_id`, `user_id`, `type`, `amount`, `balance_before`, `balance_after`, `reference_type`, `reference_id`, `description`, `status`, `created_at`) VALUES
+(1, 4, 4, 'REFUND', 1400000.00, 0.00, 1400000.00, 'booking_refund', 1, 'Hoàn 70% tiền cọc hủy phòng #BK2026071001 theo chính sách', 'completed', NOW()),
+(2, 8, 8, 'REFUND', 2100000.00, 0.00, 2100000.00, 'booking_refund', 6, 'Hoàn tiền phòng chuyến đi Sa Pa #BK2026090506', 'completed', NOW());
+
+-- =====================================================
+-- 17. SEED BANK ACCOUNTS
+-- =====================================================
+INSERT INTO `bank_accounts` (`id`, `user_id`, `bank_name`, `bank_code`, `account_number`, `account_holder_name`, `is_default`, `status`, `created_at`) VALUES
+(1, 4, 'Techcombank', 'TCB', '19071766471019', 'PHAM XUAN CHUAN', 1, 'active', NOW()),
+(2, 8, 'Vietcombank', 'VCB', '0011004567890', 'NGUYEN THI HUONG', 1, 'active', NOW());
+
+-- =====================================================
+-- 18. SEED REFUNDS
+-- =====================================================
+INSERT INTO `refunds` (`id`, `booking_id`, `user_id`, `total_paid`, `refund_amount`, `cancellation_fee`, `refund_percentage`, `policy_code`, `reason_code`, `reason_text`, `status`, `wallet_transaction_id`, `created_at`) VALUES
+(1, 1, 4, 2000000.00, 1400000.00, 600000.00, 70.00, 'CANCEL_72H_70_PERCENT', 'CHANGE_OF_PLAN', 'Thay đổi kế hoạch gia đình', 'completed', 1, NOW());
+
+-- =====================================================
+-- 19. SEED BOOKING CHAT & MESSAGES
+-- =====================================================
+INSERT INTO `booking_conversations` (`id`, `booking_id`, `created_at`) VALUES
+(1, 1, NOW()),
+(2, 2, NOW());
+
+INSERT INTO `booking_messages` (`id`, `conversation_id`, `sender_id`, `message`, `message_type`, `created_at`) VALUES
+(1, 1, 1, 'Đặt phòng thành công! Bạn có thể trao đổi với chủ nhà tại đây.', 'system', NOW()),
+(2, 1, 4, 'Chào chủ nhà, mấy giờ mình có thể nhận phòng được vậy ạ?', 'text', NOW()),
+(3, 1, 2, 'Chào bạn! Thời gian nhận phòng tiêu chuẩn là 14h00 bạn nhé. Hân hạnh được đón tiếp bạn!', 'text', NOW()),
+(4, 2, 1, 'Đặt phòng thành công! Bạn có thể trao đổi với chủ nhà tại đây.', 'system', NOW());
+
+-- =====================================================
+-- 20. SEED DISPUTES (Khiếu nại mẫu)
+-- =====================================================
+INSERT INTO `disputes` (`id`, `reporter_id`, `reporter_role`, `target_type`, `target_id`, `booking_id`, `category`, `reason`, `description`, `status`, `created_at`) VALUES
+(1, 4, 'guest', 'booking', 3, 3, 'PAYMENT_ISSUE', 'Vấn đề thanh toán & xác thực biên lai', 'Tôi đã quét mã VietQR thành công nhưng đơn phòng vẫn đang ở trạng thái chờ kiểm tra, nhờ hỗ trợ kiểm tra đối soát giúp.', 'pending', NOW());

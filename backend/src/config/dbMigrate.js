@@ -391,6 +391,21 @@ async function migrateDatabase() {
     await safeAddBookingCol('rejection_reason', 'rejection_reason TEXT NULL');
     await safeAddBookingCol('checkin_instructions', 'checkin_instructions TEXT NULL');
     await safeAddBookingCol('commission_rate_applied', 'commission_rate_applied DECIMAL(6,4) NOT NULL DEFAULT 0.1000');
+    await safeAddBookingCol('cancellation_reason_code', 'cancellation_reason_code VARCHAR(50) NULL');
+    await safeAddBookingCol('cancellation_reason_text', 'cancellation_reason_text TEXT NULL');
+    await safeAddBookingCol('refund_amount', 'refund_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00');
+    await safeAddBookingCol('cancellation_fee', 'cancellation_fee DECIMAL(12,2) NOT NULL DEFAULT 0.00');
+    await safeAddBookingCol('refund_percentage', 'refund_percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00');
+    await safeAddBookingCol('cancellation_policy_applied', 'cancellation_policy_applied VARCHAR(50) NULL');
+    await safeAddBookingCol('cancelled_by', 'cancelled_by BIGINT UNSIGNED NULL');
+
+    try {
+      await db.query("ALTER TABLE bookings MODIFY COLUMN payment_status ENUM('unpaid', 'proof_uploaded', 'verified', 'partially_refunded', 'refunded', 'rejected') NOT NULL DEFAULT 'unpaid'");
+    } catch (_) {}
+
+    try {
+      await db.query("ALTER TABLE payments MODIFY COLUMN status ENUM('pending', 'completed', 'partially_refunded', 'refunded', 'failed') NOT NULL DEFAULT 'pending'");
+    } catch (_) {}
 
     // 10. Cập nhật view v_properties_detail, v_homestays_detail và v_user_bookings
     try {
@@ -595,6 +610,123 @@ async function migrateDatabase() {
         KEY idx_audit_entity (entity_type, entity_id),
         KEY idx_audit_actor (actor_id),
         KEY idx_audit_action (action)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // 14. Bổ sung category vào disputes nếu chưa có
+    try {
+      const [dCat] = await db.query("SHOW COLUMNS FROM disputes LIKE 'category'");
+      if (dCat.length === 0) {
+        await db.query("ALTER TABLE disputes ADD COLUMN category VARCHAR(50) NULL AFTER booking_id");
+      }
+    } catch (_) {}
+
+    // 15. Tạo các bảng Wallets, Wallet Transactions, Bank Accounts, Withdrawals, Refunds
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS wallets (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT UNSIGNED NOT NULL UNIQUE,
+        balance DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+        currency VARCHAR(10) NOT NULL DEFAULT 'VND',
+        status ENUM('active', 'locked') NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_wallets_user (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS wallet_transactions (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        wallet_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NOT NULL,
+        type ENUM('REFUND', 'WITHDRAWAL', 'DEPOSIT', 'ADJUSTMENT') NOT NULL,
+        amount DECIMAL(14,2) NOT NULL,
+        balance_before DECIMAL(14,2) NOT NULL,
+        balance_after DECIMAL(14,2) NOT NULL,
+        reference_type VARCHAR(50) NOT NULL,
+        reference_id BIGINT UNSIGNED NULL,
+        description VARCHAR(255) NOT NULL,
+        status ENUM('pending', 'completed', 'failed', 'cancelled') NOT NULL DEFAULT 'completed',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_wallet_tx_wallet (wallet_id),
+        KEY idx_wallet_tx_user (user_id),
+        KEY idx_wallet_tx_type (type)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS bank_accounts (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT UNSIGNED NOT NULL,
+        bank_name VARCHAR(100) NOT NULL,
+        bank_code VARCHAR(50) NOT NULL,
+        account_number VARCHAR(50) NOT NULL,
+        account_holder_name VARCHAR(100) NOT NULL,
+        is_default TINYINT(1) NOT NULL DEFAULT 0,
+        status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_bank_accounts_user (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS withdrawals (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT UNSIGNED NOT NULL,
+        wallet_id BIGINT UNSIGNED NOT NULL,
+        bank_account_id BIGINT UNSIGNED NOT NULL,
+        amount DECIMAL(14,2) NOT NULL,
+        status ENUM('pending', 'approved', 'processing', 'completed', 'rejected', 'failed') NOT NULL DEFAULT 'pending',
+        admin_note TEXT NULL,
+        processed_by BIGINT UNSIGNED NULL,
+        processed_at DATETIME NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_withdrawals_user (user_id),
+        KEY idx_withdrawals_status (status)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS refunds (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        booking_id BIGINT UNSIGNED NOT NULL UNIQUE,
+        user_id BIGINT UNSIGNED NOT NULL,
+        total_paid DECIMAL(12,2) NOT NULL,
+        refund_amount DECIMAL(12,2) NOT NULL,
+        cancellation_fee DECIMAL(12,2) NOT NULL,
+        refund_percentage DECIMAL(5,2) NOT NULL,
+        policy_code VARCHAR(50) NOT NULL,
+        reason_code VARCHAR(50) NOT NULL,
+        reason_text TEXT NULL,
+        status ENUM('completed', 'failed') NOT NULL DEFAULT 'completed',
+        wallet_transaction_id BIGINT UNSIGNED NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_refunds_user (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS booking_conversations (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        booking_id BIGINT UNSIGNED NOT NULL UNIQUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS booking_messages (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        conversation_id BIGINT UNSIGNED NOT NULL,
+        sender_id BIGINT UNSIGNED NOT NULL,
+        message TEXT NOT NULL,
+        message_type ENUM('text', 'image', 'system') NOT NULL DEFAULT 'text',
+        read_at DATETIME NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_messages_conversation (conversation_id),
+        KEY idx_messages_sender (sender_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 

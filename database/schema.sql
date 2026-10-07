@@ -18,6 +18,13 @@ DROP VIEW IF EXISTS `v_properties_detail`;
 DROP VIEW IF EXISTS `v_homestays_detail`;
 
 -- Drop tables with foreign keys in correct order
+DROP TABLE IF EXISTS `booking_messages`;
+DROP TABLE IF EXISTS `booking_conversations`;
+DROP TABLE IF EXISTS `withdrawals`;
+DROP TABLE IF EXISTS `bank_accounts`;
+DROP TABLE IF EXISTS `refunds`;
+DROP TABLE IF EXISTS `wallet_transactions`;
+DROP TABLE IF EXISTS `wallets`;
 DROP TABLE IF EXISTS `audit_logs`;
 DROP TABLE IF EXISTS `disputes`;
 DROP TABLE IF EXISTS `host_verifications`;
@@ -254,7 +261,7 @@ CREATE TABLE `bookings` (
   `source` ENUM('guest_online', 'host_direct', 'admin_manual') NOT NULL DEFAULT 'guest_online',
   `payment_method` ENUM('cash', 'bank_transfer', 'vnpay', 'momo') NOT NULL DEFAULT 'bank_transfer',
   `payment_reference` VARCHAR(80) NULL,
-  `payment_status` ENUM('unpaid', 'proof_uploaded', 'verified', 'rejected') NOT NULL DEFAULT 'unpaid',
+  `payment_status` ENUM('unpaid', 'proof_uploaded', 'verified', 'partially_refunded', 'refunded', 'rejected') NOT NULL DEFAULT 'unpaid',
   `payment_proof_image` VARCHAR(500) NULL,
   `payment_submitted_at` DATETIME NULL,
   `confirmed_by` BIGINT UNSIGNED NULL,
@@ -264,6 +271,13 @@ CREATE TABLE `bookings` (
   `notes` TEXT NULL,
   `host_note` TEXT NULL,
   `created_by` BIGINT UNSIGNED NULL,
+  `cancellation_reason_code` VARCHAR(50) NULL,
+  `cancellation_reason_text` TEXT NULL,
+  `refund_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `cancellation_fee` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  `refund_percentage` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  `cancellation_policy_applied` VARCHAR(50) NULL,
+  `cancelled_by` BIGINT UNSIGNED NULL,
   `cancelled_at` TIMESTAMP NULL,
   `cancelled_reason` VARCHAR(255) NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -295,7 +309,7 @@ CREATE TABLE `payments` (
   `transaction_code` VARCHAR(100) NULL COMMENT 'Mã tham chiếu ngân hàng hoặc mã cổng thanh toán',
   `proof_image_url` VARCHAR(500) NULL COMMENT 'Ảnh chụp biên lai chuyển khoản ngân hàng',
   `amount` DECIMAL(12,2) NOT NULL,
-  `status` ENUM('pending', 'completed', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
+  `status` ENUM('pending', 'completed', 'partially_refunded', 'refunded', 'failed') NOT NULL DEFAULT 'pending',
   `paid_at` TIMESTAMP NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -445,10 +459,11 @@ CREATE TABLE `disputes` (
   `target_type` ENUM('property', 'host', 'booking') NOT NULL,
   `target_id` BIGINT UNSIGNED NOT NULL,
   `booking_id` BIGINT UNSIGNED NULL,
+  `category` VARCHAR(50) NULL,
   `reason` VARCHAR(255) NOT NULL,
   `description` TEXT NOT NULL,
   `evidence_url` VARCHAR(500) NULL,
-  `status` ENUM('pending', 'investigating', 'resolved', 'dismissed') NOT NULL DEFAULT 'pending',
+  `status` ENUM('pending', 'investigating', 'resolved', 'dismissed', 'rejected') NOT NULL DEFAULT 'pending',
   `admin_note` TEXT NULL,
   `resolution_action` ENUM('none', 'refund', 'suspend_host', 'suspend_property', 'warning') NOT NULL DEFAULT 'none',
   `resolved_by` BIGINT UNSIGNED NULL,
@@ -458,6 +473,7 @@ CREATE TABLE `disputes` (
   KEY `idx_disputes_status` (`status`),
   KEY `idx_disputes_target` (`target_type`, `target_id`),
   KEY `idx_disputes_reporter` (`reporter_id`),
+  KEY `idx_disputes_booking` (`booking_id`),
   CONSTRAINT `fk_disputes_reporter` FOREIGN KEY (`reporter_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -478,6 +494,143 @@ CREATE TABLE `audit_logs` (
   KEY `idx_audit_entity` (`entity_type`, `entity_id`),
   KEY `idx_audit_actor` (`actor_id`),
   KEY `idx_audit_action` (`action`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- 20. WALLETS TABLE (Ví điện tử / Số dư của người dùng)
+-- =====================================================
+CREATE TABLE `wallets` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `balance` DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+  `currency` VARCHAR(10) NOT NULL DEFAULT 'VND',
+  `status` ENUM('active', 'locked') NOT NULL DEFAULT 'active',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_wallets_user` (`user_id`),
+  CONSTRAINT `fk_wallets_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- 21. WALLET TRANSACTIONS TABLE (Lịch sử biến động số dư ví / Ledger)
+-- =====================================================
+CREATE TABLE `wallet_transactions` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `wallet_id` BIGINT UNSIGNED NOT NULL,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `type` ENUM('REFUND', 'WITHDRAWAL', 'DEPOSIT', 'ADJUSTMENT') NOT NULL,
+  `amount` DECIMAL(14,2) NOT NULL,
+  `balance_before` DECIMAL(14,2) NOT NULL,
+  `balance_after` DECIMAL(14,2) NOT NULL,
+  `reference_type` VARCHAR(50) NOT NULL,
+  `reference_id` BIGINT UNSIGNED NULL,
+  `description` VARCHAR(255) NOT NULL,
+  `status` ENUM('pending', 'completed', 'failed', 'cancelled') NOT NULL DEFAULT 'completed',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_wallet_tx_wallet` (`wallet_id`),
+  KEY `idx_wallet_tx_user` (`user_id`),
+  KEY `idx_wallet_tx_type` (`type`),
+  KEY `idx_wallet_tx_ref` (`reference_type`, `reference_id`),
+  CONSTRAINT `fk_wallet_tx_wallet` FOREIGN KEY (`wallet_id`) REFERENCES `wallets` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_wallet_tx_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- 22. BANK ACCOUNTS TABLE (Tài khoản ngân hàng của người dùng)
+-- =====================================================
+CREATE TABLE `bank_accounts` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `bank_name` VARCHAR(100) NOT NULL,
+  `bank_code` VARCHAR(50) NOT NULL,
+  `account_number` VARCHAR(50) NOT NULL,
+  `account_holder_name` VARCHAR(100) NOT NULL,
+  `is_default` TINYINT(1) NOT NULL DEFAULT 0,
+  `status` ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_bank_accounts_user` (`user_id`),
+  CONSTRAINT `fk_bank_accounts_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- 23. WITHDRAWALS TABLE (Yêu cầu rút tiền về ngân hàng)
+-- =====================================================
+CREATE TABLE `withdrawals` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `wallet_id` BIGINT UNSIGNED NOT NULL,
+  `bank_account_id` BIGINT UNSIGNED NOT NULL,
+  `amount` DECIMAL(14,2) NOT NULL,
+  `status` ENUM('pending', 'approved', 'processing', 'completed', 'rejected', 'failed') NOT NULL DEFAULT 'pending',
+  `admin_note` TEXT NULL,
+  `processed_by` BIGINT UNSIGNED NULL,
+  `processed_at` DATETIME NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_withdrawals_user` (`user_id`),
+  KEY `idx_withdrawals_status` (`status`),
+  CONSTRAINT `fk_withdrawals_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_withdrawals_wallet` FOREIGN KEY (`wallet_id`) REFERENCES `wallets` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_withdrawals_bank` FOREIGN KEY (`bank_account_id`) REFERENCES `bank_accounts` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- 24. REFUNDS TABLE (Hồ sơ hoàn tiền đơn đặt phòng)
+-- =====================================================
+CREATE TABLE `refunds` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `booking_id` BIGINT UNSIGNED NOT NULL,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `total_paid` DECIMAL(12,2) NOT NULL,
+  `refund_amount` DECIMAL(12,2) NOT NULL,
+  `cancellation_fee` DECIMAL(12,2) NOT NULL,
+  `refund_percentage` DECIMAL(5,2) NOT NULL,
+  `policy_code` VARCHAR(50) NOT NULL,
+  `reason_code` VARCHAR(50) NOT NULL,
+  `reason_text` TEXT NULL,
+  `status` ENUM('completed', 'failed') NOT NULL DEFAULT 'completed',
+  `wallet_transaction_id` BIGINT UNSIGNED NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_refunds_booking` (`booking_id`),
+  KEY `idx_refunds_user` (`user_id`),
+  CONSTRAINT `fk_refunds_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_refunds_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- 25. BOOKING CONVERSATIONS TABLE (Hội thoại Chat giữa Guest & Host)
+-- =====================================================
+CREATE TABLE `booking_conversations` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `booking_id` BIGINT UNSIGNED NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_conversations_booking` (`booking_id`),
+  CONSTRAINT `fk_conversations_booking` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- 26. BOOKING MESSAGES TABLE (Tin nhắn trong cuộc trò chuyện)
+-- =====================================================
+CREATE TABLE `booking_messages` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `conversation_id` BIGINT UNSIGNED NOT NULL,
+  `sender_id` BIGINT UNSIGNED NOT NULL,
+  `message` TEXT NOT NULL,
+  `message_type` ENUM('text', 'image', 'system') NOT NULL DEFAULT 'text',
+  `read_at` DATETIME NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_messages_conversation` (`conversation_id`),
+  KEY `idx_messages_sender` (`sender_id`),
+  CONSTRAINT `fk_messages_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `booking_conversations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_messages_sender` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
