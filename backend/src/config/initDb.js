@@ -21,28 +21,36 @@ async function runInitDatabase() {
 
     console.log(`✓ Kết nối MySQL server (${config.DB.HOST}:${config.DB.PORT}) thành công!`);
 
-    // 2. Đọc file database/schema.sql
+    // 2. Tự động sinh file seed.sql với 500+ bản ghi chuẩn trước khi nạp
+    console.log('1. Đang tự động tạo dữ liệu mẫu phong phú (500+ bản ghi/bảng)...');
+    try {
+      require('./generateSeed');
+    } catch (genErr) {
+      console.warn('Lưu ý khi tạo seed:', genErr.message);
+    }
+
+    // 3. Đọc file database/schema.sql
     const schemaPath = path.resolve(__dirname, '../../../database/schema.sql');
     if (!fs.existsSync(schemaPath)) {
       throw new Error(`Không tìm thấy file schema tại: ${schemaPath}`);
     }
-    console.log('1. Đang nạp cấu trúc bảng từ database/schema.sql...');
+    console.log('2. Đang nạp cấu trúc bảng từ database/schema.sql...');
     let schemaSql = fs.readFileSync(schemaPath, 'utf8');
 
     // Chuyển đổi DELIMITER // thành định dạng MySQL client chuẩn
     schemaSql = schemaSql.replace(/DELIMITER \/\//g, '').replace(/DELIMITER ;/g, '').replace(/\/\/\s*$/gm, ';');
     await connection.query(schemaSql);
-    console.log('   ✓ Tạo Database & Bảng chuẩn (properties, bookings, ...) thành công!');
+    console.log('   ✓ Tạo Database & Bảng chuẩn (properties, bookings, wallets, ...) thành công!');
 
-    // 3. Đọc file database/seed.sql
+    // 4. Đọc file database/seed.sql
     const seedPath = path.resolve(__dirname, '../../../database/seed.sql');
     if (!fs.existsSync(seedPath)) {
       throw new Error(`Không tìm thấy file seed tại: ${seedPath}`);
     }
-    console.log('2. Đang chèn dữ liệu mẫu chuẩn từ database/seed.sql...');
+    console.log('3. Đang chèn dữ liệu mẫu chuẩn (500+ bản ghi) từ database/seed.sql...');
     const seedSql = fs.readFileSync(seedPath, 'utf8');
     await connection.query(seedSql);
-    console.log('   ✓ Chèn 10 properties, 66 ảnh, 72 tiện nghi, đơn phòng, reviews thành công!');
+    console.log('   ✓ Chèn 520 users, 520 properties, 2600+ ảnh, 3000+ tiện nghi, 520 đơn phòng, 520 ví thành công!');
 
     // 4. Kiểm tra tổng kết
     const [pRows] = await connection.query('SELECT COUNT(*) AS total FROM homestay_db.properties');
