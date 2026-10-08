@@ -521,4 +521,57 @@ body {
   }
 }
 
+/* ── Listing Booking DatePicker Widget ── */
+.hs-datepicker-wrapper {
+  display: block !important;
+  width: 100% !important;
+}
+.hs-datepicker-input {
+  width: 100% !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  cursor: pointer !important;
+  padding: 4px 0 !important;
+  box-shadow: none !important;
+}
+.hs-datepicker-input::placeholder {
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
+  font-size: 0.84rem !important;
+}
+.hs-datepicker-input:disabled {
+  cursor: not-allowed !important;
+  color: #94a3b8 !important;
+  opacity: 0.8 !important;
+}
+.react-datepicker-popper {
+  z-index: 1000 !important;
+}
+.react-datepicker {
+  font-family: inherit !important;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.15) !important;
+  overflow: hidden !important;
+}
+.react-datepicker__header {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding-top: 12px !important;
+}
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: #2563EB !important;
+  border-radius: 50% !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+.react-datepicker__day:hover {
+  border-radius: 50% !important;
+}
+
 

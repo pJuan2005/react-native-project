@@ -861,10 +861,12 @@ export default function DetailPage() {
                   </div>
                 ) : (
                   <form onSubmit={handleBooking} style={{ marginTop: 16 }}>
-                    <div style={{ border: "1.5px solid #e2e8f0", borderRadius: 10, overflow: "hidden", marginBottom: 12 }}>
+                    <div style={{ border: "1.5px solid #cbd5e1", borderRadius: 14, overflow: "hidden", marginBottom: 14, background: "#ffffff", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderBottom: "1px solid #e2e8f0" }}>
                         <div style={{ padding: "12px 14px", borderRight: "1px solid #e2e8f0" }}>
-                          <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1e293b", letterSpacing: 0.5, textTransform: "uppercase" }}>Nhận phòng</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.72rem", fontWeight: 700, color: "#64748b", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 3 }}>
+                            <Calendar size={12} color="#2563EB" /> Nhận phòng
+                          </div>
                           <DatePicker
                             selected={selectedCheckInDate}
                             onChange={(selectedDate: Date | null) => {
@@ -900,8 +902,10 @@ export default function DetailPage() {
                             required
                           />
                         </div>
-                        <div style={{ padding: "12px 14px" }}>
-                          <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1e293b", letterSpacing: 0.5, textTransform: "uppercase" }}>Trả phòng</div>
+                        <div style={{ padding: "12px 14px", background: !selectedCheckInDate ? "#f8fafc" : "#ffffff" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.72rem", fontWeight: 700, color: "#64748b", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 3 }}>
+                            <Calendar size={12} color="#2563EB" /> Trả phòng
+                          </div>
                           <DatePicker
                             selected={selectedCheckOutDate}
                             onChange={(selectedDate: Date | null) =>
@@ -914,11 +918,7 @@ export default function DetailPage() {
                             }
                             minDate={checkoutMinDate}
                             maxDate={checkoutMaxDate || undefined}
-                            placeholderText={
-                              selectedCheckInDate
-                                ? "dd/mm/yyyy"
-                                : "Chọn ngày nhận phòng trước"
-                            }
+                            placeholderText="dd/mm/yyyy"
                             dateFormat="dd/MM/yyyy"
                             className="hs-datepicker-input"
                             wrapperClassName="hs-datepicker-wrapper"
@@ -929,9 +929,11 @@ export default function DetailPage() {
                         </div>
                       </div>
                       <div style={{ padding: "12px 14px" }}>
-                        <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1e293b", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 }}>Số lượng khách</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.72rem", fontWeight: 700, color: "#64748b", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 }}>
+                          <Users size={12} color="#2563EB" /> Số lượng khách
+                        </div>
                         <select
-                          style={{ border: "none", outline: "none", width: "100%", fontSize: "0.87rem", color: "#475569", padding: 0, background: "transparent" }}
+                          style={{ border: "none", outline: "none", width: "100%", fontSize: "0.88rem", fontWeight: 700, color: "#1e293b", padding: "2px 0", background: "transparent", cursor: "pointer" }}
                           value={bookingForm.guests}
                           onChange={e => setBookingForm({ ...bookingForm, guests: e.target.value })}
                         >
