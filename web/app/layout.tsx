@@ -28,6 +28,30 @@ export default function RootLayout({
               (function() {
                 if (typeof window === 'undefined') return;
                 try {
+                  // Ignore third-party Chrome Extension errors (e.g. M_ID in 200.js)
+                  window.addEventListener('unhandledrejection', function(event) {
+                    var reason = event.reason;
+                    var str = String((reason && (reason.stack || reason.message)) || reason || '');
+                    if (str.indexOf('chrome-extension://') !== -1 || str.indexOf('M_ID') !== -1) {
+                      event.preventDefault();
+                      event.stopImmediatePropagation();
+                    }
+                  }, true);
+
+                  window.addEventListener('error', function(event) {
+                    var filename = event.filename || '';
+                    var message = String(event.message || '');
+                    var stack = event.error ? String(event.error.stack || '') : '';
+                    if (
+                      filename.indexOf('chrome-extension://') !== -1 ||
+                      message.indexOf('M_ID') !== -1 ||
+                      stack.indexOf('chrome-extension://') !== -1
+                    ) {
+                      event.preventDefault();
+                      event.stopImmediatePropagation();
+                    }
+                  }, true);
+
                   var observer = new MutationObserver(function(mutations) {
                     for (var i = 0; i < mutations.length; i++) {
                       var m = mutations[i];
