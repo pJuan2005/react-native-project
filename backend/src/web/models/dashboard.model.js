@@ -198,7 +198,7 @@ async function getHostRecentBookings(hostId, limit = 5) {
       b.id,
       COALESCE(guest.full_name, b.guest_name_snapshot, 'Walk-in Guest') AS guestName,
       b.guests,
-      p.title AS propertyTitle,
+      p.name AS propertyTitle,
       DATE_FORMAT(b.check_in, '%Y-%m-%d') AS checkIn,
       DATE_FORMAT(b.check_out, '%Y-%m-%d') AS checkOut,
       b.total_price AS totalPrice,
