@@ -1,20 +1,13 @@
 /**
  * Data Generator Script for Homestay Booking Platform
  * Generates rich, realistic, constraint-valid Vietnamese seed data with 500+ records per entity table.
+ * Natural authentic property names (NO '#' suffix) and themed high-resolution photos matching property types.
  */
 const fs = require('fs');
 const path = require('path');
-const bcrypt = require('bcryptjs');
 
 // Salted hash for "123456"
 const DEFAULT_PW_HASH = '$2a$10$f6b9g95N187uCjR3849x4OmU8k9c81iM19qZ5u4Xo1EaF5o5P1eU2';
-
-function escapeSql(val) {
-  if (val === null || val === undefined) return 'NULL';
-  if (typeof val === 'number') return String(val);
-  if (typeof val === 'boolean') return val ? '1' : '0';
-  return `'${String(val).replace(/\\/g, '\\\\').replace(/'/g, "''")}'`;
-}
 
 function randomItem(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -58,35 +51,60 @@ const DISTRICTS = [
   'Phường 1', 'Phường 2', 'Phường 8', 'Bãi Cháy', 'Dương Đông', 'Cẩm Phô', 'Vĩnh Hải', 'Tam Cốc'
 ];
 
-const PHOTO_COLLECTION = [
+// PHOTO POOLS BY THEME (Loại bỏ hoàn toàn ảnh trùng nhau, ảnh khớp sát với loại hình)
+const PHOTOS_VILLA = [
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1600573472550-8090b5e0745e?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1540518614846-7ede433c4b13?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=900&q=80',
+];
+
+const PHOTOS_HOMESTAY = [
+  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1540518614846-7ede433c4b13?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=900&q=80',
+];
+
+const PHOTOS_RESORT = [
   'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=900&q=80',
+];
+
+const PHOTOS_CABIN = [
+  'https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=80',
+];
+
+const PHOTOS_ECO = [
+  'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1470246973918-29a93221c455?auto=format&fit=crop&w=900&q=80',
 ];
 
 const AVATAR_COLLECTION = [
@@ -102,15 +120,45 @@ const AVATAR_COLLECTION = [
   'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=300&q=80',
 ];
 
-const PROPERTY_PREFIXES = [
-  'Villa', 'Homestay', 'Resort', 'Cabin', 'Retreat', 'Lodge', 'Bungalow', 'House', 'Studio', 'Chalet', 'Garden House'
-];
+// Bộ từ ghép tiếng Việt tạo tên chỗ nghỉ phong phú, chuyên nghiệp, hoàn toàn tự nhiên
+const THEMED_NAMES = {
+  1: [ // Villa (type_id = 1)
+    'Villa Lavender Dream', 'Seaside Bliss Luxury Villa', 'Sunset Cliff Villa', 'Heritage Palm Villa',
+    'Golden Horizon Villa', 'Ocean View Royal Villa', 'Rose Garden Luxury Villa', 'Emerald Bay Villa',
+    'Hillside Palace Villa', 'Pine Hill Grand Villa', 'Valley Dream Luxury Villa', 'Imperial Lotus Villa',
+    'Starlight Bay Villa', 'Riverfront Crown Villa', 'Azure Sky Villa', 'Sunny Coastline Villa',
+    'Green Meadow Villa', 'Silent Forest Villa', 'Serene Lake Villa', 'Paradise Cove Villa'
+  ],
+  2: [ // Homestay (type_id = 2)
+    'Homestay Cloud Nine', 'Rice Terrace Homestay', 'Ancient Town Riverside', 'Sweet Home Valley',
+    'Cozy Corner Homestay', 'Morning Mist Homestay', 'Old Street Memory Homestay', 'Green Oasis Homestay',
+    'Valley Lantern Homestay', 'Sunflower Hill Homestay', 'Peaceful Haven Homestay', 'Riverside Warmth Homestay',
+    'Dreamcatcher Homestay', 'Hillside Breeze Homestay', 'Little Forest Homestay', 'Moonlight Valley Homestay',
+    'Rustic Charm Homestay', 'Warm Hearth Homestay', 'Birdsong Garden Homestay', 'Old Quarter Story Homestay'
+  ],
+  3: [ // Resort (type_id = 3)
+    'Ocean View Resort', 'Sunset Beach Luxury Resort', 'Lotus Lagoon Wellness Resort', 'Palm Island Beach Resort',
+    'Golden Sand Boutique Resort', 'Mountain Peak Eco Resort', 'Emerald Coast Paradise Resort', 'Riverside Serenity Resort',
+    'Starlight Cliff Resort', 'Heritage Bay Resort & Spa', 'Crystal Clear Bay Resort', 'Green Valley Retreat Resort',
+    'Aqua Marine Luxury Resort', 'Tropical Breeze Resort', 'Sunburst Paradise Resort', 'Royal Coastline Resort'
+  ],
+  4: [ // Cabin (type_id = 4)
+    'Pine Hill Rustic Cabin', 'Cozy Wood Cabin', 'Starlight Hillside Cabin', 'Silent Woods Log Cabin',
+    'Mountain Dew Timber Cabin', 'Morning Dew Forest Cabin', 'Warm Fireplace Cabin', 'Hidden Glen Wood Cabin',
+    'Cedar Wood Country Cabin', 'Whispering Pines Cabin', 'Little Wooden Cottage', 'Highland Timber Cabin',
+    'Alpine Forest Cabin', 'Autumn Leaves Cabin', 'Valley Mist Cabin', 'Riverside Wooden Cabin'
+  ],
+  5: [ // Eco Homestay (type_id = 5)
+    'Bamboo Eco Green House', 'Tràng An Valley Lotus Retreat', 'Lotus Lagoon Eco Farmstay', 'Green Garden Nature Lodge',
+    'Organic Farm Eco Homestay', 'Wildflower Meadow Retreat', 'Forest Brook Eco House', 'Earth & Stone Eco Lodge',
+    'River Stream Eco Retreat', 'Herbal Garden Eco House', 'Sunlit Farm Nature Stay', 'Pure Earth Eco Sanctuary',
+    'Bird Paradise Eco Retreat', 'Green Valley Sustainable Stay', 'Breeze Garden Eco House', 'Fresh Spring Eco Lodge'
+  ]
+};
 
-const PROPERTY_NAMES_MODIFIERS = [
-  'Lavender Hill', 'Cloud Nine', 'Seaside Bliss', 'Rice Terrace', 'Ancient Town', 'Ocean Horizon',
-  'Pine Forest', 'Bamboo Eco', 'Valley View', 'Sunset Cliff', 'Lotus Lake', 'Morning Mist',
-  'Peaceful Haven', 'Green Oasis', 'Riverside Dream', 'Golden Sand', 'Mountain Dew', 'Starlight Hill',
-  'Heritage Charm', 'Silent Woods', 'Sunflower Hill', 'Sweet Home', 'Cozy Corner', 'Eden Garden'
+const AREA_QUALIFIERS = [
+  'Khu A', 'Khu B', 'Khu Nghỉ Dưỡng', 'Biệt Lập', 'Bên Suối', 'Lưng Đồi', 'Ven Sông', 'Hướng Biển',
+  'Vườn Thượng Uyển', 'Đồi Thông', 'Phố Cổ', 'Thung Lũng', 'Bãi Bắc', 'Bãi Nam', 'An Hòa', 'Thanh Bình'
 ];
 
 const VIETNAMESE_REVIEWS = [
@@ -133,14 +181,14 @@ const DISPUTE_REASONS = [
   { cat: 'SAFETY_ISSUE', reason: 'Điều hòa trong phòng gặp sự cố rò nước', desc: 'Điều hòa phòng ngủ chính bị chảy nước xuống sàn gây trơn trượt.' }
 ];
 
-console.log('Generating 500+ records dataset...');
+console.log("Generating production-scale seed data without '#' symbol and with thematic photos...");
 
 // OUTPUT BUILDER
 let sql = `-- =====================================================
 -- COMPREHENSIVE PRODUCTION-SCALE SEED DATA (500+ RECORDS PER ENTITY)
 -- Database: homestay_db
 -- Target: MariaDB / MySQL 8.0+
--- Generated for full platform realistic simulation
+-- Generated with Authentic Vietnamese Names (NO '#' symbol) & Themed Photos
 -- =====================================================
 
 USE \`homestay_db\`;
@@ -221,7 +269,7 @@ INSERT INTO \`locations\` (\`id\`, \`name\`, \`description\`, \`icon\`, \`image_
 const locValues = [];
 for (let i = 1; i <= LOCATION_COUNT; i++) {
   const cityName = CITIES[i - 1];
-  const photo = PHOTO_COLLECTION[(i - 1) % PHOTO_COLLECTION.length];
+  const photo = PHOTOS_HOMESTAY[(i - 1) % PHOTOS_HOMESTAY.length];
   locValues.push(`(${i}, '${cityName}', 'Điểm đến du lịch nổi tiếng ${cityName}', 'compass-outline', '${photo}', 26, 26, 1, ${i})`);
 }
 sql += locValues.join(',\n') + ';\n\n';
@@ -287,7 +335,7 @@ userRows.push(`(8, 'Hương Nguyễn', 'Hương Nguyễn', 'huong@gmail.com', '$
 const generatedEmails = new Set(['admin@mail.com', 'host1@mail.com', 'host2@mail.com', 'phamchuan2608@gmail.com', 'huong@gmail.com']);
 
 for (let id = 5; id <= TOTAL_USERS; id++) {
-  if (id === 8) continue; // already added Huong Nguyen
+  if (id === 8) continue;
   const role = id <= HOST_COUNT + 2 ? 'host' : 'customer';
   const nameObj = generateVietnameseName();
   let email = `${nameObj.cleanEmailName}@gmail.com`;
@@ -316,7 +364,7 @@ sql += `-- =====================================================
 INSERT INTO \`users\` (\`id\`, \`name\`, \`full_name\`, \`email\`, \`password\`, \`password_hash\`, \`role\`, \`status\`, \`phone\`, \`address\`, \`location\`, \`birth_date\`, \`avatar_url\`, \`reward_points\`, \`is_verified\`, \`is_active\`) VALUES
 ` + userRows.join(',\n') + ';\n\n';
 
-// 6. SEED PROPERTIES (520 Properties)
+// 6. SEED PROPERTIES (520 Properties - TÊN TỰ NHIÊN, KHÔNG DẤU '#', ẢNH KHỚP CHỦ ĐỀ)
 const TOTAL_PROPERTIES = 520;
 const propRows = [];
 const imageRows = [];
@@ -326,33 +374,47 @@ let imgIdCounter = 1;
 for (let id = 1; id <= TOTAL_PROPERTIES; id++) {
   const hostId = randomInt(2, HOST_COUNT + 2);
   const locId = ((id - 1) % LOCATION_COUNT) + 1;
-  const typeId = randomInt(1, 5);
+  const typeId = ((id - 1) % 5) + 1; // phân bổ đều 5 loại hình
   const city = CITIES[locId - 1];
-  const prefix = randomItem(PROPERTY_PREFIXES);
-  const mod = randomItem(PROPERTY_NAMES_MODIFIERS);
-  const name = `${prefix} ${mod} ${city} #${id}`;
-  const desc = `${name} tọa lạc tại vị trí đắc địa ở ${city}. Không gian nghỉ dưỡng yên bình với đầy đủ tiện nghi, view ngắm cảnh tuyệt đẹp, sân vườn nướng BBQ và hồ bơi thư giãn.`;
-  const price = randomInt(10, 80) * 100000; // 1.000.000đ - 8.000.000đ
+
+  // Tạo tên tự nhiên không có ký tự '#':
+  const baseThemedList = THEMED_NAMES[typeId];
+  const baseName = baseThemedList[(id - 1) % baseThemedList.length];
+  const qualifier = AREA_QUALIFIERS[Math.floor((id - 1) / baseThemedList.length) % AREA_QUALIFIERS.length];
+  const name = id <= baseThemedList.length
+    ? `${baseName} ${city}`
+    : `${baseName} ${qualifier} ${city}`;
+
+  const desc = `${name} tọa lạc tại vị trí đắc địa ở ${city}. Không gian nghỉ dưỡng yên bình với đầy đủ tiện nghi, view ngắm cảnh tuyệt đẹp, sân vườn nướng BBQ và không gian thư giãn lý tưởng cho chuyến đi của bạn.`;
+  const price = randomInt(12, 65) * 100000; // 1.200.000đ - 6.500.000đ
   const oldPrice = Math.random() > 0.4 ? Math.round(price * 1.25) : null;
   const address = `Đường số ${randomInt(1, 88)}, ${randomItem(DISTRICTS)}`;
   const lat = (10 + Math.random() * 12).toFixed(6);
   const lng = (105 + Math.random() * 4).toFixed(6);
-  const maxGuests = randomInt(2, 12);
+  const maxGuests = typeId === 1 ? randomInt(6, 14) : typeId === 3 ? randomInt(4, 8) : randomInt(2, 6);
   const bedrooms = Math.max(1, Math.floor(maxGuests / 2));
   const bathrooms = Math.max(1, Math.floor(bedrooms * 0.8));
-  const rating = (4.3 + Math.random() * 0.7).toFixed(2);
-  const reviewCount = randomInt(5, 180);
+  const rating = (4.4 + Math.random() * 0.6).toFixed(2);
+  const reviewCount = randomInt(12, 180);
   const isNew = id > 450 ? 1 : 0;
   const isFeatured = (id % 7 === 0 || id <= 10) ? 1 : 0;
-  const coverImg = PHOTO_COLLECTION[(id - 1) % PHOTO_COLLECTION.length];
+
+  // Chọn bộ ảnh khớp đúng với loại hình chỗ nghỉ
+  let themedPhotoPool = PHOTOS_HOMESTAY;
+  if (typeId === 1) themedPhotoPool = PHOTOS_VILLA;
+  else if (typeId === 3) themedPhotoPool = PHOTOS_RESORT;
+  else if (typeId === 4) themedPhotoPool = PHOTOS_CABIN;
+  else if (typeId === 5) themedPhotoPool = PHOTOS_ECO;
+
+  const coverImg = themedPhotoPool[(id - 1) % themedPhotoPool.length];
   const token = `HMTOKEN_${String(id).padStart(4, '0')}`;
 
   propRows.push(`(${id}, ${hostId}, '${name}', '${desc}', ${typeId}, ${price}.00, ${oldPrice ? oldPrice + '.00' : 'NULL'}, ${locId}, '${address}', '${city}', 'Vietnam', ${lat}, ${lng}, ${maxGuests}, ${bedrooms}, ${bathrooms}, ${rating}, ${reviewCount}, ${isNew}, ${isFeatured}, 1, 0, 'approved', '${coverImg}', '${token}', 1, NULL)`);
 
-  // 5-6 Images per property
-  const imgCount = randomInt(5, 6);
+  // Mỗi chỗ nghỉ có 6 ảnh độc đáo, không trùng lặp
+  const imgCount = 6;
   for (let imgIdx = 1; imgIdx <= imgCount; imgIdx++) {
-    const imgUrl = PHOTO_COLLECTION[(id + imgIdx) % PHOTO_COLLECTION.length];
+    const imgUrl = themedPhotoPool[(id + imgIdx - 1) % themedPhotoPool.length];
     const isPrimary = imgIdx === 1 ? 1 : 0;
     imageRows.push(`(${imgIdCounter++}, ${id}, '${imgUrl}', ${isPrimary}, ${imgIdx})`);
   }
@@ -416,7 +478,7 @@ for (let bId = 1; bId <= TOTAL_BOOKINGS; bId++) {
   const bookingCode = `BK2026${String(randomInt(1, 12)).padStart(2, '0')}${String(bId).padStart(4, '0')}`;
   const nights = randomInt(1, 4);
   const guests = randomInt(1, 6);
-  const pricePerNight = randomInt(12, 45) * 100000; // 1.2M - 4.5M
+  const pricePerNight = randomInt(12, 45) * 100000;
   const rawTotal = pricePerNight * nights;
   const discountAmount = bId % 4 === 0 ? 200000 : 0;
   const totalPrice = rawTotal - discountAmount;
@@ -424,14 +486,12 @@ for (let bId = 1; bId <= TOTAL_BOOKINGS; bId++) {
   const commAmount = Math.round((totalPrice * commRate) / 100);
   const hostPayout = totalPrice - commAmount;
 
-  // Diverse realistic date windows
   const month = randomInt(6, 11);
   const startDay = ((bId * 3) % 25) + 1;
   const endDay = startDay + nights;
   const checkIn = `2026-${String(month).padStart(2, '0')}-${String(startDay).padStart(2, '0')}`;
   const checkOut = `2026-${String(month).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
 
-  // Booking status distribution
   let status = 'confirmed';
   let paymentStatus = 'verified';
   let cancelReasonCode = 'NULL';
@@ -453,11 +513,9 @@ for (let bId = 1; bId <= TOTAL_BOOKINGS; bId++) {
     status = 'pending';
     paymentStatus = bId % 2 === 0 ? 'proof_uploaded' : 'unpaid';
   } else {
-    // Cancelled scenarios (60 cancelled bookings)
     status = 'cancelled';
     cancelledAt = `'2026-${String(month).padStart(2, '0')}-${String(startDay > 4 ? startDay - 4 : 1).padStart(2, '0')} 10:00:00'`;
     if (bId % 3 === 0) {
-      // Hủy trước 72h: hoàn 70%
       paymentStatus = 'partially_refunded';
       refundPercentage = 70.0;
       refundAmount = Math.round(totalPrice * 0.70);
@@ -466,7 +524,6 @@ for (let bId = 1; bId <= TOTAL_BOOKINGS; bId++) {
       cancelReasonCode = "'CHANGE_OF_PLAN'";
       cancelReasonDisplay = "'Tôi thay đổi kế hoạch chuyến đi'";
     } else if (bId % 3 === 1) {
-      // Hủy dưới 72h: không hoàn (phí hủy 100%)
       paymentStatus = 'verified';
       refundPercentage = 0.0;
       refundAmount = 0;
@@ -475,7 +532,6 @@ for (let bId = 1; bId <= TOTAL_BOOKINGS; bId++) {
       cancelReasonCode = "'SCHEDULE_ISSUE'";
       cancelReasonDisplay = "'Có việc bận đột xuất sát ngày đi'";
     } else {
-      // Đơn chưa thanh toán quá 15 phút -> tự động hủy miễn phí
       paymentStatus = 'rejected';
       refundPercentage = 0.0;
       refundAmount = 0;
@@ -493,7 +549,6 @@ for (let bId = 1; bId <= TOTAL_BOOKINGS; bId++) {
 
   bookingRows.push(`(${bId}, '${bookingCode}', ${propId}, ${guestUserId}, ${guestUserId}, NULL, NULL, NULL, NULL, '${checkIn}', '${checkOut}', ${guests}, ${nights}, ${pricePerNight}.00, NULL, ${discountAmount}.00, ${totalPrice}.00, ${commRate}, 0.1000, ${commAmount}.00, ${hostPayout}.00, '${status}', 'guest_online', 'bank_transfer', 'HSBK${String(bId).padStart(6, '0')}', '${paymentStatus}', ${proofImg}, NOW(), 1, NOW(), NULL, 'Vui lòng xuất trình CCCD khi nhận phòng', 'Khách đặt qua ứng dụng', '', ${guestUserId}, ${cancelReasonCode}, ${cancelReasonText}, ${refundAmount}.00, ${cancellationFee}.00, ${refundPercentage}, ${policyApplied}, ${status === 'cancelled' ? guestUserId : 'NULL'}, ${cancelledAt}, ${cancelReasonDisplay}, NOW(), NOW())`);
 
-  // Corresponding payment record
   let payStatus = 'completed';
   if (paymentStatus === 'unpaid') payStatus = 'pending';
   else if (paymentStatus === 'refunded') payStatus = 'refunded';
@@ -502,12 +557,10 @@ for (let bId = 1; bId <= TOTAL_BOOKINGS; bId++) {
 
   paymentRows.push(`(${bId}, ${bId}, 'bank_transfer', 'FT26${String(bId).padStart(8, '0')}', ${proofImg}, ${totalPrice}.00, '${payStatus}', NOW(), NOW(), NOW())`);
 
-  // If cancellation had refund or fee
   if (status === 'cancelled' && (refundAmount > 0 || cancellationFee > 0)) {
     refundRows.push(`(${refundRows.length + 1}, ${bId}, ${guestUserId}, ${totalPrice}.00, ${refundAmount}.00, ${cancellationFee}.00, ${refundPercentage}, ${policyApplied}, ${cancelReasonCode}, ${cancelReasonDisplay}, 'completed', NULL, NOW())`);
   }
 
-  // Conversation & Messages
   conversationRows.push(`(${bId}, ${bId}, NOW())`);
   messageRows.push(`(${msgIdCounter++}, ${bId}, 1, 'Đặt phòng thành công! Bạn có thể trao đổi với chủ nhà tại đây.', 'system', NOW(), NOW())`);
   messageRows.push(`(${msgIdCounter++}, ${bId}, ${guestUserId}, 'Chào chủ nhà, mình có thể nhận phòng sớm khoảng 12h trưa được không?', 'text', NOW(), NOW())`);
@@ -549,7 +602,7 @@ INSERT INTO \`favorites\` (\`id\`, \`user_id\`, \`property_id\`, \`created_at\`)
 // 13. SEED REVIEWS (520 Reviews)
 const revRows = [];
 for (let rId = 1; rId <= 520; rId++) {
-  const bId = rId; // matching booking
+  const bId = rId;
   const uId = randomInt(HOST_COUNT + 3, TOTAL_USERS);
   const pId = ((rId - 1) % TOTAL_PROPERTIES) + 1;
   const rating = randomInt(4, 5);
@@ -599,7 +652,7 @@ sql += `-- =====================================================
 INSERT INTO \`point_transactions\` (\`id\`, \`user_id\`, \`title\`, \`points\`, \`type\`, \`reference_id\`, \`created_at\`) VALUES
 ` + ptRows.join(',\n') + ';\n\n';
 
-// 17. SEED WALLETS (520 Wallets - one per user)
+// 17. SEED WALLETS (520 Wallets)
 const walletRows = [];
 for (let wId = 1; wId <= 520; wId++) {
   const bal = randomInt(0, 30) * 100000;
@@ -659,7 +712,7 @@ sql += `-- =====================================================
 INSERT INTO \`withdrawals\` (\`id\`, \`user_id\`, \`wallet_id\`, \`bank_account_id\`, \`amount\`, \`status\`, \`admin_note\`, \`processed_by\`, \`processed_at\`, \`created_at\`, \`updated_at\`) VALUES
 ` + withRows.join(',\n') + ';\n\n';
 
-// 21. SEED REFUNDS (${refundRows.length} Records)
+// 21. SEED REFUNDS
 if (refundRows.length > 0) {
   sql += `-- =====================================================
 -- 21. SEED REFUNDS (${refundRows.length} Records)
