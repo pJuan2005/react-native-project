@@ -471,27 +471,141 @@ export default function DetailPage() {
 
         {/* Image Gallery */}
         <div style={{ marginBottom: 32 }}>
-          <div style={{ position: "relative", marginBottom: 8 }}>
-            <img src={allImages[activeImg]} alt={property.title} className="hs-gallery-main" />
+          {/* Main Display Image */}
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              height: "460px",
+              borderRadius: 20,
+              overflow: "hidden",
+              marginBottom: 12,
+              background: "#f1f5f9",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+            }}
+          >
+            <img
+              src={allImages[activeImg]}
+              alt={property.title}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+
             {allImages.length > 1 && (
               <>
-                <button onClick={() => setActiveImg(i => (i - 1 + allImages.length) % allImages.length)}
-                  style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.4)", border: "none", borderRadius: 8, padding: "8px", cursor: "pointer", color: "#fff" }}>
-                  <ChevronLeft size={18} />
+                <button
+                  onClick={() => setActiveImg((i) => (i - 1 + allImages.length) % allImages.length)}
+                  style={{
+                    position: "absolute",
+                    left: 16,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "rgba(15,23,42,0.6)",
+                    backdropFilter: "blur(4px)",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: 40,
+                    height: 40,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    color: "#fff",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  <ChevronLeft size={20} />
                 </button>
-                <button onClick={() => setActiveImg(i => (i + 1) % allImages.length)}
-                  style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.4)", border: "none", borderRadius: 8, padding: "8px", cursor: "pointer", color: "#fff" }}>
-                  <ChevronRight size={18} />
+                <button
+                  onClick={() => setActiveImg((i) => (i + 1) % allImages.length)}
+                  style={{
+                    position: "absolute",
+                    right: 16,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "rgba(15,23,42,0.6)",
+                    backdropFilter: "blur(4px)",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: 40,
+                    height: 40,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    color: "#fff",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  <ChevronRight size={20} />
                 </button>
               </>
             )}
+
+            {/* Photo Counter Pill */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: 14,
+                right: 16,
+                background: "rgba(15,23,42,0.75)",
+                backdropFilter: "blur(6px)",
+                color: "#ffffff",
+                padding: "4px 12px",
+                borderRadius: 20,
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                letterSpacing: 0.5,
+              }}
+            >
+              {activeImg + 1} / {allImages.length}
+            </div>
           </div>
-          <div className="row g-2">
-            {allImages.map((img: string, i: number) => (
-              <div key={i} className="col-4 col-md-3">
-                <img src={img} alt="" className={`hs-gallery-thumb ${activeImg === i ? "active" : ""}`} onClick={() => setActiveImg(i)} />
-              </div>
-            ))}
+
+          {/* Thumbnails Row */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${Math.min(allImages.length, 6)}, 1fr)`,
+              gap: 10,
+            }}
+          >
+            {allImages.slice(0, 6).map((img: string, i: number) => {
+              const isActive = activeImg === i;
+              return (
+                <div
+                  key={i}
+                  onClick={() => setActiveImg(i)}
+                  style={{
+                    height: 84,
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    border: isActive ? "2.5px solid #2563EB" : "2px solid transparent",
+                    opacity: isActive ? 1 : 0.65,
+                    transform: isActive ? "scale(1.02)" : "none",
+                    transition: "all 0.15s ease",
+                    boxShadow: isActive ? "0 4px 12px rgba(37,99,235,0.2)" : "none",
+                    background: "#f1f5f9",
+                  }}
+                >
+                  <img
+                    src={img}
+                    alt=""
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
 
