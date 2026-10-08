@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Home, Search, User, LogIn, Menu, X, Building2,
-  LayoutDashboard, LogOut, CalendarDays, ChevronDown, UserCircle, Shield
+  LayoutDashboard, LogOut, CalendarDays, ChevronDown, UserCircle, Shield,
+  Wallet, Ticket, Heart
 } from "lucide-react";
 import { useAuth, getUserInitials } from "@/components/context/AuthContext";
 
@@ -39,8 +40,11 @@ export function Navbar() {
 
   // Guest dropdown menu items
   const guestMenuItems = [
-    { icon: <CalendarDays size={15} />, label: "Chuyến đi của tôi", path: "/dashboard" },
-    { icon: <UserCircle size={15} />, label: "Hồ sơ & Cài đặt", path: "/dashboard" },
+    { icon: <CalendarDays size={15} />, label: "Chuyến đi của tôi", path: "/dashboard?tab=bookings" },
+    { icon: <Wallet size={15} />, label: "Ví & Ngân hàng", path: "/dashboard?tab=wallet" },
+    { icon: <Ticket size={15} />, label: "Kho Voucher", path: "/dashboard?tab=vouchers" },
+    { icon: <Heart size={15} />, label: "Chỗ nghỉ yêu thích", path: "/dashboard?tab=favorites" },
+    { icon: <UserCircle size={15} />, label: "Hồ sơ & Cài đặt", path: "/dashboard?tab=profile" },
   ];
 
   // Host dropdown menu items

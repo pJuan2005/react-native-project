@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   CalendarDays,
   CreditCard,
-  FileText,
   Home,
   MapPin,
   Star,
@@ -15,8 +13,6 @@ import {
   XCircle,
   UploadCloud,
   CheckCircle2,
-  Clock,
-  MessageCircle,
   Wallet,
   Landmark,
   Ticket,
@@ -28,7 +24,6 @@ import {
   ArrowUpRight,
   PlusCircle,
   AlertCircle,
-  Copy,
   ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/components/context/AuthContext";
@@ -72,12 +67,23 @@ function formatDate(dateStr?: string | null) {
   });
 }
 
-export default function GuestDashboardPage() {
+function GuestDashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated, isInitializing } = useAuth();
   const [activeTab, setActiveTab] = useState<
     "bookings" | "wallet" | "vouchers" | "favorites" | "profile"
   >("bookings");
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (
+      tabParam &&
+      ["bookings", "wallet", "vouchers", "favorites", "profile"].includes(tabParam)
+    ) {
+      setActiveTab(tabParam as any);
+    }
+  }, [searchParams]);
 
   const [bookings, setBookings] = useState<BookingRecord[]>([]);
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
@@ -246,7 +252,7 @@ export default function GuestDashboardPage() {
 
   if (isInitializing || !user) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center text-slate-500 font-medium">
+      <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
         Đang tải thông tin tài khoản...
       </div>
     );
@@ -258,158 +264,306 @@ export default function GuestDashboardPage() {
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
 
   return (
-    <div className="bg-slate-50 min-h-screen py-8">
-      <div className="container max-w-6xl mx-auto px-4">
-        {/* HEADER PROFILE PREMIUM BANNER */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 mb-6 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-100/40 via-indigo-50/20 to-transparent rounded-full blur-3xl pointer-events-none" />
+    <div style={{ background: "#f8fafc", minHeight: "100vh", padding: "32px 0 64px" }}>
+      <div style={{ maxWidth: 1140, margin: "0 auto", padding: "0 20px" }}>
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        {/* HEADER PROFILE BANNER */}
+        <div
+          className="hs-card"
+          style={{
+            padding: "28px",
+            marginBottom: 24,
+            borderRadius: 20,
+            background: "#ffffff",
+            border: "1px solid #e2e8f0",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 20,
+            }}
+          >
             {/* User Identity */}
-            <div className="flex items-center gap-5">
-              <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden border-2 border-blue-500/20 shadow-lg shadow-blue-500/10 shrink-0">
-                <Image
+            <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+              {/* Avatar fixed size */}
+              <div
+                style={{
+                  width: 84,
+                  height: 84,
+                  minWidth: 84,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  border: "3px solid #dbeafe",
+                  boxShadow: "0 4px 14px rgba(37,99,235,0.15)",
+                }}
+              >
+                <img
                   src={avatarSrc}
                   alt={user.name}
-                  fill
-                  className="object-cover"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               </div>
 
               <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
                     {user.name}
                   </h1>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                    <ShieldCheck size={13} className="text-blue-600" />
-                    Thành viên Sàn
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      padding: "3px 10px",
+                      borderRadius: 20,
+                      background: "#eff6ff",
+                      color: "#1d4ed8",
+                      border: "1px solid #bfdbfe",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <ShieldCheck size={13} color="#2563EB" /> Thành viên Sàn
                   </span>
                 </div>
 
-                <p className="text-xs md:text-sm text-slate-500 mt-1 flex items-center gap-3 flex-wrap">
-                  <span className="flex items-center gap-1">
-                    <Mail size={13} className="text-slate-400" />
-                    {user.email}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 16,
+                    flexWrap: "wrap",
+                    marginTop: 6,
+                    fontSize: "0.83rem",
+                    color: "#64748b",
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <Mail size={13} color="#94a3b8" /> {user.email}
                   </span>
                   {user.phone && (
-                    <span className="flex items-center gap-1">
-                      <Phone size={13} className="text-slate-400" />
-                      {user.phone}
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <Phone size={13} color="#94a3b8" /> {user.phone}
                     </span>
                   )}
                   {user.location && (
-                    <span className="flex items-center gap-1">
-                      <MapPin size={13} className="text-slate-400" />
-                      {user.location}
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <MapPin size={13} color="#94a3b8" /> {user.location}
                     </span>
                   )}
                   {user.birthDate && (
-                    <span className="flex items-center gap-1">
-                      <Cake size={13} className="text-slate-400" />
-                      {user.birthDate}
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <Cake size={13} color="#94a3b8" /> {user.birthDate}
                     </span>
                   )}
-                </p>
+                </div>
               </div>
             </div>
 
-            {/* Quick Action Button */}
-            <div className="flex items-center gap-3">
-              <Link
-                href="/listings"
-                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 transition flex items-center gap-1.5"
-              >
-                <Home size={15} />
-                <span>Khám phá Homestay</span>
-              </Link>
-            </div>
+            {/* CTA Explore */}
+            <Link
+              href="/listings"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "10px 18px",
+                borderRadius: 12,
+                background: "#2563EB",
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: "0.85rem",
+                textDecoration: "none",
+                boxShadow: "0 4px 12px rgba(37,99,235,0.25)",
+              }}
+            >
+              <Home size={15} /> Khám phá Homestay
+            </Link>
           </div>
 
           {/* 4 QUICK STATS & UTILITY CARDS (MATCHING MOBILE APP) */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mt-7 pt-7 border-t border-slate-100">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+              gap: 14,
+              marginTop: 22,
+              paddingTop: 20,
+              borderTop: "1px solid #f1f5f9",
+            }}
+          >
             {/* Card 1: Reward Points */}
             <div
               onClick={() => setActiveTab("vouchers")}
-              className="bg-amber-50/60 hover:bg-amber-50 border border-amber-200/80 rounded-2xl p-4 cursor-pointer transition shadow-xs group"
+              style={{
+                background: "#fffbeb",
+                border: "1px solid #fef3c7",
+                borderRadius: 14,
+                padding: "14px 16px",
+                cursor: "pointer",
+              }}
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-amber-800">Điểm thưởng tích lũy</span>
-                <div className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center shadow-xs">
-                  <Star size={14} className="fill-white" />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#92400e" }}>
+                  Điểm thưởng tích lũy
+                </span>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 7,
+                    background: "#f59e0b",
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Star size={14} fill="#fff" />
                 </div>
               </div>
-              <div className="text-xl md:text-2xl font-black text-amber-900">
-                {user.rewardPoints || 82} <span className="text-xs font-semibold">điểm</span>
+              <div style={{ fontSize: "1.45rem", fontWeight: 900, color: "#78350f", marginTop: 4 }}>
+                {user.rewardPoints || 82}{" "}
+                <span style={{ fontSize: "0.8rem", fontWeight: 600 }}>điểm</span>
               </div>
-              <p className="text-[11px] text-amber-700/80 mt-1 line-clamp-1">
+              <div style={{ fontSize: "0.72rem", color: "#b45309", marginTop: 2 }}>
                 +100đ sau mỗi chuyến đi • Đổi Voucher
-              </p>
+              </div>
             </div>
 
             {/* Card 2: Wallet Balance */}
             <div
               onClick={() => setActiveTab("wallet")}
-              className="bg-emerald-50/60 hover:bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 cursor-pointer transition shadow-xs group"
+              style={{
+                background: "#f0fdf4",
+                border: "1px solid #dcfce7",
+                borderRadius: 14,
+                padding: "14px 16px",
+                cursor: "pointer",
+              }}
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-emerald-800">Ví của tôi</span>
-                <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#166534" }}>
+                  Ví của tôi
+                </span>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 7,
+                    background: "#16a34a",
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Wallet size={14} />
                 </div>
               </div>
-              <div className="text-xl md:text-2xl font-black text-emerald-900">
+              <div style={{ fontSize: "1.45rem", fontWeight: 900, color: "#14532d", marginTop: 4 }}>
                 {formatCurrency(wallet?.balance || 0)}
               </div>
-              <p className="text-[11px] text-emerald-700/80 mt-1 line-clamp-1">
+              <div style={{ fontSize: "0.72rem", color: "#15803d", marginTop: 2 }}>
                 {wallet?.pending_withdrawal && wallet.pending_withdrawal > 0
-                  ? `Chờ rút: ${formatCurrency(wallet.pending_withdrawal)}`
+                  ? `Đang chờ rút: ${formatCurrency(wallet.pending_withdrawal)}`
                   : "Hoàn tiền tự động & Rút tiền nhanh"}
-              </p>
+              </div>
             </div>
 
             {/* Card 3: My Vouchers */}
             <div
               onClick={() => setActiveTab("vouchers")}
-              className="bg-indigo-50/60 hover:bg-indigo-50 border border-indigo-200/80 rounded-2xl p-4 cursor-pointer transition shadow-xs group"
+              style={{
+                background: "#eef2ff",
+                border: "1px solid #e0e7ff",
+                borderRadius: 14,
+                padding: "14px 16px",
+                cursor: "pointer",
+              }}
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-indigo-800">Kho Voucher</span>
-                <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#3730a3" }}>
+                  Kho Voucher
+                </span>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 7,
+                    background: "#4f46e5",
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
                   <Ticket size={14} />
                 </div>
               </div>
-              <div className="text-xl md:text-2xl font-black text-indigo-900">
-                {vouchers.length} <span className="text-xs font-semibold">ưu đãi</span>
+              <div style={{ fontSize: "1.45rem", fontWeight: 900, color: "#312e81", marginTop: 4 }}>
+                {vouchers.length} <span style={{ fontSize: "0.8rem", fontWeight: 600 }}>ưu đãi</span>
               </div>
-              <p className="text-[11px] text-indigo-700/80 mt-1 line-clamp-1">
-                Giảm tới 30% cho kỳ nghỉ tiếp theo
-              </p>
+              <div style={{ fontSize: "0.72rem", color: "#4338ca", marginTop: 2 }}>
+                Giảm tới 30% khi đặt homestay
+              </div>
             </div>
 
             {/* Card 4: Wishlist / Favorites */}
             <div
               onClick={() => setActiveTab("favorites")}
-              className="bg-rose-50/60 hover:bg-rose-50 border border-rose-200/80 rounded-2xl p-4 cursor-pointer transition shadow-xs group"
+              style={{
+                background: "#fff1f2",
+                border: "1px solid #ffe4e6",
+                borderRadius: 14,
+                padding: "14px 16px",
+                cursor: "pointer",
+              }}
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-rose-800">Chỗ nghỉ yêu thích</span>
-                <div className="w-7 h-7 rounded-lg bg-rose-500 text-white flex items-center justify-center shadow-xs">
-                  <Heart size={14} className="fill-white" />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#9f1239" }}>
+                  Chỗ nghỉ yêu thích
+                </span>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 7,
+                    background: "#f43f5e",
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Heart size={14} fill="#fff" />
                 </div>
               </div>
-              <div className="text-xl md:text-2xl font-black text-rose-900">
-                {favorites.length} <span className="text-xs font-semibold">đã lưu</span>
+              <div style={{ fontSize: "1.45rem", fontWeight: 900, color: "#881337", marginTop: 4 }}>
+                {favorites.length} <span style={{ fontSize: "0.8rem", fontWeight: 600 }}>đã lưu</span>
               </div>
-              <p className="text-[11px] text-rose-700/80 mt-1 line-clamp-1">
-                Bộ sưu tập homestay ưa thích của bạn
-              </p>
+              <div style={{ fontSize: "0.72rem", color: "#be123c", marginTop: 2 }}>
+                Bộ sưu tập homestay ưa thích
+              </div>
             </div>
           </div>
         </div>
 
         {/* TAB NAVIGATION CHIPS */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 scrollbar-none">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            overflowX: "auto",
+            paddingBottom: 8,
+            marginBottom: 20,
+          }}
+        >
           {[
             { key: "bookings", label: `Chuyến đi của tôi (${bookings.length})`, icon: CalendarDays },
             { key: "wallet", label: `Ví & Ngân hàng`, icon: Wallet },
@@ -423,11 +577,21 @@ export default function GuestDashboardPage() {
               <button
                 key={item.key}
                 onClick={() => setActiveTab(item.key as any)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap shadow-xs ${
-                  active
-                    ? "bg-blue-600 text-white shadow-blue-500/20"
-                    : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
-                }`}
+                style={{
+                  padding: "9px 16px",
+                  borderRadius: 12,
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  border: active ? "1px solid #2563EB" : "1px solid #e2e8f0",
+                  background: active ? "#2563EB" : "#ffffff",
+                  color: active ? "#ffffff" : "#475569",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  whiteSpace: "nowrap",
+                  transition: "all 0.15s ease",
+                }}
               >
                 <Icon size={14} />
                 <span>{item.label}</span>
@@ -438,13 +602,41 @@ export default function GuestDashboardPage() {
 
         {/* FEEDBACK MESSAGES */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-semibold p-4 rounded-xl mb-6 flex items-center gap-2">
+          <div
+            style={{
+              background: "#fef2f2",
+              border: "1px solid #fecaca",
+              color: "#dc2626",
+              fontSize: "0.83rem",
+              fontWeight: 600,
+              padding: "12px 16px",
+              borderRadius: 12,
+              marginBottom: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
             <AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}
         {successMsg && (
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold p-4 rounded-xl mb-6 flex items-center gap-2">
+          <div
+            style={{
+              background: "#f0fdf4",
+              border: "1px solid #bbf7d0",
+              color: "#16a34a",
+              fontSize: "0.83rem",
+              fontWeight: 600,
+              padding: "12px 16px",
+              borderRadius: 12,
+              marginBottom: 20,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
             <CheckCircle2 size={16} />
             <span>{successMsg}</span>
           </div>
@@ -452,23 +644,58 @@ export default function GuestDashboardPage() {
 
         {/* ================= TAB 1: BOOKINGS LIST ================= */}
         {activeTab === "bookings" && (
-          <div className="space-y-4">
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {isLoading ? (
-              <div className="bg-white rounded-2xl p-12 text-center text-slate-400 text-sm">
+              <div
+                className="hs-card"
+                style={{ padding: 48, textAlign: "center", color: "#94a3b8", fontSize: "0.9rem" }}
+              >
                 Đang tải danh sách đặt phòng...
               </div>
             ) : bookings.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-xs">
-                <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4">
-                  <Home size={30} />
+              <div
+                className="hs-card"
+                style={{
+                  padding: 48,
+                  textAlign: "center",
+                  background: "#ffffff",
+                  borderRadius: 20,
+                }}
+              >
+                <div
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: "50%",
+                    background: "#eff6ff",
+                    color: "#2563EB",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 16px",
+                  }}
+                >
+                  <Home size={28} />
                 </div>
-                <h3 className="font-extrabold text-slate-900 text-lg">Bạn chưa có đơn đặt phòng nào</h3>
-                <p className="text-xs md:text-sm text-slate-500 mt-1 max-w-md mx-auto">
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+                  Bạn chưa có đơn đặt phòng nào
+                </h3>
+                <p style={{ fontSize: "0.85rem", color: "#64748b", marginTop: 6, maxWidth: 450, margin: "6px auto 0" }}>
                   Khám phá hàng trăm homestay, villa tuyệt đẹp với giá tốt nhất và đặt chỗ cho kỳ nghỉ sắp tới ngay hôm nay!
                 </p>
                 <Link
                   href="/listings"
-                  className="mt-6 inline-block px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition"
+                  style={{
+                    marginTop: 20,
+                    display: "inline-block",
+                    padding: "10px 22px",
+                    borderRadius: 12,
+                    background: "#2563EB",
+                    color: "#ffffff",
+                    fontWeight: 700,
+                    fontSize: "0.82rem",
+                    textDecoration: "none",
+                  }}
                 >
                   Khám phá Homestay ngay
                 </Link>
@@ -477,78 +704,128 @@ export default function GuestDashboardPage() {
               bookings.map((booking) => (
                 <div
                   key={booking.id}
-                  className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition flex flex-col md:flex-row gap-5 items-start md:items-center justify-between"
+                  className="hs-card"
+                  style={{
+                    padding: 20,
+                    borderRadius: 18,
+                    background: "#ffffff",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 18,
+                  }}
                 >
-                  <div className="flex gap-4 items-start">
-                    <div className="w-24 h-24 rounded-xl overflow-hidden bg-slate-100 shrink-0 relative">
-                      <Image
+                  <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                    <div
+                      style={{
+                        width: 90,
+                        height: 90,
+                        borderRadius: 14,
+                        overflow: "hidden",
+                        background: "#f1f5f9",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <img
                         src={booking.propertyImage || "/img/home1.png"}
                         alt={booking.propertyTitle}
-                        fill
-                        className="object-cover"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     </div>
 
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-blue-600">
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontFamily: "monospace", fontSize: "0.78rem", fontWeight: 800, color: "#2563EB" }}>
                           {booking.bookingCode}
                         </span>
                         <StatusBadge status={booking.status} />
                         <PaymentStatusBadge status={booking.paymentStatus} />
                       </div>
 
-                      <h3 className="font-bold text-slate-900 text-base leading-tight">
+                      <h3 style={{ fontSize: "1.02rem", fontWeight: 800, color: "#1e293b", margin: "2px 0 4px" }}>
                         {booking.propertyTitle}
                       </h3>
-                      <p className="text-xs text-slate-500 flex items-center gap-1">
-                        <MapPin size={12} className="text-slate-400" />
-                        <span>{booking.propertyLocation}</span>
+                      <p style={{ fontSize: "0.8rem", color: "#64748b", margin: 0, display: "flex", alignItems: "center", gap: 4 }}>
+                        <MapPin size={12} color="#94a3b8" /> {booking.propertyLocation}
                       </p>
 
-                      <div className="flex items-center gap-3 text-xs text-slate-600 pt-1">
+                      <div style={{ fontSize: "0.78rem", color: "#475569", marginTop: 4, display: "flex", gap: 14 }}>
                         <span>📅 {booking.checkIn} ➔ {booking.checkOut} ({booking.nights} đêm)</span>
                         <span>👥 {booking.guests} khách</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col md:items-end gap-3 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
-                    <div className="text-left md:text-right">
-                      <span className="text-[11px] text-slate-400 block">Tổng thanh toán</span>
-                      <span className="text-lg font-extrabold text-blue-600">
-                        {new Intl.NumberFormat("vi-VN").format(booking.totalPrice)} ₫
+                  <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+                    <div>
+                      <span style={{ fontSize: "0.72rem", color: "#94a3b8", display: "block" }}>Tổng thanh toán</span>
+                      <span style={{ fontSize: "1.15rem", fontWeight: 800, color: "#2563EB" }}>
+                        {formatCurrency(booking.totalPrice)}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div style={{ display: "flex", gap: 8 }}>
                       {booking.paymentStatus === "unpaid" && booking.status !== "cancelled" && (
                         <button
                           onClick={() => setSelectedBooking(booking)}
-                          className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5"
+                          style={{
+                            padding: "7px 12px",
+                            borderRadius: 10,
+                            background: "#2563EB",
+                            color: "#ffffff",
+                            fontWeight: 700,
+                            fontSize: "0.78rem",
+                            border: "none",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                          }}
                         >
-                          <CreditCard size={13} />
-                          <span>Thanh toán & Gửi bill</span>
+                          <CreditCard size={13} /> Thanh toán VietQR
                         </button>
                       )}
 
                       {booking.status === "completed" && (
                         <Link
                           href={`/reviews/create/${booking.id}`}
-                          className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs border border-amber-200 transition flex items-center gap-1.5"
+                          style={{
+                            padding: "7px 12px",
+                            borderRadius: 10,
+                            background: "#fffbeb",
+                            color: "#b45309",
+                            border: "1px solid #fef3c7",
+                            fontWeight: 700,
+                            fontSize: "0.78rem",
+                            textDecoration: "none",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                          }}
                         >
-                          <Star size={13} className="fill-amber-500 text-amber-500" />
-                          <span>Đánh giá chuyến đi</span>
+                          <Star size={13} fill="#f59e0b" color="#f59e0b" /> Đánh giá
                         </Link>
                       )}
 
                       {booking.status === "pending" && (
                         <button
                           onClick={() => handleCancel(booking.id)}
-                          className="px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs border border-red-200 transition flex items-center gap-1"
+                          style={{
+                            padding: "7px 12px",
+                            borderRadius: 10,
+                            background: "#fef2f2",
+                            color: "#dc2626",
+                            border: "1px solid #fecaca",
+                            fontWeight: 700,
+                            fontSize: "0.78rem",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 5,
+                          }}
                         >
-                          <XCircle size={13} />
-                          <span>Hủy đơn</span>
+                          <XCircle size={13} /> Hủy đơn
                         </button>
                       )}
                     </div>
@@ -561,91 +838,159 @@ export default function GuestDashboardPage() {
 
         {/* ================= TAB 2: WALLET & BANKING ================= */}
         {activeTab === "wallet" && (
-          <div className="space-y-6">
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {/* Top Cards: Balance & Bank List */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
               {/* Balance Card */}
-              <div className="md:col-span-1 bg-gradient-to-br from-slate-900 to-blue-950 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden flex flex-col justify-between">
-                <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl" />
-
+              <div
+                style={{
+                  background: "linear-gradient(135deg, #0f172a, #1e293b)",
+                  color: "#ffffff",
+                  borderRadius: 20,
+                  padding: "24px 28px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  boxShadow: "0 8px 24px rgba(15,23,42,0.15)",
+                }}
+              >
                 <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs uppercase tracking-wider text-slate-400 font-bold">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8", fontWeight: 700 }}>
                       Ví Homestay Pay
                     </span>
-                    <Wallet size={20} className="text-blue-400" />
+                    <Wallet size={20} color="#60a5fa" />
                   </div>
-                  <div className="text-2xl md:text-3xl font-black mt-3 text-white">
+                  <div style={{ fontSize: "2rem", fontWeight: 900, color: "#ffffff", marginTop: 12 }}>
                     {formatCurrency(wallet?.balance || 0)}
                   </div>
                   {wallet?.pending_withdrawal && wallet.pending_withdrawal > 0 ? (
-                    <p className="text-xs text-amber-300 mt-1">
+                    <p style={{ fontSize: "0.78rem", color: "#fde047", margin: "4px 0 0" }}>
                       Đang xử lý rút: {formatCurrency(wallet.pending_withdrawal)}
                     </p>
                   ) : (
-                    <p className="text-xs text-slate-400 mt-1">Số dư khả dụng để rút về ngân hàng</p>
+                    <p style={{ fontSize: "0.78rem", color: "#94a3b8", margin: "4px 0 0" }}>
+                      Số dư khả dụng để rút về tài khoản ngân hàng
+                    </p>
                   )}
                 </div>
 
-                <div className="pt-6">
+                <div style={{ marginTop: 24 }}>
                   <button
                     onClick={() => setShowWithdrawModal(true)}
                     disabled={(wallet?.balance || 0) < 50000}
-                    className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2"
+                    style={{
+                      width: "100%",
+                      padding: "11px",
+                      borderRadius: 12,
+                      background: (wallet?.balance || 0) >= 50000 ? "#2563EB" : "#334155",
+                      color: "#ffffff",
+                      fontWeight: 700,
+                      fontSize: "0.84rem",
+                      border: "none",
+                      cursor: (wallet?.balance || 0) >= 50000 ? "pointer" : "not-allowed",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                    }}
                   >
-                    <ArrowUpRight size={15} />
-                    <span>Rút tiền về tài khoản</span>
+                    <ArrowUpRight size={16} /> Rút tiền về tài khoản
                   </button>
                 </div>
               </div>
 
               {/* Linked Bank Accounts */}
-              <div className="md:col-span-2 bg-white rounded-3xl border border-slate-200 p-6 shadow-xs">
-                <div className="flex items-center justify-between mb-4">
+              <div
+                className="hs-card"
+                style={{
+                  background: "#ffffff",
+                  borderRadius: 20,
+                  padding: "24px",
+                  border: "1px solid #e2e8f0",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div>
-                    <h3 className="font-extrabold text-slate-900 text-base">Tài khoản ngân hàng liên kết</h3>
-                    <p className="text-xs text-slate-500">Dùng để nhận tiền hoàn hủy phòng & rút số dư ví</p>
+                    <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+                      Tài khoản ngân hàng liên kết
+                    </h3>
+                    <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "2px 0 0" }}>
+                      Dùng để nhận tiền hoàn hủy phòng & rút số dư ví
+                    </p>
                   </div>
                   <button
                     onClick={() => setShowAddBankModal(true)}
-                    className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition flex items-center gap-1.5"
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 10,
+                      background: "#eff6ff",
+                      color: "#2563EB",
+                      border: "1px solid #bfdbfe",
+                      fontWeight: 700,
+                      fontSize: "0.78rem",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
                   >
-                    <PlusCircle size={14} />
-                    <span>Thêm ngân hàng</span>
+                    <PlusCircle size={14} /> Thêm ngân hàng
                   </button>
                 </div>
 
                 {bankAccounts.length === 0 ? (
-                  <div className="p-8 text-center text-slate-400 border border-dashed border-slate-200 rounded-2xl">
-                    <Landmark size={28} className="mx-auto mb-2 text-slate-300" />
-                    <p className="text-xs">Bạn chưa liên kết tài khoản ngân hàng nào.</p>
+                  <div style={{ padding: 28, textAlign: "center", color: "#94a3b8", border: "1px dashed #e2e8f0", borderRadius: 14 }}>
+                    <Landmark size={24} style={{ margin: "0 auto 6px", color: "#cbd5e1" }} />
+                    <p style={{ fontSize: "0.8rem", margin: 0 }}>Bạn chưa liên kết tài khoản ngân hàng nào.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {bankAccounts.map((b) => (
                       <div
                         key={b.id}
-                        className="p-4 rounded-2xl border border-slate-200/90 bg-slate-50/50 flex items-center justify-between"
+                        style={{
+                          padding: "12px 14px",
+                          borderRadius: 12,
+                          background: "#f8fafc",
+                          border: "1px solid #e2e8f0",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div
+                            style={{
+                              width: 38,
+                              height: 38,
+                              borderRadius: 10,
+                              background: "#dbeafe",
+                              color: "#1d4ed8",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontWeight: 800,
+                              fontSize: "0.75rem",
+                            }}
+                          >
                             {b.bank_code || "BANK"}
                           </div>
                           <div>
-                            <div className="font-extrabold text-slate-900 text-sm">
+                            <div style={{ fontWeight: 800, color: "#1e293b", fontSize: "0.85rem" }}>
                               {b.bank_name}
                             </div>
-                            <div className="text-xs font-mono text-slate-600 font-semibold">
+                            <div style={{ fontSize: "0.78rem", fontFamily: "monospace", color: "#475569", fontWeight: 700 }}>
                               {b.account_number}
                             </div>
-                            <div className="text-[11px] text-slate-400 uppercase">
+                            <div style={{ fontSize: "0.72rem", color: "#94a3b8", textTransform: "uppercase" }}>
                               {b.account_holder_name}
                             </div>
                           </div>
                         </div>
 
                         {b.is_default === 1 && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#dcfce7", color: "#166534" }}>
                             Mặc định
                           </span>
                         )}
@@ -657,60 +1002,63 @@ export default function GuestDashboardPage() {
             </div>
 
             {/* Wallet Transaction Ledger */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs">
-              <h3 className="font-extrabold text-slate-900 text-base mb-1">
+            <div
+              className="hs-card"
+              style={{
+                background: "#ffffff",
+                borderRadius: 20,
+                padding: "24px",
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
                 Lịch sử giao dịch ví (Biến động số dư)
               </h3>
-              <p className="text-xs text-slate-500 mb-4">
+              <p style={{ fontSize: "0.78rem", color: "#64748b", margin: "2px 0 16px" }}>
                 Theo dõi minh bạch toàn bộ các khoản hoàn tiền và rút tiền
               </p>
 
               {transactions.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-xs">
+                <div style={{ padding: 24, textAlign: "center", color: "#94a3b8", fontSize: "0.82rem" }}>
                   Chưa có giao dịch biến động số dư nào.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                <div style={{ overflowX: "auto" }}>
+                  <table className="hs-table" style={{ width: "100%", fontSize: "0.82rem" }}>
                     <thead>
-                      <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-[10px]">
-                        <th className="py-2.5">Thời gian</th>
-                        <th className="py-2.5">Loại giao dịch</th>
-                        <th className="py-2.5">Nội dung</th>
-                        <th className="py-2.5 text-right">Số tiền</th>
-                        <th className="py-2.5 text-right">Số dư sau</th>
+                      <tr>
+                        <th>Thời gian</th>
+                        <th>Loại giao dịch</th>
+                        <th>Nội dung</th>
+                        <th style={{ textAlign: "right" }}>Số tiền</th>
+                        <th style={{ textAlign: "right" }}>Số dư sau</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                    <tbody>
                       {transactions.map((tx) => {
                         const isPlus = tx.amount > 0;
                         return (
-                          <tr key={tx.id} className="hover:bg-slate-50/50">
-                            <td className="py-3 text-slate-500">{formatDate(tx.created_at)}</td>
-                            <td className="py-3">
+                          <tr key={tx.id}>
+                            <td style={{ color: "#64748b", whiteSpace: "nowrap" }}>{formatDate(tx.created_at)}</td>
+                            <td>
                               <span
-                                className={`px-2 py-0.5 rounded-md font-bold text-[10px] uppercase ${
-                                  tx.type === "refund"
-                                    ? "bg-emerald-100 text-emerald-800"
-                                    : tx.type === "withdrawal"
-                                    ? "bg-amber-100 text-amber-800"
-                                    : "bg-blue-100 text-blue-800"
-                                }`}
+                                style={{
+                                  fontSize: "0.72rem",
+                                  fontWeight: 700,
+                                  padding: "2px 8px",
+                                  borderRadius: 20,
+                                  background: tx.type === "refund" ? "#dcfce7" : tx.type === "withdrawal" ? "#fef3c7" : "#eff6ff",
+                                  color: tx.type === "refund" ? "#166534" : tx.type === "withdrawal" ? "#92400e" : "#1e40af",
+                                }}
                               >
                                 {tx.type === "refund" ? "Hoàn tiền" : tx.type === "withdrawal" ? "Rút tiền" : tx.type}
                               </span>
                             </td>
-                            <td className="py-3 max-w-xs truncate text-slate-600">
-                              {tx.description || "Giao dịch ví"}
-                            </td>
-                            <td
-                              className={`py-3 text-right font-bold ${
-                                isPlus ? "text-emerald-600" : "text-red-600"
-                              }`}
-                            >
+                            <td style={{ color: "#334155" }}>{tx.description || "Giao dịch ví"}</td>
+                            <td style={{ textAlign: "right", fontWeight: 800, color: isPlus ? "#16a34a" : "#dc2626" }}>
                               {isPlus ? `+${formatCurrency(tx.amount)}` : formatCurrency(tx.amount)}
                             </td>
-                            <td className="py-3 text-right text-slate-900 font-bold">
+                            <td style={{ textAlign: "right", fontWeight: 800, color: "#1e293b" }}>
                               {formatCurrency(tx.balance_after)}
                             </td>
                           </tr>
@@ -727,53 +1075,84 @@ export default function GuestDashboardPage() {
         {/* ================= TAB 3: VOUCHERS LIST ================= */}
         {activeTab === "vouchers" && (
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-extrabold text-slate-900 text-lg">Kho Voucher ưu đãi của bạn</h3>
-                <p className="text-xs text-slate-500">Mã giảm giá có thể áp dụng ngay khi đặt homestay</p>
-              </div>
+            <div style={{ marginBottom: 16 }}>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+                Kho Voucher ưu đãi của bạn
+              </h3>
+              <p style={{ fontSize: "0.8rem", color: "#64748b", margin: "2px 0 0" }}>
+                Mã giảm giá có thể áp dụng ngay khi đặt homestay trên toàn sàn
+              </p>
             </div>
 
             {vouchers.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-xs">
-                <Ticket size={32} className="mx-auto mb-2 text-slate-300" />
-                <h4 className="font-bold text-slate-800 text-sm">Chưa có voucher nào trong ví</h4>
-                <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              <div
+                className="hs-card"
+                style={{ padding: 48, textAlign: "center", background: "#ffffff", borderRadius: 20 }}
+              >
+                <Ticket size={32} style={{ margin: "0 auto 8px", color: "#cbd5e1" }} />
+                <h4 style={{ fontWeight: 800, color: "#1e293b", margin: 0 }}>Chưa có voucher nào trong ví</h4>
+                <p style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: 4 }}>
                   Hãy tích lũy điểm thưởng từ các chuyến đi hoàn tất để đổi những voucher giá trị!
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gap: 16,
+                }}
+              >
                 {vouchers.map((v) => (
                   <div
                     key={v.id}
-                    className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition relative overflow-hidden flex flex-col justify-between"
+                    className="hs-card"
+                    style={{
+                      padding: "20px",
+                      borderRadius: 18,
+                      background: "#ffffff",
+                      border: "1px solid #e2e8f0",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                    }}
                   >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-100/50 to-transparent rounded-full pointer-events-none" />
-
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-mono text-xs font-black tracking-wider px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                        <span
+                          style={{
+                            fontFamily: "monospace",
+                            fontSize: "0.82rem",
+                            fontWeight: 800,
+                            padding: "4px 10px",
+                            borderRadius: 8,
+                            background: "#eef2ff",
+                            color: "#4338ca",
+                            border: "1px solid #c7d2fe",
+                          }}
+                        >
                           {v.code}
                         </span>
-                        <span className="text-[10px] text-slate-400">
+                        <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
                           HSD: {formatDate(v.end_date)}
                         </span>
                       </div>
 
-                      <h4 className="font-extrabold text-slate-900 text-sm mt-2">{v.title}</h4>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">{v.description}</p>
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 800, color: "#1e293b", margin: "6px 0 4px" }}>
+                        {v.title}
+                      </h4>
+                      <p style={{ fontSize: "0.78rem", color: "#64748b", margin: 0 }}>
+                        {v.description}
+                      </p>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                      <div className="text-xs font-black text-indigo-600">
-                        {v.discount_type === "percentage"
-                          ? `Giảm ${v.discount_value}%`
-                          : `Giảm ${formatCurrency(v.discount_value)}`}
-                      </div>
+                    <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontWeight: 900, fontSize: "0.95rem", color: "#4f46e5" }}>
+                        {v.discount_type === "percentage" ? `Giảm ${v.discount_value}%` : `Giảm ${formatCurrency(v.discount_value)}`}
+                      </span>
                       <Link
                         href="/listings"
-                        className="text-[11px] font-bold text-blue-600 hover:underline"
+                        style={{ fontSize: "0.78rem", fontWeight: 700, color: "#2563EB", textDecoration: "none" }}
                       >
                         Dùng ngay →
                       </Link>
@@ -788,66 +1167,105 @@ export default function GuestDashboardPage() {
         {/* ================= TAB 4: FAVORITES LIST ================= */}
         {activeTab === "favorites" && (
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-extrabold text-slate-900 text-lg">Homestay yêu thích đã lưu</h3>
-                <p className="text-xs text-slate-500">Các chỗ nghỉ bạn đã bấm thả tim lưu lại</p>
-              </div>
+            <div style={{ marginBottom: 16 }}>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+                Homestay yêu thích đã lưu
+              </h3>
+              <p style={{ fontSize: "0.8rem", color: "#64748b", margin: "2px 0 0" }}>
+                Các chỗ nghỉ bạn đã bấm biểu tượng trái tim lưu lại
+              </p>
             </div>
 
             {favorites.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-xs">
-                <Heart size={32} className="mx-auto mb-2 text-slate-300" />
-                <h4 className="font-bold text-slate-800 text-sm">Chưa có homestay yêu thích nào</h4>
-                <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              <div
+                className="hs-card"
+                style={{ padding: 48, textAlign: "center", background: "#ffffff", borderRadius: 20 }}
+              >
+                <Heart size={32} style={{ margin: "0 auto 8px", color: "#cbd5e1" }} />
+                <h4 style={{ fontWeight: 800, color: "#1e293b", margin: 0 }}>Chưa có homestay yêu thích nào</h4>
+                <p style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: 4 }}>
                   Hãy khám phá và bấm biểu tượng trái tim để lưu lại những nơi bạn muốn ghé thăm!
                 </p>
                 <Link
                   href="/listings"
-                  className="mt-4 inline-block px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-xs"
+                  style={{
+                    marginTop: 16,
+                    display: "inline-block",
+                    padding: "9px 20px",
+                    borderRadius: 12,
+                    background: "#2563EB",
+                    color: "#ffffff",
+                    fontWeight: 700,
+                    fontSize: "0.8rem",
+                    textDecoration: "none",
+                  }}
                 >
                   Khám phá ngay
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+                  gap: 18,
+                }}
+              >
                 {favorites.map((item) => (
                   <Link
                     key={item.id}
                     href={`/listings/${item.id}`}
-                    className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition group flex flex-col"
+                    className="hs-card"
+                    style={{
+                      borderRadius: 18,
+                      overflow: "hidden",
+                      background: "#ffffff",
+                      textDecoration: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                    }}
                   >
-                    <div className="relative h-44 w-full bg-slate-100 overflow-hidden">
-                      <Image
+                    <div style={{ height: 160, position: "relative", background: "#f1f5f9" }}>
+                      <img
                         src={item.cover_image || "/img/home1.png"}
                         alt={item.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition duration-300"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
-                      <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-rose-500 shadow-xs">
-                        <Heart size={16} className="fill-rose-500" />
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 10,
+                          right: 10,
+                          width: 32,
+                          height: 32,
+                          borderRadius: "50%",
+                          background: "rgba(255,255,255,0.9)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Heart size={16} fill="#f43f5e" color="#f43f5e" />
                       </div>
                     </div>
 
-                    <div className="p-4 flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center gap-1 text-xs text-amber-500 font-bold mb-1">
-                          <Star size={13} className="fill-amber-400" />
-                          <span>{Number(item.rating_average || 5.0).toFixed(1)}</span>
-                          <span className="text-slate-400">({item.review_count || 12})</span>
-                        </div>
-                        <h4 className="font-bold text-slate-900 text-sm line-clamp-1 group-hover:text-blue-600 transition">
-                          {item.name}
-                        </h4>
-                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                          <MapPin size={12} className="text-slate-400" />
-                          <span>{item.city}</span>
-                        </p>
+                    <div style={{ padding: "14px 16px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, color: "#f59e0b", fontSize: "0.78rem", fontWeight: 700 }}>
+                        <Star size={13} fill="#f59e0b" color="#f59e0b" />
+                        <span>{Number(item.rating_average || 5.0).toFixed(1)}</span>
+                        <span style={{ color: "#94a3b8" }}>({item.review_count || 12})</span>
                       </div>
+                      <h4 style={{ fontSize: "0.95rem", fontWeight: 800, color: "#1e293b", margin: "4px 0" }}>
+                        {item.name}
+                      </h4>
+                      <p style={{ fontSize: "0.78rem", color: "#64748b", margin: 0, display: "flex", alignItems: "center", gap: 3 }}>
+                        <MapPin size={11} color="#94a3b8" /> {item.city}
+                      </p>
 
-                      <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-                        <span className="text-xs text-slate-400">Giá 1 đêm</span>
-                        <span className="font-extrabold text-blue-600 text-sm">
+                      <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>Giá 1 đêm</span>
+                        <span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#2563EB" }}>
                           {formatCurrency(item.price_per_night)}
                         </span>
                       </div>
@@ -861,26 +1279,51 @@ export default function GuestDashboardPage() {
 
         {/* ================= TAB 5: PROFILE & ACCOUNT SETTINGS ================= */}
         {activeTab === "profile" && (
-          <div className="max-w-3xl">
+          <div style={{ maxWidth: 800 }}>
             <AccountSettingsPanel user={user} />
           </div>
         )}
 
         {/* MODAL: WITHDRAWAL REQUEST */}
         {showWithdrawModal && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-            <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden p-6">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                <h3 className="font-extrabold text-slate-900 text-base">Rút tiền về tài khoản ngân hàng</h3>
-                <button onClick={() => setShowWithdrawModal(false)} className="text-slate-400 hover:text-slate-600">
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(15,23,42,0.6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 999,
+              padding: 16,
+            }}
+          >
+            <div
+              style={{
+                background: "#ffffff",
+                width: "100%",
+                maxWidth: 440,
+                borderRadius: 20,
+                padding: 24,
+                boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid #f1f5f9" }}>
+                <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+                  Rút tiền về tài khoản ngân hàng
+                </h3>
+                <button
+                  onClick={() => setShowWithdrawModal(false)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}
+                >
                   <XCircle size={20} />
                 </button>
               </div>
 
-              <form onSubmit={handleWithdrawSubmit} className="space-y-4">
+              <form onSubmit={handleWithdrawSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Số dư khả dụng: <span className="text-emerald-600">{formatCurrency(wallet?.balance || 0)}</span>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                    Số dư khả dụng: <span style={{ color: "#16a34a" }}>{formatCurrency(wallet?.balance || 0)}</span>
                   </label>
                   <input
                     type="number"
@@ -890,21 +1333,25 @@ export default function GuestDashboardPage() {
                     placeholder="Nhập số tiền cần rút (tối thiểu 50.000 ₫)"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="w-full text-sm p-3 rounded-xl border border-slate-200 focus:outline-blue-500"
+                    className="hs-form-control"
+                    style={{ padding: "10px 14px", fontSize: "0.85rem" }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Chọn tài khoản nhận tiền:</label>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                    Chọn tài khoản nhận tiền:
+                  </label>
                   {bankAccounts.length === 0 ? (
-                    <p className="text-xs text-red-600">
+                    <p style={{ fontSize: "0.78rem", color: "#dc2626", margin: 0 }}>
                       Bạn chưa có tài khoản ngân hàng nào. Vui lòng thêm ngân hàng trước.
                     </p>
                   ) : (
                     <select
                       value={withdrawBankId}
                       onChange={(e) => setWithdrawBankId(Number(e.target.value))}
-                      className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-blue-500"
+                      className="hs-form-control"
+                      style={{ padding: "10px 14px", fontSize: "0.85rem" }}
                     >
                       {bankAccounts.map((b) => (
                         <option key={b.id} value={b.id}>
@@ -915,18 +1362,28 @@ export default function GuestDashboardPage() {
                   )}
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3">
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
                   <button
                     type="button"
                     onClick={() => setShowWithdrawModal(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                    style={{ padding: "8px 16px", borderRadius: 10, background: "#f1f5f9", border: "none", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", color: "#64748b" }}
                   >
                     Hủy
                   </button>
                   <button
                     type="submit"
                     disabled={isWithdrawing || bankAccounts.length === 0}
-                    className="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md disabled:opacity-50"
+                    style={{
+                      padding: "8px 18px",
+                      borderRadius: 10,
+                      background: "#2563EB",
+                      border: "none",
+                      fontSize: "0.8rem",
+                      fontWeight: 700,
+                      color: "#fff",
+                      cursor: "pointer",
+                      opacity: isWithdrawing ? 0.6 : 1,
+                    }}
                   >
                     {isWithdrawing ? "Đang xử lý..." : "Xác nhận rút tiền"}
                   </button>
@@ -938,18 +1395,45 @@ export default function GuestDashboardPage() {
 
         {/* MODAL: ADD BANK ACCOUNT */}
         {showAddBankModal && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-            <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden p-6">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                <h3 className="font-extrabold text-slate-900 text-base">Liên kết tài khoản ngân hàng</h3>
-                <button onClick={() => setShowAddBankModal(false)} className="text-slate-400 hover:text-slate-600">
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(15,23,42,0.6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 999,
+              padding: 16,
+            }}
+          >
+            <div
+              style={{
+                background: "#ffffff",
+                width: "100%",
+                maxWidth: 440,
+                borderRadius: 20,
+                padding: 24,
+                boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid #f1f5f9" }}>
+                <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+                  Liên kết tài khoản ngân hàng
+                </h3>
+                <button
+                  onClick={() => setShowAddBankModal(false)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}
+                >
                   <XCircle size={20} />
                 </button>
               </div>
 
-              <form onSubmit={handleAddBankSubmit} className="space-y-3.5">
+              <form onSubmit={handleAddBankSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Ngân hàng:</label>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                    Ngân hàng:
+                  </label>
                   <select
                     value={newBankForm.bankName}
                     onChange={(e) => {
@@ -958,7 +1442,8 @@ export default function GuestDashboardPage() {
                         name === "Techcombank" ? "TCB" : name === "Vietcombank" ? "VCB" : name === "MB Bank" ? "MB" : "BIDV";
                       setNewBankForm((prev) => ({ ...prev, bankName: name, bankCode: code }));
                     }}
-                    className="w-full text-xs p-3 rounded-xl border border-slate-200"
+                    className="hs-form-control"
+                    style={{ padding: "10px 14px", fontSize: "0.85rem" }}
                   >
                     <option value="Techcombank">Techcombank (TCB)</option>
                     <option value="Vietcombank">Vietcombank (VCB)</option>
@@ -968,7 +1453,9 @@ export default function GuestDashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Số tài khoản:</label>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                    Số tài khoản:
+                  </label>
                   <input
                     type="text"
                     required
@@ -977,12 +1464,15 @@ export default function GuestDashboardPage() {
                     onChange={(e) =>
                       setNewBankForm((prev) => ({ ...prev, accountNumber: e.target.value }))
                     }
-                    className="w-full text-xs p-3 rounded-xl border border-slate-200"
+                    className="hs-form-control"
+                    style={{ padding: "10px 14px", fontSize: "0.85rem" }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Tên chủ tài khoản (in hoa không dấu):</label>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                    Tên chủ tài khoản (in hoa không dấu):
+                  </label>
                   <input
                     type="text"
                     required
@@ -994,22 +1484,33 @@ export default function GuestDashboardPage() {
                         accountHolderName: e.target.value.toUpperCase(),
                       }))
                     }
-                    className="w-full text-xs p-3 rounded-xl border border-slate-200 uppercase"
+                    className="hs-form-control"
+                    style={{ padding: "10px 14px", fontSize: "0.85rem", textTransform: "uppercase" }}
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3">
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
                   <button
                     type="button"
                     onClick={() => setShowAddBankModal(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                    style={{ padding: "8px 16px", borderRadius: 10, background: "#f1f5f9", border: "none", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", color: "#64748b" }}
                   >
                     Hủy
                   </button>
                   <button
                     type="submit"
                     disabled={isAddingBank}
-                    className="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md disabled:opacity-50"
+                    style={{
+                      padding: "8px 18px",
+                      borderRadius: 10,
+                      background: "#2563EB",
+                      border: "none",
+                      fontSize: "0.8rem",
+                      fontWeight: 700,
+                      color: "#fff",
+                      cursor: "pointer",
+                      opacity: isAddingBank ? 0.6 : 1,
+                    }}
                   >
                     {isAddingBank ? "Đang lưu..." : "Lưu tài khoản"}
                   </button>
@@ -1021,29 +1522,55 @@ export default function GuestDashboardPage() {
 
         {/* MODAL: PAYMENT INSTRUCTIONS & PROOF UPLOAD */}
         {selectedBooking && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-            <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(15,23,42,0.6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 999,
+              padding: 16,
+            }}
+          >
+            <div
+              style={{
+                background: "#ffffff",
+                width: "100%",
+                maxWidth: 480,
+                borderRadius: 20,
+                padding: 24,
+                boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+                maxHeight: "90vh",
+                overflowY: "auto",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, paddingBottom: 12, borderBottom: "1px solid #f1f5f9" }}>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base">Thanh toán chuyển khoản VietQR</h3>
-                  <p className="text-xs text-blue-600 font-mono font-bold">Mã đơn: {selectedBooking.bookingCode}</p>
+                  <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+                    Thanh toán chuyển khoản VietQR
+                  </h3>
+                  <p style={{ fontSize: "0.78rem", color: "#2563EB", fontFamily: "monospace", fontWeight: 800, margin: "2px 0 0" }}>
+                    Mã đơn: {selectedBooking.bookingCode}
+                  </p>
                 </div>
                 <button
                   onClick={() => {
                     setSelectedBooking(null);
                     setSelectedProofFile(null);
                   }}
-                  className="text-slate-400 hover:text-slate-600 p-1"
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}
                 >
                   <XCircle size={20} />
                 </button>
               </div>
 
-              <div className="p-5 space-y-4">
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <PaymentInstructionsCard booking={selectedBooking} />
 
-                <form onSubmit={handleUploadProof} className="pt-3 border-t border-slate-100 space-y-3">
-                  <label className="block text-xs font-bold text-slate-800">
+                <form onSubmit={handleUploadProof} style={{ paddingTop: 12, borderTop: "1px solid #f1f5f9", display: "flex", flexDirection: "column", gap: 10 }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1e293b" }}>
                     📸 Tải lên ảnh chụp biên lai chuyển khoản thành công:
                   </label>
                   <input
@@ -1051,24 +1578,37 @@ export default function GuestDashboardPage() {
                     accept="image/*"
                     required
                     onChange={(e) => setSelectedProofFile(e.target.files?.[0] || null)}
-                    className="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                    style={{ fontSize: "0.8rem", color: "#475569" }}
                   />
 
-                  <div className="flex justify-end gap-2 pt-2">
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
                     <button
                       type="button"
                       onClick={() => {
                         setSelectedBooking(null);
                         setSelectedProofFile(null);
                       }}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                      style={{ padding: "8px 16px", borderRadius: 10, background: "#f1f5f9", border: "none", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", color: "#64748b" }}
                     >
                       Đóng
                     </button>
                     <button
                       type="submit"
                       disabled={isUploading || !selectedProofFile}
-                      className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md disabled:opacity-50 flex items-center gap-1.5"
+                      style={{
+                        padding: "8px 18px",
+                        borderRadius: 10,
+                        background: "#2563EB",
+                        border: "none",
+                        fontSize: "0.8rem",
+                        fontWeight: 700,
+                        color: "#fff",
+                        cursor: "pointer",
+                        opacity: isUploading ? 0.6 : 1,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
                     >
                       <UploadCloud size={14} />
                       <span>{isUploading ? "Đang gửi..." : "Xác nhận gửi biên lai"}</span>
@@ -1081,5 +1621,27 @@ export default function GuestDashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function GuestDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: "60vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#64748b",
+          }}
+        >
+          Đang tải thông tin tài khoản...
+        </div>
+      }
+    >
+      <GuestDashboardContent />
+    </Suspense>
   );
 }
