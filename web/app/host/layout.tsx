@@ -144,7 +144,20 @@ export default function HostLayout({ children }: { children: React.ReactNode }) 
 
       {/* Main Content */}
       <div className="hs-host-main">
-        <div className="hs-host-topbar">
+        <div
+          className="hs-host-topbar"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "16px 28px",
+            background: "#fff",
+            borderBottom: "1px solid #e2e8f0",
+            position: "sticky",
+            top: 0,
+            zIndex: 40,
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button
               className="d-md-none"

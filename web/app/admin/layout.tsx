@@ -138,7 +138,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       <div className="hs-admin-main">
-        <div className="hs-admin-topbar">
+        <div
+          className="hs-admin-topbar"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "16px 28px",
+            background: "#fff",
+            borderBottom: "1px solid #e2e8f0",
+            position: "sticky",
+            top: 0,
+            zIndex: 40,
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button className="d-md-none" style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }} onClick={() => setMobileSidebarOpen(true)}>
               <Menu size={22} color="#1e293b" />

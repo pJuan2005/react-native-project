@@ -15,6 +15,10 @@ export interface AuthUser {
   website?: string;
   languages?: string;
   bio?: string;
+  avatar?: string;
+  avatarUrl?: string;
+  rewardPoints?: number;
+  birthDate?: string;
 }
 
 interface ApiAuthUser {
@@ -29,6 +33,10 @@ interface ApiAuthUser {
   languages?: string | null;
   bio?: string | null;
   createdAt?: string | null;
+  avatar?: string | null;
+  avatarUrl?: string | null;
+  rewardPoints?: number | null;
+  birthDate?: string | null;
 }
 
 interface AuthResponse {
@@ -73,6 +81,10 @@ export function mapAuthUser(user: ApiAuthUser): AuthUser {
     website: user.website || "",
     languages: user.languages || "",
     bio: user.bio || "",
+    avatar: user.avatar || user.avatarUrl || "",
+    avatarUrl: user.avatar || user.avatarUrl || "",
+    rewardPoints: Number(user.rewardPoints || 0),
+    birthDate: user.birthDate || "",
   };
 }
 

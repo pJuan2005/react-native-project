@@ -35,15 +35,19 @@ function formatBirthDate(val) {
 function mapUserResponse(user) {
   return {
     id: Number(user.id),
-    fullName: user.full_name,
+    fullName: user.full_name || user.name,
     email: user.email,
     role: user.role,
     status: user.status,
-    phone: user.phone,
-    location: user.location,
-    website: user.website,
-    languages: user.languages,
-    bio: user.bio,
+    phone: user.phone || "",
+    location: user.location || user.address || "",
+    website: user.website || "",
+    languages: user.languages || "",
+    bio: user.bio || "",
+    avatar: user.avatar_url || "",
+    avatarUrl: user.avatar_url || "",
+    rewardPoints: Number(user.reward_points || 0),
+    birthDate: formatBirthDate(user.birth_date),
     createdAt: user.created_at,
   };
 }
