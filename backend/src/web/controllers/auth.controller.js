@@ -161,13 +161,6 @@ async function verifyPassword(user, plainPassword) {
     return true;
   }
 
-  // 4. Default demo/test account passwords (123456, password123)
-  if (plainPassword === "123456" || plainPassword === "password123") {
-    const hashedPassword = await bcrypt.hash(plainPassword, SALT_ROUNDS);
-    await User.updatePassword(user.id, hashedPassword).catch(() => {});
-    return true;
-  }
-
   return false;
 }
 
@@ -284,30 +277,12 @@ async function handleLogin(req, res) {
   }
 
   try {
-    let user = await User.findByEmail(email);
+    const user = await User.findByEmail(email);
 
     if (!user) {
-      // Auto-provision user for testing if registering directly
-      const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-      const defaultName = email.split('@')[0].toUpperCase();
-      const newUserId = await User.create({
-        name: defaultName,
-        fullName: defaultName,
-        email,
-        password: hashedPassword,
-        role: "guest",
-        phone: "0900000000",
-      }).catch(() => null);
-
-      if (newUserId) {
-        user = await User.findById(newUserId);
-      }
-    }
-
-    if (!user) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
-        message: "Email không tồn tại trên hệ thống",
+        message: "Tài khoản không tồn tại trên hệ thống",
       });
     }
 
@@ -321,7 +296,7 @@ async function handleLogin(req, res) {
     const isValidPassword = await verifyPassword(user, password);
 
     if (!isValidPassword) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
         message: "Mật khẩu không chính xác",
       });

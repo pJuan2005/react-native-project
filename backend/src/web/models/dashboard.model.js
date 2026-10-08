@@ -393,16 +393,17 @@ async function getBookingStatusBreakdown() {
 async function getPropertyTypeBreakdown() {
   const [rows] = await db.promise().query(
     `SELECT
-      property_type AS name,
-      COUNT(*) AS value
-     FROM properties
-     WHERE is_deleted = 0
-     GROUP BY property_type
-     ORDER BY value DESC, property_type ASC`,
+      COALESCE(ht.name, 'Chỗ nghỉ khác') AS name,
+      COUNT(p.id) AS value
+     FROM properties p
+     LEFT JOIN homestay_types ht ON ht.id = p.type_id
+     WHERE p.is_deleted = 0
+     GROUP BY p.type_id, ht.name
+     ORDER BY value DESC, name ASC`,
   );
 
   return rows.map((row) => ({
-    name: row.name || "Other",
+    name: row.name || "Chỗ nghỉ khác",
     value: toNumber(row.value),
   }));
 }

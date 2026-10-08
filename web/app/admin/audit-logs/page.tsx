@@ -13,6 +13,9 @@ import {
   User,
 } from "lucide-react";
 import { getAdminAuditLogs, type AuditLogItem } from "@/services/adminAuditService";
+import { PaginationControls } from "@/components/shared/PaginationControls";
+
+const ITEMS_PER_PAGE = 15;
 
 function formatTimestamp(value: string) {
   const d = new Date(value);
@@ -54,11 +57,12 @@ export default function AdminAuditLogsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const data = await getAdminAuditLogs(100, 0);
+      const data = await getAdminAuditLogs(500, 0);
       setLogs(Array.isArray(data) ? data : []);
     } catch (err) {
       console.warn("Lỗi tải audit logs:", err);
@@ -70,6 +74,10 @@ export default function AdminAuditLogsPage() {
   useEffect(() => {
     fetchLogs();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, actionFilter]);
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
@@ -88,6 +96,14 @@ export default function AdminAuditLogsPage() {
       return matchSearch && matchAction;
     });
   }, [logs, search, actionFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedLogs = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+    return filteredLogs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredLogs, safeCurrentPage]);
 
   return (
     <div style={{ padding: "28px" }}>
@@ -209,8 +225,13 @@ export default function AdminAuditLogsPage() {
 
       {/* Table */}
       <div className="hs-card" style={{ overflow: "hidden" }}>
-        <div style={{ padding: "12px 20px", borderBottom: "1px solid #e2e8f0", fontSize: "0.85rem", color: "#64748b" }}>
-          Hiển thị {filteredLogs.length} trên tổng số {logs.length} bản ghi kiểm toán
+        <div style={{ padding: "12px 20px", borderBottom: "1px solid #e2e8f0", fontSize: "0.85rem", color: "#64748b", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <span>
+            Hiển thị {filteredLogs.length > 0 ? (safeCurrentPage - 1) * ITEMS_PER_PAGE + 1 : 0} - {Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredLogs.length)} trên tổng số {filteredLogs.length} bản ghi kiểm toán
+          </span>
+          <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+            Trang {safeCurrentPage} / {totalPages}
+          </span>
         </div>
 
         <div style={{ overflowX: "auto" }}>
@@ -233,14 +254,14 @@ export default function AdminAuditLogsPage() {
                     Đang tải nhật ký kiểm toán...
                   </td>
                 </tr>
-              ) : filteredLogs.length === 0 ? (
+              ) : paginatedLogs.length === 0 ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: "center", padding: "48px", color: "#94a3b8" }}>
                     Chưa có nhật ký kiểm toán nào phù hợp.
                   </td>
                 </tr>
               ) : (
-                filteredLogs.map((log) => {
+                paginatedLogs.map((log) => {
                   const badge = getActionBadge(log.action);
                   return (
                     <tr key={log.id}>
@@ -321,6 +342,17 @@ export default function AdminAuditLogsPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div style={{ marginTop: 20 }}>
+        <PaginationControls
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          totalItems={filteredLogs.length}
+          pageSize={ITEMS_PER_PAGE}
+          itemLabel="bản ghi kiểm toán"
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   );
