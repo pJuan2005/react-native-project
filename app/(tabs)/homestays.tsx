@@ -10,6 +10,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { API_BASE_URL, fetchWithTimeout } from '@/config/api';
 import { useResponsive } from '@/utils/responsive';
+import { PaginationControls } from '@/components/pagination-controls';
+
+const ITEMS_PER_PAGE = 8;
 
 export default function HomestaysScreen() {
   const { isDark, colors } = useAppTheme();
@@ -21,6 +24,7 @@ export default function HomestaysScreen() {
   const [homestays, setHomestays] = useState<Homestay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchWithTimeout(`${API_BASE_URL}/api/homestays`, {}, 3000)
@@ -44,6 +48,17 @@ export default function HomestaysScreen() {
     const matchesType = selectedType === 'all' || h.type === selectedType;
     return matchesSearch && matchesType;
   }).sort((a, b) => sort === 'price' ? a.price - b.price : sort === 'rating' ? b.rating - a.rating : 0), [homestays, searchText, selectedType, sort]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText, selectedType, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredHomestays.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedHomestays = useMemo(() => {
+    const start = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+    return filteredHomestays.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredHomestays, safeCurrentPage]);
 
   const types = useMemo(() => [...new Set(homestays.map(h => h.type))], [homestays]);
 
@@ -152,7 +167,7 @@ export default function HomestaysScreen() {
         </View>
       ) : (
         <FlatList
-          data={filteredHomestays}
+          data={paginatedHomestays}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
@@ -170,6 +185,16 @@ export default function HomestaysScreen() {
               <Text style={styles.emptyTitle}>Không tìm thấy homestay</Text>
               <Text style={styles.emptyText}>Vui lòng thử từ khóa hoặc chọn loại hình khác.</Text>
             </View>
+          }
+          ListFooterComponent={
+            <PaginationControls
+              currentPage={safeCurrentPage}
+              totalPages={totalPages}
+              totalItems={filteredHomestays.length}
+              pageSize={ITEMS_PER_PAGE}
+              itemLabel="chỗ nghỉ"
+              onPageChange={setCurrentPage}
+            />
           }
         />
       )}

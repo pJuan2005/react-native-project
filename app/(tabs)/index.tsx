@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Alert,
   Dimensions,
@@ -21,10 +21,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { ProductImage } from '@/components/product-image';
 import { InfiniteMarquee } from '@/components/infinite-marquee';
-import { formatPrice, mockLocations, mockHomestays, Homestay } from '@/constants/mockData';
+import { formatPrice, mockLocations, mockHomestays, Homestay, Location } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import { useResponsive } from '@/utils/responsive';
+import { API_BASE_URL, fetchWithTimeout } from '@/config/api';
 
 const TRENDING_KEYWORDS = [
   { icon: 'bed-outline', text: 'Villa hồ bơi riêng', badge: 'VIP', badgeColor: '#0284C7' },
@@ -42,20 +43,51 @@ export default function HomeScreen() {
   const [search, setSearch] = useState('');
   const { userProfile, savedHomestays, toggleSavedHomestay } = useBooking();
 
+  const [locationsList, setLocationsList] = useState<Location[]>(mockLocations);
+  const [homestaysList, setHomestaysList] = useState<Homestay[]>(mockHomestays);
+
+  useEffect(() => {
+    fetchWithTimeout(`${API_BASE_URL}/api/locations`, {}, 3000)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const mapped: Location[] = json.data.map((l: any) => ({
+            id: String(l.id),
+            name: l.name,
+            description: l.description || '',
+            homestayCount: parseInt(l.homestay_count, 10) || parseInt(l.property_count, 10) || 0,
+            icon: (l.icon as any) || 'compass-outline',
+            image: l.image_url || l.image || 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=80',
+          }));
+          setLocationsList(mapped);
+        }
+      })
+      .catch(() => {});
+
+    fetchWithTimeout(`${API_BASE_URL}/api/homestays`, {}, 3000)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setHomestaysList(json.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const horizontalCardWidth = Math.min(Math.max(width * 0.43, 148), 190);
   const gridCardWidth = getGridCardWidth(16, 10);
 
   const forYouList = useMemo(
     () =>
-      mockHomestays.filter((h) =>
+      homestaysList.filter((h) =>
         h.name.toLowerCase().includes(search.toLowerCase()) ||
         h.location.toLowerCase().includes(search.toLowerCase())
       ),
-    [search]
+    [homestaysList, search]
   );
 
-  const featuredList = useMemo(() => mockHomestays.filter((h) => h.isFeatured), []);
-  const newestList = useMemo(() => mockHomestays.filter((h) => h.isNew), []);
+  const featuredList = useMemo(() => homestaysList.filter((h) => h.isFeatured), [homestaysList]);
+  const newestList = useMemo(() => homestaysList.filter((h) => h.isNew), [homestaysList]);
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -207,7 +239,7 @@ export default function HomeScreen() {
           <View style={[styles.sectionHeader, { marginTop: 20 }]}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Khám phá địa điểm</Text>
             <Pressable onPress={() => router.push('/locations')} hitSlop={6}>
-              <Text style={styles.viewAllText}>Tất cả ({mockLocations.length})</Text>
+              <Text style={styles.viewAllText}>Tất cả ({locationsList.length})</Text>
             </Pressable>
           </View>
 
@@ -216,7 +248,7 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.locationPillsList}
           >
-            {mockLocations.map((loc) => (
+            {locationsList.map((loc) => (
               <Pressable
                 key={loc.id}
                 style={[styles.locationPill, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}

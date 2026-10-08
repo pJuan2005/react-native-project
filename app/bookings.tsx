@@ -23,6 +23,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
 import { useResponsive } from '@/utils/responsive';
+import { PaginationControls } from '@/components/pagination-controls';
+
+const BOOKINGS_PER_PAGE = 5;
 
 const CANCELLATION_REASONS = [
   { code: 'CHANGE_OF_PLAN', label: 'Tôi thay đổi kế hoạch' },
@@ -78,11 +81,28 @@ export default function BookingsScreen() {
   const [transactionCode, setTransactionCode] = useState('');
   const [isSubmittingProof, setIsSubmittingProof] = useState(false);
 
+  const [bookingPage, setBookingPage] = useState(1);
+  const [wishlistPage, setWishlistPage] = useState(1);
+
   // Active bookings (not cancelled)
   const activeBookings = useMemo(
     () => bookings.filter((b: BookingItem) => b.status !== 'cancelled'),
     [bookings]
   );
+
+  const totalBookingPages = Math.max(1, Math.ceil(activeBookings.length / BOOKINGS_PER_PAGE));
+  const safeBookingPage = Math.min(bookingPage, totalBookingPages);
+  const paginatedActiveBookings = useMemo(() => {
+    const start = (safeBookingPage - 1) * BOOKINGS_PER_PAGE;
+    return activeBookings.slice(start, start + BOOKINGS_PER_PAGE);
+  }, [activeBookings, safeBookingPage]);
+
+  const totalWishlistPages = Math.max(1, Math.ceil(savedHomestays.length / BOOKINGS_PER_PAGE));
+  const safeWishlistPage = Math.min(wishlistPage, totalWishlistPages);
+  const paginatedWishlist = useMemo(() => {
+    const start = (safeWishlistPage - 1) * BOOKINGS_PER_PAGE;
+    return savedHomestays.slice(start, start + BOOKINGS_PER_PAGE);
+  }, [savedHomestays, safeWishlistPage]);
 
   const total = useMemo(
     () => activeBookings.reduce((sum: number, item: BookingItem) => sum + (item.totalPrice || item.price * item.quantity), 0),
@@ -332,7 +352,7 @@ export default function BookingsScreen() {
             </View>
           ) : (
             <FlatList
-              data={activeBookings}
+              data={paginatedActiveBookings}
               keyExtractor={(item, index) =>
                 item.bookingId
                   ? `booking-${item.bookingId}-${index}`
@@ -454,43 +474,55 @@ export default function BookingsScreen() {
                 );
               }}
               ListFooterComponent={
-                activeBookings.length > 0 ? (
-                  <View style={[s.summaryCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-                    <Line label="Tổng giá trị đặt phòng" value={formatPrice(total)} isDark={isDark} />
+                <>
+                  {totalBookingPages > 1 && (
+                    <PaginationControls
+                      currentPage={safeBookingPage}
+                      totalPages={totalBookingPages}
+                      totalItems={activeBookings.length}
+                      pageSize={BOOKINGS_PER_PAGE}
+                      itemLabel="đơn đặt phòng"
+                      onPageChange={setBookingPage}
+                    />
+                  )}
+                  {activeBookings.length > 0 ? (
+                    <View style={[s.summaryCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+                      <Line label="Tổng giá trị đặt phòng" value={formatPrice(total)} isDark={isDark} />
 
-                    {allPaid ? (
-                      <>
-                        <View style={s.total}>
-                          <Text style={[s.totalLabel, { color: colors.text }]}>Số tiền cần thanh toán</Text>
-                          <Text style={[s.totalValue, { color: '#16A34A' }]}>0 ₫</Text>
-                        </View>
-                        <View style={[s.allPaidBanner, { backgroundColor: isDark ? '#052E16' : '#DCFCE7', borderColor: '#86EFAC' }]}>
-                          <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
-                          <Text style={[s.allPaidBannerText, { color: '#16A34A' }]}>
-                            Tất cả đơn phòng đã hoàn tất thanh toán
-                          </Text>
-                        </View>
-                      </>
-                    ) : (
-                      <>
-                        <View style={s.total}>
-                          <Text style={[s.totalLabel, { color: colors.text }]}>
-                            Cần thanh toán ({unpaidBookings.length} đơn)
-                          </Text>
-                          <Text style={[s.totalValue, { color: colors.primary }]}>{formatPrice(unpaidTotal)}</Text>
-                        </View>
-                        <Pressable
-                          style={[s.checkout, { backgroundColor: colors.primary }]}
-                          onPress={handleProceedCheckout}
-                        >
-                          <Text style={s.checkoutText}>
-                            Tiến hành thanh toán ({formatPrice(unpaidTotal)})
-                          </Text>
-                        </Pressable>
-                      </>
-                    )}
-                  </View>
-                ) : null
+                      {allPaid ? (
+                        <>
+                          <View style={s.total}>
+                            <Text style={[s.totalLabel, { color: colors.text }]}>Số tiền cần thanh toán</Text>
+                            <Text style={[s.totalValue, { color: '#16A34A' }]}>0 ₫</Text>
+                          </View>
+                          <View style={[s.allPaidBanner, { backgroundColor: isDark ? '#052E16' : '#DCFCE7', borderColor: '#86EFAC' }]}>
+                            <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+                            <Text style={[s.allPaidBannerText, { color: '#16A34A' }]}>
+                              Tất cả đơn phòng đã hoàn tất thanh toán
+                            </Text>
+                          </View>
+                        </>
+                      ) : (
+                        <>
+                          <View style={s.total}>
+                            <Text style={[s.totalLabel, { color: colors.text }]}>
+                              Cần thanh toán ({unpaidBookings.length} đơn)
+                            </Text>
+                            <Text style={[s.totalValue, { color: colors.primary }]}>{formatPrice(unpaidTotal)}</Text>
+                          </View>
+                          <Pressable
+                            style={[s.checkout, { backgroundColor: colors.primary }]}
+                            onPress={handleProceedCheckout}
+                          >
+                            <Text style={s.checkoutText}>
+                              Tiến hành thanh toán ({formatPrice(unpaidTotal)})
+                            </Text>
+                          </Pressable>
+                        </>
+                      )}
+                    </View>
+                  ) : null}
+                </>
               }
             />
           )}
@@ -513,7 +545,7 @@ export default function BookingsScreen() {
             </View>
           ) : (
             <FlatList
-              data={savedHomestays}
+              data={paginatedWishlist}
               keyExtractor={(item, index) => `wishlist-${item.id}-${index}`}
               contentContainerStyle={s.contentList}
               showsVerticalScrollIndicator={false}
@@ -565,6 +597,18 @@ export default function BookingsScreen() {
                   </Pressable>
                 </View>
               )}
+              ListFooterComponent={
+                totalWishlistPages > 1 ? (
+                  <PaginationControls
+                    currentPage={safeWishlistPage}
+                    totalPages={totalWishlistPages}
+                    totalItems={savedHomestays.length}
+                    pageSize={BOOKINGS_PER_PAGE}
+                    itemLabel="chỗ nghỉ yêu thích"
+                    onPageChange={setWishlistPage}
+                  />
+                ) : null
+              }
             />
           )}
         </>
