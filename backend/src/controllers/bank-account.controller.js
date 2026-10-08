@@ -55,9 +55,31 @@ const deleteBankAccount = async (req, res) => {
   }
 };
 
+const revealBankAccount = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.body.userId || 4;
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return badRequest(res, 'Vui lòng nhập mật khẩu tài khoản để xác thực');
+    }
+
+    const data = await BankAccountService.revealBankAccountDetail({
+      userId,
+      accountId: id,
+      password,
+    });
+    return success(res, data, 'Xác thực mật khẩu thành công!');
+  } catch (err) {
+    return badRequest(res, err.message || 'Mật khẩu không chính xác');
+  }
+};
+
 module.exports = {
   getBankAccounts,
   addBankAccount,
   setDefault,
   deleteBankAccount,
+  revealBankAccount,
 };

@@ -25,6 +25,10 @@ import {
   PlusCircle,
   AlertCircle,
   ExternalLink,
+  Eye,
+  Lock,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useAuth } from "@/components/context/AuthContext";
 import {
@@ -39,6 +43,7 @@ import {
   getGuestBankAccounts,
   addGuestBankAccount,
   requestGuestWithdrawal,
+  revealGuestBankAccount,
   getGuestVouchers,
   getGuestFavorites,
   type WalletInfo,
@@ -114,6 +119,15 @@ function GuestDashboardContent() {
     accountHolderName: "",
   });
   const [isAddingBank, setIsAddingBank] = useState(false);
+
+  // Bank Reveal Security Modal State
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedBankToReveal, setSelectedBankToReveal] = useState<BankAccountItem | null>(null);
+  const [revealPassword, setRevealPassword] = useState("");
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
+  const [revealedBankDetail, setRevealedBankDetail] = useState<BankAccountItem | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     if (!isInitializing && !isAuthenticated) {
@@ -248,6 +262,39 @@ function GuestDashboardContent() {
     } finally {
       setIsAddingBank(false);
     }
+  }
+
+  async function handleRevealSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedBankToReveal || !user) return;
+    if (!revealPassword) {
+      alert("Vui lòng nhập mật khẩu tài khoản");
+      return;
+    }
+
+    setIsVerifyingPassword(true);
+    try {
+      const detail = await revealGuestBankAccount({
+        accountId: selectedBankToReveal.id,
+        password: revealPassword,
+        userId: user.id,
+      });
+      setShowPasswordModal(false);
+      setRevealPassword("");
+      setRevealedBankDetail(detail);
+      setShowDetailModal(true);
+    } catch (err: any) {
+      alert(err?.message || "Mật khẩu không chính xác. Không thể xem thông tin.");
+    } finally {
+      setIsVerifyingPassword(false);
+    }
+  }
+
+  function handleCopyAccountNumber(text?: string) {
+    if (!text) return;
+    navigator.clipboard?.writeText(text);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   }
 
   if (isInitializing || !user) {
@@ -946,56 +993,94 @@ function GuestDashboardContent() {
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {bankAccounts.map((b) => (
-                      <div
-                        key={b.id}
-                        style={{
-                          padding: "12px 14px",
-                          borderRadius: 12,
-                          background: "#f8fafc",
-                          border: "1px solid #e2e8f0",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          <div
+                    {bankAccounts.map((b) => {
+                      const bankTitle = b.bankName || b.bank_name || "Ngân hàng liên kết";
+                      const bankCodeText = b.bankCode || b.bank_code || "BANK";
+                      const accMasked = b.accountNumberMasked || b.account_number_masked || b.accountNumber || b.account_number || "****";
+                      const holderName = b.accountHolderName || b.account_holder_name || user.name;
+                      const isDef = b.isDefault || b.is_default === 1;
+
+                      return (
+                        <div
+                          key={b.id}
+                          style={{
+                            padding: "14px 16px",
+                            borderRadius: 14,
+                            background: "#ffffff",
+                            border: "1px solid #e2e8f0",
+                            boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 12,
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <div
+                              style={{
+                                width: 42,
+                                height: 42,
+                                borderRadius: 12,
+                                background: "#eff6ff",
+                                color: "#1d4ed8",
+                                border: "1px solid #dbeafe",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontWeight: 800,
+                                fontSize: "0.78rem",
+                              }}
+                            >
+                              {bankCodeText}
+                            </div>
+                            <div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <span style={{ fontWeight: 800, color: "#1e293b", fontSize: "0.88rem" }}>
+                                  {bankTitle}
+                                </span>
+                                {isDef && (
+                                  <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#dcfce7", color: "#166534" }}>
+                                    Mặc định
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: "0.82rem", fontFamily: "monospace", color: "#475569", fontWeight: 700, marginTop: 2 }}>
+                                {accMasked}
+                              </div>
+                              <div style={{ fontSize: "0.72rem", color: "#94a3b8", textTransform: "uppercase", marginTop: 1 }}>
+                                {holderName}
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setSelectedBankToReveal(b);
+                              setRevealPassword("");
+                              setShowPasswordModal(true);
+                            }}
+                            title="Xác thực mật khẩu để xem số tài khoản đầy đủ"
                             style={{
-                              width: 38,
-                              height: 38,
+                              padding: "7px 12px",
                               borderRadius: 10,
-                              background: "#dbeafe",
-                              color: "#1d4ed8",
-                              display: "flex",
+                              background: "#f8fafc",
+                              color: "#2563EB",
+                              border: "1px solid #e2e8f0",
+                              fontWeight: 700,
+                              fontSize: "0.76rem",
+                              cursor: "pointer",
+                              display: "inline-flex",
                               alignItems: "center",
-                              justifyContent: "center",
-                              fontWeight: 800,
-                              fontSize: "0.75rem",
+                              gap: 5,
+                              whiteSpace: "nowrap",
                             }}
                           >
-                            {b.bank_code || "BANK"}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 800, color: "#1e293b", fontSize: "0.85rem" }}>
-                              {b.bank_name}
-                            </div>
-                            <div style={{ fontSize: "0.78rem", fontFamily: "monospace", color: "#475569", fontWeight: 700 }}>
-                              {b.account_number}
-                            </div>
-                            <div style={{ fontSize: "0.72rem", color: "#94a3b8", textTransform: "uppercase" }}>
-                              {b.account_holder_name}
-                            </div>
-                          </div>
+                            <Lock size={12} color="#2563EB" />
+                            <span>Xem chi tiết</span>
+                          </button>
                         </div>
-
-                        {b.is_default === 1 && (
-                          <span style={{ fontSize: "0.7rem", fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#dcfce7", color: "#166534" }}>
-                            Mặc định
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -1355,7 +1440,7 @@ function GuestDashboardContent() {
                     >
                       {bankAccounts.map((b) => (
                         <option key={b.id} value={b.id}>
-                          {b.bank_name} - {b.account_number} ({b.account_holder_name})
+                          {b.bankName || b.bank_name} - {b.accountNumberMasked || b.account_number_masked || b.accountNumber || b.account_number} ({b.accountHolderName || b.accountHolderName || b.account_holder_name || user.name})
                         </option>
                       ))}
                     </select>
@@ -1615,6 +1700,243 @@ function GuestDashboardContent() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* MODAL: SECURITY PASSWORD CHALLENGE TO REVEAL BANK DETAIL */}
+        {showPasswordModal && selectedBankToReveal && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(15,23,42,0.65)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+              padding: 16,
+            }}
+          >
+            <div
+              style={{
+                background: "#ffffff",
+                width: "100%",
+                maxWidth: 420,
+                borderRadius: 20,
+                padding: 24,
+                boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+              }}
+            >
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <div
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: "50%",
+                    background: "#eff6ff",
+                    color: "#2563EB",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 12px",
+                    border: "2px solid #bfdbfe",
+                  }}
+                >
+                  <Lock size={24} />
+                </div>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+                  Xác thực bảo mật tài chính
+                </h3>
+                <p style={{ fontSize: "0.8rem", color: "#64748b", marginTop: 6 }}>
+                  Để bảo vệ tài sản, vui lòng nhập mật khẩu tài khoản của bạn để xem số tài khoản và thông tin chi tiết ngân hàng{" "}
+                  <strong>{selectedBankToReveal.bankName || selectedBankToReveal.bank_name}</strong>.
+                </p>
+              </div>
+
+              <form onSubmit={handleRevealSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: 4 }}>
+                    Mật khẩu tài khoản:
+                  </label>
+                  <input
+                    type="password"
+                    autoFocus
+                    required
+                    placeholder="Nhập mật khẩu của bạn..."
+                    value={revealPassword}
+                    onChange={(e) => setRevealPassword(e.target.value)}
+                    className="hs-form-control"
+                    style={{ padding: "10px 14px", fontSize: "0.9rem" }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordModal(false);
+                      setRevealPassword("");
+                    }}
+                    style={{ padding: "8px 16px", borderRadius: 10, background: "#f1f5f9", border: "none", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", color: "#64748b" }}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isVerifyingPassword || !revealPassword}
+                    style={{
+                      padding: "8px 20px",
+                      borderRadius: 10,
+                      background: "#2563EB",
+                      border: "none",
+                      fontSize: "0.8rem",
+                      fontWeight: 700,
+                      color: "#fff",
+                      cursor: "pointer",
+                      opacity: isVerifyingPassword ? 0.6 : 1,
+                    }}
+                  >
+                    {isVerifyingPassword ? "Đang xác thực..." : "Xác nhận & Xem"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: FULL BANK ACCOUNT DETAIL (REVEALED) */}
+        {showDetailModal && revealedBankDetail && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(15,23,42,0.65)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+              padding: 16,
+            }}
+          >
+            <div
+              style={{
+                background: "#ffffff",
+                width: "100%",
+                maxWidth: 460,
+                borderRadius: 20,
+                padding: 24,
+                boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingBottom: 12, borderBottom: "1px solid #f1f5f9" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                      background: "#eff6ff",
+                      color: "#1d4ed8",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 800,
+                      fontSize: "0.8rem",
+                      border: "1px solid #bfdbfe",
+                    }}
+                  >
+                    {revealedBankDetail.bankCode || revealedBankDetail.bank_code || "BANK"}
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+                      {revealedBankDetail.bankName || revealedBankDetail.bank_name}
+                    </h3>
+                    <p style={{ fontSize: "0.72rem", color: "#16a34a", fontWeight: 700, margin: "2px 0 0", display: "flex", alignItems: "center", gap: 3 }}>
+                      <CheckCircle2 size={12} /> Đã xác thực bảo mật
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}
+                >
+                  <XCircle size={20} />
+                </button>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {/* Full Account Number with Copy */}
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 14, padding: "14px 16px" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>Số tài khoản đầy đủ:</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+                    <span style={{ fontSize: "1.25rem", fontWeight: 900, fontFamily: "monospace", color: "#1e293b", letterSpacing: 1 }}>
+                      {revealedBankDetail.accountNumber || revealedBankDetail.account_number}
+                    </span>
+                    <button
+                      onClick={() => handleCopyAccountNumber(revealedBankDetail.accountNumber || revealedBankDetail.account_number)}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: 8,
+                        background: isCopied ? "#dcfce7" : "#eff6ff",
+                        color: isCopied ? "#166534" : "#2563EB",
+                        border: isCopied ? "1px solid #bbf7d0" : "1px solid #bfdbfe",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      {isCopied ? <Check size={12} /> : <Copy size={12} />}
+                      <span>{isCopied ? "Đã chép" : "Sao chép"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Details Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div style={{ background: "#f8fafc", padding: "10px 12px", borderRadius: 10 }}>
+                    <div style={{ fontSize: "0.7rem", color: "#94a3b8" }}>Chủ tài khoản</div>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#1e293b", textTransform: "uppercase", marginTop: 2 }}>
+                      {revealedBankDetail.accountHolderName || revealedBankDetail.account_holder_name}
+                    </div>
+                  </div>
+
+                  <div style={{ background: "#f8fafc", padding: "10px 12px", borderRadius: 10 }}>
+                    <div style={{ fontSize: "0.7rem", color: "#94a3b8" }}>Trạng thái tài khoản</div>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#16a34a", marginTop: 2 }}>
+                      {revealedBankDetail.isDefault || revealedBankDetail.is_default ? "Mặc định (Ưu tiên)" : "Đang hoạt động"}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ fontSize: "0.72rem", color: "#64748b", background: "#f0fdf4", border: "1px solid #dcfce7", borderRadius: 10, padding: "10px 12px", display: "flex", gap: 6 }}>
+                  <ShieldCheck size={14} color="#16a34a" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <span>
+                    Thông tin tài khoản đã được giải mã và kiểm toán. Hãy bảo mật thông tin và không chia sẻ cho người lạ.
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    style={{
+                      padding: "8px 20px",
+                      borderRadius: 10,
+                      background: "#2563EB",
+                      border: "none",
+                      fontSize: "0.8rem",
+                      fontWeight: 700,
+                      color: "#fff",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Đóng
+                  </button>
+                </div>
               </div>
             </div>
           </div>

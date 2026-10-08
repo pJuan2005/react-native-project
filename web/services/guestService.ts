@@ -23,13 +23,23 @@ export interface WalletTransactionItem {
 
 export interface BankAccountItem {
   id: number;
-  user_id: number;
-  bank_name: string;
-  bank_code: string;
-  account_number: string;
-  account_holder_name: string;
-  is_default: number;
-  is_active: number;
+  user_id?: number;
+  userId?: number;
+  bank_name?: string;
+  bankName?: string;
+  bank_code?: string;
+  bankCode?: string;
+  account_number?: string;
+  accountNumber?: string;
+  accountNumberMasked?: string;
+  account_number_masked?: string;
+  account_holder_name?: string;
+  accountHolderName?: string;
+  is_default?: number | boolean;
+  isDefault?: boolean;
+  status?: string;
+  created_at?: string;
+  createdAt?: string;
 }
 
 export interface VoucherItem {
@@ -129,4 +139,16 @@ export async function getGuestFavorites(userId: number): Promise<FavoriteItem[]>
   } catch (_) {
     return [];
   }
+}
+
+export async function revealGuestBankAccount(payload: {
+  accountId: number;
+  password: string;
+  userId?: number;
+}): Promise<BankAccountItem> {
+  const res = await apiRequest<any>(`/api/bank-accounts/${payload.accountId}/reveal`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return res?.data || res;
 }

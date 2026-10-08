@@ -55,6 +55,15 @@ export default function BankAccountsScreen() {
   const [isDefault, setIsDefault] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Security Reveal States
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedAccountForReveal, setSelectedAccountForReveal] = useState<BankAccount | null>(null);
+  const [revealPassword, setRevealPassword] = useState('');
+  const [showPasswordText, setShowPasswordText] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [revealedDetail, setRevealedDetail] = useState<any | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
   const authHeaders = useMemo(() => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -136,6 +145,44 @@ export default function BankAccountsScreen() {
         },
       ]
     );
+  };
+
+  const handleVerifyAndReveal = async () => {
+    if (!revealPassword.trim()) {
+      Alert.alert('Yêu cầu', 'Vui lòng nhập mật khẩu tài khoản');
+      return;
+    }
+    if (!selectedAccountForReveal) return;
+
+    setIsVerifying(true);
+    try {
+      const res = await fetchWithTimeout(
+        `${API_BASE_URL}/api/bank-accounts/${selectedAccountForReveal.id}/reveal`,
+        {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            userId: user?.id,
+            password: revealPassword,
+          }),
+        },
+        5000
+      );
+      const json = await res.json();
+      setIsVerifying(false);
+
+      if (json.success && json.data) {
+        setShowPasswordModal(false);
+        setRevealPassword('');
+        setRevealedDetail(json.data);
+        setShowDetailModal(true);
+      } else {
+        Alert.alert('Xác thực thất bại', json.message || 'Mật khẩu tài khoản không chính xác');
+      }
+    } catch (err) {
+      setIsVerifying(false);
+      Alert.alert('Lỗi', 'Không thể xác thực mật khẩu lúc này. Vui lòng thử lại.');
+    }
   };
 
   const handleCreateBankAccount = async () => {
@@ -272,6 +319,19 @@ export default function BankAccountsScreen() {
 
                 {/* Card Actions */}
                 <View style={[styles.bankCardActions, { borderTopColor: isDark ? '#334155' : '#F1F5F9' }]}>
+                  <Pressable
+                    style={styles.revealBtn}
+                    onPress={() => {
+                      setSelectedAccountForReveal(account);
+                      setRevealPassword('');
+                      setShowPasswordModal(true);
+                    }}
+                    hitSlop={6}
+                  >
+                    <Ionicons name="lock-closed" size={13} color="#0284C7" />
+                    <Text style={styles.revealBtnText}>Xem chi tiết</Text>
+                  </Pressable>
+
                   {!account.isDefault && (
                     <Pressable
                       style={styles.setDefaultBtn}
@@ -393,6 +453,149 @@ export default function BankAccountsScreen() {
                 )}
               </Pressable>
             </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* MODAL 1: BẢO MẬT - NHẬP MẬT KHẨU TÀI KHOẢN ĐỂ XEM CHI TIẾT */}
+      <Modal visible={showPasswordModal} transparent animationType="fade" onRequestClose={() => setShowPasswordModal(false)}>
+        <Pressable style={styles.centerModalOverlay} onPress={() => setShowPasswordModal(false)}>
+          <Pressable style={[styles.centerModalBox, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]} onPress={(e) => e.stopPropagation()}>
+            <View style={{ alignItems: 'center', marginBottom: 14 }}>
+              <View style={[styles.lockIconCircle, { backgroundColor: isDark ? '#082F49' : '#EFF6FF' }]}>
+                <Ionicons name="lock-closed" size={26} color="#0284C7" />
+              </View>
+              <Text style={[styles.centerModalTitle, { color: colors.text }]}>Xác thực bảo mật tài chính</Text>
+              <Text style={[styles.centerModalDesc, { color: colors.textSecondary }]}>
+                Để bảo vệ thông tin cá nhân, vui lòng nhập mật khẩu tài khoản của bạn để xem chi tiết số tài khoản ngân hàng {selectedAccountForReveal?.bankName}:
+              </Text>
+            </View>
+
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={[
+                  styles.formInput,
+                  { flex: 1, backgroundColor: colors.inputBg, borderColor: colors.primary, color: colors.text }
+                ]}
+                placeholder="Nhập mật khẩu tài khoản..."
+                placeholderTextColor="#94A3B8"
+                secureTextEntry={!showPasswordText}
+                autoFocus
+                value={revealPassword}
+                onChangeText={setRevealPassword}
+              />
+              <Pressable
+                style={styles.eyeBtn}
+                onPress={() => setShowPasswordText(!showPasswordText)}
+                hitSlop={6}
+              >
+                <Ionicons name={showPasswordText ? "eye-off-outline" : "eye-outline"} size={20} color="#64748B" />
+              </Pressable>
+            </View>
+
+            <View style={[styles.modalActionsRow, { marginTop: 16 }]}>
+              <Pressable
+                style={[styles.cancelBtn, isDark && { backgroundColor: '#334155' }]}
+                onPress={() => {
+                  setShowPasswordModal(false);
+                  setRevealPassword('');
+                }}
+                disabled={isVerifying}
+              >
+                <Text style={styles.cancelBtnText}>Hủy</Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.saveBtn, { backgroundColor: colors.primary }, isVerifying && { opacity: 0.7 }]}
+                onPress={handleVerifyAndReveal}
+                disabled={isVerifying}
+              >
+                {isVerifying ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.saveBtnText}>Xác thực & Xem</Text>
+                )}
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* MODAL 2: HIỂN THỊ CHI TIẾT TÀI KHOẢN NGÂN HÀNG ĐÃ XÁC THỰC */}
+      <Modal visible={showDetailModal} transparent animationType="fade" onRequestClose={() => setShowDetailModal(false)}>
+        <Pressable style={styles.centerModalOverlay} onPress={() => setShowDetailModal(false)}>
+          <Pressable style={[styles.centerModalBox, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={[styles.verifiedBadge]}>
+                  <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
+                </View>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Chi tiết tài khoản ngân hàng</Text>
+              </View>
+              <Pressable onPress={() => setShowDetailModal(false)} hitSlop={8}>
+                <Ionicons name="close" size={22} color="#64748B" />
+              </Pressable>
+            </View>
+
+            {revealedDetail && (
+              <View style={{ gap: 12, marginTop: 8 }}>
+                <View style={[styles.detailCard, { backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Ngân hàng:</Text>
+                  <Text style={[styles.detailBankTitle, { color: colors.text }]}>
+                    {revealedDetail.bankName || revealedDetail.bank_name} ({revealedDetail.bankCode || revealedDetail.bank_code})
+                  </Text>
+                </View>
+
+                <View style={[styles.detailCard, { backgroundColor: isDark ? '#0F172A' : '#EFF6FF', borderColor: '#BFDBFE', borderWidth: 1 }]}>
+                  <Text style={[styles.detailLabel, { color: '#0369A1' }]}>Số tài khoản đầy đủ:</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                    <Text style={[styles.fullAccountNum, { color: colors.text }]}>
+                      {revealedDetail.accountNumber || revealedDetail.account_number}
+                    </Text>
+                    <Pressable
+                      style={styles.copyPill}
+                      onPress={() => {
+                        Alert.alert('Đã sao chép! 📋', `Số tài khoản ${revealedDetail.accountNumber || revealedDetail.account_number} đã được sao chép.`);
+                      }}
+                      hitSlop={8}
+                    >
+                      <Ionicons name="copy-outline" size={14} color="#0284C7" />
+                      <Text style={styles.copyPillText}>Sao chép</Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <View style={[styles.detailCard, { flex: 1, backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}>
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Chủ tài khoản:</Text>
+                    <Text style={[styles.detailSubValue, { color: colors.text }]}>
+                      {revealedDetail.accountHolderName || revealedDetail.account_holder_name}
+                    </Text>
+                  </View>
+
+                  <View style={[styles.detailCard, { flex: 1, backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}>
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Trạng thái:</Text>
+                    <Text style={[styles.detailSubValue, { color: '#16A34A', fontWeight: '800' }]}>
+                      {revealedDetail.isDefault || revealedDetail.is_default ? 'Mặc định' : 'Hoạt động'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.securityWarningBox}>
+                  <Ionicons name="shield-checkmark" size={16} color="#16A34A" />
+                  <Text style={styles.securityWarningText}>
+                    Thông tin tài khoản đã xác thực bảo mật và ghi vết kiểm toán. Không chia sẻ cho người khác.
+                  </Text>
+                </View>
+
+                <Pressable
+                  style={[styles.saveBtn, { backgroundColor: colors.primary, marginTop: 8 }]}
+                  onPress={() => setShowDetailModal(false)}
+                >
+                  <Text style={styles.saveBtnText}>Đóng</Text>
+                </Pressable>
+              </View>
+            )}
           </Pressable>
         </Pressable>
       </Modal>
@@ -608,4 +811,91 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveBtnText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
+  revealBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  revealBtnText: { fontSize: 11, fontWeight: '700', color: '#0284C7' },
+  centerModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  centerModalBox: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: 22,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  lockIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  centerModalTitle: { fontSize: 16, fontWeight: '800', textAlign: 'center' },
+  centerModalDesc: { fontSize: 12, textAlign: 'center', marginTop: 4, lineHeight: 17, paddingHorizontal: 6 },
+  passwordInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  eyeBtn: {
+    position: 'absolute',
+    right: 12,
+    padding: 4,
+  },
+  verifiedBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailCard: {
+    padding: 12,
+    borderRadius: 14,
+  },
+  detailLabel: { fontSize: 11, fontWeight: '600' },
+  detailBankTitle: { fontSize: 14, fontWeight: '800', marginTop: 2 },
+  fullAccountNum: { fontSize: 17, fontWeight: '900', letterSpacing: 1.5, fontFamily: 'monospace' },
+  copyPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#E0F2FE',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  copyPillText: { fontSize: 11, fontWeight: '700', color: '#0284C7' },
+  detailSubValue: { fontSize: 13, fontWeight: '700', marginTop: 2 },
+  securityWarningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#DCFCE7',
+    padding: 10,
+    borderRadius: 12,
+  },
+  securityWarningText: { fontSize: 10, color: '#16A34A', flex: 1, lineHeight: 14, fontWeight: '500' },
 });
