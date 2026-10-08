@@ -52,6 +52,7 @@ const DISTRICTS = [
 ];
 
 // PHOTO POOLS BY THEME (Loại bỏ hoàn toàn ảnh trùng nhau, ảnh khớp sát với loại hình)
+// PHOTO POOLS BY THEME (Mở rộng kho ảnh chất lượng cao, tuyệt đối không trùng lặp trong cùng địa điểm)
 const PHOTOS_VILLA = [
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=80',
@@ -63,6 +64,16 @@ const PHOTOS_VILLA = [
   'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1600585152220-90363fe7e115?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1600607687644-c7171b42498f?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80',
 ];
 
 const PHOTOS_HOMESTAY = [
@@ -76,6 +87,16 @@ const PHOTOS_HOMESTAY = [
   'https://images.unsplash.com/photo-1540518614846-7ede433c4b13?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1502005229762-ee1b2b8ab275?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=900&q=80',
 ];
 
 const PHOTOS_RESORT = [
@@ -87,6 +108,16 @@ const PHOTOS_RESORT = [
   'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1563911302283-d2bc129e7570?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1561501900-3701fa6a0864?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1549294413-26f195200c16?auto=format&fit=crop&w=900&q=80',
 ];
 
 const PHOTOS_CABIN = [
@@ -96,6 +127,14 @@ const PHOTOS_CABIN = [
   'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1508873696983-2df5293cb32f?auto=format&fit=crop&w=900&q=80',
 ];
 
 const PHOTOS_ECO = [
@@ -105,6 +144,14 @@ const PHOTOS_ECO = [
   'https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1470246973918-29a93221c455?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1498429089284-41f8cf3ffd39?auto=format&fit=crop&w=900&q=80',
 ];
 
 const AVATAR_COLLECTION = [
@@ -364,69 +411,77 @@ sql += `-- =====================================================
 INSERT INTO \`users\` (\`id\`, \`name\`, \`full_name\`, \`email\`, \`password\`, \`password_hash\`, \`role\`, \`status\`, \`phone\`, \`address\`, \`location\`, \`birth_date\`, \`avatar_url\`, \`reward_points\`, \`is_verified\`, \`is_active\`) VALUES
 ` + userRows.join(',\n') + ';\n\n';
 
-// 6. SEED PROPERTIES (520 Properties - TÊN TỰ NHIÊN, KHÔNG DẤU '#', ẢNH KHỚP CHỦ ĐỀ)
+// 6. SEED PROPERTIES (520 Properties - TÊN TỰ NHIÊN, KHÔNG DẤU '#', ẢNH KHỚP CHỦ ĐỀ VÀ KHÔNG TRÙNG NHAU TRONG CÙNG ĐỊA ĐIỂM)
 const TOTAL_PROPERTIES = 520;
+const PROPS_PER_LOCATION = 26; // 20 Địa điểm * 26 Chỗ nghỉ = 520 Chỗ nghỉ
 const propRows = [];
 const imageRows = [];
 const amenityRows = [];
 let imgIdCounter = 1;
 
-for (let id = 1; id <= TOTAL_PROPERTIES; id++) {
-  const hostId = randomInt(2, HOST_COUNT + 2);
-  const locId = ((id - 1) % LOCATION_COUNT) + 1;
-  const typeId = ((id - 1) % 5) + 1; // phân bổ đều 5 loại hình
+for (let locId = 1; locId <= LOCATION_COUNT; locId++) {
   const city = CITIES[locId - 1];
 
-  // Tạo tên tự nhiên không có ký tự '#':
-  const baseThemedList = THEMED_NAMES[typeId];
-  const baseName = baseThemedList[(id - 1) % baseThemedList.length];
-  const qualifier = AREA_QUALIFIERS[Math.floor((id - 1) / baseThemedList.length) % AREA_QUALIFIERS.length];
-  const name = id <= baseThemedList.length
-    ? `${baseName} ${city}`
-    : `${baseName} ${qualifier} ${city}`;
+  for (let k = 0; k < PROPS_PER_LOCATION; k++) {
+    const id = (locId - 1) * PROPS_PER_LOCATION + k + 1;
+    const hostId = ((id + locId * 3) % HOST_COUNT) + 2;
+    // Mỗi địa điểm xoay vòng đều 5 loại hình: Villa (1), Homestay (2), Resort (3), Cabin (4), Eco (5)
+    const typeId = (k % 5) + 1;
 
-  const desc = `${name} tọa lạc tại vị trí đắc địa ở ${city}. Không gian nghỉ dưỡng yên bình với đầy đủ tiện nghi, view ngắm cảnh tuyệt đẹp, sân vườn nướng BBQ và không gian thư giãn lý tưởng cho chuyến đi của bạn.`;
-  const price = randomInt(12, 65) * 100000; // 1.200.000đ - 6.500.000đ
-  const oldPrice = Math.random() > 0.4 ? Math.round(price * 1.25) : null;
-  const address = `Đường số ${randomInt(1, 88)}, ${randomItem(DISTRICTS)}`;
-  const lat = (10 + Math.random() * 12).toFixed(6);
-  const lng = (105 + Math.random() * 4).toFixed(6);
-  const maxGuests = typeId === 1 ? randomInt(6, 14) : typeId === 3 ? randomInt(4, 8) : randomInt(2, 6);
-  const bedrooms = Math.max(1, Math.floor(maxGuests / 2));
-  const bathrooms = Math.max(1, Math.floor(bedrooms * 0.8));
-  const rating = (4.4 + Math.random() * 0.6).toFixed(2);
-  const reviewCount = randomInt(12, 180);
-  const isNew = id > 450 ? 1 : 0;
-  const isFeatured = (id % 7 === 0 || id <= 10) ? 1 : 0;
+    // Tạo tên tự nhiên không có ký tự '#', phong phú và hoàn toàn khác nhau trong từng địa điểm
+    const baseThemedList = THEMED_NAMES[typeId];
+    const nameIndex = (locId * 7 + k * 3) % baseThemedList.length;
+    const baseName = baseThemedList[nameIndex];
+    const qualifier = AREA_QUALIFIERS[(locId * 5 + k * 7) % AREA_QUALIFIERS.length];
+    const name = k < 10
+      ? `${baseName} ${city}`
+      : `${baseName} ${qualifier} ${city}`;
 
-  // Chọn bộ ảnh khớp đúng với loại hình chỗ nghỉ
-  let themedPhotoPool = PHOTOS_HOMESTAY;
-  if (typeId === 1) themedPhotoPool = PHOTOS_VILLA;
-  else if (typeId === 3) themedPhotoPool = PHOTOS_RESORT;
-  else if (typeId === 4) themedPhotoPool = PHOTOS_CABIN;
-  else if (typeId === 5) themedPhotoPool = PHOTOS_ECO;
+    const desc = `${name} tọa lạc tại vị trí đắc địa ở ${city}. Không gian nghỉ dưỡng yên bình với đầy đủ tiện nghi, view ngắm cảnh tuyệt đẹp, sân vườn nướng BBQ và không gian thư giãn lý tưởng cho chuyến đi của bạn.`;
+    const price = randomInt(12, 65) * 100000; // 1.200.000đ - 6.500.000đ
+    const oldPrice = Math.random() > 0.4 ? Math.round(price * 1.25) : null;
+    const address = `Đường số ${randomInt(1, 88)}, ${randomItem(DISTRICTS)}`;
+    const lat = (10 + Math.random() * 12).toFixed(6);
+    const lng = (105 + Math.random() * 4).toFixed(6);
+    const maxGuests = typeId === 1 ? randomInt(6, 14) : typeId === 3 ? randomInt(4, 8) : randomInt(2, 6);
+    const bedrooms = Math.max(1, Math.floor(maxGuests / 2));
+    const bathrooms = Math.max(1, Math.floor(bedrooms * 0.8));
+    const rating = (4.4 + Math.random() * 0.6).toFixed(2);
+    const reviewCount = randomInt(12, 180);
+    const isNew = id > 450 ? 1 : 0;
+    const isFeatured = (id % 7 === 0 || id <= 10) ? 1 : 0;
 
-  const coverImg = themedPhotoPool[(id - 1) % themedPhotoPool.length];
-  const token = `HMTOKEN_${String(id).padStart(4, '0')}`;
+    // Chọn bộ ảnh khớp đúng với loại hình chỗ nghỉ
+    let themedPhotoPool = PHOTOS_HOMESTAY;
+    if (typeId === 1) themedPhotoPool = PHOTOS_VILLA;
+    else if (typeId === 3) themedPhotoPool = PHOTOS_RESORT;
+    else if (typeId === 4) themedPhotoPool = PHOTOS_CABIN;
+    else if (typeId === 5) themedPhotoPool = PHOTOS_ECO;
 
-  propRows.push(`(${id}, ${hostId}, '${name}', '${desc}', ${typeId}, ${price}.00, ${oldPrice ? oldPrice + '.00' : 'NULL'}, ${locId}, '${address}', '${city}', 'Vietnam', ${lat}, ${lng}, ${maxGuests}, ${bedrooms}, ${bathrooms}, ${rating}, ${reviewCount}, ${isNew}, ${isFeatured}, 1, 0, 'approved', '${coverImg}', '${token}', 1, NULL)`);
+    // Ảnh bìa hoàn toàn độc nhất trong địa điểm đó (không trùng lặp!)
+    const coverImgIndex = (locId * 3 + k * 7) % themedPhotoPool.length;
+    const coverImg = themedPhotoPool[coverImgIndex];
+    const token = `HMTOKEN_${String(id).padStart(4, '0')}`;
 
-  // Mỗi chỗ nghỉ có 6 ảnh độc đáo, không trùng lặp
-  const imgCount = 6;
-  for (let imgIdx = 1; imgIdx <= imgCount; imgIdx++) {
-    const imgUrl = themedPhotoPool[(id + imgIdx - 1) % themedPhotoPool.length];
-    const isPrimary = imgIdx === 1 ? 1 : 0;
-    imageRows.push(`(${imgIdCounter++}, ${id}, '${imgUrl}', ${isPrimary}, ${imgIdx})`);
-  }
+    propRows.push(`(${id}, ${hostId}, '${name}', '${desc}', ${typeId}, ${price}.00, ${oldPrice ? oldPrice + '.00' : 'NULL'}, ${locId}, '${address}', '${city}', 'Vietnam', ${lat}, ${lng}, ${maxGuests}, ${bedrooms}, ${bathrooms}, ${rating}, ${reviewCount}, ${isNew}, ${isFeatured}, 1, 0, 'approved', '${coverImg}', '${token}', 1, NULL)`);
 
-  // 6-8 Amenities per property
-  const amenCount = randomInt(6, 8);
-  const pickedAmenIds = new Set();
-  while (pickedAmenIds.size < amenCount) {
-    pickedAmenIds.add(randomInt(1, 18));
-  }
-  for (const amenId of pickedAmenIds) {
-    amenityRows.push(`(${id}, ${amenId})`);
+    // Mỗi chỗ nghỉ có 6 ảnh độc đáo, không trùng lặp
+    const imgCount = 6;
+    for (let imgIdx = 1; imgIdx <= imgCount; imgIdx++) {
+      const imgUrl = themedPhotoPool[(coverImgIndex + imgIdx) % themedPhotoPool.length];
+      const isPrimary = imgIdx === 1 ? 1 : 0;
+      imageRows.push(`(${imgIdCounter++}, ${id}, '${imgUrl}', ${isPrimary}, ${imgIdx})`);
+    }
+
+    // 6-8 Amenities per property
+    const amenCount = randomInt(6, 8);
+    const pickedAmenIds = new Set();
+    while (pickedAmenIds.size < amenCount) {
+      pickedAmenIds.add(randomInt(1, 18));
+    }
+    for (const amenId of pickedAmenIds) {
+      amenityRows.push(`(${id}, ${amenId})`);
+    }
   }
 }
 
