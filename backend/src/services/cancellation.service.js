@@ -157,7 +157,13 @@ class CancellationService {
       (p) => p.status === 'completed' || p.status === 'verified'
     );
 
-    if (hasCompletedPayment || booking.payment_status === 'verified' || booking.payment_status === 'proof_uploaded') {
+    if (
+      hasCompletedPayment ||
+      booking.payment_status === 'verified' ||
+      booking.payment_status === 'proof_uploaded' ||
+      booking.payment_status === 'completed' ||
+      Boolean(booking.payment_proof_image)
+    ) {
       totalPaid = parseFloat(booking.total_price || 0);
     }
 
@@ -278,7 +284,9 @@ class CancellationService {
       );
       const isPaid = pRows.some((p) => p.status === 'completed' || p.status === 'verified') ||
                      booking.payment_status === 'verified' ||
-                     booking.payment_status === 'proof_uploaded';
+                     booking.payment_status === 'proof_uploaded' ||
+                     booking.payment_status === 'completed' ||
+                     Boolean(booking.payment_proof_image);
 
       const totalPaid = isPaid ? parseFloat(booking.total_price || 0) : 0;
       const split = this.calculateSplitBreakdown(hoursUntilCheckIn, totalPaid);

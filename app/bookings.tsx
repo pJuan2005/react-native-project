@@ -172,23 +172,50 @@ export default function BookingsScreen() {
     setCancelPreview({ loading: true });
 
     const targetId = booking.bookingId || booking.id;
+    const isPaid = booking.paymentStatus === 'completed' || booking.paymentStatus === 'verified' || Boolean(booking.proofImageUrl);
+    const totalAmount = booking.totalPrice || booking.price * booking.quantity || 0;
+    const fallbackTotalPaid = isPaid ? totalAmount : 0;
+
+    let fallbackHours = 96;
+    if (booking.checkIn) {
+      const checkInDate = new Date(`${booking.checkIn}T14:00:00`);
+      fallbackHours = Math.round((checkInDate.getTime() - Date.now()) / (1000 * 60 * 60));
+    }
+    const fallbackRefundPct = fallbackTotalPaid > 0 ? (fallbackHours >= 72 ? 70 : 0) : 0;
+    const fallbackRefundAmt = Math.round((fallbackTotalPaid * fallbackRefundPct) / 100);
+    const fallbackCancelFee = fallbackTotalPaid - fallbackRefundAmt;
+
     try {
       const res = await previewCancellation(targetId);
       if (res && res.canCancel !== undefined) {
         setCancelPreview({
-          totalPaid: res.totalPaid || 0,
-          refundPercentage: res.refundPercentage || 0,
-          refundAmount: res.refundAmount || 0,
-          cancellationFee: res.cancellationFee || 0,
+          totalPaid: res.totalPaid !== undefined ? res.totalPaid : fallbackTotalPaid,
+          refundPercentage: res.refundPercentage !== undefined ? res.refundPercentage : fallbackRefundPct,
+          refundAmount: res.refundAmount !== undefined ? res.refundAmount : fallbackRefundAmt,
+          cancellationFee: res.cancellationFee !== undefined ? res.cancellationFee : fallbackCancelFee,
           policyDescription: res.policyDescription || '',
-          hoursUntilCheckIn: res.hoursUntilCheckIn || 0,
+          hoursUntilCheckIn: res.hoursUntilCheckIn !== undefined ? res.hoursUntilCheckIn : fallbackHours,
           loading: false,
         });
       } else {
-        setCancelPreview({ loading: false });
+        setCancelPreview({
+          totalPaid: fallbackTotalPaid,
+          refundPercentage: fallbackRefundPct,
+          refundAmount: fallbackRefundAmt,
+          cancellationFee: fallbackCancelFee,
+          hoursUntilCheckIn: fallbackHours,
+          loading: false,
+        });
       }
     } catch (_) {
-      setCancelPreview({ loading: false });
+      setCancelPreview({
+        totalPaid: fallbackTotalPaid,
+        refundPercentage: fallbackRefundPct,
+        refundAmount: fallbackRefundAmt,
+        cancellationFee: fallbackCancelFee,
+        hoursUntilCheckIn: fallbackHours,
+        loading: false,
+      });
     }
   };
 

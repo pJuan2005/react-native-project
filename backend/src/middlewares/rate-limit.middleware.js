@@ -14,13 +14,13 @@ const authLimiter = rateLimit({
 
 // Limiter cho hành động Đặt phòng & Nộp biên lai chuyển khoản (Chống double click / spam)
 const bookingLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 phút
-  max: 25, // Tối đa 25 requests
+  windowMs: 5 * 60 * 1000, // 5 phút
+  max: 300, // Tối đa 300 requests
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    message: 'Quá nhiều yêu cầu đặt phòng. Vui lòng thử lại sau ít phút.',
+    message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau ít phút.',
   },
 });
 
