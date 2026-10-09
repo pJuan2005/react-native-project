@@ -40,7 +40,7 @@ export function buildAssetUrl(url?: string | null) {
     return "";
   }
 
-  if (/^https?:\/\//i.test(url)) {
+  if (/^https?:\/\//i.test(url) || url.startsWith("data:")) {
     return url;
   }
 

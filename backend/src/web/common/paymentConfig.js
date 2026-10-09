@@ -26,11 +26,17 @@ function getPaymentConfig(platformSettings = {}) {
 
 function buildPaymentInfo(booking, platformSettings = {}) {
   const config = getPaymentConfig(platformSettings);
-  const amountUsd = Number(booking.totalPrice || 0);
+  const rawTotal = Number(booking.totalPrice || 0);
   const exchangeRate = normalizeUsdToVndRate(
     platformSettings.usdToVndRate || getDefaultUsdToVndRate(),
   );
-  const amountVnd = convertUsdToVnd(amountUsd, exchangeRate);
+
+  // Trong hệ thống, booking.totalPrice đã được tính bằng VNĐ (vd: 5.200.000 ₫).
+  // Nếu số tiền >= 1000 thì đó là tiền VNĐ trực tiếp, không nhân thêm tỷ giá USD!
+  const isAlreadyVnd = rawTotal >= 1000;
+  const amountVnd = isAlreadyVnd ? Math.round(rawTotal) : convertUsdToVnd(rawTotal, exchangeRate);
+  const amountUsd = isAlreadyVnd ? Math.round(rawTotal / exchangeRate) : rawTotal;
+
   const transferContent =
     booking.paymentReference || booking.bookingCode || `HSBK${booking.id}`;
 
@@ -40,7 +46,7 @@ function buildPaymentInfo(booking, platformSettings = {}) {
     bankName: config.bankName,
     accountNumber: config.accountNumber,
     accountName: config.accountName,
-    amount: amountUsd,
+    amount: amountVnd,
     amountUsd,
     amountVnd,
     exchangeRate,

@@ -273,14 +273,13 @@ export default function ManageBookingsPage() {
                       <td style={{ fontSize: "0.85rem", color: "#475569" }}>{booking.hostName}</td>
                       <td>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <Image
-                            src={booking.propertyImage}
+                          <img
+                            src={booking.propertyImage || "/img/home1.png"}
                             alt={booking.propertyTitle}
-                            width={40}
-                            height={40}
-                            sizes="40px"
-                            unoptimized={isBackendUploadImage(booking.propertyImage)}
-                            style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
+                            onError={(e) => {
+                              e.currentTarget.src = "/img/home1.png";
+                            }}
+                            style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0, background: "#f1f5f9" }}
                           />
                           <span style={{ fontSize: "0.85rem", color: "#475569", maxWidth: 160, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {booking.propertyTitle}

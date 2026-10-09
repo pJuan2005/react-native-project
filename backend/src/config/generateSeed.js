@@ -95,7 +95,7 @@ const PHOTOS_HOMESTAY = [
   'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1502005229762-ee1b2b8ab275?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=900&q=80',
 ];
@@ -600,7 +600,7 @@ for (let bId = 1; bId <= TOTAL_BOOKINGS; bId++) {
   }
 
   const proofImg = (paymentStatus === 'verified' || paymentStatus === 'proof_uploaded')
-    ? "'/uploads/proofs/sample_proof.jpg'"
+    ? "'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80'"
     : 'NULL';
 
   bookingRows.push(`(${bId}, '${bookingCode}', ${propId}, ${guestUserId}, ${guestUserId}, NULL, NULL, NULL, NULL, '${checkIn}', '${checkOut}', ${guests}, ${nights}, ${pricePerNight}.00, NULL, ${discountAmount}.00, ${totalPrice}.00, ${commRate}, 0.1000, ${commAmount}.00, ${hostPayout}.00, '${status}', 'guest_online', 'bank_transfer', 'HSBK${String(bId).padStart(6, '0')}', '${paymentStatus}', ${proofImg}, NOW(), 1, NOW(), NULL, 'Vui lòng xuất trình CCCD khi nhận phòng', 'Khách đặt qua ứng dụng', '', ${guestUserId}, ${cancelReasonCode}, ${cancelReasonText}, ${refundAmount}.00, ${cancellationFee}.00, ${refundPercentage}, ${policyApplied}, ${status === 'cancelled' ? guestUserId : 'NULL'}, ${cancelledAt}, ${cancelReasonDisplay}, NOW(), NOW())`);

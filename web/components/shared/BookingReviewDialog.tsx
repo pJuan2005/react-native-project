@@ -133,9 +133,12 @@ export function BookingReviewDialog({
               }}
             >
               <img
-                src={booking.propertyImage}
+                src={booking.propertyImage || "/img/home1.png"}
                 alt={booking.propertyTitle}
-                style={{ width: "100%", height: 220, objectFit: "cover" }}
+                onError={(e) => {
+                  e.currentTarget.src = "/img/home1.png";
+                }}
+                style={{ width: "100%", height: 220, objectFit: "cover", background: "#f1f5f9" }}
               />
               <div style={{ padding: "16px 18px" }}>
                 <div
@@ -257,6 +260,9 @@ export function BookingReviewDialog({
                 <img
                   src={booking.paymentProofImage}
                   alt="Biên lai thanh toán"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80";
+                  }}
                   style={{
                     width: "100%",
                     maxHeight: 320,

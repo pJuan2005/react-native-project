@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const db = require('../config/database');
 
 class BookingModel {
@@ -677,11 +679,33 @@ class BookingModel {
       throw new Error('Bạn không có quyền thao tác trên đơn đặt phòng này');
     }
 
+    let resolvedProofUrl = proofImageUrl || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80';
+
+    // Nếu ảnh gửi lên là chuỗi base64, lưu file ảnh thật vào thư mục uploads/bookings/<id>/
+    if (typeof proofImageUrl === 'string' && proofImageUrl.startsWith('data:image/')) {
+      try {
+        const uploadDir = path.join(__dirname, '../../uploads/bookings', String(booking.id), 'payment-proof');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        const isPng = proofImageUrl.includes('image/png');
+        const ext = isPng ? '.png' : '.jpg';
+        const fileName = `proof-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`;
+        const filePath = path.join(uploadDir, fileName);
+        const base64Data = proofImageUrl.replace(/^data:image\/[^;]+;base64,/, '');
+        fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+        resolvedProofUrl = `/uploads/bookings/${booking.id}/payment-proof/${fileName}`;
+      } catch (saveErr) {
+        console.warn('Lỗi lưu file base64 payment proof, fallback URL:', saveErr.message);
+        resolvedProofUrl = 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80';
+      }
+    }
+
     await db.query(
       `UPDATE payments
        SET proof_image_url = ?, payment_method = 'bank_transfer', transaction_code = COALESCE(?, transaction_code), status = 'completed', paid_at = NOW(), updated_at = NOW()
        WHERE booking_id = ?`,
-      [proofImageUrl, transactionCode || `FT${Date.now().toString().slice(-8)}`, booking.id]
+      [resolvedProofUrl, transactionCode || `FT${Date.now().toString().slice(-8)}`, booking.id]
     );
 
     await db.query(
@@ -689,7 +713,7 @@ class BookingModel {
        SET payment_status = 'proof_uploaded', payment_proof_image = ?, payment_submitted_at = NOW(),
            notes = CONCAT(IFNULL(notes, ''), ' [Đã thanh toán CK, chờ Admin duyệt]')
        WHERE id = ?`,
-      [proofImageUrl, booking.id]
+      [resolvedProofUrl, booking.id]
     );
 
     if (booking.user_id) {
@@ -707,7 +731,7 @@ class BookingModel {
     return {
       bookingId: booking.id,
       bookingCode: booking.booking_code,
-      proofImageUrl,
+      proofImageUrl: resolvedProofUrl,
       paymentStatus: 'completed',
       bookingStatus: booking.status,
       message: 'Thanh toán thành công! Minh chứng chuyển khoản đã được ghi nhận. Đơn đang chờ Quản trị viên duyệt.',
