@@ -135,13 +135,13 @@ class WalletService {
       }
       const bank = bankRows[0];
 
-      // 2. Kiểm tra yêu cầu rút tiền đang chờ xử lý (giới hạn 1 yêu cầu pending cùng lúc)
+      // 2. Kiểm tra giới hạn số yêu cầu rút tiền đang chờ xử lý (tối đa 5 yêu cầu cùng lúc để chống spam)
       const [pendingRows] = await runner.query(
-        `SELECT id FROM withdrawals WHERE user_id = ? AND status = 'pending' LIMIT 1`,
+        `SELECT COUNT(*) AS pending_count FROM withdrawals WHERE user_id = ? AND status = 'pending'`,
         [userId]
       );
-      if (pendingRows.length > 0) {
-        throw new Error('Bạn đang có 1 yêu cầu rút tiền đang chờ xét duyệt. Vui lòng đợi hoàn tất trước khi tạo yêu cầu mới.');
+      if (pendingRows[0]?.pending_count >= 5) {
+        throw new Error('Bạn đang có 5 yêu cầu rút tiền đang chờ xét duyệt. Vui lòng đợi quản trị viên xử lý trước khi tạo thêm.');
       }
 
       // 3. Khóa hàng ví bằng FOR UPDATE

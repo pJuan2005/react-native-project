@@ -711,7 +711,9 @@ INSERT INTO \`point_transactions\` (\`id\`, \`user_id\`, \`title\`, \`points\`, 
 // 17. SEED WALLETS (520 Wallets)
 const walletRows = [];
 for (let wId = 1; wId <= 520; wId++) {
-  const bal = randomInt(0, 30) * 100000;
+  let bal = randomInt(2, 25) * 100000;
+  if (wId === 4) bal = 1400000; // Phạm Xuân Chuẩn có 1.400.000₫ trong ví
+  if (wId === 8) bal = 1900000; // Hương Nguyễn có 1.900.000₫ trong ví
   walletRows.push(`(${wId}, ${wId}, ${bal}.00, 'VND', 'active', NOW(), NOW())`);
 }
 sql += `-- =====================================================
@@ -722,7 +724,12 @@ INSERT INTO \`wallets\` (\`id\`, \`user_id\`, \`balance\`, \`currency\`, \`statu
 
 // 18. SEED WALLET TRANSACTIONS (520 Wallet Transactions)
 const wtxRows = [];
-for (let txId = 1; txId <= 520; txId++) {
+// Giao dịch ví mẫu thực tế cho Phạm Xuân Chuẩn (user 4)
+wtxRows.push(`(1, 4, 4, 'REFUND', 1400000.00, 0.00, 1400000.00, 'booking_refund', 101, 'Hoàn 70% tiền phòng hủy trước 72h đơn #BK101', 'completed', '2026-10-07 14:30:00')`);
+// Giao dịch ví mẫu thực tế cho Hương Nguyễn (user 8)
+wtxRows.push(`(2, 8, 8, 'REFUND', 1900000.00, 0.00, 1900000.00, 'booking_refund', 108, 'Hoàn 70% tiền phòng hủy trước 72h đơn #BK108', 'completed', '2026-10-06 09:15:00')`);
+
+for (let txId = 3; txId <= 520; txId++) {
   const uId = randomInt(HOST_COUNT + 3, TOTAL_USERS);
   const amt = randomInt(5, 20) * 100000;
   wtxRows.push(`(${txId}, ${uId}, ${uId}, 'REFUND', ${amt}.00, 0.00, ${amt}.00, 'booking_refund', ${txId}, 'Hoàn 70% tiền phòng hủy trước 72h đơn #${txId}', 'completed', NOW())`);
@@ -746,8 +753,24 @@ const BANKS = [
 const bankRows = [];
 for (let bAccId = 1; bAccId <= 520; bAccId++) {
   const b = randomItem(BANKS);
-  const accNum = `${randomInt(1000, 9999)}${randomInt(1000, 9999)}${randomInt(1000, 9999)}`;
-  bankRows.push(`(${bAccId}, ${bAccId}, '${b.name}', '${b.code}', '${accNum}', 'NGUYEN KHACH HANG ${bAccId}', 1, 'active', NOW(), NOW())`);
+  let accNum = `${randomInt(1000, 9999)}${randomInt(1000, 9999)}${randomInt(1000, 9999)}`;
+  let holder = `NGUYEN KHACH HANG ${bAccId}`;
+  let bankName = b.name;
+  let bankCode = b.code;
+
+  if (bAccId === 4) {
+    bankName = 'Vietcombank';
+    bankCode = 'VCB';
+    accNum = '190720058888';
+    holder = 'PHAM XUAN CHUAN';
+  } else if (bAccId === 8) {
+    bankName = 'Techcombank';
+    bankCode = 'TCB';
+    accNum = '190345672005';
+    holder = 'VU THU HUONG';
+  }
+
+  bankRows.push(`(${bAccId}, ${bAccId}, '${bankName}', '${bankCode}', '${accNum}', '${holder}', 1, 'active', NOW(), NOW())`);
 }
 sql += `-- =====================================================
 -- 19. SEED BANK ACCOUNTS (${bankRows.length} Accounts)
@@ -755,11 +778,15 @@ sql += `-- =====================================================
 INSERT INTO \`bank_accounts\` (\`id\`, \`user_id\`, \`bank_name\`, \`bank_code\`, \`account_number\`, \`account_holder_name\`, \`is_default\`, \`status\`, \`created_at\`, \`updated_at\`) VALUES
 ` + bankRows.join(',\n') + ';\n\n';
 
-// 20. SEED WITHDRAWALS (200 Withdrawals)
+// 20. SEED WITHDRAWALS (200 Withdrawals - sạch sẽ cho user 4 và user 8 để tự do rút tiền test)
 const withRows = [];
 for (let wId = 1; wId <= 200; wId++) {
   const amt = randomInt(5, 30) * 100000;
-  const status = wId % 4 === 0 ? 'pending' : 'completed';
+  // User 4 và User 8 không bị treo lệnh pending, giúp người dùng tự do bấm rút tiền kiểm thử
+  let status = wId % 4 === 0 ? 'pending' : 'completed';
+  if (wId === 4 || wId === 8) {
+    status = 'completed';
+  }
   withRows.push(`(${wId}, ${wId}, ${wId}, ${wId}, ${amt}.00, '${status}', 'Rút tiền qua thẻ ngân hàng', 1, NOW(), NOW(), NOW())`);
 }
 sql += `-- =====================================================

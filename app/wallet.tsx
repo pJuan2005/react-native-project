@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   FlatList,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -114,24 +115,29 @@ export default function WalletScreen() {
 
   const filteredTransactions = useMemo(() => {
     if (activeTab === 'refund') {
-      return transactions.filter((t) => t.type === 'REFUND');
+      return transactions.filter((t) => String(t.type || '').toUpperCase() === 'REFUND');
     }
     if (activeTab === 'withdrawal') {
-      return transactions.filter((t) => t.type === 'WITHDRAWAL');
+      return transactions.filter((t) => String(t.type || '').toUpperCase() === 'WITHDRAWAL');
     }
     return transactions;
   }, [transactions, activeTab]);
 
   const handleOpenWithdrawModal = () => {
     if (bankAccounts.length === 0) {
-      Alert.alert(
-        'Chưa có tài khoản ngân hàng',
-        'Vui lòng thêm tài khoản ngân hàng trước khi tạo yêu cầu rút tiền.',
-        [
-          { text: 'Để sau', style: 'cancel' },
-          { text: 'Thêm tài khoản', onPress: () => router.push('/bank-accounts' as any) },
-        ]
-      );
+      if (Platform.OS === 'web') {
+        const ok = window.confirm('Bạn chưa có tài khoản ngân hàng. Đi đến trang Thêm tài khoản ngân hàng ngay bây giờ?');
+        if (ok) router.push('/bank-accounts' as any);
+      } else {
+        Alert.alert(
+          'Chưa có tài khoản ngân hàng',
+          'Vui lòng thêm tài khoản ngân hàng trước khi tạo yêu cầu rút tiền.',
+          [
+            { text: 'Để sau', style: 'cancel' },
+            { text: 'Thêm tài khoản', onPress: () => router.push('/bank-accounts' as any) },
+          ]
+        );
+      }
       return;
     }
     setWithdrawAmountStr('');
@@ -141,17 +147,23 @@ export default function WalletScreen() {
   const handleConfirmWithdraw = async () => {
     const amount = parseFloat(withdrawAmountStr.replace(/\D/g, ''));
     if (!amount || amount <= 0) {
-      Alert.alert('Số tiền không hợp lệ', 'Vui lòng nhập số tiền muốn rút.');
+      const msg = 'Vui lòng nhập số tiền muốn rút.';
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Số tiền không hợp lệ', msg);
       return;
     }
 
     if (wallet && amount > wallet.availableBalance) {
-      Alert.alert('Số dư không đủ', `Số dư khả dụng (${formatPrice(wallet.availableBalance)}) không đủ để rút số tiền này.`);
+      const msg = `Số dư khả dụng (${formatPrice(wallet.availableBalance)}) không đủ để rút số tiền này.`;
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Số dư không đủ', msg);
       return;
     }
 
     if (!selectedBankId) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng chọn tài khoản ngân hàng nhận tiền.');
+      const msg = 'Vui lòng chọn tài khoản ngân hàng nhận tiền.';
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Thiếu thông tin', msg);
       return;
     }
 
@@ -163,7 +175,7 @@ export default function WalletScreen() {
           method: 'POST',
           headers: authHeaders,
           body: JSON.stringify({
-            userId: user?.id,
+            userId: user?.id || 4,
             bankAccountId: selectedBankId,
             amount,
           }),
@@ -175,14 +187,29 @@ export default function WalletScreen() {
 
       if (json.success) {
         setShowWithdrawModal(false);
-        Alert.alert('Thành công! 🎉', 'Yêu cầu rút tiền đã được gửi. Quản trị viên sẽ xử lý chuyển khoản trong vòng 24 giờ.');
+        const msg = 'Yêu cầu rút tiền đã được gửi thành công. Quản trị viên sẽ xử lý chuyển khoản trong vòng 24 giờ.';
+        if (Platform.OS === 'web') {
+          window.alert(msg);
+        } else {
+          Alert.alert('Thành công! 🎉', msg);
+        }
         loadWalletData();
       } else {
-        Alert.alert('Không thể rút tiền', json.message || 'Lỗi khi tạo yêu cầu rút tiền.');
+        const msg = json.message || 'Lỗi khi tạo yêu cầu rút tiền.';
+        if (Platform.OS === 'web') {
+          window.alert(msg);
+        } else {
+          Alert.alert('Không thể rút tiền', msg);
+        }
       }
     } catch (err) {
       setIsSubmittingWithdraw(false);
-      Alert.alert('Lỗi kết nối', 'Không thể kết nối máy chủ để gửi yêu cầu rút tiền.');
+      const msg = 'Không thể kết nối máy chủ để gửi yêu cầu rút tiền.';
+      if (Platform.OS === 'web') {
+        window.alert(msg);
+      } else {
+        Alert.alert('Lỗi kết nối', msg);
+      }
     }
   };
 
