@@ -4,7 +4,7 @@ import { useBooking, BookingItem } from '@/contexts/BookingContext';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
