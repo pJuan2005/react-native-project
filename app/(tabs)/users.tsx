@@ -111,7 +111,7 @@ function parseBirthDateParts(dateStr: string | undefined) {
 }
 
 export default function ProfileScreen() {
-  const { logout } = useAuth();
+  const { user: authUser, logout } = useAuth();
   const { themeMode, isDark, setThemeMode, colors } = useAppTheme();
   const {
     userProfile,
@@ -207,7 +207,7 @@ export default function ProfileScreen() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
-        const targetUserId = userProfile.id || '1';
+        const targetUserId = authUser?.id || userProfile.id || '1';
         setShowAvatarModal(false);
 
         // 1. Tải lên server Backend để lưu thành file tĩnh thật trong thư mục uploads/avatars/

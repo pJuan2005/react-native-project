@@ -63,14 +63,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const json = await res.json();
 
       if (json.success && json.data) {
+        const rawUser = json.data.user || {};
         const loggedInUser: CustomerProfile = {
-          id: json.data.user.id,
-          name: json.data.user.name,
-          email: json.data.user.email,
-          phone: json.data.user.phone || '',
-          address: json.data.user.address || '',
-          birthDate: json.data.user.birthDate || '',
-          avatar: json.data.user.avatar || mockUser.avatar,
+          id: String(rawUser.id),
+          name: rawUser.name || rawUser.fullName || '',
+          email: rawUser.email || '',
+          phone: rawUser.phone || '',
+          address: rawUser.address || rawUser.location || '',
+          birthDate: rawUser.birthDate || '',
+          avatar: rawUser.avatar || rawUser.avatarUrl || rawUser.avatar_url || mockUser.avatar,
         };
         const authToken = json.data.token;
 

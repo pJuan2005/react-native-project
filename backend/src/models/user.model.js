@@ -26,21 +26,27 @@ class UserModel {
     return result.insertId;
   }
 
-  static async update(id, { name, email, phone, address, avatarUrl, birthDate }) {
+  static async update(id, { name, fullName, email, phone, address, location, avatarUrl, birthDate }) {
+    const finalName = name || fullName;
+    const finalAddress = address || location;
     await db.query(
       `UPDATE users
        SET name = COALESCE(?, name),
+           full_name = COALESCE(?, full_name, name),
            email = COALESCE(?, email),
            phone = COALESCE(?, phone),
            address = COALESCE(?, address),
+           location = COALESCE(?, location, address),
            avatar_url = COALESCE(?, avatar_url),
            birth_date = COALESCE(?, birth_date)
        WHERE id = ?`,
       [
-        name ?? null,
+        finalName ?? null,
+        finalName ?? null,
         email ?? null,
         phone ?? null,
-        address ?? null,
+        finalAddress ?? null,
+        finalAddress ?? null,
         avatarUrl ?? null,
         birthDate ?? null,
         id,

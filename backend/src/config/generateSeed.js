@@ -5,9 +5,10 @@
  */
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
-// Salted hash for "123456"
-const DEFAULT_PW_HASH = '$2a$10$f6b9g95N187uCjR3849x4OmU8k9c81iM19qZ5u4Xo1EaF5o5P1eU2';
+// Real Salted hash for "123456"
+const DEFAULT_PW_HASH = bcrypt.hashSync('123456', 10);
 
 function randomItem(arr) {
   return arr[Math.floor(Math.random() * arr.length)];

@@ -203,24 +203,31 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     updateAuthUser(profileData);
 
     // 2. Sync with backend API
-    const targetUserId = userProfile.id || '1';
+    const targetUserId = authUser?.id || userProfile.id || '1';
     try {
       const res = await fetchWithTimeout(
         `${API_BASE_URL}/api/users/${targetUserId}`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
           body: JSON.stringify(profileData),
         },
         4000
       );
       const json = await res.json();
       if (json.success && json.data) {
+        const syncedData: Partial<CustomerProfile> = {
+          ...json.data,
+          avatar: json.data.avatar || json.data.avatarUrl || json.data.avatar_url || profileData.avatar,
+        };
         setUserProfile((prev) => ({
           ...prev,
-          ...json.data,
+          ...syncedData,
         }));
-        updateAuthUser(json.data);
+        updateAuthUser(syncedData);
       }
       return true;
     } catch (err) {

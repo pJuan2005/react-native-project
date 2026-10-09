@@ -73,8 +73,12 @@ class UserService {
     };
   }
 
-  static async updateUserProfile(id, { name, email, phone, address, avatar, birthDate }) {
-    if (name !== undefined && name.trim() === '') {
+  static async updateUserProfile(id, { name, fullName, email, phone, address, location, avatar, avatarUrl, birthDate }) {
+    const finalName = name || fullName;
+    const finalAddress = address || location;
+    const finalAvatar = avatar || avatarUrl;
+
+    if (finalName !== undefined && finalName.trim() === '') {
       throw new Error('Họ và tên không được để trống');
     }
     if (email !== undefined && email !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -84,11 +88,13 @@ class UserService {
     const dbBirthDate = birthDate !== undefined ? normalizeDateForDb(birthDate) : undefined;
 
     const updated = await UserModel.update(id, {
-      name: name !== undefined ? name.trim() : undefined,
+      name: finalName !== undefined ? finalName.trim() : undefined,
+      fullName: finalName !== undefined ? finalName.trim() : undefined,
       email: email !== undefined ? email.trim().toLowerCase() : undefined,
       phone,
-      address,
-      avatarUrl: avatar,
+      address: finalAddress,
+      location: finalAddress,
+      avatarUrl: finalAvatar,
       birthDate: dbBirthDate,
     });
 
@@ -99,12 +105,16 @@ class UserService {
     return {
       id: String(updated.id),
       name: updated.name,
+      fullName: updated.full_name || updated.name,
       email: updated.email,
       role: updated.role,
       phone: updated.phone || '',
       address: updated.address || '',
+      location: updated.location || updated.address || '',
       birthDate: formatDateForClient(updated.birth_date),
       avatar: updated.avatar_url || '',
+      avatarUrl: updated.avatar_url || '',
+      avatar_url: updated.avatar_url || '',
       rewardPoints: updated.reward_points || 0,
     };
   }

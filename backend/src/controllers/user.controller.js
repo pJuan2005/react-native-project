@@ -19,14 +19,16 @@ const getUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, address, avatar, birthDate } = req.body;
+    const { name, fullName, email, phone, address, location, avatar, avatarUrl, avatar_url, birthDate } = req.body;
 
     const data = await UserService.updateUserProfile(id, {
-      name,
+      name: name || fullName,
+      fullName: fullName || name,
       email,
       phone,
-      address,
-      avatar,
+      address: address || location,
+      location: location || address,
+      avatar: avatar || avatarUrl || avatar_url,
       birthDate,
     });
     return success(res, data, 'Cập nhật thông tin hồ sơ thành công');

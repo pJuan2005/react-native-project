@@ -130,18 +130,22 @@ User.updateProfile = async (id, payload) => {
   const [result] = await db.promise().query(
     `UPDATE users
      SET
+       name = COALESCE(?, name),
        full_name = ?,
        email = ?,
        phone = ?,
+       address = COALESCE(?, address),
        location = ?,
        website = ?,
        languages = ?,
        bio = ?
      WHERE id = ?`,
     [
+      payload.fullName || null,
       payload.fullName,
       payload.email,
       payload.phone,
+      payload.location || null,
       payload.location || null,
       payload.website || null,
       payload.languages || null,
