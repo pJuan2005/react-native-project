@@ -125,7 +125,7 @@ class DisputeService {
 
     // Thực thi hành động khắc phục nếu có
     if (resolutionAction === 'suspend_property' && dispute.target_type === 'property') {
-      await db.query('UPDATE properties SET is_active = 0, is_deleted = 1, status = "rejected", approval_status = "rejected" WHERE id = ?', [dispute.target_id]);
+      await db.query('UPDATE properties SET is_active = 0, is_deleted = 1, status = "rejected" WHERE id = ?', [dispute.target_id]);
     } else if (resolutionAction === 'suspend_host' && dispute.target_type === 'host') {
       await db.query("UPDATE users SET is_active = 0, status = 'blocked' WHERE id = ?", [dispute.target_id]);
     }

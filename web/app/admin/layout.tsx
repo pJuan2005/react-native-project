@@ -11,6 +11,7 @@ import {
   LayoutDashboard, Users, Building2, CheckCircle,
   CalendarDays, BarChart2, LogOut, Home, Menu, Bell,
   Shield, ChevronRight, ExternalLink, User, KeyRound, Settings, ClipboardList,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "@/components/context/AuthContext";
 
@@ -21,6 +22,7 @@ const navItems = [
   { icon: KeyRound,        label: "Liên kết quản lý nhanh", path: "/admin/quick-manage-links" },
   { icon: CheckCircle,     label: "Phê duyệt chỗ nghỉ", path: "/admin/property-approvals" },
   { icon: CalendarDays,    label: "Quản lý đặt phòng", path: "/admin/manage-booking" },
+  { icon: AlertTriangle,   label: "Quản lý khiếu nại", path: "/admin/disputes" },
   { icon: BarChart2,       label: "Báo cáo tài chính", path: "/admin/manage-reports" },
   { icon: ClipboardList,   label: "Nhật ký kiểm toán", path: "/admin/audit-logs" },
   { icon: User,            label: "Hồ sơ cá nhân", path: "/admin/profile" },
