@@ -480,6 +480,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         5000
       );
       const json = await res.json();
+      if (currentUserId) {
+        fetchUserData(currentUserId);
+      }
       return {
         success: json.success,
         message:
@@ -487,6 +490,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           'Thanh toán thành công! Minh chứng chuyển khoản đã được ghi nhận. Đơn phòng đang chờ Web Admin duyệt.',
       };
     } catch (err) {
+      if (currentUserId) {
+        fetchUserData(currentUserId);
+      }
       return {
         success: true,
         message: 'Thanh toán thành công! Đã lưu minh chứng chuyển khoản (chờ Web Admin chấp nhận).',

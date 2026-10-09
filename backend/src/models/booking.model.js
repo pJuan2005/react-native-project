@@ -209,9 +209,9 @@ class BookingModel {
       LEFT JOIN property_images pi ON pi.property_id = p.id AND pi.is_primary = 1
       LEFT JOIN promotions prom ON b.promotion_id = prom.id
       LEFT JOIN payments pay ON pay.booking_id = b.id
-      WHERE b.user_id = ?
+      WHERE (b.user_id = ? OR b.guest_id = ?)
     `;
-    const params = [userId];
+    const params = [userId, userId];
 
     if (status && status !== 'all') {
       sql += ' AND b.status = ?';
@@ -672,7 +672,8 @@ class BookingModel {
       throw new Error('Không tìm thấy đơn đặt phòng');
     }
     const booking = rows[0];
-    if (userId && String(booking.user_id) !== String(userId)) {
+    const bookingUserId = booking.user_id || booking.guest_id;
+    if (userId && bookingUserId && String(bookingUserId) !== String(userId)) {
       throw new Error('Bạn không có quyền thao tác trên đơn đặt phòng này');
     }
 

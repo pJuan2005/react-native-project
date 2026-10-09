@@ -25,8 +25,8 @@ router.get("/:id", (req, res, next) => {
 router.get("/:id/chat", chat.getGuestBookingConversation);
 
 router.post("/", (req, res, next) => {
-  // Route to Mobile controller if homestayId is present
-  if (req.body?.homestayId && !req.body?.propertyId) {
+  // Route to Mobile controller if request contains userId or homestayId
+  if (req.body?.homestayId || req.body?.userId) {
     return mobileBookingController.createBooking(req, res, next);
   }
   return booking.createBooking(req, res, next);

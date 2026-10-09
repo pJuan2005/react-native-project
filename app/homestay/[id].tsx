@@ -86,10 +86,8 @@ export default function HomestayDetail() {
 
   const isSaved = homestay ? savedHomestays.some((s) => s.id === homestay.id) : false;
 
-  useEffect(() => {
+  const loadHomestayDetail = () => {
     if (!id) return;
-    setLoading(true);
-    setError(null);
     fetchWithTimeout(`${API_BASE_URL}/api/homestays/${id}`, {}, 3000)
       .then((res) => {
         if (!res.ok) throw new Error('not_found');
@@ -111,6 +109,12 @@ export default function HomestayDetail() {
         else setError('Không thể tải thông tin Homestay');
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    loadHomestayDetail();
   }, [id]);
 
   const imagesList = useMemo(() => {
@@ -129,7 +133,16 @@ export default function HomestayDetail() {
     }
     if (bookings) {
       bookings
-        .filter((b) => (String(b.id) === String(id) || String((b as any).homestayId) === String(id)) && b.status !== 'cancelled' && b.checkIn && b.checkOut)
+        .filter(
+          (b) =>
+            (String(b.id) === String(id) ||
+              String((b as any).homestayId) === String(id) ||
+              String((b as any).propertyId) === String(id) ||
+              String((b as any).property_id) === String(id)) &&
+            b.status !== 'cancelled' &&
+            b.checkIn &&
+            b.checkOut
+        )
         .forEach((b) => {
           list.push({ checkIn: b.checkIn!, checkOut: b.checkOut! });
         });
@@ -522,7 +535,13 @@ export default function HomestayDetail() {
 
         {/* Interactive Date Picker Field */}
         <View style={s.dateRow}>
-          <Pressable style={[s.dateField, { backgroundColor: colors.cardBackground, borderColor: colors.primary }]} onPress={() => setShowDatePicker(true)}>
+          <Pressable
+            style={[s.dateField, { backgroundColor: colors.cardBackground, borderColor: colors.primary }]}
+            onPress={() => {
+              loadHomestayDetail();
+              setShowDatePicker(true);
+            }}
+          >
             <Ionicons name="calendar" size={18} color={colors.primary} />
             <View>
               <Text style={[s.dateLabel, { color: colors.primary }]}>Nhận phòng</Text>
@@ -530,7 +549,13 @@ export default function HomestayDetail() {
             </View>
           </Pressable>
 
-          <Pressable style={[s.dateField, { backgroundColor: colors.cardBackground, borderColor: colors.primary }]} onPress={() => setShowDatePicker(true)}>
+          <Pressable
+            style={[s.dateField, { backgroundColor: colors.cardBackground, borderColor: colors.primary }]}
+            onPress={() => {
+              loadHomestayDetail();
+              setShowDatePicker(true);
+            }}
+          >
             <Ionicons name="calendar-outline" size={18} color={colors.primary} />
             <View>
               <Text style={[s.dateLabel, { color: colors.primary }]}>Trả phòng</Text>

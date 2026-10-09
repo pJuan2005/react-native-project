@@ -150,12 +150,12 @@ async function getBookingList(whereClause, params = []) {
       b.created_at AS createdAt
      FROM bookings b
      JOIN properties p ON p.id = b.property_id
-     LEFT JOIN users guest ON guest.id = b.guest_id
-     JOIN users host ON host.id = p.host_id
+     LEFT JOIN users guest ON guest.id = COALESCE(b.guest_id, b.user_id)
+     LEFT JOIN users host ON host.id = p.host_id
      LEFT JOIN users reviewer ON reviewer.id = b.confirmed_by
      LEFT JOIN reviews review ON review.booking_id = b.id
      WHERE ${whereClause} AND p.is_deleted = 0
-     ORDER BY b.created_at DESC`,
+     ORDER BY b.id DESC, b.created_at DESC`,
     params,
   );
 
@@ -213,10 +213,17 @@ Booking.hasDateConflict = async (propertyId, checkIn, checkOut) => {
 };
 
 Booking.create = async (payload) => {
+  const nights = Number(payload.nights || 1);
+  const totalPrice = Number(payload.totalPrice || 0);
+  const pricePerNight = payload.pricePerNight || (nights > 0 ? totalPrice / nights : totalPrice);
+  const finalUserId = payload.userId || payload.guestId || null;
+
   const [result] = await db.promise().query(
     `INSERT INTO bookings (
       property_id,
+      user_id,
       guest_id,
+      price_per_night,
       guest_name_snapshot,
       guest_phone_snapshot,
       check_in,
@@ -232,20 +239,22 @@ Booking.create = async (payload) => {
       commission_rate_applied,
       commission_amount,
       host_payout_amount
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)` ,
     [
       payload.propertyId,
-      payload.guestId || null,
+      finalUserId,
+      payload.guestId || finalUserId,
+      pricePerNight,
       payload.guestNameSnapshot || null,
       payload.guestPhoneSnapshot || null,
       payload.checkIn,
       payload.checkOut,
-      payload.nights,
+      nights,
       payload.guests,
-      payload.totalPrice,
+      totalPrice,
       payload.status || "pending",
       payload.source || "guest_online",
-      payload.createdBy || null,
+      payload.createdBy || finalUserId,
       payload.paymentMethod || "bank_transfer",
       payload.paymentStatus || "unpaid",
       payload.commissionRateApplied || 0,
@@ -265,13 +274,24 @@ Booking.create = async (payload) => {
     [bookingCode, paymentReference, bookingId],
   );
 
+  // Tạo bản ghi tương ứng trong bảng payments
+  try {
+    await db.promise().query(
+      `INSERT INTO payments (booking_id, payment_method, amount, status, created_at, updated_at)
+       VALUES (?, ?, ?, 'pending', NOW(), NOW())
+       ON DUPLICATE KEY UPDATE amount = VALUES(amount)`,
+      [bookingId, payload.paymentMethod || "bank_transfer", totalPrice]
+    );
+  } catch (_) {}
+
   return bookingId;
 };
 
 Booking.getByGuest = async (guestId) =>
-  getBookingList("b.guest_id = ?", [guestId]);
+  getBookingList("(b.guest_id = ? OR b.user_id = ?)", [guestId, guestId]);
 
 Booking.getGuestById = async (bookingId, guestId) =>
+  getBookingDetail("b.id = ? AND (b.guest_id = ? OR b.user_id = ?)", [bookingId, guestId, guestId]);
   getBookingDetail("b.id = ? AND b.guest_id = ?", [bookingId, guestId]);
 
 Booking.getByHost = async (hostId) =>

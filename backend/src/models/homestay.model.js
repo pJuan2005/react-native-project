@@ -148,8 +148,7 @@ class HomestayModel {
           DATE_FORMAT(check_out, '%Y-%m-%d') AS check_out
          FROM bookings
          WHERE property_id = ?
-           AND status IN ('pending', 'confirmed')
-           AND check_out >= CURDATE()
+           AND status IN ('pending', 'confirmed', 'completed')
          ORDER BY check_in ASC`,
         [id]
       );
