@@ -292,7 +292,6 @@ Booking.getByGuest = async (guestId) =>
 
 Booking.getGuestById = async (bookingId, guestId) =>
   getBookingDetail("b.id = ? AND (b.guest_id = ? OR b.user_id = ?)", [bookingId, guestId, guestId]);
-  getBookingDetail("b.id = ? AND b.guest_id = ?", [bookingId, guestId]);
 
 Booking.getByHost = async (hostId) =>
   getBookingList("p.host_id = ?", [hostId]);
