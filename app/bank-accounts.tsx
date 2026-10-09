@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -100,51 +101,92 @@ export default function BankAccountsScreen() {
         {
           method: 'PUT',
           headers: authHeaders,
-          body: JSON.stringify({ userId: user?.id }),
+          body: JSON.stringify({ userId: user?.id || 4 }),
         },
         4000
       );
       const json = await res.json();
       if (json.success) {
-        Alert.alert('Thành công', `Đã đặt ${account.bankName} làm tài khoản nhận tiền mặc định.`);
+        if (Platform.OS === 'web') {
+          window.alert(`Đã đặt ${account.bankName} làm tài khoản nhận tiền mặc định.`);
+        } else {
+          Alert.alert('Thành công', `Đã đặt ${account.bankName} làm tài khoản nhận tiền mặc định.`);
+        }
         loadBankAccounts();
+      } else {
+        const msg = json.message || 'Không thể đổi tài khoản mặc định lúc này.';
+        if (Platform.OS === 'web') {
+          window.alert(msg);
+        } else {
+          Alert.alert('Lỗi', msg);
+        }
       }
     } catch (err) {
-      Alert.alert('Lỗi', 'Không thể đổi tài khoản mặc định lúc này.');
+      if (Platform.OS === 'web') {
+        window.alert('Không thể đổi tài khoản mặc định lúc này.');
+      } else {
+        Alert.alert('Lỗi', 'Không thể đổi tài khoản mặc định lúc này.');
+      }
     }
   };
 
   const handleDeleteAccount = (account: BankAccount) => {
-    Alert.alert(
-      'Xóa tài khoản ngân hàng',
-      `Bạn có chắc chắn muốn xóa tài khoản ${account.bankName} (${account.accountNumberMasked}) khỏi danh sách nhận tiền không?`,
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Xóa',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const res = await fetchWithTimeout(
-                `${API_BASE_URL}/api/bank-accounts/${account.id}?userId=${user?.id || 4}`,
-                {
-                  method: 'DELETE',
-                  headers: authHeaders,
-                },
-                4000
-              );
-              const json = await res.json();
-              if (json.success) {
-                Alert.alert('Thành công', 'Đã xóa tài khoản ngân hàng.');
-                loadBankAccounts();
-              }
-            } catch (err) {
-              Alert.alert('Lỗi', 'Không thể xóa tài khoản ngân hàng lúc này.');
-            }
+    const doDelete = async () => {
+      try {
+        const res = await fetchWithTimeout(
+          `${API_BASE_URL}/api/bank-accounts/${account.id}?userId=${user?.id || 4}`,
+          {
+            method: 'DELETE',
+            headers: authHeaders,
           },
-        },
-      ]
-    );
+          4000
+        );
+        const json = await res.json();
+        if (json.success) {
+          if (Platform.OS === 'web') {
+            window.alert('Đã xóa tài khoản ngân hàng thành công.');
+          } else {
+            Alert.alert('Thành công', 'Đã xóa tài khoản ngân hàng.');
+          }
+          loadBankAccounts();
+        } else {
+          const msg = json.message || 'Không thể xóa tài khoản ngân hàng.';
+          if (Platform.OS === 'web') {
+            window.alert(msg);
+          } else {
+            Alert.alert('Lỗi', msg);
+          }
+        }
+      } catch (err) {
+        if (Platform.OS === 'web') {
+          window.alert('Không thể xóa tài khoản ngân hàng lúc này.');
+        } else {
+          Alert.alert('Lỗi', 'Không thể xóa tài khoản ngân hàng lúc này.');
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        `Bạn có chắc chắn muốn xóa tài khoản ${account.bankName} (${account.accountNumberMasked}) khỏi danh sách nhận tiền không?`
+      );
+      if (confirmed) {
+        doDelete();
+      }
+    } else {
+      Alert.alert(
+        'Xóa tài khoản ngân hàng',
+        `Bạn có chắc chắn muốn xóa tài khoản ${account.bankName} (${account.accountNumberMasked}) khỏi danh sách nhận tiền không?`,
+        [
+          { text: 'Hủy', style: 'cancel' },
+          {
+            text: 'Xóa',
+            style: 'destructive',
+            onPress: doDelete,
+          },
+        ]
+      );
+    }
   };
 
   const handleVerifyAndReveal = async () => {

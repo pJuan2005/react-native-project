@@ -29,6 +29,7 @@ import {
   Lock,
   Copy,
   Check,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "@/components/context/AuthContext";
 import {
@@ -44,6 +45,8 @@ import {
   addGuestBankAccount,
   requestGuestWithdrawal,
   revealGuestBankAccount,
+  setGuestBankAccountDefault,
+  deleteGuestBankAccount,
   getGuestVouchers,
   getGuestFavorites,
   type WalletInfo,
@@ -295,6 +298,31 @@ function GuestDashboardContent() {
     navigator.clipboard?.writeText(text);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
+  }
+
+  async function handleSetDefaultBank(accountId: number) {
+    if (!user) return;
+    try {
+      await setGuestBankAccountDefault(accountId, user.id);
+      setSuccessMsg("Đã đặt tài khoản ngân hàng làm mặc định!");
+      loadData();
+    } catch (err: any) {
+      alert(err?.message || "Không thể đổi tài khoản mặc định lúc này");
+    }
+  }
+
+  async function handleDeleteBank(account: BankAccountItem) {
+    if (!user) return;
+    const bankTitle = account.bankName || account.bank_name || "ngân hàng";
+    if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản ${bankTitle} khỏi danh sách nhận tiền?`)) return;
+
+    try {
+      await deleteGuestBankAccount(account.id, user.id);
+      setSuccessMsg("Đã xóa tài khoản ngân hàng thành công!");
+      loadData();
+    } catch (err: any) {
+      alert(err?.message || "Không thể xóa tài khoản ngân hàng lúc này");
+    }
   }
 
   if (isInitializing || !user) {
@@ -1053,31 +1081,78 @@ function GuestDashboardContent() {
                             </div>
                           </div>
 
-                          <button
-                            onClick={() => {
-                              setSelectedBankToReveal(b);
-                              setRevealPassword("");
-                              setShowPasswordModal(true);
-                            }}
-                            title="Xác thực mật khẩu để xem số tài khoản đầy đủ"
-                            style={{
-                              padding: "7px 12px",
-                              borderRadius: 10,
-                              background: "#f8fafc",
-                              color: "#2563EB",
-                              border: "1px solid #e2e8f0",
-                              fontWeight: 700,
-                              fontSize: "0.76rem",
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: 5,
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            <Lock size={12} color="#2563EB" />
-                            <span>Xem chi tiết</span>
-                          </button>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <button
+                              onClick={() => {
+                                setSelectedBankToReveal(b);
+                                setRevealPassword("");
+                                setShowPasswordModal(true);
+                              }}
+                              title="Xác thực mật khẩu để xem số tài khoản đầy đủ"
+                              style={{
+                                padding: "7px 12px",
+                                borderRadius: 10,
+                                background: "#f8fafc",
+                                color: "#2563EB",
+                                border: "1px solid #e2e8f0",
+                                fontWeight: 700,
+                                fontSize: "0.76rem",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 5,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              <Lock size={12} color="#2563EB" />
+                              <span>Xem chi tiết</span>
+                            </button>
+
+                            {!isDef && (
+                              <button
+                                onClick={() => handleSetDefaultBank(b.id)}
+                                title="Đặt làm tài khoản nhận tiền mặc định"
+                                style={{
+                                  padding: "7px 11px",
+                                  borderRadius: 10,
+                                  background: "#eff6ff",
+                                  color: "#1d4ed8",
+                                  border: "1px solid #bfdbfe",
+                                  fontWeight: 700,
+                                  fontSize: "0.76rem",
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 4,
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                <Check size={12} color="#1d4ed8" />
+                                <span>Đặt mặc định</span>
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => handleDeleteBank(b)}
+                              title="Xóa tài khoản ngân hàng"
+                              style={{
+                                padding: "7px 10px",
+                                borderRadius: 10,
+                                background: "#fef2f2",
+                                color: "#dc2626",
+                                border: "1px solid #fecaca",
+                                fontWeight: 700,
+                                fontSize: "0.76rem",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
+                              <Trash2 size={12} color="#dc2626" />
+                              <span>Xóa</span>
+                            </button>
+                          </div>
                         </div>
                       );
                     })}

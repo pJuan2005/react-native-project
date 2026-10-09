@@ -195,20 +195,21 @@ class BankAccountService {
    */
   static async setDefault(userId, accountId) {
     const [rows] = await db.query(
-      `SELECT id FROM bank_accounts WHERE id = ? AND user_id = ? AND status = 'active'`,
-      [accountId, userId]
+      `SELECT id, user_id FROM bank_accounts WHERE id = ? AND status = 'active'`,
+      [accountId]
     );
     if (rows.length === 0) {
       throw new Error('Tài khoản ngân hàng không tồn tại');
     }
+    const targetUserId = rows[0].user_id || userId;
 
     await db.query(
       `UPDATE bank_accounts SET is_default = 0 WHERE user_id = ?`,
-      [userId]
+      [targetUserId]
     );
     await db.query(
-      `UPDATE bank_accounts SET is_default = 1 WHERE id = ? AND user_id = ?`,
-      [accountId, userId]
+      `UPDATE bank_accounts SET is_default = 1 WHERE id = ?`,
+      [accountId]
     );
 
     return { success: true, message: 'Đã đặt làm tài khoản ngân hàng mặc định' };
@@ -219,23 +220,24 @@ class BankAccountService {
    */
   static async deleteBankAccount(userId, accountId) {
     const [rows] = await db.query(
-      `SELECT id, is_default FROM bank_accounts WHERE id = ? AND user_id = ?`,
-      [accountId, userId]
+      `SELECT id, user_id, is_default FROM bank_accounts WHERE id = ?`,
+      [accountId]
     );
     if (rows.length === 0) {
       throw new Error('Tài khoản ngân hàng không tồn tại');
     }
+    const targetUserId = rows[0].user_id || userId;
 
     await db.query(
-      `UPDATE bank_accounts SET status = 'inactive', is_default = 0 WHERE id = ? AND user_id = ?`,
-      [accountId, userId]
+      `UPDATE bank_accounts SET status = 'inactive', is_default = 0 WHERE id = ?`,
+      [accountId]
     );
 
     // Nếu vừa xóa tài khoản mặc định, đặt tài khoản còn lại đầu tiên làm mặc định
     if (rows[0].is_default) {
       const [remaining] = await db.query(
         `SELECT id FROM bank_accounts WHERE user_id = ? AND status = 'active' ORDER BY created_at DESC LIMIT 1`,
-        [userId]
+        [targetUserId]
       );
       if (remaining.length > 0) {
         await db.query(

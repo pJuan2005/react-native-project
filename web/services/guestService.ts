@@ -152,3 +152,16 @@ export async function revealGuestBankAccount(payload: {
   });
   return res?.data || res;
 }
+
+export async function setGuestBankAccountDefault(accountId: number, userId: number): Promise<any> {
+  return apiRequest<any>(`/api/bank-accounts/${accountId}/default`, {
+    method: "PUT",
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function deleteGuestBankAccount(accountId: number, userId: number): Promise<any> {
+  return apiRequest<any>(`/api/bank-accounts/${accountId}?userId=${userId}`, {
+    method: "DELETE",
+  });
+}

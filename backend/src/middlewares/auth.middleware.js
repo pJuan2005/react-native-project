@@ -42,16 +42,16 @@ const optionalAuth = async (req, res, next) => {
       const token = authHeader.replace('Bearer ', '').trim();
       const parts = token.split('_');
       const userId = parts[1];
-      if (userId) {
+      if (userId && userId !== 'offline' && !isNaN(Number(userId))) {
         try {
           const user = await UserModel.findById(userId);
           if (user && user.is_active) {
             req.user = user;
           } else {
-            req.user = { id: userId, role: 'customer' };
+            req.user = { id: Number(userId), role: 'customer' };
           }
         } catch (_) {
-          req.user = { id: userId, role: 'customer' };
+          req.user = { id: Number(userId), role: 'customer' };
         }
       }
     }
