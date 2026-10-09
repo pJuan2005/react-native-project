@@ -26,6 +26,13 @@ export type BookingItem = Homestay & {
   proofImageUrl?: string;
   voucherCode?: string;
   discountAmount?: number;
+  cancelledAt?: string;
+  cancelledReason?: string;
+  cancellationReasonCode?: string;
+  refundAmount?: number;
+  cancellationFee?: number;
+  refundPercentage?: number;
+  cancellationPolicyApplied?: string;
 };
 
 type BookingContextValue = {
@@ -104,7 +111,6 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         const seenBookingIds = new Set<string>();
         const mappedBookings = bJson.data
           .filter((b: any) => {
-            if (b.status === 'cancelled') return false;
             const uniqueKey = String(b.id || b.booking_code);
             if (seenBookingIds.has(uniqueKey)) return false;
             seenBookingIds.add(uniqueKey);
@@ -138,6 +144,13 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             paymentStatus: b.payment_status || 'pending',
             proofImageUrl: b.proof_image_url || undefined,
             homestayImage: b.property_image || b.homestay_image,
+            cancelledAt: b.cancelled_at || undefined,
+            cancelledReason: b.cancelled_reason || b.cancellation_reason_text || undefined,
+            cancellationReasonCode: b.cancellation_reason_code || undefined,
+            refundAmount: b.refund_amount ? parseFloat(b.refund_amount) : undefined,
+            cancellationFee: b.cancellation_fee ? parseFloat(b.cancellation_fee) : undefined,
+            refundPercentage: b.refund_percentage ? parseFloat(b.refund_percentage) : undefined,
+            cancellationPolicyApplied: b.cancellation_policy_applied || undefined,
           }));
         setBookings(mappedBookings);
       }
@@ -604,7 +617,22 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       );
       const json = await res.json();
       if (json.success) {
-        setBookings((prev) => prev.filter((b) => b.bookingId !== bookingId && b.id !== bookingId));
+        setBookings((prev) =>
+          prev.map((b) =>
+            b.bookingId === bookingId || b.id === bookingId
+              ? {
+                  ...b,
+                  status: 'cancelled',
+                  cancelledAt: new Date().toISOString(),
+                  cancelledReason: json.cancellationReasonDisplay || reasonText || reasonCode,
+                  refundAmount: json.refundAmount || 0,
+                  cancellationFee: json.cancellationFee || 0,
+                  refundPercentage: json.refundPercentage || 0,
+                  cancellationPolicyApplied: json.policyCode,
+                }
+              : b
+          )
+        );
       }
       return json;
     } catch (err: any) {

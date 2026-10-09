@@ -83,19 +83,37 @@ export default function BookingsScreen() {
 
   const [bookingPage, setBookingPage] = useState(1);
   const [wishlistPage, setWishlistPage] = useState(1);
+  const [bookingStatusFilter, setBookingStatusFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
 
-  // Active bookings (not cancelled)
-  const activeBookings = useMemo(
-    () => bookings.filter((b: BookingItem) => b.status !== 'cancelled'),
-    [bookings]
-  );
+  const allBookingsCount = bookings.length;
+  const activeBookingsCount = useMemo(() => bookings.filter((b) => b.status === 'pending' || b.status === 'confirmed').length, [bookings]);
+  const completedBookingsCount = useMemo(() => bookings.filter((b) => b.status === 'completed').length, [bookings]);
+  const cancelledBookingsCount = useMemo(() => bookings.filter((b) => b.status === 'cancelled').length, [bookings]);
 
-  const totalBookingPages = Math.max(1, Math.ceil(activeBookings.length / BOOKINGS_PER_PAGE));
+  // Filtered bookings based on chip selection
+  const displayedBookings = useMemo(() => {
+    if (bookingStatusFilter === 'active') {
+      return bookings.filter((b: BookingItem) => b.status === 'pending' || b.status === 'confirmed');
+    }
+    if (bookingStatusFilter === 'completed') {
+      return bookings.filter((b: BookingItem) => b.status === 'completed');
+    }
+    if (bookingStatusFilter === 'cancelled') {
+      return bookings.filter((b: BookingItem) => b.status === 'cancelled');
+    }
+    return bookings;
+  }, [bookings, bookingStatusFilter]);
+
+  const totalBookingPages = Math.max(1, Math.ceil(displayedBookings.length / BOOKINGS_PER_PAGE));
   const safeBookingPage = Math.min(bookingPage, totalBookingPages);
-  const paginatedActiveBookings = useMemo(() => {
+  const paginatedBookings = useMemo(() => {
     const start = (safeBookingPage - 1) * BOOKINGS_PER_PAGE;
-    return activeBookings.slice(start, start + BOOKINGS_PER_PAGE);
-  }, [activeBookings, safeBookingPage]);
+    return displayedBookings.slice(start, start + BOOKINGS_PER_PAGE);
+  }, [displayedBookings, safeBookingPage]);
+
+  useEffect(() => {
+    setBookingPage(1);
+  }, [bookingStatusFilter]);
 
   const totalWishlistPages = Math.max(1, Math.ceil(savedHomestays.length / BOOKINGS_PER_PAGE));
   const safeWishlistPage = Math.min(wishlistPage, totalWishlistPages);
@@ -103,6 +121,12 @@ export default function BookingsScreen() {
     const start = (safeWishlistPage - 1) * BOOKINGS_PER_PAGE;
     return savedHomestays.slice(start, start + BOOKINGS_PER_PAGE);
   }, [savedHomestays, safeWishlistPage]);
+
+  // Active bookings (not cancelled)
+  const activeBookings = useMemo(
+    () => bookings.filter((b: BookingItem) => b.status !== 'cancelled'),
+    [bookings]
+  );
 
   const total = useMemo(
     () => activeBookings.reduce((sum: number, item: BookingItem) => sum + (item.totalPrice || item.price * item.quantity), 0),
@@ -339,12 +363,59 @@ export default function BookingsScreen() {
       {/* TAB 1: BOOKINGS */}
       {activeTab === 'bookings' && (
         <>
-          {bookings.length === 0 ? (
+          {/* Sub-Filter Status Chips */}
+          <View style={s.subFilterRow}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.subFilterScroll}>
+              {[
+                { key: 'all', label: `Tất cả (${allBookingsCount})`, icon: 'apps-outline' },
+                { key: 'active', label: `Sắp tới (${activeBookingsCount})`, icon: 'time-outline' },
+                { key: 'completed', label: `Đã ở qua (${completedBookingsCount})`, icon: 'checkmark-circle-outline' },
+                { key: 'cancelled', label: `Đã hủy (${cancelledBookingsCount})`, icon: 'close-circle-outline' },
+              ].map((chip) => {
+                const isSelected = bookingStatusFilter === chip.key;
+                return (
+                  <Pressable
+                    key={chip.key}
+                    style={[
+                      s.subFilterChip,
+                      {
+                        backgroundColor: isSelected ? colors.primary : isDark ? '#1E293B' : '#FFFFFF',
+                        borderColor: isSelected ? colors.primary : isDark ? '#334155' : '#CBD5E1',
+                      },
+                    ]}
+                    onPress={() => setBookingStatusFilter(chip.key as any)}
+                  >
+                    <Ionicons
+                      name={chip.icon as any}
+                      size={13}
+                      color={isSelected ? '#FFFFFF' : isDark ? '#94A3B8' : '#475569'}
+                    />
+                    <Text
+                      style={[
+                        s.subFilterChipText,
+                        { color: isSelected ? '#FFFFFF' : isDark ? '#94A3B8' : '#475569' },
+                      ]}
+                    >
+                      {chip.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+
+          {displayedBookings.length === 0 ? (
             <View style={s.empty}>
               <View style={[s.emptyIconCircle, { backgroundColor: isDark ? '#1C2541' : '#E0F2FE' }]}>
                 <Ionicons name="cart-outline" size={38} color={colors.primary} />
               </View>
-              <Text style={[s.emptyTitle, { color: colors.text }]}>Chưa có đặt phòng nào</Text>
+              <Text style={[s.emptyTitle, { color: colors.text }]}>
+                {bookingStatusFilter === 'cancelled'
+                  ? 'Chưa có đơn đặt phòng nào bị hủy'
+                  : bookingStatusFilter === 'completed'
+                  ? 'Chưa có chuyến đi nào đã hoàn tất'
+                  : 'Chưa có đặt phòng nào'}
+              </Text>
               <Text style={s.emptyText}>Khám phá các homestay tuyệt vời và đặt chỗ ngay hôm nay.</Text>
               <Pressable style={[s.continue, { backgroundColor: colors.primary }]} onPress={() => router.push('/homestays')}>
                 <Text style={s.continueText}>Khám phá homestay</Text>
@@ -352,7 +423,7 @@ export default function BookingsScreen() {
             </View>
           ) : (
             <FlatList
-              data={paginatedActiveBookings}
+              data={paginatedBookings}
               keyExtractor={(item, index) =>
                 item.bookingId
                   ? `booking-${item.bookingId}-${index}`
@@ -363,11 +434,17 @@ export default function BookingsScreen() {
               contentContainerStyle={s.contentList}
               showsVerticalScrollIndicator={false}
               renderItem={({ item: booking }) => {
-                const isPaid = booking.paymentStatus === 'completed';
+                const isPaid = booking.paymentStatus === 'completed' || booking.paymentStatus === 'verified';
                 const isConfirmed = booking.status === 'confirmed';
+                const isCompleted = booking.status === 'completed';
+                const isCancelled = booking.status === 'cancelled';
 
                 return (
-                  <View style={[s.bookingCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+                  <View style={[
+                    s.bookingCard,
+                    { backgroundColor: colors.cardBackground, borderColor: isCancelled ? '#FECACA' : colors.cardBorder },
+                    isCancelled && { borderLeftWidth: 4, borderLeftColor: '#DC2626' },
+                  ]}>
                     {/* Clickable Card Body */}
                     <Pressable
                       style={s.cardTouchable}
@@ -399,36 +476,68 @@ export default function BookingsScreen() {
 
                         {/* Dual Status Badges */}
                         <View style={s.badgeRow}>
-                          {isPaid ? (
-                            <View style={s.paidBadge}>
-                              <Ionicons name="checkmark-circle" size={11} color="#15803D" />
-                              <Text style={s.paidBadgeText}>Đã thanh toán CK</Text>
+                          {isCancelled ? (
+                            <View style={s.cancelledBadge}>
+                              <Ionicons name="close-circle" size={11} color="#DC2626" />
+                              <Text style={s.cancelledBadgeText}>Đã hủy phòng</Text>
+                            </View>
+                          ) : isCompleted ? (
+                            <View style={s.completedBadge}>
+                              <Ionicons name="checkmark-done-circle" size={11} color="#16A34A" />
+                              <Text style={s.completedBadgeText}>Đã hoàn thành chuyến đi</Text>
                             </View>
                           ) : (
                             <>
-                              <View style={s.unpaidBadge}>
-                                <Ionicons name="card-outline" size={11} color="#D97706" />
-                                <Text style={s.unpaidBadgeText}>Chưa thanh toán</Text>
-                              </View>
-                              <View style={s.holdBadge}>
-                                <Ionicons name="hourglass-outline" size={10} color="#C2410C" />
-                                <Text style={s.holdBadgeText}>Hạn 15 phút</Text>
-                              </View>
+                              {isPaid ? (
+                                <View style={s.paidBadge}>
+                                  <Ionicons name="checkmark-circle" size={11} color="#15803D" />
+                                  <Text style={s.paidBadgeText}>Đã thanh toán CK</Text>
+                                </View>
+                              ) : (
+                                <>
+                                  <View style={s.unpaidBadge}>
+                                    <Ionicons name="card-outline" size={11} color="#D97706" />
+                                    <Text style={s.unpaidBadgeText}>Chưa thanh toán</Text>
+                                  </View>
+                                  <View style={s.holdBadge}>
+                                    <Ionicons name="hourglass-outline" size={10} color="#C2410C" />
+                                    <Text style={s.holdBadgeText}>Hạn 15 phút</Text>
+                                  </View>
+                                </>
+                              )}
+
+                              {isConfirmed ? (
+                                <View style={s.confirmedBadge}>
+                                  <Ionicons name="shield-checkmark" size={11} color="#0284C7" />
+                                  <Text style={s.confirmedBadgeText}>Đặt phòng thành công</Text>
+                                </View>
+                              ) : (
+                                <View style={s.pendingBadge}>
+                                  <Ionicons name="time-outline" size={11} color="#D97706" />
+                                  <Text style={s.pendingBadgeText}>Chờ Web Admin duyệt</Text>
+                                </View>
+                              )}
                             </>
                           )}
-
-                          {isConfirmed ? (
-                            <View style={s.confirmedBadge}>
-                              <Ionicons name="shield-checkmark" size={11} color="#0284C7" />
-                              <Text style={s.confirmedBadgeText}>Đặt phòng thành công</Text>
-                            </View>
-                          ) : (
-                            <View style={s.pendingBadge}>
-                              <Ionicons name="time-outline" size={11} color="#D97706" />
-                              <Text style={s.pendingBadgeText}>Chờ Web Admin duyệt</Text>
-                            </View>
-                          )}
                         </View>
+
+                        {/* Cancelled Snippet Info */}
+                        {isCancelled && (
+                          <View style={[s.cancelInfoSnippet, { backgroundColor: isDark ? '#450A0A' : '#FEF2F2' }]}>
+                            <Text style={s.cancelInfoSnippetTitle} numberOfLines={1}>
+                              Lý do: {booking.cancelledReason || 'Khách hủy theo yêu cầu'}
+                            </Text>
+                            {booking.refundAmount && booking.refundAmount > 0 ? (
+                              <Text style={s.cancelInfoSnippetRefund}>
+                                💰 Đã hoàn ví: +{formatPrice(booking.refundAmount)} ({booking.refundPercentage || 70}%)
+                              </Text>
+                            ) : (
+                              <Text style={s.cancelInfoSnippetNoRefund}>
+                                🔒 Không hoàn cọc (Hủy sát ngày &lt; 72h)
+                              </Text>
+                            )}
+                          </View>
+                        )}
 
                         <View style={s.itemBottomRow}>
                           <Text style={s.priceLabel}>
@@ -436,40 +545,62 @@ export default function BookingsScreen() {
                           </Text>
 
                           <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                            {!isPaid && (
+                            {isCancelled ? (
                               <Pressable
-                                style={[s.payNowBtn, { backgroundColor: colors.primary }]}
-                                onPress={() => {
-                                  setPaymentBooking(booking);
-                                  setProofImage(null);
-                                  setTransactionCode('');
-                                }}
+                                style={[s.rebookBtn, { backgroundColor: colors.primary }]}
+                                onPress={() => router.push(`/homestay/${booking.id}` as any)}
                               >
-                                <Ionicons name="card" size={12} color="#FFFFFF" />
-                                <Text style={s.payNowText}>Thanh toán</Text>
+                                <Ionicons name="refresh" size={12} color="#FFFFFF" />
+                                <Text style={s.rebookText}>Đặt lại</Text>
                               </Pressable>
-                            )}
+                            ) : isCompleted ? (
+                              <Pressable
+                                style={s.reviewBtn}
+                                onPress={() => handleReviewAndReward(booking.bookingId || booking.id, booking.name)}
+                              >
+                                <Ionicons name="star" size={12} color="#D97706" />
+                                <Text style={s.reviewBtnText}>Đánh giá 5★</Text>
+                              </Pressable>
+                            ) : (
+                              <>
+                                {!isPaid && (
+                                  <Pressable
+                                    style={[s.payNowBtn, { backgroundColor: colors.primary }]}
+                                    onPress={() => {
+                                      setPaymentBooking(booking);
+                                      setProofImage(null);
+                                      setTransactionCode('');
+                                    }}
+                                  >
+                                    <Ionicons name="card" size={12} color="#FFFFFF" />
+                                    <Text style={s.payNowText}>Thanh toán</Text>
+                                  </Pressable>
+                                )}
 
-                            <Pressable
-                              style={s.reviewBtn}
-                              onPress={() => handleReviewAndReward(booking.bookingId || booking.id, booking.name)}
-                            >
-                              <Ionicons name="star" size={12} color="#D97706" />
-                              <Text style={s.reviewBtnText}>Đánh giá</Text>
-                            </Pressable>
+                                <Pressable
+                                  style={s.reviewBtn}
+                                  onPress={() => handleReviewAndReward(booking.bookingId || booking.id, booking.name)}
+                                >
+                                  <Ionicons name="star" size={12} color="#D97706" />
+                                  <Text style={s.reviewBtnText}>Đánh giá</Text>
+                                </Pressable>
+                              </>
+                            )}
                           </View>
                         </View>
                       </View>
                     </Pressable>
 
-                    {/* Independent Trash Button (No event bubbling collision) */}
-                    <Pressable
-                      style={s.trashBtnCorner}
-                      hitSlop={10}
-                      onPress={() => handlePromptCancel(booking)}
-                    >
-                      <Ionicons name="trash-outline" size={18} color="#EF4444" />
-                    </Pressable>
+                    {/* Independent Trash Button (Chỉ hiển thị cho đơn chưa hủy và chưa hoàn thành) */}
+                    {!isCancelled && !isCompleted && (
+                      <Pressable
+                        style={s.trashBtnCorner}
+                        hitSlop={10}
+                        onPress={() => handlePromptCancel(booking)}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                      </Pressable>
+                    )}
                   </View>
                 );
               }}
@@ -1902,4 +2033,76 @@ const s = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  // Sub-Filter Status Chips Styles
+  subFilterRow: {
+    marginBottom: 10,
+  },
+  subFilterScroll: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  subFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  subFilterChipText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  cancelledBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  cancelledBadgeText: { fontSize: 9.5, fontWeight: '800', color: '#DC2626' },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  completedBadgeText: { fontSize: 9.5, fontWeight: '800', color: '#16A34A' },
+  cancelInfoSnippet: {
+    marginTop: 6,
+    padding: 8,
+    borderRadius: 8,
+  },
+  cancelInfoSnippetTitle: {
+    fontSize: 10.5,
+    color: '#991B1B',
+    fontWeight: '600',
+  },
+  cancelInfoSnippetRefund: {
+    fontSize: 10.5,
+    color: '#15803D',
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  cancelInfoSnippetNoRefund: {
+    fontSize: 10.5,
+    color: '#DC2626',
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  rebookBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  rebookText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
 });

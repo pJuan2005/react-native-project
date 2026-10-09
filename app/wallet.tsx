@@ -67,6 +67,9 @@ export default function WalletScreen() {
   const [selectedBankId, setSelectedBankId] = useState<number | null>(null);
   const [isSubmittingWithdraw, setIsSubmittingWithdraw] = useState(false);
 
+  // Modal Chi tiết giao dịch ví / Đơn hủy
+  const [selectedTx, setSelectedTx] = useState<WalletTx | null>(null);
+
   const authHeaders = useMemo(() => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -321,7 +324,12 @@ export default function WalletScreen() {
               {filteredTransactions.map((tx) => {
                 const isPositive = tx.amount > 0;
                 return (
-                  <View key={tx.id} style={[styles.txRow, { borderBottomColor: isDark ? '#334155' : '#F1F5F9' }]}>
+                  <Pressable
+                    key={tx.id}
+                    style={[styles.txRow, { borderBottomColor: isDark ? '#334155' : '#F1F5F9' }]}
+                    onPress={() => setSelectedTx(tx)}
+                    android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
+                  >
                     <View style={[styles.txIconCircle, { backgroundColor: isPositive ? '#DCFCE7' : '#FEE2E2' }]}>
                       <Ionicons
                         name={isPositive ? 'arrow-down' : 'arrow-up'}
@@ -329,19 +337,22 @@ export default function WalletScreen() {
                         color={isPositive ? '#16A34A' : '#DC2626'}
                       />
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.txDesc, { color: colors.text }]}>{tx.description}</Text>
+                    <View style={{ flex: 1, marginRight: 8 }}>
+                      <Text style={[styles.txDesc, { color: colors.text }]} numberOfLines={2}>{tx.description}</Text>
                       <Text style={styles.txDate}>{new Date(tx.createdAt).toLocaleString('vi-VN')}</Text>
                     </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={[styles.txAmount, { color: isPositive ? '#16A34A' : '#DC2626' }]}>
-                        {isPositive ? '+' : ''}{formatPrice(tx.amount)}
-                      </Text>
-                      <Text style={styles.txSub}>
-                        Số dư: {formatPrice(tx.balanceAfter)}
-                      </Text>
+                    <View style={{ alignItems: 'flex-end', flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={[styles.txAmount, { color: isPositive ? '#16A34A' : '#DC2626' }]}>
+                          {isPositive ? '+' : ''}{formatPrice(tx.amount)}
+                        </Text>
+                        <Text style={styles.txSub}>
+                          Số dư: {formatPrice(tx.balanceAfter)}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={14} color="#94A3B8" />
                     </View>
-                  </View>
+                  </Pressable>
                 );
               })}
             </View>
@@ -447,6 +458,112 @@ export default function WalletScreen() {
                 )}
               </Pressable>
             </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* MODAL: CHI TIẾT GIAO DỊCH VÍ & ĐƠN HỦY LIÊN QUAN */}
+      <Modal visible={!!selectedTx} transparent animationType="fade" onRequestClose={() => setSelectedTx(null)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setSelectedTx(null)}>
+          <Pressable style={[styles.modalBox, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={[styles.txModalIconBadge, { backgroundColor: selectedTx && selectedTx.amount > 0 ? '#DCFCE7' : '#FEE2E2' }]}>
+                  <Ionicons
+                    name={selectedTx && selectedTx.amount > 0 ? 'arrow-down' : 'arrow-up'}
+                    size={18}
+                    color={selectedTx && selectedTx.amount > 0 ? '#16A34A' : '#DC2626'}
+                  />
+                </View>
+                <View>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>Chi tiết giao dịch ví</Text>
+                  <Text style={styles.modalSub}>Mã GD: #{selectedTx?.id}</Text>
+                </View>
+              </View>
+              <Pressable onPress={() => setSelectedTx(null)} hitSlop={8}>
+                <Ionicons name="close" size={22} color="#64748B" />
+              </Pressable>
+            </View>
+
+            {selectedTx && (
+              <View style={{ gap: 14, marginTop: 4 }}>
+                {/* Big Amount Header */}
+                <View style={[styles.txDetailAmountCard, { backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}>
+                  <Text style={{ fontSize: 12, color: colors.textSecondary, fontWeight: '600' }}>Biến động số dư:</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: selectedTx.amount > 0 ? '#16A34A' : '#DC2626', marginTop: 4 }}>
+                    {selectedTx.amount > 0 ? '+' : ''}{formatPrice(selectedTx.amount)}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 4 }}>
+                    Số dư sau GD: <Text style={{ color: colors.text, fontWeight: '800' }}>{formatPrice(selectedTx.balanceAfter)}</Text>
+                  </Text>
+                </View>
+
+                {/* Details Breakdown */}
+                <View style={[styles.txDetailInfoBox, { borderColor: isDark ? '#334155' : '#E2E8F0' }]}>
+                  <View style={styles.txDetailRow}>
+                    <Text style={styles.txDetailKey}>Loại giao dịch:</Text>
+                    <Text style={[styles.txDetailVal, { color: colors.text }]}>
+                      {selectedTx.type === 'REFUND' ? 'Hoàn tiền hủy phòng' : selectedTx.type === 'WITHDRAWAL' ? 'Rút tiền về tài khoản' : selectedTx.type}
+                    </Text>
+                  </View>
+
+                  <View style={styles.txDetailRow}>
+                    <Text style={styles.txDetailKey}>Thời gian ghi nhận:</Text>
+                    <Text style={[styles.txDetailVal, { color: colors.text }]}>
+                      {new Date(selectedTx.createdAt).toLocaleString('vi-VN')}
+                    </Text>
+                  </View>
+
+                  <View style={styles.txDetailRow}>
+                    <Text style={styles.txDetailKey}>Trạng thái:</Text>
+                    <Text style={[styles.txDetailVal, { color: '#16A34A', fontWeight: '800' }]}>
+                      {selectedTx.status === 'completed' ? 'Thành công' : 'Đang xử lý'}
+                    </Text>
+                  </View>
+
+                  <View style={[styles.txDetailRow, { borderBottomWidth: 0 }]}>
+                    <Text style={styles.txDetailKey}>Nội dung:</Text>
+                    <Text style={[styles.txDetailVal, { color: colors.text, flex: 1, textAlign: 'right' }]}>
+                      {selectedTx.description}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Refund Policy & Related Booking Info */}
+                {selectedTx.type === 'REFUND' && (
+                  <View style={styles.refundExplainBox}>
+                    <Ionicons name="information-circle" size={18} color="#0284C7" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.refundExplainTitle}>Chính sách hoàn tiền 70%:</Text>
+                      <Text style={styles.refundExplainDesc}>
+                        Đơn phòng được hủy đúng hạn trước giờ nhận phòng ≥ 72 giờ. Bạn đã được hoàn lại 70% tiền phòng trực tiếp vào Ví Homestay Pay và có thể rút về ngân hàng ngay.
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* Actions */}
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                  <Pressable
+                    style={[styles.modalSecondaryBtn, { borderColor: colors.primary }]}
+                    onPress={() => {
+                      setSelectedTx(null);
+                      router.push('/bookings');
+                    }}
+                  >
+                    <Ionicons name="calendar-outline" size={15} color={colors.primary} />
+                    <Text style={[styles.modalSecondaryText, { color: colors.primary }]}>Xem đơn phòng</Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={[styles.modalPrimaryBtn, { backgroundColor: colors.primary }]}
+                    onPress={() => setSelectedTx(null)}
+                  >
+                    <Text style={styles.modalPrimaryText}>Đóng</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
           </Pressable>
         </Pressable>
       </Modal>
@@ -673,4 +790,88 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   confirmModalText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
+  txModalIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  txDetailAmountCard: {
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  txDetailInfoBox: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+  },
+  txDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  txDetailKey: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  txDetailVal: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  refundExplainBox: {
+    flexDirection: 'row',
+    gap: 8,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: 12,
+    padding: 10,
+    marginTop: 2,
+  },
+  refundExplainTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0369A1',
+    marginBottom: 2,
+  },
+  refundExplainDesc: {
+    fontSize: 10.5,
+    color: '#0284C7',
+    lineHeight: 15,
+  },
+  modalSecondaryBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 11,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    backgroundColor: 'transparent',
+  },
+  modalSecondaryText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  modalPrimaryBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 11,
+    borderRadius: 20,
+  },
+  modalPrimaryText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
 });
