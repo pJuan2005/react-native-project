@@ -49,8 +49,20 @@ async function runInitDatabase() {
     }
     console.log('3. Đang chèn dữ liệu mẫu chuẩn (500+ bản ghi) từ database/seed.sql...');
     const seedSql = fs.readFileSync(seedPath, 'utf8');
-    await connection.query(seedSql);
-    console.log('   ✓ Chèn 520 users, 520 properties, 2600+ ảnh, 3000+ tiện nghi, 520 đơn phòng, 520 ví thành công!');
+
+    // Tách câu lệnh theo từng bảng để không bị vượt giới hạn max_allowed_packet của MySQL
+    const statements = seedSql
+      .split(/;\s*[\r\n]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !s.startsWith('--'));
+
+    for (let i = 0; i < statements.length; i++) {
+      const stmt = statements[i];
+      if (stmt) {
+        await connection.query(stmt);
+      }
+    }
+    console.log('   ✓ Chèn 520 users, 520 properties, 3120 ảnh, 3600+ tiện nghi, 520 đơn phòng, 520 ví thành công!');
 
     // 4. Kiểm tra tổng kết
     const [pRows] = await connection.query('SELECT COUNT(*) AS total FROM homestay_db.properties');
