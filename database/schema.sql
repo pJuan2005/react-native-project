@@ -17,6 +17,14 @@ DROP VIEW IF EXISTS `v_user_bookings`;
 DROP VIEW IF EXISTS `v_properties_detail`;
 DROP VIEW IF EXISTS `v_homestays_detail`;
 
+DROP PROCEDURE IF EXISTS `sp_create_booking`;
+DROP FUNCTION IF EXISTS `fn_check_property_available`;
+DROP FUNCTION IF EXISTS `fn_check_homestay_available`;
+DROP TRIGGER IF EXISTS `trg_properties_after_insert`;
+DROP TRIGGER IF EXISTS `trg_properties_after_update`;
+DROP TRIGGER IF EXISTS `trg_properties_after_delete`;
+DROP TRIGGER IF EXISTS `trg_reviews_after_insert`;
+
 -- Drop tables with foreign keys in correct order
 DROP TABLE IF EXISTS `booking_messages`;
 DROP TABLE IF EXISTS `booking_conversations`;
@@ -755,6 +763,11 @@ ORDER BY `month_year` DESC;
 -- =====================================================
 -- TRIGGERS
 -- =====================================================
+DROP TRIGGER IF EXISTS `trg_properties_after_insert`;
+DROP TRIGGER IF EXISTS `trg_properties_after_update`;
+DROP TRIGGER IF EXISTS `trg_properties_after_delete`;
+DROP TRIGGER IF EXISTS `trg_reviews_after_insert`;
+
 DELIMITER //
 
 -- Trigger 1: Tăng số lượng property theo địa điểm khi thêm mới
@@ -842,6 +855,9 @@ DELIMITER ;
 -- =====================================================
 -- FUNCTION: fn_check_property_available
 -- =====================================================
+DROP FUNCTION IF EXISTS `fn_check_property_available`;
+DROP FUNCTION IF EXISTS `fn_check_homestay_available`;
+
 DELIMITER //
 
 CREATE FUNCTION `fn_check_property_available`(
@@ -882,6 +898,8 @@ DELIMITER ;
 -- =====================================================
 -- STORED PROCEDURE: sp_create_booking
 -- =====================================================
+DROP PROCEDURE IF EXISTS `sp_create_booking`;
+
 DELIMITER //
 
 CREATE PROCEDURE `sp_create_booking`(
