@@ -95,8 +95,8 @@ const PHOTOS_HOMESTAY = [
   'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1501183638710-841dd1904471?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1536376072261-38c75010e6c9?auto=format&fit=crop&w=900&q=80',
 ];
 
@@ -117,7 +117,7 @@ const PHOTOS_RESORT = [
   'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1561501900-3701fa6a0864?auto=format&fit=crop&w=900&q=80',
-  'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80',
+  'https://images.unsplash.com/photo-1582610116397-edb318620f90?auto=format&fit=crop&w=900&q=80',
   'https://images.unsplash.com/photo-1549294413-26f195200c16?auto=format&fit=crop&w=900&q=80',
 ];
 
@@ -466,10 +466,20 @@ for (let locId = 1; locId <= LOCATION_COUNT; locId++) {
 
     propRows.push(`(${id}, ${hostId}, '${name}', '${desc}', ${typeId}, ${price}.00, ${oldPrice ? oldPrice + '.00' : 'NULL'}, ${locId}, '${address}', '${city}', 'Vietnam', ${lat}, ${lng}, ${maxGuests}, ${bedrooms}, ${bathrooms}, ${rating}, ${reviewCount}, ${isNew}, ${isFeatured}, 1, 0, 'approved', '${coverImg}', '${token}', 1, NULL)`);
 
-    // Mỗi chỗ nghỉ có 6 ảnh độc đáo, không trùng lặp
+    // Mỗi chỗ nghỉ có 6 ảnh độc đáo, tuyệt đối không trùng lặp (tuân thủ UNIQUE KEY uk_property_images_url)
     const imgCount = 6;
+    const pickedImages = new Set();
+    let offset = 0;
     for (let imgIdx = 1; imgIdx <= imgCount; imgIdx++) {
-      const imgUrl = themedPhotoPool[(coverImgIndex + imgIdx) % themedPhotoPool.length];
+      let imgUrl;
+      while (true) {
+        imgUrl = themedPhotoPool[(coverImgIndex + imgIdx + offset) % themedPhotoPool.length];
+        if (!pickedImages.has(imgUrl)) {
+          pickedImages.add(imgUrl);
+          break;
+        }
+        offset++;
+      }
       const isPrimary = imgIdx === 1 ? 1 : 0;
       imageRows.push(`(${imgIdCounter++}, ${id}, '${imgUrl}', ${isPrimary}, ${imgIdx})`);
     }

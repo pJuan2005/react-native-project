@@ -35,9 +35,6 @@ const remotePatterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["three"],
-  turbopack: {
-    root: path.resolve(__dirname),
-  },
   images: {
     remotePatterns,
   },
