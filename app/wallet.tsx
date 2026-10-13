@@ -71,7 +71,7 @@ export default function WalletScreen() {
   // Modal Chi tiết giao dịch ví / Đơn hủy
   const [selectedTx, setSelectedTx] = useState<WalletTx | null>(null);
 
-  const activeUserId = user?.id || 4;
+  const activeUserId = user?.id;
 
   const authHeaders = useMemo(() => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -80,6 +80,7 @@ export default function WalletScreen() {
   }, [token]);
 
   const loadWalletData = async () => {
+    if (!activeUserId) return;
     setLoading(true);
     try {
       // 1. Lấy thông tin ví
@@ -116,8 +117,10 @@ export default function WalletScreen() {
   };
 
   useEffect(() => {
-    loadWalletData();
-  }, []);
+    if (activeUserId) {
+      loadWalletData();
+    }
+  }, [activeUserId]);
 
   const filteredTransactions = useMemo(() => {
     if (activeTab === 'refund') {

@@ -63,8 +63,8 @@ class BookingModel {
         b.notes,
         b.host_note,
         pay.payment_method,
-        COALESCE(MAX(pay.status), b.payment_status) AS payment_status,
-        COALESCE(MAX(pay.status), b.payment_status) AS payment_status_display,
+        b.payment_status AS payment_status,
+        b.payment_status AS payment_status_display,
         COALESCE(MAX(pay.proof_image_url), b.payment_proof_image) AS proof_image_url,
         pay.transaction_code,
         b.created_at
@@ -151,8 +151,8 @@ class BookingModel {
         b.cancelled_at,
         b.cancelled_reason,
         pay.payment_method,
-        COALESCE(pay.status, b.payment_status) AS payment_status,
-        COALESCE(pay.status, b.payment_status) AS payment_status_display,
+        b.payment_status AS payment_status,
+        b.payment_status AS payment_status_display,
         pay.proof_image_url,
         pay.transaction_code,
         b.created_at
@@ -208,8 +208,8 @@ class BookingModel {
         b.refund_percentage,
         b.cancellation_policy_applied,
         COALESCE(MAX(pay.payment_method), b.payment_method, 'bank_transfer') AS payment_method,
-        COALESCE(MAX(pay.status), b.payment_status, 'unpaid') AS payment_status,
-        COALESCE(MAX(pay.status), b.payment_status, 'unpaid') AS payment_status_display,
+        b.payment_status AS payment_status,
+        b.payment_status AS payment_status_display,
         COALESCE(MAX(pay.proof_image_url), b.payment_proof_image) AS proof_image_url,
         b.created_at
       FROM bookings b

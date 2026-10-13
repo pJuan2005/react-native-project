@@ -60,7 +60,7 @@ export default function CreateDisputeScreen() {
           method: 'POST',
           headers: authHeaders,
           body: JSON.stringify({
-            reporterId: user?.id || 4,
+            reporterId: user?.id,
             reporterRole: 'guest',
             targetType: 'booking',
             targetId: parseInt(id || '1', 10),

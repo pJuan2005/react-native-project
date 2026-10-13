@@ -111,8 +111,10 @@ class CancellationService {
 
     const booking = rows[0];
 
-    if (userId && String(booking.user_id) !== String(userId)) {
-      throw new Error('Bạn không có quyền thao tác trên đơn đặt phòng này');
+    if (userId && booking.user_id && String(booking.user_id) !== String(userId)) {
+      if (booking.guest_id && String(booking.guest_id) !== String(userId)) {
+        throw new Error('Bạn không có quyền thao tác trên đơn đặt phòng này');
+      }
     }
 
     if (booking.status === 'cancelled') {
@@ -143,7 +145,7 @@ class CancellationService {
       ? booking.check_in.split('T')[0]
       : new Date(booking.check_in).toISOString().split('T')[0];
 
-    const checkInDateTime = new Date(`${checkInDateOnly}T14:00:00`);
+    const checkInDateTime = new Date(`${checkInDateOnly}T14:00:00+07:00`);
     const diffMs = checkInDateTime.getTime() - now.getTime();
     const hoursUntilCheckIn = Math.round((diffMs / (1000 * 60 * 60)) * 10) / 10;
 
@@ -163,6 +165,7 @@ class CancellationService {
       booking.payment_status === 'verified' ||
       booking.payment_status === 'proof_uploaded' ||
       booking.payment_status === 'completed' ||
+      booking.status === 'confirmed' ||
       Boolean(booking.payment_proof_image)
     ) {
       totalPaid = parseFloat(booking.total_price || 0);
@@ -258,8 +261,10 @@ class CancellationService {
 
       const booking = bRows[0];
 
-      if (userId && String(booking.user_id) !== String(userId)) {
-        throw new Error('Bạn không có quyền hủy đơn đặt phòng này');
+      if (userId && booking.user_id && String(booking.user_id) !== String(userId)) {
+        if (booking.guest_id && String(booking.guest_id) !== String(userId)) {
+          throw new Error('Bạn không có quyền hủy đơn đặt phòng này');
+        }
       }
 
       if (booking.status === 'cancelled') {
@@ -275,7 +280,7 @@ class CancellationService {
       const checkInDateOnly = typeof booking.check_in === 'string'
         ? booking.check_in.split('T')[0]
         : new Date(booking.check_in).toISOString().split('T')[0];
-      const checkInDateTime = new Date(`${checkInDateOnly}T14:00:00`);
+      const checkInDateTime = new Date(`${checkInDateOnly}T14:00:00+07:00`);
       const diffMs = checkInDateTime.getTime() - now.getTime();
       const hoursUntilCheckIn = Math.round((diffMs / (1000 * 60 * 60)) * 10) / 10;
 
@@ -284,11 +289,14 @@ class CancellationService {
         `SELECT amount, status FROM payments WHERE booking_id = ?`,
         [booking.id]
       );
-      const isPaid = pRows.some((p) => p.status === 'completed' || p.status === 'verified') ||
-                     booking.payment_status === 'verified' ||
-                     booking.payment_status === 'proof_uploaded' ||
-                     booking.payment_status === 'completed' ||
-                     Boolean(booking.payment_proof_image);
+      const isPaid = (
+        pRows.some((p) => p.status === 'completed' || p.status === 'verified') ||
+        booking.payment_status === 'verified' ||
+        booking.payment_status === 'proof_uploaded' ||
+        booking.payment_status === 'completed' ||
+        booking.status === 'confirmed' ||
+        Boolean(booking.payment_proof_image)
+      );
 
       const totalPaid = isPaid ? parseFloat(booking.total_price || 0) : 0;
       const split = this.calculateSplitBreakdown(hoursUntilCheckIn, totalPaid);

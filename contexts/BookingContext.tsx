@@ -615,8 +615,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     try {
       const authHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
       if (authToken) authHeaders['Authorization'] = `Bearer ${authToken}`;
+      const uid = authUser?.id || userProfile?.id;
       const res = await fetchWithTimeout(
-        `${API_BASE_URL}/api/bookings/${bookingId}/cancellation-preview`,
+        `${API_BASE_URL}/api/bookings/${bookingId}/cancellation-preview${uid ? `?userId=${uid}` : ''}`,
         { headers: authHeaders },
         4000
       );
@@ -636,7 +637,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           method: 'POST',
           headers: authHeaders,
           body: JSON.stringify({
-            userId: userProfile.id,
+            userId: authUser?.id || userProfile.id,
             reasonCode,
             reasonText,
           }),
@@ -661,8 +662,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
               : b
           )
         );
-        if (userProfile.id) {
-          fetchUserData(userProfile.id);
+        const uid = authUser?.id || userProfile.id;
+        if (uid) {
+          fetchUserData(uid);
         }
       }
       return json;

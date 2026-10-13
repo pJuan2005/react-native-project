@@ -64,7 +64,7 @@ export default function ChatScreen() {
     if (!id) return;
     try {
       const res = await fetchWithTimeout(
-        `${API_BASE_URL}/api/bookings/${id}/chat?userId=${user?.id || 4}`,
+        `${API_BASE_URL}/api/bookings/${id}/chat?userId=${user?.id || ''}`,
         { headers: authHeaders },
         4000
       );
@@ -105,7 +105,7 @@ export default function ChatScreen() {
     const tempId = Date.now();
     const optimisticMsg: Message = {
       id: tempId,
-      senderId: Number(user?.id || 4),
+      senderId: Number(user?.id || 0),
       senderName: user?.name || 'Tôi',
       senderRole: 'guest',
       message: text,
@@ -184,7 +184,7 @@ export default function ChatScreen() {
             </View>
 
             {messages.map((msg) => {
-              const isMe = String(msg.senderId) === String(user?.id || '4') || msg.senderRole === 'guest';
+              const isMe = (user?.id ? String(msg.senderId) === String(user.id) : false) || msg.senderRole === 'guest';
               const isSystem = msg.messageType === 'system' || msg.senderRole === 'system' || msg.senderId === 1;
 
               if (isSystem) {

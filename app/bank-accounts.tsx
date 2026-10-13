@@ -65,6 +65,8 @@ export default function BankAccountsScreen() {
   const [revealedDetail, setRevealedDetail] = useState<any | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
+  const activeUserId = user?.id;
+
   const authHeaders = useMemo(() => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -72,10 +74,11 @@ export default function BankAccountsScreen() {
   }, [token]);
 
   const loadBankAccounts = async () => {
+    if (!activeUserId) return;
     setLoading(true);
     try {
       const res = await fetchWithTimeout(
-        `${API_BASE_URL}/api/bank-accounts?userId=${user?.id || 4}`,
+        `${API_BASE_URL}/api/bank-accounts?userId=${activeUserId}`,
         { headers: authHeaders },
         4000
       );
@@ -91,17 +94,20 @@ export default function BankAccountsScreen() {
   };
 
   useEffect(() => {
-    loadBankAccounts();
-  }, []);
+    if (activeUserId) {
+      loadBankAccounts();
+    }
+  }, [activeUserId]);
 
   const handleSetDefault = async (account: BankAccount) => {
+    if (!activeUserId) return;
     try {
       const res = await fetchWithTimeout(
         `${API_BASE_URL}/api/bank-accounts/${account.id}/default`,
         {
           method: 'PUT',
           headers: authHeaders,
-          body: JSON.stringify({ userId: user?.id || 4 }),
+          body: JSON.stringify({ userId: activeUserId }),
         },
         4000
       );
@@ -134,7 +140,7 @@ export default function BankAccountsScreen() {
     const doDelete = async () => {
       try {
         const res = await fetchWithTimeout(
-          `${API_BASE_URL}/api/bank-accounts/${account.id}?userId=${user?.id || 4}`,
+          `${API_BASE_URL}/api/bank-accounts/${account.id}?userId=${activeUserId}`,
           {
             method: 'DELETE',
             headers: authHeaders,

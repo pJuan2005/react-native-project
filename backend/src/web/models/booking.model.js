@@ -363,6 +363,13 @@ Booking.confirmByHost = async (
     [reviewerId, hostNote || null, checkinInstructions || null, bookingId, hostId],
   );
 
+  if (result.affectedRows > 0) {
+    await db.promise().query(
+      `UPDATE payments SET status = 'completed', paid_at = COALESCE(paid_at, NOW()), updated_at = NOW() WHERE booking_id = ?`,
+      [bookingId]
+    ).catch(() => {});
+  }
+
   return result.affectedRows > 0;
 };
 
@@ -412,6 +419,13 @@ Booking.confirmByAdmin = async (
        AND payment_status = 'proof_uploaded'`,
     [reviewerId, hostNote || null, checkinInstructions || null, bookingId],
   );
+
+  if (result.affectedRows > 0) {
+    await db.promise().query(
+      `UPDATE payments SET status = 'completed', paid_at = COALESCE(paid_at, NOW()), updated_at = NOW() WHERE booking_id = ?`,
+      [bookingId]
+    ).catch(() => {});
+  }
 
   return result.affectedRows > 0;
 };

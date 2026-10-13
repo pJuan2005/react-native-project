@@ -35,6 +35,8 @@ export default function DisputesListScreen() {
   const [disputes, setDisputes] = useState<DisputeItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const activeUserId = user?.id;
+
   const authHeaders = useMemo(() => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -42,10 +44,11 @@ export default function DisputesListScreen() {
   }, [token]);
 
   const loadDisputes = async () => {
+    if (!activeUserId) return;
     setLoading(true);
     try {
       const res = await fetchWithTimeout(
-        `${API_BASE_URL}/api/disputes?reporterId=${user?.id || 4}`,
+        `${API_BASE_URL}/api/disputes?reporterId=${activeUserId}`,
         { headers: authHeaders },
         4000
       );
@@ -63,8 +66,10 @@ export default function DisputesListScreen() {
   };
 
   useEffect(() => {
-    loadDisputes();
-  }, []);
+    if (activeUserId) {
+      loadDisputes();
+    }
+  }, [activeUserId]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
