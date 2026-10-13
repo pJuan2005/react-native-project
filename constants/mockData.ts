@@ -523,7 +523,17 @@ export const initialPointTransactions: PointTransaction[] = [
 export const formatPrice = (price: number) => `${new Intl.NumberFormat('vi-VN').format(price)} ₫`;
 
 export const formatDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
+  const parts = datePart.split('-');
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    if (year.length === 4 && month.length <= 2 && day.length <= 2) {
+      return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+    }
+  }
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
   return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 

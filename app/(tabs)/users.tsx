@@ -3,6 +3,7 @@ import {
   mockUser,
   redeemableVouchers,
   Voucher,
+  formatDate,
 } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -495,13 +496,13 @@ export default function ProfileScreen() {
                 <Pressable
                   key={booking.id + (booking.checkIn || '')}
                   style={styles.bookingItem}
-                  onPress={() => Alert.alert(booking.name, `${booking.location} • ${booking.checkIn} - ${booking.checkOut}`)}
+                  onPress={() => Alert.alert(booking.name, `${booking.location} • ${formatDate(booking.checkIn || '')} - ${formatDate(booking.checkOut || '')}`)}
                 >
                   <ProductImage uri={booking.homestayImage || booking.images[0]} style={styles.bookingImage} containerStyle={styles.bookingImage} />
                   <View style={styles.bookingInfo}>
                     <Text style={[styles.bookingName, isDark && { color: '#F8FAFC' }]}>{booking.name}</Text>
                     <Text style={styles.bookingLocation}>📍 by {booking.location} • {booking.type}</Text>
-                    <Text style={styles.bookingDates}>📅 {booking.checkIn} - {booking.checkOut} ({booking.nights} đêm)</Text>
+                    <Text style={styles.bookingDates}>📅 {formatDate(booking.checkIn || '')} - {formatDate(booking.checkOut || '')} ({booking.nights} đêm)</Text>
                     <Text style={styles.bookingPrice}>
                       {booking.totalPrice
                         ? `Tổng: ${new Intl.NumberFormat('vi-VN').format(booking.totalPrice)} ₫`

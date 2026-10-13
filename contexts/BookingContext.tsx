@@ -73,6 +73,25 @@ type BookingContextValue = {
 
 const BookingContext = createContext<BookingContextValue | undefined>(undefined);
 
+function parseSafeDateStr(rawDate: any): string {
+  if (!rawDate) return '';
+  const str = String(rawDate);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return str;
+  }
+  if (str.includes('T')) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+    return str.split('T')[0];
+  }
+  return str.split(' ')[0];
+}
+
 export function BookingProvider({ children }: { children: ReactNode }) {
   const { user: authUser, token: authToken, updateUser: updateAuthUser } = useAuth();
   const [userProfile, setUserProfile] = useState<CustomerProfile>(authUser || mockUser);
@@ -133,8 +152,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             images: b.property_image || b.homestay_image ? [b.property_image || b.homestay_image] : ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80'],
             description: '',
             quantity: 1,
-            checkIn: b.check_in ? b.check_in.split('T')[0] : '',
-            checkOut: b.check_out ? b.check_out.split('T')[0] : '',
+            checkIn: parseSafeDateStr(b.check_in),
+            checkOut: parseSafeDateStr(b.check_out),
             guests: b.guests,
             nights: b.nights,
             totalPrice: parseFloat(b.total_price || 0),

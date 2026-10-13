@@ -1,5 +1,5 @@
 import { ProductImage } from '@/components/product-image';
-import { formatPrice, Homestay, mockHomestays, Voucher } from '@/constants/mockData';
+import { formatPrice, formatDate, Homestay, mockHomestays, Voucher } from '@/constants/mockData';
 import { useBooking } from '@/contexts/BookingContext';
 import { useAppTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -545,7 +545,7 @@ export default function HomestayDetail() {
             <Ionicons name="calendar" size={18} color={colors.primary} />
             <View>
               <Text style={[s.dateLabel, { color: colors.primary }]}>Nhận phòng</Text>
-              <Text style={[s.dateValue, { color: colors.text }]}>{checkIn || 'Chọn ngày'}</Text>
+              <Text style={[s.dateValue, { color: colors.text }]}>{checkIn ? formatDate(checkIn) : 'Chọn ngày'}</Text>
             </View>
           </Pressable>
 
@@ -559,7 +559,7 @@ export default function HomestayDetail() {
             <Ionicons name="calendar-outline" size={18} color={colors.primary} />
             <View>
               <Text style={[s.dateLabel, { color: colors.primary }]}>Trả phòng</Text>
-              <Text style={[s.dateValue, { color: colors.text }]}>{checkOut || 'Chọn ngày'}</Text>
+              <Text style={[s.dateValue, { color: colors.text }]}>{checkOut ? formatDate(checkOut) : 'Chọn ngày'}</Text>
             </View>
           </Pressable>
         </View>
@@ -968,7 +968,7 @@ export default function HomestayDetail() {
               <ReceiptLine label="Địa điểm" value={`${bookingSuccessData?.location} • ${bookingSuccessData?.type}`} isDark={isDark} />
               <ReceiptLine
                 label="Thời gian lưu trú"
-                value={`${bookingSuccessData?.checkIn} ➔ ${bookingSuccessData?.checkOut} (${bookingSuccessData?.nights} đêm)`}
+                value={`${formatDate(bookingSuccessData?.checkIn || '')} ➔ ${formatDate(bookingSuccessData?.checkOut || '')} (${bookingSuccessData?.nights} đêm)`}
                 isDark={isDark}
               />
               <ReceiptLine label="Số lượng khách" value={`${bookingSuccessData?.guests} người`} isDark={isDark} />
