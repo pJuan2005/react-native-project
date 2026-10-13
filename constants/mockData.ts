@@ -354,7 +354,7 @@ export const mockHomestays: Homestay[] = [
 ];
 
 export const mockUser: CustomerProfile = {
-  id: '1',
+  id: '4',
   name: 'Phạm Xuân Chuẩn',
   email: 'phamchuan2608@gmail.com',
   phone: '0901234567',

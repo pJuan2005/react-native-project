@@ -101,12 +101,13 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [rewardPoints, setRewardPoints] = useState<number>(82);
   const [pointHistory, setPointHistory] = useState<PointTransaction[]>(initialPointTransactions);
 
-  // Sync with authUser when user logs in or registers
+  // Sync with authUser when user logs in or registers, and load on initial mount
   useEffect(() => {
+    const uid = authUser?.id || userProfile?.id || '4';
     if (authUser) {
       setUserProfile(authUser);
-      fetchUserData(authUser.id);
     }
+    fetchUserData(uid);
   }, [authUser]);
 
   // Load user bookings and favorites from MySQL Backend API
@@ -235,7 +236,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     updateAuthUser(profileData);
 
     // 2. Sync with backend API
-    const targetUserId = authUser?.id || userProfile.id || '1';
+    const targetUserId = authUser?.id || userProfile.id || '4';
     try {
       const res = await fetchWithTimeout(
         `${API_BASE_URL}/api/users/${targetUserId}`,
@@ -296,8 +297,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       voucherCode?: string;
       discountAmount?: number;
     }
-  ): Promise<{ success: boolean; bookingId?: string; bookingCode?: string }> => {
-    const currentUserId = userProfile.id || '1';
+  ): Promise<{ success: boolean; bookingId?: string; bookingCode?: string; message?: string }> => {
+    const currentUserId = userProfile.id || authUser?.id || '4';
 
     if (bookingDetails) {
       let createdBookingId: string | undefined;
@@ -395,7 +396,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleSavedHomestay = (homestay: Homestay): boolean => {
-    const currentUserId = userProfile.id || '1';
+    const currentUserId = userProfile.id || authUser?.id || '4';
     let nowSaved = false;
 
     setSavedHomestays((items) => {
@@ -428,7 +429,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   };
 
   const removeFromBooking = async (id: string, bookingDbId?: string, bookingCode?: string) => {
-    const currentUserId = userProfile.id || '1';
+    const currentUserId = userProfile.id || authUser?.id || '4';
 
     // 1. Remove from local state immediately with precise target identification
     setBookings((items) =>
@@ -488,7 +489,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     proofImageUrl: string,
     transactionCode?: string
   ): Promise<{ success: boolean; message: string }> => {
-    const currentUserId = userProfile.id || '1';
+    const currentUserId = userProfile.id || authUser?.id || '4';
 
     // 1. Update local booking state immediately
     setBookings((items) =>
@@ -541,7 +542,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   };
 
   const removeSaved = (id: string) => {
-    const currentUserId = userProfile.id || '1';
+    const currentUserId = userProfile.id || authUser?.id || '4';
     setSavedHomestays((items) => items.filter((item) => item.id !== id));
     fetchWithTimeout(`${API_BASE_URL}/api/favorites/${id}?userId=${currentUserId}`, { method: 'DELETE' }, 3000).catch(
       (err) => console.warn('API delete favorite failed:', err)
@@ -568,7 +569,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   };
 
   const redeemPointsForVoucher = (voucher: Voucher): boolean => {
-    const currentUserId = userProfile.id || '1';
+    const currentUserId = userProfile.id || authUser?.id || '4';
     const cost = voucher.requiredPoints || 0;
     if (rewardPoints < cost) {
       return false;

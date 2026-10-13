@@ -95,6 +95,7 @@ class CancellationService {
         b.total_price,
         b.status,
         b.payment_status,
+        b.payment_proof_image,
         b.created_at,
         p.name AS property_name,
         p.host_id
@@ -241,6 +242,7 @@ class CancellationService {
           b.total_price,
           b.status,
           b.payment_status,
+          b.payment_proof_image,
           p.name AS property_name,
           p.host_id
          FROM bookings b

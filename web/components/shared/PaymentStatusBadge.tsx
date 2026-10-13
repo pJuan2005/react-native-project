@@ -18,9 +18,21 @@ const paymentStatusMap: Record<
     className: "hs-badge hs-badge-approved",
     label: "Đã xác minh",
   },
+  completed: {
+    className: "hs-badge hs-badge-approved",
+    label: "Đã thanh toán CK",
+  },
+  partially_refunded: {
+    className: "hs-badge hs-badge-approved",
+    label: "Đã hoàn cọc (70%)",
+  },
+  refunded: {
+    className: "hs-badge hs-badge-approved",
+    label: "Đã hoàn tiền (100%)",
+  },
   rejected: {
     className: "hs-badge hs-badge-rejected",
-    label: "Từ chối",
+    label: "Chưa thanh toán (Hủy)",
   },
 };
 

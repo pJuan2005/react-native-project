@@ -816,28 +816,55 @@ export default function BookingsScreen() {
 
                   {/* Status Badges in Modal */}
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 4 }}>
-                    {selectedBookingDetail?.paymentStatus === 'completed' ? (
-                      <View style={s.paidBadge}>
-                        <Ionicons name="checkmark-circle" size={11} color="#15803D" />
-                        <Text style={s.paidBadgeText}>Đã thanh toán CK</Text>
-                      </View>
+                    {selectedBookingDetail?.status === 'cancelled' ? (
+                      <>
+                        <View style={s.cancelledBadge}>
+                          <Ionicons name="close-circle" size={11} color="#DC2626" />
+                          <Text style={s.cancelledBadgeText}>Đã hủy phòng</Text>
+                        </View>
+                        {selectedBookingDetail?.refundAmount && selectedBookingDetail.refundAmount > 0 ? (
+                          <View style={s.paidBadge}>
+                            <Ionicons name="wallet-outline" size={11} color="#15803D" />
+                            <Text style={s.paidBadgeText}>Đã hoàn ví: +{formatPrice(selectedBookingDetail.refundAmount)}</Text>
+                          </View>
+                        ) : selectedBookingDetail?.cancellationPolicyApplied === 'CANCEL_UNPAID_FREE' || selectedBookingDetail?.paymentStatus === 'unpaid' ? (
+                          <View style={s.unpaidBadge}>
+                            <Ionicons name="shield-checkmark-outline" size={11} color="#059669" />
+                            <Text style={[s.unpaidBadgeText, { color: '#059669' }]}>Hủy miễn phí 100%</Text>
+                          </View>
+                        ) : (
+                          <View style={s.unpaidBadge}>
+                            <Ionicons name="lock-closed-outline" size={11} color="#DC2626" />
+                            <Text style={[s.unpaidBadgeText, { color: '#DC2626' }]}>Không hoàn cọc (&lt; 72h)</Text>
+                          </View>
+                        )}
+                      </>
                     ) : (
-                      <View style={s.unpaidBadge}>
-                        <Ionicons name="card-outline" size={11} color="#D97706" />
-                        <Text style={s.unpaidBadgeText}>Chưa thanh toán</Text>
-                      </View>
-                    )}
+                      <>
+                        {selectedBookingDetail?.paymentStatus === 'completed' || selectedBookingDetail?.paymentStatus === 'verified' ? (
+                          <View style={s.paidBadge}>
+                            <Ionicons name="checkmark-circle" size={11} color="#15803D" />
+                            <Text style={s.paidBadgeText}>Đã thanh toán CK</Text>
+                          </View>
+                        ) : (
+                          <View style={s.unpaidBadge}>
+                            <Ionicons name="card-outline" size={11} color="#D97706" />
+                            <Text style={s.unpaidBadgeText}>Chưa thanh toán</Text>
+                          </View>
+                        )}
 
-                    {selectedBookingDetail?.status === 'confirmed' ? (
-                      <View style={s.confirmedBadge}>
-                        <Ionicons name="shield-checkmark" size={11} color="#0284C7" />
-                        <Text style={s.confirmedBadgeText}>Đặt phòng thành công</Text>
-                      </View>
-                    ) : (
-                      <View style={s.pendingBadge}>
-                        <Ionicons name="time-outline" size={11} color="#D97706" />
-                        <Text style={s.pendingBadgeText}>Chờ Web Admin duyệt</Text>
-                      </View>
+                        {selectedBookingDetail?.status === 'confirmed' ? (
+                          <View style={s.confirmedBadge}>
+                            <Ionicons name="shield-checkmark" size={11} color="#0284C7" />
+                            <Text style={s.confirmedBadgeText}>Đặt phòng thành công</Text>
+                          </View>
+                        ) : (
+                          <View style={s.pendingBadge}>
+                            <Ionicons name="time-outline" size={11} color="#D97706" />
+                            <Text style={s.pendingBadgeText}>Chờ Web Admin duyệt</Text>
+                          </View>
+                        )}
+                      </>
                     )}
                   </View>
                 </View>
@@ -870,18 +897,28 @@ export default function BookingsScreen() {
                 </View>
               </View>
 
-              {/* Notice regarding approval */}
-              <View style={[s.approvalNoticeBox, { backgroundColor: isDark ? '#1C2541' : '#FEF3C7', borderColor: '#F59E0B' }]}>
-                <Ionicons name="information-circle" size={16} color="#D97706" />
-                <Text style={[s.approvalNoticeText, { color: isDark ? '#FDE68A' : '#92400E' }]}>
-                  Chỉ cần chuyển khoản & upload biên lai là thanh toán thành công. Sau đó Web Admin sẽ chấp nhận duyệt phòng để chuyển trạng thái sang "Đặt phòng thành công".
-                </Text>
-              </View>
+              {/* Notice regarding approval / cancellation */}
+              {selectedBookingDetail?.status === 'cancelled' ? (
+                <View style={[s.approvalNoticeBox, { backgroundColor: isDark ? '#450A0A' : '#FEF2F2', borderColor: '#FCA5A5' }]}>
+                  <Ionicons name="alert-circle" size={16} color="#DC2626" />
+                  <Text style={[s.approvalNoticeText, { color: isDark ? '#FCA5A5' : '#991B1B' }]}>
+                    Đơn phòng này đã hủy vào lúc {selectedBookingDetail.cancelledAt ? new Date(selectedBookingDetail.cancelledAt).toLocaleString('vi-VN') : 'vừa qua'}.
+                    {'\n'}Lý do hủy: {selectedBookingDetail.cancelledReason || 'Khách yêu cầu hủy phòng.'}
+                  </Text>
+                </View>
+              ) : (
+                <View style={[s.approvalNoticeBox, { backgroundColor: isDark ? '#1C2541' : '#FEF3C7', borderColor: '#F59E0B' }]}>
+                  <Ionicons name="information-circle" size={16} color="#D97706" />
+                  <Text style={[s.approvalNoticeText, { color: isDark ? '#FDE68A' : '#92400E' }]}>
+                    Chỉ cần chuyển khoản & upload biên lai là thanh toán thành công. Sau đó Web Admin sẽ chấp nhận duyệt phòng để chuyển trạng thái sang "Đặt phòng thành công".
+                  </Text>
+                </View>
+              )}
             </ScrollView>
 
             {/* Modal Actions */}
             <View style={s.detailModalActions}>
-              {selectedBookingDetail?.paymentStatus !== 'completed' && (
+              {selectedBookingDetail?.status !== 'cancelled' && selectedBookingDetail?.paymentStatus !== 'completed' && selectedBookingDetail?.paymentStatus !== 'verified' && (
                 <Pressable
                   style={[s.payInDetailBtn, { backgroundColor: colors.primary }]}
                   onPress={() => {
@@ -897,20 +934,22 @@ export default function BookingsScreen() {
                 </Pressable>
               )}
 
-              {/* Chat với chủ nhà */}
-              <Pressable
-                style={[s.chatInDetailBtn, { backgroundColor: '#E0F2FE', borderColor: '#BAE6FD' }]}
-                onPress={() => {
-                  const bId = selectedBookingDetail?.bookingId || selectedBookingDetail?.id;
-                  setSelectedBookingDetail(null);
-                  if (bId) {
-                    router.push({ pathname: '/chat/[id]' as any, params: { id: bId } });
-                  }
-                }}
-              >
-                <Ionicons name="chatbubbles-outline" size={15} color="#0284C7" />
-                <Text style={s.chatInDetailText}>Nhắn tin với chủ nhà</Text>
-              </Pressable>
+              {/* Chat với chủ nhà (chỉ khi đơn chưa hủy) */}
+              {selectedBookingDetail?.status !== 'cancelled' && (
+                <Pressable
+                  style={[s.chatInDetailBtn, { backgroundColor: '#E0F2FE', borderColor: '#BAE6FD' }]}
+                  onPress={() => {
+                    const bId = selectedBookingDetail?.bookingId || selectedBookingDetail?.id;
+                    setSelectedBookingDetail(null);
+                    if (bId) {
+                      router.push({ pathname: '/chat/[id]' as any, params: { id: bId } });
+                    }
+                  }}
+                >
+                  <Ionicons name="chatbubbles-outline" size={15} color="#0284C7" />
+                  <Text style={s.chatInDetailText}>Nhắn tin với chủ nhà</Text>
+                </Pressable>
+              )}
 
               {/* Trợ giúp & Khiếu nại */}
               <Pressable
@@ -938,22 +977,26 @@ export default function BookingsScreen() {
                 }}
               >
                 <Ionicons name="eye-outline" size={15} color={colors.primary} />
-                <Text style={[s.viewHomestayText, { color: colors.primary }]}>Xem chi tiết chỗ nghỉ</Text>
+                <Text style={[s.viewHomestayText, { color: colors.primary }]}>
+                  {selectedBookingDetail?.status === 'cancelled' ? 'Đặt lại phòng này' : 'Xem chi tiết chỗ nghỉ'}
+                </Text>
               </Pressable>
 
-              <Pressable
-                style={s.cancelBookingBtn}
-                onPress={() => {
-                  if (selectedBookingDetail) {
-                    const item = selectedBookingDetail;
-                    setSelectedBookingDetail(null);
-                    handlePromptCancel(item);
-                  }
-                }}
-              >
-                <Ionicons name="trash-outline" size={15} color="#FFFFFF" />
-                <Text style={s.cancelBookingText}>Hủy đặt phòng</Text>
-              </Pressable>
+              {selectedBookingDetail?.status !== 'cancelled' && (
+                <Pressable
+                  style={s.cancelBookingBtn}
+                  onPress={() => {
+                    if (selectedBookingDetail) {
+                      const item = selectedBookingDetail;
+                      setSelectedBookingDetail(null);
+                      handlePromptCancel(item);
+                    }
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={15} color="#FFFFFF" />
+                  <Text style={s.cancelBookingText}>Hủy đặt phòng</Text>
+                </Pressable>
+              )}
             </View>
           </View>
         </View>

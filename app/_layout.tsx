@@ -2,8 +2,34 @@ import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } fro
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Platform } from 'react-native';
 import 'react-native-reanimated';
+
+// Bỏ qua các lỗi crash không mong muốn từ Chrome Extension trình duyệt bên thứ 3 (ví dụ 200.js / M_ID)
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (event: any) => {
+    const reason = event.reason;
+    const str = String((reason && (reason.stack || reason.message)) || reason || '');
+    if (str.includes('chrome-extension://') || str.includes('M_ID')) {
+      event.preventDefault();
+      event.stopImmediatePropagation?.();
+    }
+  }, true);
+
+  window.addEventListener('error', (event: any) => {
+    const filename = event.filename || '';
+    const message = String(event.message || '');
+    const stack = event.error ? String(event.error.stack || '') : '';
+    if (
+      filename.includes('chrome-extension://') ||
+      message.includes('M_ID') ||
+      stack.includes('chrome-extension://')
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation?.();
+    }
+  }, true);
+}
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { BookingProvider } from '@/contexts/BookingContext';

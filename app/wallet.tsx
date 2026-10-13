@@ -71,7 +71,7 @@ export default function WalletScreen() {
   // Modal Chi tiết giao dịch ví / Đơn hủy
   const [selectedTx, setSelectedTx] = useState<WalletTx | null>(null);
 
-  const activeUserId = user?.id || 1;
+  const activeUserId = user?.id || 4;
 
   const authHeaders = useMemo(() => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
