@@ -82,8 +82,3 @@ Thumbs.db
 # Claude AI
 .claude/
 
-# Local Documentation & Test Notes
-API_DOCUMENTATION.md
-api_document*
-*.api.md
-
