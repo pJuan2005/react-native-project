@@ -325,19 +325,19 @@ export default function PropertyApprovalsPage() {
                   <tr key={property.id}>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <Image
-                          src={property.image}
+                        <img
+                          src={property.image || "/img/home1.png"}
                           alt={property.title}
-                          width={48}
-                          height={48}
-                          sizes="48px"
-                          unoptimized={isBackendUploadImage(property.image)}
+                          onError={(e) => {
+                            e.currentTarget.src = "/img/home1.png";
+                          }}
                           style={{
                             width: 48,
                             height: 48,
                             borderRadius: 8,
                             objectFit: "cover",
                             flexShrink: 0,
+                            background: "#f1f5f9",
                           }}
                         />
                         <div>

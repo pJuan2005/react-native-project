@@ -497,18 +497,18 @@ export default function HostDashboardPage() {
                         cursor: "pointer",
                       }}
                     >
-                      <Image
-                        src={property.image}
+                      <img
+                        src={property.image || "/img/home1.png"}
                         alt={property.title}
-                        width={46}
-                        height={46}
-                        sizes="46px"
-                        unoptimized={isBackendUploadImage(property.image)}
+                        onError={(e) => {
+                          e.currentTarget.src = "/img/home1.png";
+                        }}
                         style={{
                           width: 46,
                           height: 46,
                           borderRadius: 8,
                           objectFit: "cover",
+                          background: "#f1f5f9",
                         }}
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>

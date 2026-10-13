@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -27,6 +26,30 @@ const ITEMS_PER_PAGE = 6;
 
 function formatCurrency(value: number) {
   return `${Number(value || 0).toLocaleString("vi-VN")} ₫`;
+}
+
+function HostPropertyImage({ src, alt }: { src: string; alt: string }) {
+  const fallback = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80";
+  const [imgSrc, setImgSrc] = useState(src || fallback);
+
+  useEffect(() => {
+    setImgSrc(src || fallback);
+  }, [src]);
+
+  return (
+    <div style={{ width: "100%", height: 190, overflow: "hidden", position: "relative", background: "#f1f5f9" }}>
+      <img
+        src={imgSrc}
+        alt={alt}
+        onError={() => {
+          if (imgSrc !== fallback) {
+            setImgSrc(fallback);
+          }
+        }}
+        style={{ width: "100%", height: 190, objectFit: "cover", display: "block" }}
+      />
+    </div>
+  );
 }
 
 export default function MyPropertiesPage() {
@@ -260,17 +283,7 @@ export default function MyPropertiesPage() {
                   <StatusBadge status={property.status} />
                 </div>
 
-                <div style={{ overflow: "hidden" }}>
-                  <Image
-                    src={property.image}
-                    alt={property.title}
-                    width={720}
-                    height={456}
-                    sizes="(max-width: 992px) 100vw, (max-width: 1400px) 50vw, 33vw"
-                    unoptimized={isBackendUploadImage(property.image)}
-                    style={{ width: "100%", height: 190, objectFit: "cover" }}
-                  />
-                </div>
+                <HostPropertyImage src={property.image} alt={property.title} />
 
                 <div style={{ padding: "16px 18px" }}>
                   <div
