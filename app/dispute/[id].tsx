@@ -8,6 +8,8 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Modal,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -36,6 +38,7 @@ export default function CreateDisputeScreen() {
   const [reasonTitle, setReasonTitle] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [createdDisputeId, setCreatedDisputeId] = useState<number | null>(null);
 
   const authHeaders = useMemo(() => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -48,7 +51,9 @@ export default function CreateDisputeScreen() {
     const finalDesc = description.trim();
 
     if (!finalDesc || finalDesc.length < 15) {
-      Alert.alert('Mô tả quá ngắn', 'Vui lòng mô tả chi tiết sự việc (tối thiểu 15 ký tự) để Ban Quản Trị có đủ cơ sở xác minh.');
+      const msg = 'Vui lòng mô tả chi tiết sự việc (tối thiểu 15 ký tự) để Ban Quản Trị có đủ cơ sở xác minh.';
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Mô tả quá ngắn', msg);
       return;
     }
 
@@ -76,27 +81,19 @@ export default function CreateDisputeScreen() {
       const json = await res.json();
       setSubmitting(false);
 
-      if (json.success || json.id) {
-        Alert.alert(
-          'Gửi khiếu nại thành công! 🛡️',
-          'Yêu cầu hỗ trợ của bạn đã được chuyển tới Ban Quản Trị Sàn Homestay Booking. Chúng tôi sẽ liên hệ đối soát và phản hồi sớm nhất.',
-          [
-            {
-              text: 'Xem khiếu nại của tôi',
-              onPress: () => router.replace('/disputes' as any),
-            },
-            {
-              text: 'Về đơn phòng',
-              onPress: () => router.back(),
-            },
-          ]
-        );
+      if (json.success || json.id || json.data?.id) {
+        const disputeId = json.data?.id || json.id || parseInt(id || '1', 10);
+        setCreatedDisputeId(disputeId);
       } else {
-        Alert.alert('Lỗi', json.message || 'Không thể gửi khiếu nại lúc này.');
+        const msg = json.message || 'Không thể gửi khiếu nại lúc này.';
+        if (Platform.OS === 'web') window.alert(msg);
+        else Alert.alert('Lỗi', msg);
       }
-    } catch (err) {
+    } catch (err: any) {
       setSubmitting(false);
-      Alert.alert('Lỗi kết nối', 'Không thể gửi khiếu nại. Vui lòng kiểm tra lại kết nối mạng.');
+      const msg = 'Không thể gửi khiếu nại. Vui lòng kiểm tra lại kết nối mạng.';
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Lỗi kết nối', msg);
     }
   };
 
@@ -196,6 +193,63 @@ export default function CreateDisputeScreen() {
           )}
         </Pressable>
       </ScrollView>
+
+      {/* MODAL: THÔNG BÁO GỬI KHIẾU NẠI THÀNH CÔNG */}
+      <Modal
+        visible={!!createdDisputeId}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setCreatedDisputeId(null);
+          router.replace('/disputes' as any);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalBox, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+            <View style={styles.successIconCircle}>
+              <Ionicons name="shield-checkmark" size={48} color="#16A34A" />
+            </View>
+
+            <Text style={[styles.successTitle, { color: colors.text }]}>
+              Gửi khiếu nại thành công! 🛡️
+            </Text>
+
+            <View style={[styles.codeBadge, { backgroundColor: isDark ? '#082F49' : '#EFF6FF', borderColor: colors.primary }]}>
+              <Text style={[styles.codeText, { color: colors.primary }]}>
+                Mã tiếp nhận: #{createdDisputeId} • Đơn phòng #{id}
+              </Text>
+            </View>
+
+            <Text style={[styles.successDesc, { color: isDark ? '#94A3B8' : '#64748B' }]}>
+              Yêu cầu hỗ trợ của bạn đã được chuyển tới Ban Quản Trị Sàn Homestay Booking. Chúng tôi sẽ điều tra đối soát với chủ nhà và giải quyết sớm nhất để đảm bảo quyền lợi cho bạn.
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  setCreatedDisputeId(null);
+                  router.replace('/disputes' as any);
+                }}
+              >
+                <Ionicons name="list" size={16} color="#FFFFFF" />
+                <Text style={styles.primaryActionBtnText}>Xem danh sách khiếu nại</Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.secondaryActionBtn, { borderColor: colors.cardBorder, backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}
+                onPress={() => {
+                  setCreatedDisputeId(null);
+                  router.replace('/bookings' as any);
+                }}
+              >
+                <Ionicons name="arrow-back" size={16} color={colors.text} />
+                <Text style={[styles.secondaryActionBtnText, { color: colors.text }]}>Về danh sách đặt phòng</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -270,4 +324,85 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   submitBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalBox: {
+    width: '100%',
+    maxWidth: 380,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  successIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  successTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  codeBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  codeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  successDesc: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    width: '100%',
+    gap: 10,
+  },
+  primaryActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  primaryActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  secondaryActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  secondaryActionBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
 });
