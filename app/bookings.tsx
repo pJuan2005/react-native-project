@@ -476,6 +476,7 @@ export default function BookingsScreen() {
               showsVerticalScrollIndicator={false}
               renderItem={({ item: booking }) => {
                 const isPaid = booking.paymentStatus === 'completed' || booking.paymentStatus === 'verified';
+                const isProofUploaded = booking.paymentStatus === 'proof_uploaded' || Boolean(booking.proofImageUrl);
                 const isConfirmed = booking.status === 'confirmed';
                 const isCompleted = booking.status === 'completed';
                 const isCancelled = booking.status === 'cancelled';
@@ -533,6 +534,11 @@ export default function BookingsScreen() {
                                 <View style={s.paidBadge}>
                                   <Ionicons name="checkmark-circle" size={11} color="#15803D" />
                                   <Text style={s.paidBadgeText}>Đã thanh toán CK</Text>
+                                </View>
+                              ) : isProofUploaded ? (
+                                <View style={[s.paidBadge, { backgroundColor: isDark ? '#082F49' : '#E0F2FE', borderColor: '#7DD3FC' }]}>
+                                  <Ionicons name="document-text" size={11} color="#0284C7" />
+                                  <Text style={[s.paidBadgeText, { color: '#0284C7' }]}>Đã gửi biên lai</Text>
                                 </View>
                               ) : (
                                 <>
@@ -608,7 +614,7 @@ export default function BookingsScreen() {
                               </Pressable>
                             ) : (
                               <>
-                                {!isPaid && (
+                                {!isPaid && !isProofUploaded && (
                                   <Pressable
                                     style={[s.payNowBtn, { backgroundColor: colors.primary }]}
                                     onPress={() => {
@@ -856,6 +862,11 @@ export default function BookingsScreen() {
                             <Ionicons name="checkmark-circle" size={11} color="#15803D" />
                             <Text style={s.paidBadgeText}>Đã thanh toán CK</Text>
                           </View>
+                        ) : selectedBookingDetail?.paymentStatus === 'proof_uploaded' || Boolean(selectedBookingDetail?.proofImageUrl) ? (
+                          <View style={[s.paidBadge, { backgroundColor: isDark ? '#082F49' : '#E0F2FE', borderColor: '#7DD3FC' }]}>
+                            <Ionicons name="document-text" size={11} color="#0284C7" />
+                            <Text style={[s.paidBadgeText, { color: '#0284C7' }]}>Đã gửi biên lai CK</Text>
+                          </View>
                         ) : (
                           <View style={s.unpaidBadge}>
                             <Ionicons name="card-outline" size={11} color="#D97706" />
@@ -916,6 +927,20 @@ export default function BookingsScreen() {
                     {'\n'}Lý do hủy: {selectedBookingDetail.cancelledReason || 'Khách yêu cầu hủy phòng.'}
                   </Text>
                 </View>
+              ) : selectedBookingDetail?.paymentStatus === 'completed' || selectedBookingDetail?.paymentStatus === 'verified' ? (
+                <View style={[s.approvalNoticeBox, { backgroundColor: isDark ? '#052E16' : '#DCFCE7', borderColor: '#86EFAC' }]}>
+                  <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
+                  <Text style={[s.approvalNoticeText, { color: isDark ? '#86EFAC' : '#15803D' }]}>
+                    Đơn phòng đã được Web Admin xác minh thanh toán thành công! Chúc bạn có kỳ nghỉ tuyệt vời.
+                  </Text>
+                </View>
+              ) : selectedBookingDetail?.paymentStatus === 'proof_uploaded' || Boolean(selectedBookingDetail?.proofImageUrl) ? (
+                <View style={[s.approvalNoticeBox, { backgroundColor: isDark ? '#082F49' : '#E0F2FE', borderColor: '#7DD3FC' }]}>
+                  <Ionicons name="shield-checkmark" size={16} color="#0284C7" />
+                  <Text style={[s.approvalNoticeText, { color: isDark ? '#BAE6FD' : '#0369A1' }]}>
+                    Biên lai chuyển khoản đã được gửi thành công! Đơn phòng đang chờ Web Admin kiểm tra và duyệt phòng.
+                  </Text>
+                </View>
               ) : (
                 <View style={[s.approvalNoticeBox, { backgroundColor: isDark ? '#1C2541' : '#FEF3C7', borderColor: '#F59E0B' }]}>
                   <Ionicons name="information-circle" size={16} color="#D97706" />
@@ -928,7 +953,11 @@ export default function BookingsScreen() {
 
             {/* Modal Actions */}
             <View style={s.detailModalActions}>
-              {selectedBookingDetail?.status !== 'cancelled' && selectedBookingDetail?.paymentStatus !== 'completed' && selectedBookingDetail?.paymentStatus !== 'verified' && (
+              {selectedBookingDetail?.status !== 'cancelled' &&
+               selectedBookingDetail?.paymentStatus !== 'completed' &&
+               selectedBookingDetail?.paymentStatus !== 'verified' &&
+               selectedBookingDetail?.paymentStatus !== 'proof_uploaded' &&
+               !Boolean(selectedBookingDetail?.proofImageUrl) && (
                 <Pressable
                   style={[s.payInDetailBtn, { backgroundColor: colors.primary }]}
                   onPress={() => {
