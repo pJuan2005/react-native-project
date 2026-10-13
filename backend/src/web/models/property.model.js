@@ -306,10 +306,17 @@ async function getPropertyList(whereClause, params = [], options = {}) {
       params,
     );
 
+    if (whereClause.includes("p.host_id")) {
+      return rows.map((row) => mapPropertySummaryRow(row, options));
+    }
+
     return rows.length > 0
       ? rows.map((row) => mapPropertySummaryRow(row, options))
       : FALLBACK_PROPERTIES;
   } catch (_err) {
+    if (whereClause.includes("p.host_id")) {
+      return [];
+    }
     return FALLBACK_PROPERTIES;
   }
 }

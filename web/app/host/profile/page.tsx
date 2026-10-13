@@ -1,12 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays, Mail, MapPin, Phone, User } from "lucide-react";
+import { CalendarDays, Mail, MapPin, Phone, User, ShieldCheck, CheckCircle2, Clock, XCircle, FileText, Upload, Sparkles } from "lucide-react";
 import { useAuth, getUserInitials } from "@/components/context/AuthContext";
 import { AccountSettingsPanel } from "@/components/shared/AccountSettingsPanel";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { getHostBookings } from "@/services/bookingService";
 import { getHostProperties } from "@/services/propertyService";
+import {
+  getHostVerificationStatus,
+  submitHostVerification,
+  type HostVerificationItem,
+} from "@/services/hostVerificationService";
 
 export default function HostProfilePage() {
   const { user, isInitializing } = useAuth();
@@ -17,6 +22,16 @@ export default function HostProfilePage() {
   });
   const [statsError, setStatsError] = useState("");
 
+  // KYC Host Verification state
+  const [verification, setVerification] = useState<HostVerificationItem | null>(null);
+  const [loadingKyc, setLoadingKyc] = useState(true);
+  const [showKycForm, setShowKycForm] = useState(false);
+  const [idCardNumber, setIdCardNumber] = useState("");
+  const [idCardFrontUrl, setIdCardFrontUrl] = useState("");
+  const [idCardBackUrl, setIdCardBackUrl] = useState("");
+  const [businessLicenseUrl, setBusinessLicenseUrl] = useState("");
+  const [submittingKyc, setSubmittingKyc] = useState(false);
+
   useEffect(() => {
     if (isInitializing || !user || user.role !== "Host") {
       return;
@@ -24,9 +39,10 @@ export default function HostProfilePage() {
 
     async function loadStats() {
       try {
-        const [properties, bookings] = await Promise.all([
+        const [properties, bookings, kycData] = await Promise.all([
           getHostProperties(),
           getHostBookings(),
+          getHostVerificationStatus(user?.id),
         ]);
 
         setStats({
@@ -36,13 +52,68 @@ export default function HostProfilePage() {
             (booking) => booking.paymentStatus === "proof_uploaded",
           ).length,
         });
+
+        if (kycData) {
+          setVerification(kycData);
+          if (kycData.id_card_number) {
+            setIdCardNumber(kycData.id_card_number);
+          }
+          if (kycData.id_card_front_url) {
+            setIdCardFrontUrl(kycData.id_card_front_url);
+          }
+          if (kycData.id_card_back_url) {
+            setIdCardBackUrl(kycData.id_card_back_url);
+          }
+        }
       } catch (_error) {
         setStatsError("Không thể tải số liệu thống kê của chủ nhà lúc này.");
+      } finally {
+        setLoadingKyc(false);
       }
     }
 
     loadStats();
   }, [isInitializing, user]);
+
+  const handleUseMockKyc = () => {
+    setIdCardNumber("02409600" + Math.floor(1000 + Math.random() * 9000));
+    setIdCardFrontUrl("https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=500&q=80");
+    setIdCardBackUrl("https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=500&q=80");
+    setBusinessLicenseUrl("https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=500&q=80");
+  };
+
+  const handleSubmitKyc = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!idCardNumber.trim() || idCardNumber.trim().length < 9) {
+      alert("Vui lòng nhập số CCCD / Hộ chiếu hợp lệ (tối thiểu 9-12 chữ số).");
+      return;
+    }
+    if (!idCardFrontUrl.trim() || !idCardBackUrl.trim()) {
+      alert("Vui lòng cung cấp link hoặc ảnh CCCD 2 mặt (Mặt trước & Mặt sau).");
+      return;
+    }
+
+    setSubmittingKyc(true);
+    try {
+      const res = await submitHostVerification({
+        hostId: user?.id,
+        idCardNumber: idCardNumber.trim(),
+        idCardFrontUrl: idCardFrontUrl.trim(),
+        idCardBackUrl: idCardBackUrl.trim(),
+        businessLicenseUrl: businessLicenseUrl.trim() || undefined,
+      });
+
+      alert("🎉 Gửi hồ sơ xác minh thành công! Quản trị viên sẽ kiểm duyệt trong vòng 24 giờ.");
+      setShowKycForm(false);
+      // Reload verification status
+      const updated = await getHostVerificationStatus(user?.id);
+      if (updated) setVerification(updated);
+    } catch (err: any) {
+      alert(err.message || "Lỗi khi nộp hồ sơ xác minh.");
+    } finally {
+      setSubmittingKyc(false);
+    }
+  };
 
   if (isInitializing || !user || user.role !== "Host") {
     return (
@@ -207,6 +278,169 @@ export default function HostProfilePage() {
         </div>
 
         <div className="col-lg-8">
+          {/* Card Xác minh Danh tính KYC */}
+          <div className="hs-card" style={{ padding: "24px 26px", marginBottom: 24, border: "1px solid #e2e8f0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
+              <div>
+                <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#1e293b", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                  <ShieldCheck size={22} color="#2563eb" />
+                  Xác minh Danh tính Chủ nhà (KYC / CCCD)
+                </h3>
+                <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.84rem" }}>
+                  Bảo vệ uy tín tài khoản và tăng độ tin cậy với khách du lịch khi mở bán Homestay.
+                </p>
+              </div>
+
+              {/* Status Badge */}
+              {verification?.status === "approved" ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 20, fontSize: "0.82rem", fontWeight: 700, background: "#dcfce7", color: "#15803d", border: "1px solid #bbf7d0" }}>
+                  <CheckCircle2 size={15} /> Đã xác minh (Tích xanh)
+                </span>
+              ) : verification?.status === "pending" ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 20, fontSize: "0.82rem", fontWeight: 700, background: "#fef3c7", color: "#b45309", border: "1px solid #fde68a" }}>
+                  <Clock size={15} /> Chờ Admin duyệt CCCD
+                </span>
+              ) : verification?.status === "rejected" ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 20, fontSize: "0.82rem", fontWeight: 700, background: "#fee2e2", color: "#b91c1c", border: "1px solid #fecaca" }}>
+                  <XCircle size={15} /> Hồ sơ bị từ chối
+                </span>
+              ) : (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 20, fontSize: "0.82rem", fontWeight: 700, background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0" }}>
+                  Chưa nộp hồ sơ CCCD
+                </span>
+              )}
+            </div>
+
+            {verification?.status === "approved" ? (
+              <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "16px", borderRadius: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, color: "#15803d", fontWeight: 700, fontSize: "0.95rem" }}>
+                  <CheckCircle2 size={20} />
+                  Hồ sơ CCCD đã được phê duyệt hợp lệ!
+                </div>
+                <div style={{ marginTop: 8, fontSize: "0.86rem", color: "#166534" }}>
+                  Số CCCD / Hộ chiếu: <strong>{verification.id_card_number}</strong>
+                </div>
+                <div style={{ fontSize: "0.82rem", color: "#64748b", marginTop: 4 }}>
+                  Tài khoản của bạn đã được chứng thực chính chủ và có huy hiệu uy tín trên toàn bộ sàn Homestay.
+                </div>
+              </div>
+            ) : verification?.status === "pending" ? (
+              <div style={{ background: "#fffbeb", border: "1px solid #fde68a", padding: "16px", borderRadius: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#b45309", fontWeight: 700, fontSize: "0.92rem" }}>
+                  <Clock size={18} />
+                  Hồ sơ CCCD #{verification.id_card_number} đang chờ Ban Quản Trị kiểm duyệt
+                </div>
+                <p style={{ margin: "6px 0 0", fontSize: "0.83rem", color: "#78350f" }}>
+                  Ban Quản Trị sẽ đối soát ảnh 2 mặt CCCD và phản hồi trong vòng 24 giờ. Bạn vẫn có thể chuẩn bị đăng chỗ nghỉ trong thời gian này.
+                </p>
+              </div>
+            ) : (
+              <div>
+                {verification?.status === "rejected" && (
+                  <div style={{ background: "#fef2f2", border: "1px solid #fecaca", padding: "12px 14px", borderRadius: 10, marginBottom: 16, fontSize: "0.85rem", color: "#991b1b" }}>
+                    ❌ <strong>Lý do từ chối:</strong> {verification.rejection_reason || "Ảnh chụp không rõ ràng."} Vui lòng nộp lại thông tin chính xác bên dưới.
+                  </div>
+                )}
+
+                {!showKycForm && verification?.status !== "rejected" ? (
+                  <div style={{ background: "#f8fafc", padding: "18px 20px", borderRadius: 12, border: "1px dashed #cbd5e1", textAlign: "center" }}>
+                    <p style={{ color: "#475569", fontSize: "0.88rem", margin: "0 0 12px" }}>
+                      Bạn chưa nộp hồ sơ CCCD / Hộ chiếu để xác minh danh tính Chủ nhà.
+                    </p>
+                    <button
+                      onClick={() => setShowKycForm(true)}
+                      style={{ padding: "8px 18px", background: "#2563eb", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}
+                    >
+                      Bắt đầu xác minh ngay
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmitKyc} style={{ background: "#f8fafc", padding: "20px", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                      <span style={{ fontWeight: 700, fontSize: "0.9rem", color: "#1e293b" }}>
+                        Nhập thông tin giấy tờ tùy thân
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleUseMockKyc}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 6, fontSize: "0.78rem", color: "#2563eb", fontWeight: 700, cursor: "pointer" }}
+                        title="Điền nhanh ảnh CCCD mẫu 1 chạm"
+                      >
+                        <Sparkles size={13} /> Dùng ảnh mẫu CCCD test
+                      </button>
+                    </div>
+
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                        Số CCCD / CMND / Hộ chiếu (*):
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="VD: 024096001234"
+                        value={idCardNumber}
+                        onChange={(e) => setIdCardNumber(e.target.value)}
+                        style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: "0.88rem", outline: "none" }}
+                      />
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                          Link / Ảnh mặt trước CCCD (*):
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="https://..."
+                          value={idCardFrontUrl}
+                          onChange={(e) => setIdCardFrontUrl(e.target.value)}
+                          style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: "0.82rem", outline: "none" }}
+                        />
+                        {idCardFrontUrl && (
+                          <img src={idCardFrontUrl} alt="Mặt trước" style={{ width: "100%", height: 75, objectFit: "cover", borderRadius: 6, marginTop: 6, border: "1px solid #cbd5e1" }} />
+                        )}
+                      </div>
+
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, color: "#475569", marginBottom: 4 }}>
+                          Link / Ảnh mặt sau CCCD (*):
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="https://..."
+                          value={idCardBackUrl}
+                          onChange={(e) => setIdCardBackUrl(e.target.value)}
+                          style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: "0.82rem", outline: "none" }}
+                        />
+                        {idCardBackUrl && (
+                          <img src={idCardBackUrl} alt="Mặt sau" style={{ width: "100%", height: 75, objectFit: "cover", borderRadius: 6, marginTop: 6, border: "1px solid #cbd5e1" }} />
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 16 }}>
+                      {verification?.status !== "rejected" && (
+                        <button
+                          type="button"
+                          onClick={() => setShowKycForm(false)}
+                          style={{ padding: "8px 14px", background: "#fff", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: "0.84rem", color: "#64748b", cursor: "pointer" }}
+                        >
+                          Hủy
+                        </button>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={submittingKyc}
+                        style={{ padding: "8px 20px", background: "#2563eb", border: "none", borderRadius: 8, fontSize: "0.86rem", color: "#fff", fontWeight: 700, cursor: "pointer" }}
+                      >
+                        {submittingKyc ? "Đang gửi hồ sơ..." : "Gửi hồ sơ xác minh CCCD"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+          </div>
+
           <AccountSettingsPanel
             user={user}
             profileTitle="Thông tin cá nhân chủ nhà"
