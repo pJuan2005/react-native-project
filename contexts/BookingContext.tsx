@@ -55,7 +55,7 @@ type BookingContextValue = {
       voucherCode?: string;
       discountAmount?: number;
     }
-  ) => Promise<{ success: boolean; bookingId?: string; bookingCode?: string }>;
+  ) => Promise<{ success: boolean; bookingId?: string; bookingCode?: string; message?: string }>;
   toggleSavedHomestay: (homestay: Homestay) => boolean;
   removeFromBooking: (id: string, bookingDbId?: string, bookingCode?: string) => Promise<void>;
   previewCancellation: (bookingId: string) => Promise<any>;
@@ -302,6 +302,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     if (bookingDetails) {
       let createdBookingId: string | undefined;
       let createdBookingCode: string | undefined;
+      let apiErrorMessage: string | undefined;
 
       // 1. Call Backend API to save into MySQL Database
       try {
@@ -336,9 +337,15 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         if (json.success && json.data) {
           createdBookingId = String(json.data.id);
           createdBookingCode = json.data.bookingCode;
+        } else {
+          apiErrorMessage = json.message || 'Không thể tạo đơn đặt phòng trên hệ thống.';
         }
-      } catch (err) {
-        console.warn('API POST booking failed, saving to local state:', err);
+      } catch (err: any) {
+        apiErrorMessage = err.message || 'Lỗi kết nối máy chủ khi đặt phòng.';
+      }
+
+      if (apiErrorMessage && !createdBookingId) {
+        return { success: false, message: apiErrorMessage };
       }
 
       // Xóa voucher đã dùng khỏi ví người dùng ngay lập tức
@@ -367,10 +374,11 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             bookingId: createdBookingId,
             bookingCode: createdBookingCode,
             status: 'pending',
-            paymentStatus: 'pending',
+            paymentStatus: 'unpaid',
           },
         ];
       });
+
       const calculatedPoints = Math.max(10, Math.floor((bookingDetails.totalPrice || 0) / 10000));
       addRewardPoints(calculatedPoints, `Tích lũy ${calculatedPoints} điểm từ đặt phòng: ${homestay.name}`);
 
@@ -652,6 +660,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
               : b
           )
         );
+        if (userProfile.id) {
+          fetchUserData(userProfile.id);
+        }
       }
       return json;
     } catch (err: any) {

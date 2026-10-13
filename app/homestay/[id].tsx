@@ -174,7 +174,7 @@ export default function HomestayDetail() {
   );
   const finalTotalPrice = Math.max(0, rawTotalPrice - discountAmount);
 
-  const handleBook = () => {
+  const handleBook = async () => {
     if (!homestay) return;
     if (!checkIn || !checkOut) {
       Alert.alert('Thiếu thông tin', 'Vui lòng chọn ngày nhận và trả phòng');
@@ -201,9 +201,7 @@ export default function HomestayDetail() {
       return;
     }
 
-    const generatedCode = `BK${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(1000 + Math.random() * 9000)}`;
-
-    addToBooking(homestay, {
+    const result = await addToBooking(homestay, {
       checkIn,
       checkOut,
       guests,
@@ -213,8 +211,15 @@ export default function HomestayDetail() {
       discountAmount: discountAmount > 0 ? discountAmount : undefined,
     });
 
+    if (!result.success) {
+      Alert.alert('Không thể tạo đơn phòng', result.message || 'Lỗi khi tạo đơn đặt phòng trên hệ thống');
+      return;
+    }
+
     const usedVoucherCode = selectedVoucher?.code;
     setSelectedVoucher(null);
+
+    const generatedCode = result.bookingCode || `BK${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${Math.floor(1000 + Math.random() * 9000)}`;
 
     setBookingSuccessData({
       bookingCode: generatedCode,

@@ -321,11 +321,15 @@ export default function BookingsScreen() {
     setProofImage(null);
     setTransactionCode('');
 
-    Alert.alert(
-      'Thanh toán thành công! 🎉',
-      'Minh chứng chuyển khoản của bạn đã được ghi nhận thành công! Đơn đặt phòng đang chờ Quản trị viên (Web Admin) phê duyệt để chuyển sang trạng thái "Đặt phòng thành công".',
-      [{ text: 'Đã hiểu' }]
-    );
+    if (res.success) {
+      Alert.alert(
+        'Thanh toán thành công! 🎉',
+        res.message || 'Minh chứng chuyển khoản của bạn đã được ghi nhận thành công! Đơn đặt phòng đang chờ Quản trị viên (Web Admin) phê duyệt để chuyển sang trạng thái "Đặt phòng thành công".',
+        [{ text: 'Đã hiểu' }]
+      );
+    } else {
+      Alert.alert('Chưa thể gửi minh chứng', res.message || 'Lỗi khi gửi minh chứng thanh toán.');
+    }
   };
 
   // Handle Checkout button in footer
@@ -557,6 +561,10 @@ export default function BookingsScreen() {
                             {booking.refundAmount && booking.refundAmount > 0 ? (
                               <Text style={s.cancelInfoSnippetRefund}>
                                 💰 Đã hoàn ví: +{formatPrice(booking.refundAmount)} ({booking.refundPercentage || 70}%)
+                              </Text>
+                            ) : booking.cancellationPolicyApplied === 'CANCEL_UNPAID_FREE' || booking.paymentStatus === 'unpaid' || booking.paymentStatus === 'rejected' ? (
+                              <Text style={[s.cancelInfoSnippetNoRefund, { color: '#059669' }]}>
+                                🔓 Hủy miễn phí 100% (Đơn chưa thanh toán)
                               </Text>
                             ) : (
                               <Text style={s.cancelInfoSnippetNoRefund}>

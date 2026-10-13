@@ -11,6 +11,7 @@ import {
   Alert,
   FlatList,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -70,6 +71,8 @@ export default function WalletScreen() {
   // Modal Chi tiết giao dịch ví / Đơn hủy
   const [selectedTx, setSelectedTx] = useState<WalletTx | null>(null);
 
+  const activeUserId = user?.id || 1;
+
   const authHeaders = useMemo(() => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -80,21 +83,21 @@ export default function WalletScreen() {
     setLoading(true);
     try {
       // 1. Lấy thông tin ví
-      const wRes = await fetchWithTimeout(`${API_BASE_URL}/api/wallet?userId=${user?.id || 4}`, { headers: authHeaders }, 4000);
+      const wRes = await fetchWithTimeout(`${API_BASE_URL}/api/wallet?userId=${activeUserId}`, { headers: authHeaders }, 4000);
       const wJson = await wRes.json();
       if (wJson.success && wJson.data) {
         setWallet(wJson.data);
       }
 
       // 2. Lấy lịch sử giao dịch
-      const txRes = await fetchWithTimeout(`${API_BASE_URL}/api/wallet/transactions?userId=${user?.id || 4}`, { headers: authHeaders }, 4000);
+      const txRes = await fetchWithTimeout(`${API_BASE_URL}/api/wallet/transactions?userId=${activeUserId}`, { headers: authHeaders }, 4000);
       const txJson = await txRes.json();
       if (txJson.success && Array.isArray(txJson.data)) {
         setTransactions(txJson.data);
       }
 
       // 3. Lấy danh sách ngân hàng
-      const bRes = await fetchWithTimeout(`${API_BASE_URL}/api/bank-accounts?userId=${user?.id || 4}`, { headers: authHeaders }, 4000);
+      const bRes = await fetchWithTimeout(`${API_BASE_URL}/api/bank-accounts?userId=${activeUserId}`, { headers: authHeaders }, 4000);
       const bJson = await bRes.json();
       if (bJson.success && Array.isArray(bJson.data)) {
         setBankAccounts(bJson.data);
@@ -178,7 +181,7 @@ export default function WalletScreen() {
           method: 'POST',
           headers: authHeaders,
           body: JSON.stringify({
-            userId: user?.id || 4,
+            userId: activeUserId,
             bankAccountId: selectedBankId,
             amount,
           }),
@@ -361,9 +364,9 @@ export default function WalletScreen() {
       </ScrollView>
 
       {/* MODAL: TẠO YÊU CẦU RÚT TIỀN */}
-      <Modal visible={showWithdrawModal} transparent animationType="slide" onRequestClose={() => setShowWithdrawModal(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowWithdrawModal(false)}>
-          <Pressable style={[styles.modalBox, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]} onPress={(e) => e.stopPropagation()}>
+      <Modal visible={showWithdrawModal} transparent animationType="slide" onRequestClose={() => { Keyboard.dismiss(); setShowWithdrawModal(false); }}>
+        <Pressable style={styles.modalOverlay} onPress={() => { Keyboard.dismiss(); setShowWithdrawModal(false); }}>
+          <Pressable style={[styles.modalBox, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]} onPress={() => Keyboard.dismiss()}>
             <View style={styles.modalHeader}>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>Yêu cầu rút tiền</Text>
@@ -371,7 +374,7 @@ export default function WalletScreen() {
                   Số dư khả dụng: <Text style={{ color: colors.primary, fontWeight: '700' }}>{formatPrice(wallet?.availableBalance || 0)}</Text>
                 </Text>
               </View>
-              <Pressable onPress={() => setShowWithdrawModal(false)} hitSlop={8}>
+              <Pressable onPress={() => { Keyboard.dismiss(); setShowWithdrawModal(false); }} hitSlop={8}>
                 <Ionicons name="close" size={22} color="#64748B" />
               </Pressable>
             </View>
@@ -389,7 +392,10 @@ export default function WalletScreen() {
                       { backgroundColor: isDark ? '#0F172A' : '#F8FAFC', borderColor: isSelected ? colors.primary : '#E2E8F0' },
                       isSelected && { backgroundColor: isDark ? '#082F49' : '#EFF6FF', borderWidth: 1.8 },
                     ]}
-                    onPress={() => setSelectedBankId(b.id)}
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setSelectedBankId(b.id);
+                    }}
                   >
                     <View style={[styles.bankLogoSmall, { backgroundColor: isSelected ? colors.primary : '#E0F2FE' }]}>
                       <Ionicons name="business" size={16} color={isSelected ? '#FFFFFF' : colors.primary} />
@@ -407,15 +413,42 @@ export default function WalletScreen() {
             </View>
 
             {/* Nhập số tiền */}
-            <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>Số tiền muốn rút (₫):</Text>
-            <TextInput
-              style={[styles.amountInput, { backgroundColor: colors.inputBg, borderColor: colors.primary, color: colors.text }]}
-              placeholder="VD: 500000"
-              placeholderTextColor="#94A3B8"
-              keyboardType="number-pad"
-              value={withdrawAmountStr}
-              onChangeText={setWithdrawAmountStr}
-            />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+              <Text style={[styles.inputLabel, { color: colors.text, marginTop: 0 }]}>Số tiền muốn rút (₫):</Text>
+              <Pressable
+                onPress={Keyboard.dismiss}
+                hitSlop={8}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 2, paddingHorizontal: 6 }}
+              >
+                <Ionicons name="chevron-down-circle-outline" size={16} color={colors.primary} />
+                <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '600' }}>Ẩn bàn phím</Text>
+              </Pressable>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <TextInput
+                style={[styles.amountInput, { flex: 1, backgroundColor: colors.inputBg, borderColor: colors.primary, color: colors.text }]}
+                placeholder="VD: 500000"
+                placeholderTextColor="#94A3B8"
+                keyboardType="number-pad"
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
+                value={withdrawAmountStr}
+                onChangeText={setWithdrawAmountStr}
+              />
+              <Pressable
+                onPress={Keyboard.dismiss}
+                style={{
+                  height: 48,
+                  paddingHorizontal: 14,
+                  borderRadius: 10,
+                  backgroundColor: isDark ? '#334155' : '#E2E8F0',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="checkmark" size={20} color={colors.primary} />
+              </Pressable>
+            </View>
 
             {/* Quick amount chips */}
             {wallet && wallet.availableBalance > 0 && (

@@ -265,7 +265,7 @@ class BookingModel {
       // 0. Tự động quét và giải phóng các phòng giữ chỗ quá 15 phút chưa thanh toán
       await this.cleanupExpiredPendingBookings(runner);
 
-      // Chống Spam / Chống găm phòng: Kiểm tra nếu tài khoản có >= 3 đơn hủy chưa thanh toán trong 24h qua
+      // Chống Spam / Chống găm phòng: Kiểm tra nếu tài khoản có nhiều đơn giữ chỗ bị hệ thống tự động hủy do quá hạn 15 phút
       if (userId) {
         const [spamRows] = await runner.query(
           `SELECT COUNT(*) AS unpaid_spam_count
@@ -273,11 +273,12 @@ class BookingModel {
            WHERE user_id = ?
              AND status = 'cancelled'
              AND payment_status IN ('unpaid', 'rejected')
+             AND (cancelled_reason LIKE '%Hết thời hạn%' OR cancelled_reason LIKE '%quá hạn%')
              AND cancelled_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
           [userId]
         );
-        if (spamRows[0]?.unpaid_spam_count >= 3) {
-          throw new Error('Tài khoản của bạn đã có 3 đơn giữ chỗ bị hủy do quá hạn thanh toán trong 24 giờ qua. Để phòng ngừa hành vi spam giữ phòng và bảo vệ chủ nhà, hệ thống tạm khóa quyền tạo đơn mới trong 24h. Vui lòng thử lại sau.');
+        if (spamRows[0]?.unpaid_spam_count >= 10) {
+          throw new Error('Tài khoản của bạn có nhiều đơn giữ chỗ bị hủy do quá hạn thanh toán trong 24 giờ qua. Để phòng ngừa hành vi spam giữ phòng và bảo vệ chủ nhà, vui lòng thử lại sau.');
         }
       }
 
