@@ -656,9 +656,42 @@ Property.replaceAmenities = async (propertyId, amenityNames) => {
     return;
   }
 
+  const EN_TO_VI_AMENITIES = {
+    "WiFi": "WiFi tốc độ cao",
+    "Full Kitchen": "Bếp đầy đủ dụng cụ",
+    "Air Conditioning": "Điều hòa 2 chiều",
+    "Parking": "Bãi đỗ xe ô tô miễn phí",
+    "Pool": "Hồ bơi riêng",
+    "Beachfront": "View biển trực diện",
+    "Fireplace": "Lò sưởi ấm cúng",
+    "Washer/Dryer": "Máy giặt & sấy",
+    "Gym Access": "Bàn bi-a giải trí",
+    "Hot Tub": "Phòng xông hơi Sauna",
+    "BBQ Grill": "Khu nướng BBQ",
+    "Smart TV": "Smart TV 4K Netflix",
+    "Sauna": "Phòng xông hơi Sauna",
+    "Mountain View": "View núi / thung lũng",
+    "Sea View": "View biển trực diện",
+    "City View": "View núi / thung lũng",
+  };
+
+  const lookupNames = new Set();
+  for (const name of amenityNames) {
+    if (!name) continue;
+    const trimmed = String(name).trim();
+    lookupNames.add(trimmed);
+    if (EN_TO_VI_AMENITIES[trimmed]) {
+      lookupNames.add(EN_TO_VI_AMENITIES[trimmed]);
+    }
+  }
+
+  if (lookupNames.size === 0) {
+    return;
+  }
+
   const [amenityRows] = await db.promise().query(
     "SELECT id FROM amenities WHERE name IN (?)",
-    [amenityNames],
+    [Array.from(lookupNames)],
   );
 
   if (amenityRows.length === 0) {

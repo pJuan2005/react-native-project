@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays, Mail, MapPin, Phone, User, ShieldCheck, CheckCircle2, Clock, XCircle, FileText, Upload, Sparkles } from "lucide-react";
+import { CalendarDays, Mail, MapPin, Phone, User, ShieldCheck, CheckCircle2, Clock, XCircle, FileText, Upload, Sparkles, Image as ImageIcon, Trash2 } from "lucide-react";
 import { useAuth, getUserInitials } from "@/components/context/AuthContext";
 import { AccountSettingsPanel } from "@/components/shared/AccountSettingsPanel";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -74,6 +74,25 @@ export default function HostProfilePage() {
 
     loadStats();
   }, [isInitializing, user]);
+
+  const handlePickFile = (e: React.ChangeEvent<HTMLInputElement>, target: "front" | "back") => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 12 * 1024 * 1024) {
+      alert("Dung lượng ảnh vượt quá 12MB. Vui lòng chọn ảnh nhỏ hơn.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      if (target === "front") {
+        setIdCardFrontUrl(dataUrl);
+      } else {
+        setIdCardBackUrl(dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleUseMockKyc = () => {
     setIdCardNumber("02409600" + Math.floor(1000 + Math.random() * 9000));
@@ -383,37 +402,103 @@ export default function HostProfilePage() {
                       />
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                      {/* Mặt trước CCCD */}
                       <div>
-                        <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, color: "#475569", marginBottom: 4 }}>
-                          Link / Ảnh mặt trước CCCD (*):
+                        <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                          Ảnh mặt trước CCCD (*):
                         </label>
-                        <input
-                          type="text"
-                          placeholder="https://..."
-                          value={idCardFrontUrl}
-                          onChange={(e) => setIdCardFrontUrl(e.target.value)}
-                          style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: "0.82rem", outline: "none" }}
-                        />
-                        {idCardFrontUrl && (
-                          <img src={idCardFrontUrl} alt="Mặt trước" style={{ width: "100%", height: 75, objectFit: "cover", borderRadius: 6, marginTop: 6, border: "1px solid #cbd5e1" }} />
+                        {idCardFrontUrl ? (
+                          <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: "1.5px solid #bfdbfe", background: "#f0f9ff" }}>
+                            <img src={idCardFrontUrl} alt="Mặt trước CCCD" style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }} />
+                            <div style={{ padding: "6px 8px", background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <span style={{ fontSize: "0.74rem", color: "#16a34a", fontWeight: 700 }}>✓ Đã chọn mặt trước</span>
+                              <label
+                                htmlFor="cccd-front-picker"
+                                style={{ fontSize: "0.74rem", color: "#2563eb", fontWeight: 700, cursor: "pointer" }}
+                              >
+                                Đổi ảnh
+                              </label>
+                            </div>
+                          </div>
+                        ) : (
+                          <label
+                            htmlFor="cccd-front-picker"
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              height: 110,
+                              borderRadius: 10,
+                              border: "2px dashed #93c5fd",
+                              background: "#eff6ff",
+                              cursor: "pointer",
+                              padding: 8,
+                              textAlign: "center",
+                            }}
+                          >
+                            <Upload size={22} color="#2563eb" style={{ marginBottom: 4 }} />
+                            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#2563eb" }}>Chọn ảnh mặt trước</span>
+                            <span style={{ fontSize: "0.7rem", color: "#64748b" }}>PNG, JPG từ máy tính</span>
+                          </label>
                         )}
+                        <input
+                          id="cccd-front-picker"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handlePickFile(e, "front")}
+                          style={{ display: "none" }}
+                        />
                       </div>
 
+                      {/* Mặt sau CCCD */}
                       <div>
-                        <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, color: "#475569", marginBottom: 4 }}>
-                          Link / Ảnh mặt sau CCCD (*):
+                        <label style={{ display: "block", fontSize: "0.83rem", fontWeight: 700, color: "#475569", marginBottom: 6 }}>
+                          Ảnh mặt sau CCCD (*):
                         </label>
-                        <input
-                          type="text"
-                          placeholder="https://..."
-                          value={idCardBackUrl}
-                          onChange={(e) => setIdCardBackUrl(e.target.value)}
-                          style={{ width: "100%", padding: "9px 12px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: "0.82rem", outline: "none" }}
-                        />
-                        {idCardBackUrl && (
-                          <img src={idCardBackUrl} alt="Mặt sau" style={{ width: "100%", height: 75, objectFit: "cover", borderRadius: 6, marginTop: 6, border: "1px solid #cbd5e1" }} />
+                        {idCardBackUrl ? (
+                          <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", border: "1.5px solid #bfdbfe", background: "#f0f9ff" }}>
+                            <img src={idCardBackUrl} alt="Mặt sau CCCD" style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }} />
+                            <div style={{ padding: "6px 8px", background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <span style={{ fontSize: "0.74rem", color: "#16a34a", fontWeight: 700 }}>✓ Đã chọn mặt sau</span>
+                              <label
+                                htmlFor="cccd-back-picker"
+                                style={{ fontSize: "0.74rem", color: "#2563eb", fontWeight: 700, cursor: "pointer" }}
+                              >
+                                Đổi ảnh
+                              </label>
+                            </div>
+                          </div>
+                        ) : (
+                          <label
+                            htmlFor="cccd-back-picker"
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              height: 110,
+                              borderRadius: 10,
+                              border: "2px dashed #93c5fd",
+                              background: "#eff6ff",
+                              cursor: "pointer",
+                              padding: 8,
+                              textAlign: "center",
+                            }}
+                          >
+                            <Upload size={22} color="#2563eb" style={{ marginBottom: 4 }} />
+                            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#2563eb" }}>Chọn ảnh mặt sau</span>
+                            <span style={{ fontSize: "0.7rem", color: "#64748b" }}>PNG, JPG từ máy tính</span>
+                          </label>
                         )}
+                        <input
+                          id="cccd-back-picker"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handlePickFile(e, "back")}
+                          style={{ display: "none" }}
+                        />
                       </div>
                     </div>
 

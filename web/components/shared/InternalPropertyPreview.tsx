@@ -112,20 +112,39 @@ export function InternalPropertyPreview({
       return [];
     }
 
-    const set = new Set<string>();
+    // Helper to deduplicate images by stripping variant suffix (-medium, -thumb) and extension
+    const getBaseName = (url: string) => {
+      const cleanUrl = url.split("?")[0];
+      const fileName = cleanUrl.substring(cleanUrl.lastIndexOf("/") + 1);
+      return fileName.replace(/-(medium|thumb)\.webp$/i, "").replace(/\.[^/.]+$/, "").toLowerCase();
+    };
 
-    if (property.coverImageOriginal) {
-      set.add(property.coverImageOriginal);
+    const list: string[] = [];
+    const seenNames = new Set<string>();
+
+    // 1. Cover image first
+    const primaryCover = property.image || property.coverImageOriginal;
+    if (primaryCover) {
+      list.push(primaryCover);
+      seenNames.add(getBaseName(primaryCover));
     }
 
-    if (property.image) {
-      set.add(property.image);
+    // 2. Add detail images uniquely
+    const candidates = [
+      ...(property.images || []),
+      ...(property.originalImages || []),
+    ];
+
+    for (const url of candidates) {
+      if (!url) continue;
+      const baseName = getBaseName(url);
+      if (!seenNames.has(baseName)) {
+        seenNames.add(baseName);
+        list.push(url);
+      }
     }
 
-    (property.originalImages || []).forEach((img) => set.add(img));
-    (property.images || []).forEach((img) => set.add(img));
-
-    return Array.from(set).filter(Boolean);
+    return list.filter(Boolean);
   }, [property]);
 
   useEffect(() => {

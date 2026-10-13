@@ -1,5 +1,29 @@
+const fs = require('fs');
+const path = require('path');
 const db = require('../config/database');
 const AuditService = require('./audit.service');
+
+function saveBase64KycImage(base64Str, hostId, filePrefix) {
+  if (typeof base64Str !== 'string' || !base64Str.startsWith('data:image/')) {
+    return base64Str;
+  }
+  try {
+    const uploadDir = path.join(__dirname, '../../uploads/hosts', String(hostId), 'kyc');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    const isPng = base64Str.includes('image/png');
+    const ext = isPng ? '.png' : '.jpg';
+    const fileName = `${filePrefix}-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`;
+    const filePath = path.join(uploadDir, fileName);
+    const base64Data = base64Str.replace(/^data:image\/[^;]+;base64,/, '');
+    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+    return `/uploads/hosts/${hostId}/kyc/${fileName}`;
+  } catch (err) {
+    console.warn('Lỗi lưu file KYC base64:', err.message);
+    return base64Str;
+  }
+}
 
 class HostVerificationService {
   /**
@@ -14,6 +38,10 @@ class HostVerificationService {
     if (!idCardNumber || !idCardFrontUrl || !idCardBackUrl) {
       throw new Error('Vui lòng cung cấp số CCCD/Hộ chiếu và ảnh chụp 2 mặt giấy tờ tùy thân.');
     }
+
+    const resolvedFrontUrl = saveBase64KycImage(idCardFrontUrl, hostId, 'cccd-front');
+    const resolvedBackUrl = saveBase64KycImage(idCardBackUrl, hostId, 'cccd-back');
+    const resolvedLicenseUrl = businessLicenseUrl ? saveBase64KycImage(businessLicenseUrl, hostId, 'license') : null;
 
     await db.query(
       `INSERT INTO host_verifications (
@@ -33,9 +61,9 @@ class HostVerificationService {
       [
         hostId,
         idCardNumber.trim(),
-        idCardFrontUrl,
-        idCardBackUrl,
-        businessLicenseUrl || null,
+        resolvedFrontUrl,
+        resolvedBackUrl,
+        resolvedLicenseUrl,
       ]
     );
 
