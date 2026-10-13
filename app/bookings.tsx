@@ -122,6 +122,16 @@ export default function BookingsScreen() {
     return savedHomestays.slice(start, start + BOOKINGS_PER_PAGE);
   }, [savedHomestays, safeWishlistPage]);
 
+  const isBookingPaid = (b: BookingItem) => {
+    return (
+      b.paymentStatus === 'completed' ||
+      b.paymentStatus === 'verified' ||
+      b.paymentStatus === 'proof_uploaded' ||
+      b.status === 'confirmed' ||
+      b.status === 'completed'
+    );
+  };
+
   // Active bookings (not cancelled)
   const activeBookings = useMemo(
     () => bookings.filter((b: BookingItem) => b.status !== 'cancelled'),
@@ -135,7 +145,7 @@ export default function BookingsScreen() {
 
   // Unpaid bookings needing payment
   const unpaidBookings = useMemo(
-    () => activeBookings.filter((b: BookingItem) => b.paymentStatus !== 'completed'),
+    () => activeBookings.filter((b: BookingItem) => !isBookingPaid(b)),
     [activeBookings]
   );
 
@@ -334,7 +344,7 @@ export default function BookingsScreen() {
 
   // Handle Checkout button in footer
   const handleProceedCheckout = () => {
-    const unpaid = bookings.find((b) => b.paymentStatus !== 'completed' && b.status !== 'cancelled');
+    const unpaid = bookings.find((b) => !isBookingPaid(b) && b.status !== 'cancelled');
     if (unpaid) {
       setPaymentBooking(unpaid);
       setProofImage(null);

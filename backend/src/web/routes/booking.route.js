@@ -4,13 +4,19 @@ const chat = require("../controllers/chat.controller");
 const { requireRoles } = require("../middlewares/auth.middleware");
 const uploadBooking = require("../middlewares/uploadBooking.middleware");
 const mobileBookingController = require("../../controllers/booking.controller");
+const cancellationController = require("../../controllers/cancellation.controller");
 
 const router = express.Router();
 
 // 1. Mobile Route: GET /api/bookings/my-bookings
 router.get("/my-bookings", mobileBookingController.getMyBookings);
 
-// 2. Authentication check for both Web guest and Mobile customer
+// 2. Cancellation Preview & Execution (Chính sách hủy hoàn tiền chuẩn)
+router.get("/:id/cancellation-preview", cancellationController.getCancellationPreview);
+router.post("/:id/cancel", cancellationController.cancelBooking);
+router.put("/:id/cancel", cancellationController.cancelBooking);
+
+// 3. Authentication check for both Web guest and Mobile customer
 router.use(requireRoles("guest", "customer"));
 
 router.get("/", booking.getGuestBookings);
@@ -44,15 +50,6 @@ router.post(
   "/:id/payment-proof",
   mobileBookingController.uploadPaymentProof,
 );
-
-router.put("/:id/cancel", (req, res, next) => {
-  if (req.body?.userId || req.body?.reason) {
-    return mobileBookingController.cancelBooking(req, res, next);
-  }
-  return booking.cancelGuestBooking(req, res, next);
-});
-
-router.post("/:id/cancel", mobileBookingController.cancelBooking);
 
 module.exports = router;
 

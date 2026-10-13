@@ -43,8 +43,14 @@ class BookingService {
     return booking;
   }
 
-  static async cancelBooking(bookingId, userId, reason) {
-    return BookingModel.cancelBookingByUser(bookingId, userId, reason);
+  static async cancelBooking(bookingId, userId, reason, reasonCode = 'CHANGE_OF_PLAN') {
+    const CancellationService = require('./cancellation.service');
+    return CancellationService.executeCancellation({
+      bookingId,
+      userId,
+      reasonCode,
+      reasonText: reason,
+    });
   }
 
   static async uploadPaymentProof({ bookingId, userId, proofImageUrl, transactionCode }) {

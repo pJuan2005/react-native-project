@@ -358,17 +358,18 @@ class CancellationService {
       let walletTxId = null;
 
       // 4. Nếu khách được hoàn tiền (refundAmount > 0) -> Hoàn vào Ví (Wallet) của Khách qua Ledger
-      if (split.refundAmount > 0 && booking.user_id) {
+      const guestUserId = booking.user_id || booking.guest_id;
+      if (split.refundAmount > 0 && guestUserId) {
         await runner.query(
           `INSERT INTO wallets (user_id, balance, currency, status)
            VALUES (?, 0.00, 'VND', 'active')
            ON DUPLICATE KEY UPDATE updated_at = NOW()`,
-          [booking.user_id]
+          [guestUserId]
         );
 
         const [wRows] = await runner.query(
           `SELECT id, balance FROM wallets WHERE user_id = ? FOR UPDATE`,
-          [booking.user_id]
+          [guestUserId]
         );
 
         const wallet = wRows[0];
@@ -387,7 +388,7 @@ class CancellationService {
           ) VALUES (?, ?, 'REFUND', ?, ?, ?, 'booking_refund', ?, ?, 'completed', NOW())`,
           [
             wallet.id,
-            booking.user_id,
+            guestUserId,
             split.refundAmount,
             balanceBefore,
             balanceAfter,

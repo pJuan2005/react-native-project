@@ -60,10 +60,18 @@ const cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id || req.body.userId || null;
-    const reason = req.body.reason || 'Khách yêu cầu hủy';
+    const reasonText = req.body.reasonText || req.body.reason || 'Khách yêu cầu hủy';
+    const reasonCode = req.body.reasonCode || 'CHANGE_OF_PLAN';
 
-    await BookingService.cancelBooking(id, userId, reason);
-    return success(res, null, 'Hủy đơn đặt phòng thành công');
+    const CancellationService = require('../services/cancellation.service');
+    const result = await CancellationService.executeCancellation({
+      bookingId: id,
+      userId,
+      reasonCode,
+      reasonText,
+    });
+
+    return success(res, result, result.message || 'Hủy đơn đặt phòng thành công');
   } catch (err) {
     return badRequest(res, err.message || 'Lỗi khi hủy đơn đặt phòng');
   }
