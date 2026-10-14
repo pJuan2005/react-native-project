@@ -52,7 +52,7 @@ class HomestayModel {
 
     // Fetch images and amenities from property child tables (deduplicated)
     const [images] = await db.query(
-      'SELECT DISTINCT property_id, image_url FROM property_images ORDER BY is_primary DESC, sort_order ASC, id ASC'
+      'SELECT property_id, image_url FROM property_images ORDER BY is_primary DESC, sort_order ASC, id ASC'
     );
     const [amenities] = await db.query(
       'SELECT DISTINCT pa.property_id, a.name FROM property_amenities pa JOIN amenities a ON pa.amenity_id = a.id'
@@ -132,7 +132,7 @@ class HomestayModel {
     const row = rows[0];
 
     const [images] = await db.query(
-      'SELECT DISTINCT image_url FROM property_images WHERE property_id = ? ORDER BY is_primary DESC, sort_order ASC, id ASC LIMIT 10',
+      'SELECT image_url FROM property_images WHERE property_id = ? ORDER BY is_primary DESC, sort_order ASC, id ASC LIMIT 10',
       [id]
     );
     const [amenities] = await db.query(
@@ -277,7 +277,7 @@ class HomestayModel {
     );
 
     const [images] = await db.query(
-      'SELECT DISTINCT property_id, image_url FROM property_images ORDER BY is_primary DESC, sort_order ASC, id ASC'
+      'SELECT property_id, image_url FROM property_images ORDER BY is_primary DESC, sort_order ASC, id ASC'
     );
     const imageMap = {};
     images.forEach((img) => {
@@ -336,7 +336,7 @@ class HomestayModel {
     const row = rows[0];
 
     const [images] = await db.query(
-      'SELECT DISTINCT image_url FROM property_images WHERE property_id = ? ORDER BY is_primary DESC, sort_order ASC, id ASC LIMIT 10',
+      'SELECT image_url FROM property_images WHERE property_id = ? ORDER BY is_primary DESC, sort_order ASC, id ASC LIMIT 10',
       [row.id]
     );
 

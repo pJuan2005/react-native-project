@@ -282,42 +282,72 @@ export default function HomestayDetail() {
     }
   };
 
-  const setQuickPreset = (type: 'tonight' | 'weekend' | '3days') => {
+  const setQuickPreset = (type: 'tonight' | 'weekend' | 'next_weekend' | '3days') => {
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const day = today.getDay(); // 0: CN, 1: T2, 2: T3, 3: T4, 4: T5, 5: T6, 6: T7
 
-    let start = '';
-    let end = '';
+    let startDate = new Date(today);
+    let endDate = new Date(today);
 
     if (type === 'tonight') {
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      start = formatLocalDateStr(today);
-      end = formatLocalDateStr(tomorrow);
+      // Hôm nay nhận phòng, ngày mai trả phòng (1 đêm)
+      startDate = new Date(today);
+      endDate = new Date(today);
+      endDate.setDate(today.getDate() + 1);
     } else if (type === 'weekend') {
-      const friday = new Date(today);
-      const day = today.getDay();
-      const distToFriday = (5 - day + 7) % 7;
-      friday.setDate(today.getDate() + (distToFriday === 0 ? 7 : distToFriday));
-      const sunday = new Date(friday);
-      sunday.setDate(friday.getDate() + 2);
-      start = formatLocalDateStr(friday);
-      end = formatLocalDateStr(sunday);
+      // Cuối tuần này (2 đêm):
+      // - Nếu Thứ 2 -> Thứ 5: Thứ 6 tuần này đến Chủ Nhật tuần này
+      // - Nếu Thứ 6: Hôm nay (Thứ 6) đến Chủ Nhật tuần này (2 đêm)
+      // - Nếu Thứ 7: Hôm nay (Thứ 7) đến Thứ 2 tuần tới (2 đêm)
+      // - Nếu Chủ Nhật: Cuối tuần tiếp theo (Thứ 6 tuần sau đến Chủ Nhật tuần sau)
+      startDate = new Date(today);
+      if (day >= 1 && day <= 5) {
+        const daysToFriday = 5 - day; // Thứ 6 thì daysToFriday = 0 (hôm nay)
+        startDate.setDate(today.getDate() + daysToFriday);
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 2);
+      } else if (day === 6) {
+        startDate.setDate(today.getDate());
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 2);
+      } else {
+        startDate.setDate(today.getDate() + 5);
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 2);
+      }
+    } else if (type === 'next_weekend') {
+      // Cuối tuần sau (2 đêm): Luôn là Thứ 6 tuần tiếp theo đến Chủ Nhật tuần tiếp theo
+      startDate = new Date(today);
+      let daysToNextFriday = 0;
+      if (day >= 1 && day <= 5) {
+        daysToNextFriday = (5 - day) + 7;
+      } else if (day === 6) {
+        daysToNextFriday = 6;
+      } else {
+        daysToNextFriday = 12;
+      }
+      startDate.setDate(today.getDate() + daysToNextFriday);
+      endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 2);
     } else {
-      const d1 = new Date(today);
-      d1.setDate(today.getDate() + 3);
-      const d2 = new Date(d1);
-      d2.setDate(d1.getDate() + 2);
-      start = formatLocalDateStr(d1);
-      end = formatLocalDateStr(d2);
+      startDate = new Date(today);
+      startDate.setDate(today.getDate() + 3);
+      endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 2);
     }
 
+    const start = formatLocalDateStr(startDate);
+    const end = formatLocalDateStr(endDate);
+
     if (doesRangeConflict(start, end) || isDateOccupied(start)) {
-      Alert.alert('Đã kín phòng 🔒', 'Lựa chọn nhanh này rơi vào khoảng ngày homestay đã kín phòng.');
+      Alert.alert('Đã kín phòng 🔒', 'Lựa chọn nhanh này rơi vào khoảng ngày homestay đã kín phòng. Vui lòng chọn khoảng ngày khác.');
       return;
     }
 
     setCheckIn(start);
     setCheckOut(end);
+    setPickerMonth(new Date(startDate.getFullYear(), startDate.getMonth(), 1));
     setShowDatePicker(false);
   };
 
@@ -690,10 +720,10 @@ export default function HomestayDetail() {
                 <Text style={[s.presetChipText, { color: colors.primary }]}>Hôm nay (1 đêm)</Text>
               </Pressable>
               <Pressable style={[s.presetChip, { backgroundColor: isDark ? '#0B132B' : '#E0F2FE' }]} onPress={() => setQuickPreset('weekend')}>
-                <Text style={[s.presetChipText, { color: colors.primary }]}>Cuối tuần (2 đêm)</Text>
+                <Text style={[s.presetChipText, { color: colors.primary }]}>Cuối tuần này (2 đêm)</Text>
               </Pressable>
-              <Pressable style={[s.presetChip, { backgroundColor: isDark ? '#0B132B' : '#E0F2FE' }]} onPress={() => setQuickPreset('3days')}>
-                <Text style={[s.presetChipText, { color: colors.primary }]}>Tuần tới (2 đêm)</Text>
+              <Pressable style={[s.presetChip, { backgroundColor: isDark ? '#0B132B' : '#E0F2FE' }]} onPress={() => setQuickPreset('next_weekend')}>
+                <Text style={[s.presetChipText, { color: colors.primary }]}>Cuối tuần sau (2 đêm)</Text>
               </Pressable>
             </View>
 

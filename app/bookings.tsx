@@ -83,26 +83,79 @@ export default function BookingsScreen() {
 
   const [bookingPage, setBookingPage] = useState(1);
   const [wishlistPage, setWishlistPage] = useState(1);
-  const [bookingStatusFilter, setBookingStatusFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all');
+  const [bookingStatusFilter, setBookingStatusFilter] = useState<'all' | 'staying' | 'upcoming' | 'completed' | 'cancelled'>('all');
+
+  const formatLocalDateStr = (d: Date) => {
+    const year = d.getFullYear();
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayStr = useMemo(() => formatLocalDateStr(new Date()), []);
+
+  const isBookingPaid = (b: BookingItem) => {
+    return (
+      b.paymentStatus === 'completed' ||
+      b.paymentStatus === 'verified' ||
+      b.paymentStatus === 'proof_uploaded' ||
+      b.status === 'confirmed' ||
+      b.status === 'completed'
+    );
+  };
+
+  // Đơn đang trong thời gian lưu trú (Đã được duyệt/thanh toán và hôm nay nằm trong khoảng ngày ở)
+  const isBookingStaying = (b: BookingItem) => {
+    if (b.status === 'cancelled' || b.status === 'completed') return false;
+    const isApprovedOrPaid =
+      b.status === 'confirmed' ||
+      b.paymentStatus === 'verified' ||
+      b.paymentStatus === 'completed';
+    if (!isApprovedOrPaid) return false;
+    if (!b.checkIn || !b.checkOut) return false;
+    return b.checkIn <= todayStr && todayStr <= b.checkOut;
+  };
+
+  // Đơn sắp tới (Chưa đến ngày check-in)
+  const isBookingUpcoming = (b: BookingItem) => {
+    if (b.status === 'cancelled' || b.status === 'completed') return false;
+    if (isBookingStaying(b)) return false;
+    if (b.checkIn && b.checkIn > todayStr) return true;
+    return b.status === 'pending' || b.status === 'confirmed';
+  };
+
+  // Đơn đã ở qua (Đã hoàn thành hoặc đã qua ngày check-out)
+  const isBookingCompleted = (b: BookingItem) => {
+    if (b.status === 'cancelled') return false;
+    if (b.status === 'completed') return true;
+    if (b.checkOut && b.checkOut < todayStr && (b.status === 'confirmed' || isBookingPaid(b))) {
+      return true;
+    }
+    return false;
+  };
 
   const allBookingsCount = bookings.length;
-  const activeBookingsCount = useMemo(() => bookings.filter((b) => b.status === 'pending' || b.status === 'confirmed').length, [bookings]);
-  const completedBookingsCount = useMemo(() => bookings.filter((b) => b.status === 'completed').length, [bookings]);
+  const stayingBookingsCount = useMemo(() => bookings.filter(isBookingStaying).length, [bookings, todayStr]);
+  const upcomingBookingsCount = useMemo(() => bookings.filter(isBookingUpcoming).length, [bookings, todayStr]);
+  const completedBookingsCount = useMemo(() => bookings.filter(isBookingCompleted).length, [bookings, todayStr]);
   const cancelledBookingsCount = useMemo(() => bookings.filter((b) => b.status === 'cancelled').length, [bookings]);
 
   // Filtered bookings based on chip selection
   const displayedBookings = useMemo(() => {
-    if (bookingStatusFilter === 'active') {
-      return bookings.filter((b: BookingItem) => b.status === 'pending' || b.status === 'confirmed');
+    if (bookingStatusFilter === 'staying') {
+      return bookings.filter(isBookingStaying);
+    }
+    if (bookingStatusFilter === 'upcoming') {
+      return bookings.filter(isBookingUpcoming);
     }
     if (bookingStatusFilter === 'completed') {
-      return bookings.filter((b: BookingItem) => b.status === 'completed');
+      return bookings.filter(isBookingCompleted);
     }
     if (bookingStatusFilter === 'cancelled') {
       return bookings.filter((b: BookingItem) => b.status === 'cancelled');
     }
     return bookings;
-  }, [bookings, bookingStatusFilter]);
+  }, [bookings, bookingStatusFilter, todayStr]);
 
   const totalBookingPages = Math.max(1, Math.ceil(displayedBookings.length / BOOKINGS_PER_PAGE));
   const safeBookingPage = Math.min(bookingPage, totalBookingPages);
@@ -121,16 +174,6 @@ export default function BookingsScreen() {
     const start = (safeWishlistPage - 1) * BOOKINGS_PER_PAGE;
     return savedHomestays.slice(start, start + BOOKINGS_PER_PAGE);
   }, [savedHomestays, safeWishlistPage]);
-
-  const isBookingPaid = (b: BookingItem) => {
-    return (
-      b.paymentStatus === 'completed' ||
-      b.paymentStatus === 'verified' ||
-      b.paymentStatus === 'proof_uploaded' ||
-      b.status === 'confirmed' ||
-      b.status === 'completed'
-    );
-  };
 
   // Active bookings (not cancelled)
   const activeBookings = useMemo(
@@ -409,19 +452,25 @@ export default function BookingsScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.subFilterScroll}>
               {[
                 { key: 'all', label: `Tất cả (${allBookingsCount})`, icon: 'apps-outline' },
-                { key: 'active', label: `Sắp tới (${activeBookingsCount})`, icon: 'time-outline' },
+                { key: 'staying', label: `Đang ở (${stayingBookingsCount})`, icon: 'bed-outline', isStayingChip: true },
+                { key: 'upcoming', label: `Sắp tới (${upcomingBookingsCount})`, icon: 'time-outline' },
                 { key: 'completed', label: `Đã ở qua (${completedBookingsCount})`, icon: 'checkmark-circle-outline' },
                 { key: 'cancelled', label: `Đã hủy (${cancelledBookingsCount})`, icon: 'close-circle-outline' },
               ].map((chip) => {
                 const isSelected = bookingStatusFilter === chip.key;
+                const isStayingChip = chip.isStayingChip;
                 return (
                   <Pressable
                     key={chip.key}
                     style={[
                       s.subFilterChip,
                       {
-                        backgroundColor: isSelected ? colors.primary : isDark ? '#1E293B' : '#FFFFFF',
-                        borderColor: isSelected ? colors.primary : isDark ? '#334155' : '#CBD5E1',
+                        backgroundColor: isSelected
+                          ? isStayingChip ? '#059669' : colors.primary
+                          : isDark ? '#1E293B' : '#FFFFFF',
+                        borderColor: isSelected
+                          ? isStayingChip ? '#059669' : colors.primary
+                          : isStayingChip && stayingBookingsCount > 0 ? '#10B981' : isDark ? '#334155' : '#CBD5E1',
                       },
                     ]}
                     onPress={() => setBookingStatusFilter(chip.key as any)}
@@ -429,12 +478,29 @@ export default function BookingsScreen() {
                     <Ionicons
                       name={chip.icon as any}
                       size={13}
-                      color={isSelected ? '#FFFFFF' : isDark ? '#94A3B8' : '#475569'}
+                      color={
+                        isSelected
+                          ? '#FFFFFF'
+                          : isStayingChip && stayingBookingsCount > 0
+                          ? '#059669'
+                          : isDark
+                          ? '#94A3B8'
+                          : '#475569'
+                      }
                     />
                     <Text
                       style={[
                         s.subFilterChipText,
-                        { color: isSelected ? '#FFFFFF' : isDark ? '#94A3B8' : '#475569' },
+                        {
+                          color: isSelected
+                            ? '#FFFFFF'
+                            : isStayingChip && stayingBookingsCount > 0
+                            ? '#059669'
+                            : isDark
+                            ? '#94A3B8'
+                            : '#475569',
+                          fontWeight: isSelected || (isStayingChip && stayingBookingsCount > 0) ? '700' : '600',
+                        },
                       ]}
                     >
                       {chip.label}
@@ -451,10 +517,14 @@ export default function BookingsScreen() {
                 <Ionicons name="cart-outline" size={38} color={colors.primary} />
               </View>
               <Text style={[s.emptyTitle, { color: colors.text }]}>
-                {bookingStatusFilter === 'cancelled'
+                {bookingStatusFilter === 'staying'
+                  ? 'Hiện không có đơn phòng nào đang trong thời gian lưu trú'
+                  : bookingStatusFilter === 'cancelled'
                   ? 'Chưa có đơn đặt phòng nào bị hủy'
                   : bookingStatusFilter === 'completed'
                   ? 'Chưa có chuyến đi nào đã hoàn tất'
+                  : bookingStatusFilter === 'upcoming'
+                  ? 'Chưa có đơn phòng nào sắp tới'
                   : 'Chưa có đặt phòng nào'}
               </Text>
               <Text style={s.emptyText}>Khám phá các homestay tuyệt vời và đặt chỗ ngay hôm nay.</Text>
@@ -480,6 +550,7 @@ export default function BookingsScreen() {
                 const isConfirmed = booking.status === 'confirmed';
                 const isCompleted = booking.status === 'completed';
                 const isCancelled = booking.status === 'cancelled';
+                const isStaying = isBookingStaying(booking);
 
                 return (
                   <View style={[
@@ -528,6 +599,17 @@ export default function BookingsScreen() {
                               <Ionicons name="checkmark-done-circle" size={11} color="#16A34A" />
                               <Text style={s.completedBadgeText}>Đã hoàn thành chuyến đi</Text>
                             </View>
+                          ) : isStaying ? (
+                            <>
+                              <View style={s.stayingBadge}>
+                                <Ionicons name="bed" size={11} color="#059669" />
+                                <Text style={s.stayingBadgeText}>Đang lưu trú</Text>
+                              </View>
+                              <View style={s.confirmedBadge}>
+                                <Ionicons name="shield-checkmark" size={11} color="#0284C7" />
+                                <Text style={s.confirmedBadgeText}>Đã duyệt</Text>
+                              </View>
+                            </>
                           ) : (
                             <>
                               {isPaid ? (
@@ -885,6 +967,13 @@ export default function BookingsScreen() {
                             <Text style={s.pendingBadgeText}>Chờ Web Admin duyệt</Text>
                           </View>
                         )}
+
+                        {selectedBookingDetail && isBookingStaying(selectedBookingDetail) && (
+                          <View style={s.stayingBadge}>
+                            <Ionicons name="bed" size={11} color="#059669" />
+                            <Text style={s.stayingBadgeText}>Đang lưu trú</Text>
+                          </View>
+                        )}
                       </>
                     )}
                   </View>
@@ -925,6 +1014,13 @@ export default function BookingsScreen() {
                   <Text style={[s.approvalNoticeText, { color: isDark ? '#FCA5A5' : '#991B1B' }]}>
                     Đơn phòng này đã hủy vào lúc {selectedBookingDetail.cancelledAt ? new Date(selectedBookingDetail.cancelledAt).toLocaleString('vi-VN') : 'vừa qua'}.
                     {'\n'}Lý do hủy: {selectedBookingDetail.cancelledReason || 'Khách yêu cầu hủy phòng.'}
+                  </Text>
+                </View>
+              ) : selectedBookingDetail && isBookingStaying(selectedBookingDetail) ? (
+                <View style={[s.approvalNoticeBox, { backgroundColor: isDark ? '#064E3B' : '#ECFDF5', borderColor: '#6EE7B7' }]}>
+                  <Ionicons name="home" size={16} color="#059669" />
+                  <Text style={[s.approvalNoticeText, { color: isDark ? '#A7F3D0' : '#065F46' }]}>
+                    🎉 Bạn hiện đang trong thời gian lưu trú tại homestay này (Trả phòng: {formatDate(selectedBookingDetail.checkOut)}). Chúc bạn có kỳ nghỉ thật tuyệt vời!
                   </Text>
                 </View>
               ) : selectedBookingDetail?.paymentStatus === 'completed' || selectedBookingDetail?.paymentStatus === 'verified' ? (
@@ -1527,6 +1623,18 @@ const s = StyleSheet.create({
     borderRadius: 6,
   },
   confirmedBadgeText: { fontSize: 9, fontWeight: '700', color: '#0369A1' },
+  stayingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#6EE7B7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  stayingBadgeText: { fontSize: 9, fontWeight: '800', color: '#059669' },
   pendingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
