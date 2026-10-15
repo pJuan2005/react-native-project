@@ -6,9 +6,9 @@ import { useAppTheme } from '@/contexts/ThemeContext';
 import { useResponsive } from '@/utils/responsive';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -174,6 +174,13 @@ export default function BookingsScreen() {
   useEffect(() => {
     setBookingPage(1);
   }, [bookingStatusFilter]);
+
+  // Tự động làm mới danh sách đơn đặt phòng mỗi khi người dùng truy cập / quay lại màn hình
+  useFocusEffect(
+    useCallback(() => {
+      refreshBookings().catch(() => {});
+    }, [refreshBookings])
+  );
 
   const totalWishlistPages = Math.max(1, Math.ceil(savedHomestays.length / BOOKINGS_PER_PAGE));
   const safeWishlistPage = Math.min(wishlistPage, totalWishlistPages);

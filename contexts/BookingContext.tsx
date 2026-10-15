@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   Homestay,
   Voucher,
@@ -368,17 +368,18 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         );
       }
 
-      // 2. Update local state
+      // 2. Update local state: Đưa đơn mới lên ĐẦU DANH SÁCH (index 0) để hiển thị ngay ở Trang 1
       setBookings((items) => {
         const existing = items.find(
           (item) =>
-            item.id === homestay.id &&
-            item.checkIn === bookingDetails.checkIn &&
-            item.checkOut === bookingDetails.checkOut
+            (createdBookingId && item.bookingId === createdBookingId) ||
+            (createdBookingCode && item.bookingCode === createdBookingCode) ||
+            (item.id === homestay.id &&
+              item.checkIn === bookingDetails.checkIn &&
+              item.checkOut === bookingDetails.checkOut)
         );
         if (existing) return items;
         return [
-          ...items,
           {
             ...homestay,
             quantity: 1,
@@ -388,11 +389,19 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             status: 'pending',
             paymentStatus: 'unpaid',
           },
+          ...items,
         ];
       });
 
       const calculatedPoints = Math.max(10, Math.floor((bookingDetails.totalPrice || 0) / 10000));
       addRewardPoints(calculatedPoints, `Tích lũy ${calculatedPoints} điểm từ đặt phòng: ${homestay.name}`);
+
+      // 3. Đồng bộ lại dữ liệu ngầm từ Server để đảm bảo toàn vẹn dữ liệu
+      if (currentUserId) {
+        setTimeout(() => {
+          fetchUserData(currentUserId).catch(() => {});
+        }, 300);
+      }
 
       return {
         success: true,
@@ -745,11 +754,12 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const refreshBookings = async () => {
-    if (userProfile.id) {
-      await fetchUserData(userProfile.id);
+  const refreshBookings = useCallback(async () => {
+    const targetUserId = authUser?.id || userProfile.id || '4';
+    if (targetUserId) {
+      await fetchUserData(targetUserId);
     }
-  };
+  }, [authUser?.id, userProfile.id, authToken]);
 
   const value = useMemo(
     () => ({
@@ -777,7 +787,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       completeStayAndReward,
       submitReview,
     }),
-    [userProfile, bookings, savedHomestays, userVouchers, rewardPoints, pointHistory]
+    [userProfile, bookings, savedHomestays, userVouchers, rewardPoints, pointHistory, refreshBookings]
   );
 
   return <BookingContext.Provider value={value}>{children}</BookingContext.Provider>;
