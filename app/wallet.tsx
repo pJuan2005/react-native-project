@@ -369,7 +369,7 @@ export default function WalletScreen() {
       {/* MODAL: TẠO YÊU CẦU RÚT TIỀN */}
       <Modal visible={showWithdrawModal} transparent animationType="slide" onRequestClose={() => { Keyboard.dismiss(); setShowWithdrawModal(false); }}>
         <Pressable style={styles.modalOverlay} onPress={() => { Keyboard.dismiss(); setShowWithdrawModal(false); }}>
-          <Pressable style={[styles.modalBox, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]} onPress={() => Keyboard.dismiss()}>
+          <Pressable style={[styles.modalBox, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>Yêu cầu rút tiền</Text>
@@ -395,10 +395,7 @@ export default function WalletScreen() {
                       { backgroundColor: isDark ? '#0F172A' : '#F8FAFC', borderColor: isSelected ? colors.primary : '#E2E8F0' },
                       isSelected && { backgroundColor: isDark ? '#082F49' : '#EFF6FF', borderWidth: 1.8 },
                     ]}
-                    onPress={() => {
-                      Keyboard.dismiss();
-                      setSelectedBankId(b.id);
-                    }}
+                    onPress={() => setSelectedBankId(b.id)}
                   >
                     <View style={[styles.bankLogoSmall, { backgroundColor: isSelected ? colors.primary : '#E0F2FE' }]}>
                       <Ionicons name="business" size={16} color={isSelected ? '#FFFFFF' : colors.primary} />
@@ -430,10 +427,11 @@ export default function WalletScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <TextInput
                 style={[styles.amountInput, { flex: 1, backgroundColor: colors.inputBg, borderColor: colors.primary, color: colors.text }]}
-                placeholder="VD: 500000"
+                placeholder="Nhập số tiền (VD: 500000)"
                 placeholderTextColor="#94A3B8"
                 keyboardType="number-pad"
                 returnKeyType="done"
+                selectTextOnFocus
                 onSubmitEditing={Keyboard.dismiss}
                 value={withdrawAmountStr}
                 onChangeText={setWithdrawAmountStr}
@@ -453,18 +451,33 @@ export default function WalletScreen() {
               </Pressable>
             </View>
 
-            {/* Quick amount chips */}
+            {/* Quick preset amount chips (50k, 100k, 200k, 500k, 1tr) */}
+            <View style={[styles.quickChipsRow, { flexWrap: 'wrap', marginTop: 8 }]}>
+              {[50000, 100000, 200000, 500000, 1000000].map((val) => (
+                <Pressable
+                  key={val}
+                  style={[styles.quickChip, { backgroundColor: isDark ? '#0B132B' : '#F1F5F9' }]}
+                  onPress={() => setWithdrawAmountStr(String(val))}
+                >
+                  <Text style={[styles.quickChipText, { color: colors.text }]}>
+                    {new Intl.NumberFormat('vi-VN').format(val)} ₫
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {/* Quick ratio chips (25%, 50%, Tất cả) */}
             {wallet && wallet.availableBalance > 0 && (
-              <View style={styles.quickChipsRow}>
+              <View style={[styles.quickChipsRow, { marginTop: 6 }]}>
                 {[0.25, 0.5, 1].map((ratio) => {
                   const targetVal = Math.round(wallet.availableBalance * ratio);
                   return (
                     <Pressable
                       key={ratio}
-                      style={[styles.quickChip, { backgroundColor: isDark ? '#0B132B' : '#E0F2FE' }]}
+                      style={[styles.quickChip, { backgroundColor: isDark ? '#082F49' : '#E0F2FE' }]}
                       onPress={() => setWithdrawAmountStr(String(targetVal))}
                     >
-                      <Text style={[styles.quickChipText, { color: colors.primary }]}>
+                      <Text style={[styles.quickChipText, { color: colors.primary, fontWeight: '800' }]}>
                         {ratio === 1 ? 'Tất cả' : `${ratio * 100}%`} ({formatPrice(targetVal)})
                       </Text>
                     </Pressable>
