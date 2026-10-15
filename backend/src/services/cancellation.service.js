@@ -137,6 +137,25 @@ class CancellationService {
       };
     }
 
+    // Đơn đã tải biên lai VietQR nhưng Admin CHƯA DUYỆT: Không cho hủy để tránh gian lận hoàn tiền ảo
+    const isProofPendingApproval = (
+      (booking.payment_status === 'proof_uploaded' || Boolean(booking.payment_proof_image)) &&
+      booking.status !== 'confirmed' &&
+      booking.payment_status !== 'verified' &&
+      booking.payment_status !== 'completed'
+    );
+
+    if (isProofPendingApproval) {
+      return {
+        bookingId: booking.id,
+        bookingCode: booking.booking_code,
+        canCancel: false,
+        message: 'Đơn đặt phòng đang chờ Quản trị viên (Web Admin) đối soát biên lai chuyển khoản. Không thể hủy phòng trong thời gian chờ duyệt.',
+        policy: 'PROOF_PENDING_APPROVAL',
+        policyDescription: 'Biên lai chuyển khoản đang được Web Admin kiểm tra tài khoản thực nhận. Để đảm bảo an toàn tài chính, bạn chỉ có thể yêu cầu hủy và nhận tiền hoàn vào Ví sau khi Admin đã duyệt đơn thành công.',
+      };
+    }
+
     // Thời gian hiện tại từ Server (Source of Truth)
     const now = new Date();
 
@@ -150,6 +169,7 @@ class CancellationService {
     const hoursUntilCheckIn = Math.round((diffMs / (1000 * 60 * 60)) * 10) / 10;
 
     // Xác định số tiền thực tế khách đã thanh toán (totalPaid)
+    // Chỉ tính tiền khi Admin ĐÃ XÁC NHẬN duyệt phòng hoặc trạng thái thanh toán là verified/completed
     let totalPaid = 0;
     const [payments] = await db.query(
       `SELECT amount, status FROM payments WHERE booking_id = ?`,
@@ -163,10 +183,8 @@ class CancellationService {
     if (
       hasCompletedPayment ||
       booking.payment_status === 'verified' ||
-      booking.payment_status === 'proof_uploaded' ||
       booking.payment_status === 'completed' ||
-      booking.status === 'confirmed' ||
-      Boolean(booking.payment_proof_image)
+      booking.status === 'confirmed'
     ) {
       totalPaid = parseFloat(booking.total_price || 0);
     }
@@ -275,6 +293,18 @@ class CancellationService {
         throw new Error('Chuyến đi đã hoàn thành, không thể hủy phòng');
       }
 
+      // Đơn đã tải biên lai VietQR nhưng Admin CHƯA DUYỆT: Chặn không cho hủy để bảo vệ dòng tiền
+      const isProofPendingApproval = (
+        (booking.payment_status === 'proof_uploaded' || Boolean(booking.payment_proof_image)) &&
+        booking.status !== 'confirmed' &&
+        booking.payment_status !== 'verified' &&
+        booking.payment_status !== 'completed'
+      );
+
+      if (isProofPendingApproval) {
+        throw new Error('Đơn phòng đang trong quá trình Web Admin kiểm tra biên lai chuyển khoản. Không thể hủy phòng lúc này.');
+      }
+
       // 2. Tính toán chính sách hoàn tiền theo server time
       const now = new Date();
       const checkInDateOnly = typeof booking.check_in === 'string'
@@ -284,7 +314,7 @@ class CancellationService {
       const diffMs = checkInDateTime.getTime() - now.getTime();
       const hoursUntilCheckIn = Math.round((diffMs / (1000 * 60 * 60)) * 10) / 10;
 
-      // Tính tổng tiền đã thanh toán thực tế
+      // Tính tổng tiền đã thanh toán thực tế (Chỉ tính khi Admin đã duyệt)
       const [pRows] = await runner.query(
         `SELECT amount, status FROM payments WHERE booking_id = ?`,
         [booking.id]
@@ -292,10 +322,8 @@ class CancellationService {
       const isPaid = (
         pRows.some((p) => p.status === 'completed' || p.status === 'verified') ||
         booking.payment_status === 'verified' ||
-        booking.payment_status === 'proof_uploaded' ||
         booking.payment_status === 'completed' ||
-        booking.status === 'confirmed' ||
-        Boolean(booking.payment_proof_image)
+        booking.status === 'confirmed'
       );
 
       const totalPaid = isPaid ? parseFloat(booking.total_price || 0) : 0;

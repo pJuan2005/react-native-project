@@ -34,7 +34,12 @@ const login = async (req, res) => {
     }
 
     const data = await AuthService.login({ email, password });
-    return success(res, data, `Đăng nhập thành công! Xin chào ${data.user.name}`);
+    return res.json({
+      success: true,
+      message: `Đăng nhập thành công! Xin chào ${data.user.name}`,
+      user: data.user,
+      data,
+    });
   } catch (err) {
     return unauthorized(res, err.message || 'Email hoặc mật khẩu không chính xác');
   }

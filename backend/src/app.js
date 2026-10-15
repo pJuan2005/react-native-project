@@ -112,11 +112,13 @@ app.get(['/', '/admin', '/admin/*', '/host', '/host/*'], (req, res) => {
   `);
 });
 
-// 1. Mobile App Client Layered REST API Routes (Routes -> Controllers -> Services -> Models)
+// 1. Web Auth Router (Quản lý đăng nhập / đăng ký / session cho Web Portal & Mobile)
+app.use('/api/auth', webAuthRouter);
+
+// 2. Mobile App Client Layered REST API Routes (Routes -> Controllers -> Services -> Models)
 app.use('/api', routes);
 
-// 2. Web Admin & Host Portal API Routes
-app.use('/api/auth', webAuthRouter);
+// 3. Web Admin & Host Portal API Routes
 app.use('/api', webRoutes);
 
 // 404 & Error Handling Middlewares

@@ -240,6 +240,22 @@ export default function BookingsScreen() {
 
   // Safe Cancel Confirmation with Server-Driven Policy & Reason
   const handlePromptCancel = async (booking: BookingItem) => {
+    // 1. Kiểm tra nếu đơn đang nộp biên lai chờ Web Admin duyệt thì không cho hủy
+    const isProofPending = (
+      (booking.paymentStatus === 'proof_uploaded' || Boolean(booking.proofImageUrl)) &&
+      booking.status !== 'confirmed' &&
+      booking.paymentStatus !== 'verified' &&
+      booking.paymentStatus !== 'completed'
+    );
+
+    if (isProofPending) {
+      Alert.alert(
+        'Đơn đang chờ duyệt ⏳',
+        'Đơn đặt phòng đang được Web Admin đối soát biên lai chuyển khoản. Để đảm bảo an toàn tài chính, bạn không thể hủy phòng trong thời gian chờ duyệt. Vui lòng đợi Admin xác nhận đơn hoặc liên hệ hỗ trợ.'
+      );
+      return;
+    }
+
     setCancelTarget(booking);
     setSelectedReasonCode('CHANGE_OF_PLAN');
     setOtherReasonText('');
@@ -247,7 +263,7 @@ export default function BookingsScreen() {
     setCancelPreview({ loading: true });
 
     const targetId = booking.bookingId || booking.id;
-    const isPaid = booking.paymentStatus === 'completed' || booking.paymentStatus === 'verified' || Boolean(booking.proofImageUrl);
+    const isPaid = booking.paymentStatus === 'completed' || booking.paymentStatus === 'verified';
     const totalAmount = booking.totalPrice || booking.price * booking.quantity || 0;
     const fallbackTotalPaid = isPaid ? totalAmount : 0;
 
@@ -767,8 +783,8 @@ export default function BookingsScreen() {
                       </View>
                     </Pressable>
 
-                    {/* Independent Trash Button (Chỉ hiển thị cho đơn chưa hủy và chưa hoàn thành) */}
-                    {!isCancelled && !isCompleted && (
+                    {/* Independent Trash Button (Chỉ hiển thị cho đơn chưa hủy, chưa hoàn thành và không phải đang chờ Admin duyệt biên lai) */}
+                    {!isCancelled && !isCompleted && !isProofUploaded && (
                       <Pressable
                         style={s.trashBtnCorner}
                         hitSlop={10}
@@ -1245,10 +1261,15 @@ export default function BookingsScreen() {
                 </Text>
               </Pressable>
 
-              {/* Nút hủy phòng: CHỈ HIỂN THỊ KHI ĐƠN CHƯA HỦY VÀ CHƯA HOÀN THÀNH */}
+              {/* Nút hủy phòng: CHỈ HIỂN THỊ KHI ĐƠN CHƯA HỦY, CHƯA HOÀN THÀNH VÀ KHÔNG PHẢI ĐANG CHỜ ADMIN DUYỆT BIÊN LAI */}
               {selectedBookingDetail?.status !== 'cancelled' &&
                selectedBookingDetail?.status !== 'completed' &&
-               !(selectedBookingDetail && isBookingCompleted(selectedBookingDetail)) && (
+               !(selectedBookingDetail && isBookingCompleted(selectedBookingDetail)) &&
+               !(
+                 (selectedBookingDetail?.paymentStatus === 'proof_uploaded' || Boolean(selectedBookingDetail?.proofImageUrl)) &&
+                 selectedBookingDetail?.status !== 'confirmed' &&
+                 selectedBookingDetail?.paymentStatus !== 'verified'
+               ) && (
                 <Pressable
                   style={s.cancelBookingBtn}
                   onPress={() => {
