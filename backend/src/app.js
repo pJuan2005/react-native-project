@@ -112,12 +112,12 @@ app.get(['/', '/admin', '/admin/*', '/host', '/host/*'], (req, res) => {
   `);
 });
 
-// Web Admin & Host Portal API Routes
+// 1. Mobile App Client Layered REST API Routes (Routes -> Controllers -> Services -> Models)
+app.use('/api', routes);
+
+// 2. Web Admin & Host Portal API Routes
 app.use('/api/auth', webAuthRouter);
 app.use('/api', webRoutes);
-
-// Mobile App REST API Routes
-app.use('/api', routes);
 
 // 404 & Error Handling Middlewares
 app.use(notFoundHandler);

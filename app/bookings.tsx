@@ -1,9 +1,13 @@
+import { PaginationControls } from '@/components/pagination-controls';
 import { ProductImage } from '@/components/product-image';
-import { formatPrice, formatDate } from '@/constants/mockData';
-import { useBooking, BookingItem } from '@/contexts/BookingContext';
+import { formatDate, formatPrice } from '@/constants/mockData';
+import { BookingItem, useBooking } from '@/contexts/BookingContext';
 import { useAppTheme } from '@/contexts/ThemeContext';
+import { useResponsive } from '@/utils/responsive';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,10 +24,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import * as ImagePicker from 'expo-image-picker';
-import { useResponsive } from '@/utils/responsive';
-import { PaginationControls } from '@/components/pagination-controls';
 
 const BOOKINGS_PER_PAGE = 5;
 
@@ -54,6 +54,7 @@ export default function BookingsScreen() {
     removeSaved,
     getBookingsTotal,
     completeStayAndReward,
+    submitReview,
   } = useBooking();
 
   const [activeTab, setActiveTab] = useState<'bookings' | 'wishlist'>('bookings');
@@ -80,6 +81,12 @@ export default function BookingsScreen() {
   const [proofImage, setProofImage] = useState<string | null>(null);
   const [transactionCode, setTransactionCode] = useState('');
   const [isSubmittingProof, setIsSubmittingProof] = useState(false);
+
+  // Review Modal State
+  const [reviewBookingTarget, setReviewBookingTarget] = useState<BookingItem | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('Trải nghiệm rất tuyệt vời, phòng sạch sẽ và chủ nhà chu đáo!');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const [bookingPage, setBookingPage] = useState(1);
   const [wishlistPage, setWishlistPage] = useState(1);
@@ -199,21 +206,36 @@ export default function BookingsScreen() {
 
   const allPaid = activeBookings.length > 0 && unpaidBookings.length === 0;
 
-  const handleReviewAndReward = (bookingId: string, name: string) => {
-    Alert.alert(
-      'Đánh giá chuyến đi ⭐',
-      `Cảm ơn bạn đã trải nghiệm tại "${name}". Bạn đánh giá chuyến đi thế nào?`,
-      [
-        {
-          text: '5 sao tuyệt vời (+150 điểm)',
-          onPress: () => {
-            completeStayAndReward(bookingId);
-            Alert.alert('Cảm ơn bạn! 🎉', 'Bạn đã nhận được +150 điểm thưởng thành viên vào ví!');
-          },
-        },
-        { text: 'Để sau', style: 'cancel' },
-      ]
+  const handleOpenReviewModal = (booking: BookingItem) => {
+    setReviewBookingTarget(booking);
+    setReviewRating(booking.reviewRating || 5);
+    setReviewComment(
+      booking.reviewComment || 'Trải nghiệm rất tuyệt vời, phòng sạch sẽ và chủ nhà chu đáo!'
     );
+  };
+
+  const handleConfirmSubmitReview = async () => {
+    if (!reviewBookingTarget) return;
+    setIsSubmittingReview(true);
+    const bId = reviewBookingTarget.bookingId || reviewBookingTarget.id;
+    const pId = reviewBookingTarget.id;
+    const pointsEarned =
+      reviewRating === 5 ? 150 : reviewRating === 4 ? 100 : reviewRating === 3 ? 60 : reviewRating === 2 ? 30 : 10;
+    const res = await submitReview(bId, pId, reviewRating, reviewComment.trim(), pointsEarned);
+    setIsSubmittingReview(false);
+
+    // Cập nhật cả selectedBookingDetail nếu đang mở
+    if (
+      selectedBookingDetail &&
+      (selectedBookingDetail.bookingId === bId || selectedBookingDetail.id === pId)
+    ) {
+      setSelectedBookingDetail((prev) =>
+        prev ? { ...prev, reviewRating, reviewComment: reviewComment.trim(), status: 'completed' } : null
+      );
+    }
+
+    setReviewBookingTarget(null);
+    Alert.alert('Đánh giá thành công! 🎉', res.message || `Cảm ơn bạn! Bạn nhận được +${pointsEarned} điểm thưởng thành viên vào ví.`);
   };
 
   // Safe Cancel Confirmation with Server-Driven Policy & Reason
@@ -672,6 +694,19 @@ export default function BookingsScreen() {
                           </View>
                         )}
 
+                        {/* Hiển thị đánh giá của khách nếu đơn đã hoàn thành */}
+                        {isCompleted && Boolean(booking.reviewRating) && (
+                          <View style={[s.userReviewSnippet, { backgroundColor: isDark ? '#0B132B' : '#FFFBEB', borderColor: isDark ? '#334155' : '#FDE68A' }]}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                              <Ionicons name="star" size={11} color="#F59E0B" />
+                              <Text style={s.userReviewSnippetStars}>Đã đánh giá {booking.reviewRating}★:</Text>
+                            </View>
+                            <Text style={[s.userReviewSnippetComment, { color: colors.text }]} numberOfLines={1}>
+                              "{booking.reviewComment || 'Trải nghiệm rất tuyệt vời!'}"
+                            </Text>
+                          </View>
+                        )}
+
                         <View style={s.itemBottomRow}>
                           <Text style={s.priceLabel}>
                             Tổng: <Text style={[s.priceValue, isDark && { color: '#38BDF8' }]}>{new Intl.NumberFormat('vi-VN').format(booking.totalPrice || booking.price * booking.quantity)} Đ</Text>
@@ -688,11 +723,19 @@ export default function BookingsScreen() {
                               </Pressable>
                             ) : isCompleted ? (
                               <Pressable
-                                style={s.reviewBtn}
-                                onPress={() => handleReviewAndReward(booking.bookingId || booking.id, booking.name)}
+                                style={[
+                                  s.reviewBtn,
+                                  Boolean(booking.reviewRating) && {
+                                    backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
+                                    borderColor: '#6EE7B7',
+                                  },
+                                ]}
+                                onPress={() => handleOpenReviewModal(booking)}
                               >
-                                <Ionicons name="star" size={12} color="#D97706" />
-                                <Text style={s.reviewBtnText}>Đánh giá 5★</Text>
+                                <Ionicons name="star" size={12} color={booking.reviewRating ? '#059669' : '#D97706'} />
+                                <Text style={[s.reviewBtnText, Boolean(booking.reviewRating) && { color: '#059669' }]}>
+                                  {booking.reviewRating ? `Đã đánh giá (${booking.reviewRating}★)` : 'Đánh giá'}
+                                </Text>
                               </Pressable>
                             ) : (
                               <>
@@ -712,7 +755,7 @@ export default function BookingsScreen() {
 
                                 <Pressable
                                   style={s.reviewBtn}
-                                  onPress={() => handleReviewAndReward(booking.bookingId || booking.id, booking.name)}
+                                  onPress={() => handleOpenReviewModal(booking)}
                                 >
                                   <Ionicons name="star" size={12} color="#D97706" />
                                   <Text style={s.reviewBtnText}>Đánh giá</Text>
@@ -961,6 +1004,11 @@ export default function BookingsScreen() {
                             <Ionicons name="shield-checkmark" size={11} color="#0284C7" />
                             <Text style={s.confirmedBadgeText}>Đặt phòng thành công</Text>
                           </View>
+                        ) : selectedBookingDetail?.status === 'completed' || (selectedBookingDetail && isBookingCompleted(selectedBookingDetail)) ? (
+                          <View style={s.completedBadge}>
+                            <Ionicons name="checkmark-done-circle" size={11} color="#16A34A" />
+                            <Text style={s.completedBadgeText}>Đã hoàn thành chuyến đi</Text>
+                          </View>
                         ) : (
                           <View style={s.pendingBadge}>
                             <Ionicons name="time-outline" size={11} color="#D97706" />
@@ -1023,6 +1071,13 @@ export default function BookingsScreen() {
                     🎉 Bạn hiện đang trong thời gian lưu trú tại homestay này (Trả phòng: {formatDate(selectedBookingDetail.checkOut)}). Chúc bạn có kỳ nghỉ thật tuyệt vời!
                   </Text>
                 </View>
+              ) : selectedBookingDetail && (selectedBookingDetail.status === 'completed' || isBookingCompleted(selectedBookingDetail)) ? (
+                <View style={[s.approvalNoticeBox, { backgroundColor: isDark ? '#052E16' : '#DCFCE7', borderColor: '#86EFAC' }]}>
+                  <Ionicons name="checkmark-done-circle" size={16} color="#16A34A" />
+                  <Text style={[s.approvalNoticeText, { color: isDark ? '#86EFAC' : '#15803D' }]}>
+                    🎉 Chuyến đi đã hoàn thành xuất sắc! Cảm ơn bạn đã lựa chọn trải nghiệm chỗ nghỉ.
+                  </Text>
+                </View>
               ) : selectedBookingDetail?.paymentStatus === 'completed' || selectedBookingDetail?.paymentStatus === 'verified' ? (
                 <View style={[s.approvalNoticeBox, { backgroundColor: isDark ? '#052E16' : '#DCFCE7', borderColor: '#86EFAC' }]}>
                   <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
@@ -1045,11 +1100,84 @@ export default function BookingsScreen() {
                   </Text>
                 </View>
               )}
+
+              {/* Khung hiển thị đánh giá của khách trong modal chi tiết */}
+              {selectedBookingDetail && (selectedBookingDetail.status === 'completed' || isBookingCompleted(selectedBookingDetail)) && (
+                <View style={[s.detailReviewCard, { backgroundColor: isDark ? '#0F172A' : '#FFFBEB', borderColor: isDark ? '#334155' : '#FDE68A' }]}>
+                  {selectedBookingDetail.reviewRating ? (
+                    <>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Text style={{ fontWeight: '700', color: colors.text, fontSize: 13 }}>Đánh giá của bạn:</Text>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Ionicons
+                              key={star}
+                              name={star <= (selectedBookingDetail.reviewRating || 5) ? 'star' : 'star-outline'}
+                              size={14}
+                              color="#F59E0B"
+                            />
+                          ))}
+                        </View>
+                        <Pressable
+                          hitSlop={8}
+                          onPress={() => {
+                            const item = selectedBookingDetail;
+                            setSelectedBookingDetail(null);
+                            handleOpenReviewModal(item);
+                          }}
+                        >
+                          <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700' }}>Sửa</Text>
+                        </Pressable>
+                      </View>
+                      <Text style={{ fontSize: 12, color: colors.text, fontStyle: 'italic', lineHeight: 17 }}>
+                        "{selectedBookingDetail.reviewComment || 'Trải nghiệm rất tuyệt vời!'}"
+                      </Text>
+                    </>
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={{ fontWeight: '700', color: '#B45309', fontSize: 13 }}>⭐ Chưa đánh giá chuyến đi</Text>
+                        <Text style={{ fontSize: 11, color: '#D97706', marginTop: 2 }}>Đánh giá ngay nhận tới +150 điểm thưởng thành viên!</Text>
+                      </View>
+                      <Pressable
+                        style={s.reviewNowModalBtn}
+                        onPress={() => {
+                          const item = selectedBookingDetail;
+                          setSelectedBookingDetail(null);
+                          handleOpenReviewModal(item);
+                        }}
+                      >
+                        <Text style={s.reviewNowModalText}>Đánh giá ngay</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+              )}
             </ScrollView>
 
             {/* Modal Actions */}
             <View style={s.detailModalActions}>
+              {/* Nút Đánh giá trong Modal Chi tiết cho đơn đã hoàn thành */}
+              {selectedBookingDetail &&
+               (selectedBookingDetail.status === 'completed' || isBookingCompleted(selectedBookingDetail)) && (
+                <Pressable
+                  style={[s.reviewInDetailActionBtn, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}
+                  onPress={() => {
+                    const item = selectedBookingDetail;
+                    setSelectedBookingDetail(null);
+                    handleOpenReviewModal(item);
+                  }}
+                >
+                  <Ionicons name="star" size={15} color="#D97706" />
+                  <Text style={s.reviewInDetailActionText}>
+                    {selectedBookingDetail.reviewRating ? 'Sửa đánh giá chuyến đi' : '⭐ Viết đánh giá (lên tới +150 điểm)'}
+                  </Text>
+                </Pressable>
+              )}
+
               {selectedBookingDetail?.status !== 'cancelled' &&
+               selectedBookingDetail?.status !== 'completed' &&
+               !(selectedBookingDetail && isBookingCompleted(selectedBookingDetail)) &&
                selectedBookingDetail?.paymentStatus !== 'completed' &&
                selectedBookingDetail?.paymentStatus !== 'verified' &&
                selectedBookingDetail?.paymentStatus !== 'proof_uploaded' &&
@@ -1117,7 +1245,10 @@ export default function BookingsScreen() {
                 </Text>
               </Pressable>
 
-              {selectedBookingDetail?.status !== 'cancelled' && (
+              {/* Nút hủy phòng: CHỈ HIỂN THỊ KHI ĐƠN CHƯA HỦY VÀ CHƯA HOÀN THÀNH */}
+              {selectedBookingDetail?.status !== 'cancelled' &&
+               selectedBookingDetail?.status !== 'completed' &&
+               !(selectedBookingDetail && isBookingCompleted(selectedBookingDetail)) && (
                 <Pressable
                   style={s.cancelBookingBtn}
                   onPress={() => {
@@ -1391,6 +1522,128 @@ export default function BookingsScreen() {
                   <>
                     <Ionicons name="trash-outline" size={15} color="#FFFFFF" />
                     <Text style={s.cancelConfirmText}>Xác nhận hủy phòng</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL 4: ĐÁNH GIÁ CHUYẾN ĐI (INTERACTIVE REVIEW MODAL) */}
+      <Modal
+        visible={!!reviewBookingTarget}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setReviewBookingTarget(null)}
+      >
+        <View style={s.modalOverlay}>
+          <View style={[s.reviewModalCard, { width: modalCardWidth, backgroundColor: isDark ? '#1C2541' : '#FFFFFF' }]}>
+            {/* Modal Header */}
+            <View style={[s.detailModalHeader, { borderBottomColor: colors.cardBorder }]}>
+              <View>
+                <Text style={[s.detailModalTitle, { color: colors.text }]}>Đánh giá chuyến đi ⭐</Text>
+                <Text style={[s.detailModalSubtitle, { color: colors.primary }]}>
+                  {reviewBookingTarget?.name}
+                </Text>
+              </View>
+              <Pressable onPress={() => setReviewBookingTarget(null)} hitSlop={8}>
+                <Ionicons name="close-circle" size={24} color="#94A3B8" />
+              </Pressable>
+            </View>
+
+            <ScrollView style={{ maxHeight: height * 0.6 }} showsVerticalScrollIndicator={false}>
+              {/* Star Rating Selector */}
+              <View style={s.starPickerSection}>
+                <Text style={[s.starPickerTitle, { color: colors.text }]}>Bạn thấy chất lượng dịch vụ thế nào?</Text>
+                <View style={s.starsRow}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Pressable
+                      key={star}
+                      onPress={() => setReviewRating(star)}
+                      hitSlop={8}
+                      style={s.starItemBtn}
+                    >
+                      <Ionicons
+                        name={star <= reviewRating ? 'star' : 'star-outline'}
+                        size={36}
+                        color={star <= reviewRating ? '#F59E0B' : '#94A3B8'}
+                      />
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={s.starRatingLabel}>
+                  {reviewRating === 5
+                    ? '⭐⭐⭐⭐⭐ Xuất sắc (+150 điểm thưởng)'
+                    : reviewRating === 4
+                    ? '⭐⭐⭐⭐ Rất tốt (+100 điểm thưởng)'
+                    : reviewRating === 3
+                    ? '⭐⭐⭐ Hài lòng (+60 điểm thưởng)'
+                    : reviewRating === 2
+                    ? '⭐⭐ Trung bình (+30 điểm thưởng)'
+                    : '⭐ Cần cải thiện (+10 điểm thưởng)'}
+                </Text>
+              </View>
+
+              {/* Quick Preset Feedback Chips */}
+              <Text style={[s.feedbackLabel, { color: colors.text }]}>Nhận xét nhanh:</Text>
+              <View style={s.presetChipsWrap}>
+                {[
+                  'Phòng rất đẹp và sạch sẽ ✨',
+                  'Chủ nhà siêu nhiệt tình ❤️',
+                  'View đồi núi cực chill 🌲',
+                  'Vị trí thuận tiện đi lại 🚗',
+                  'Đúng như hình chụp, 10/10 👍',
+                ].map((preset) => (
+                  <Pressable
+                    key={preset}
+                    style={[s.quickPresetChip, { backgroundColor: isDark ? '#0F172A' : '#F1F5F9' }]}
+                    onPress={() => setReviewComment(preset)}
+                  >
+                    <Text style={[s.quickPresetText, { color: colors.text }]}>{preset}</Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              {/* Comment Input */}
+              <Text style={[s.feedbackLabel, { color: colors.text, marginTop: 10 }]}>Cảm nhận chi tiết của bạn:</Text>
+              <TextInput
+                style={[
+                  s.reviewInputBox,
+                  { backgroundColor: colors.inputBg, borderColor: colors.primary, color: colors.text },
+                ]}
+                placeholder="Chia sẻ trải nghiệm của bạn về chỗ nghỉ, không gian và thái độ phục vụ..."
+                placeholderTextColor="#94A3B8"
+                value={reviewComment}
+                onChangeText={setReviewComment}
+                multiline
+                numberOfLines={3}
+              />
+            </ScrollView>
+
+            {/* Submit Action */}
+            <View style={s.reviewModalActions}>
+              <Pressable
+                style={[s.cancelKeepBtn, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}
+                onPress={() => setReviewBookingTarget(null)}
+                disabled={isSubmittingReview}
+              >
+                <Text style={[s.cancelKeepText, { color: isDark ? '#E2E8F0' : '#475569' }]}>Để sau</Text>
+              </Pressable>
+
+              <Pressable
+                style={[s.submitReviewBtn, { backgroundColor: colors.primary }, isSubmittingReview && { opacity: 0.6 }]}
+                onPress={handleConfirmSubmitReview}
+                disabled={isSubmittingReview}
+              >
+                {isSubmittingReview ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="send" size={14} color="#FFFFFF" />
+                    <Text style={s.submitReviewBtnText}>
+                      Gửi đánh giá (+{reviewRating === 5 ? 150 : reviewRating === 4 ? 100 : reviewRating === 3 ? 60 : reviewRating === 2 ? 30 : 10} điểm)
+                    </Text>
                   </>
                 )}
               </Pressable>
@@ -2330,4 +2583,143 @@ const s = StyleSheet.create({
     borderRadius: 8,
   },
   rebookText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
+  // Review Snippets & Review Modal Styles
+  userReviewSnippet: {
+    marginTop: 6,
+    padding: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 2,
+  },
+  userReviewSnippetStars: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#D97706',
+  },
+  userReviewSnippetComment: {
+    fontSize: 11,
+    fontStyle: 'italic',
+  },
+  detailReviewCard: {
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 10,
+  },
+  reviewNowModalBtn: {
+    backgroundColor: '#D97706',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  reviewNowModalText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  reviewInDetailActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 11,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 4,
+  },
+  reviewInDetailActionText: {
+    color: '#B45309',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  reviewModalCard: {
+    borderRadius: 22,
+    padding: 20,
+    elevation: 8,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 14,
+  },
+  starPickerSection: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 12,
+  },
+  starPickerTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'center',
+    marginVertical: 4,
+  },
+  starItemBtn: {
+    padding: 2,
+  },
+  starRatingLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#D97706',
+    marginTop: 8,
+  },
+  feedbackLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  presetChipsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 6,
+  },
+  quickPresetChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  quickPresetText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  reviewInputBox: {
+    minHeight: 75,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    padding: 10,
+    fontSize: 12,
+    lineHeight: 17,
+    textAlignVertical: 'top',
+  },
+  reviewModalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+    marginTop: 14,
+    borderTopWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingTop: 12,
+  },
+  submitReviewBtn: {
+    flex: 1.8,
+    paddingVertical: 12,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  submitReviewBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
 });

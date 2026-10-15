@@ -9,12 +9,12 @@ class ReviewService {
     return ReviewModel.findByPropertyId(homestayId);
   }
 
-  static async createReview({ userId, propertyId, homestayId, bookingId, rating, comment }) {
+  static async createReview({ userId, propertyId, homestayId, bookingId, rating, comment, points }) {
     const targetPropertyId = propertyId || homestayId;
     if (!targetPropertyId || !rating) {
       throw new Error('Vui lòng chọn số sao và chỗ nghỉ muốn đánh giá');
     }
-    return ReviewModel.create({ userId, propertyId: targetPropertyId, bookingId, rating, comment });
+    return ReviewModel.create({ userId, propertyId: targetPropertyId, bookingId, rating, comment, points });
   }
 }
 

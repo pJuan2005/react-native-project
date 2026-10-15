@@ -14,7 +14,7 @@ const getReviews = async (req, res) => {
 const createReview = async (req, res) => {
   try {
     const userId = req.user?.id || req.body.userId || '1';
-    const { propertyId, homestayId, bookingId, rating, comment } = req.body;
+    const { propertyId, homestayId, bookingId, rating, comment, points } = req.body;
 
     const reviewId = await ReviewService.createReview({
       userId,
@@ -22,10 +22,12 @@ const createReview = async (req, res) => {
       bookingId,
       rating: parseInt(rating, 10),
       comment,
+      points: points ? parseInt(points, 10) : undefined,
     });
 
-    return created(res, { id: reviewId }, 'Gửi đánh giá thành công! Tặng bạn +50 điểm thưởng.');
+    return created(res, { id: reviewId }, 'Gửi đánh giá thành công! Cảm ơn bạn đã đóng góp đánh giá.');
   } catch (err) {
+    console.error('Lỗi tạo/cập nhật đánh giá:', err);
     return badRequest(res, err.message || 'Lỗi khi gửi đánh giá');
   }
 };

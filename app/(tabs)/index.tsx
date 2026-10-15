@@ -1,31 +1,30 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import { InfiniteMarquee } from '@/components/infinite-marquee';
+import { ProductImage } from '@/components/product-image';
+import { API_BASE_URL, fetchWithTimeout } from '@/config/api';
+import { Homestay, Location, mockHomestays, mockLocations } from '@/constants/mockData';
+import { useBooking } from '@/contexts/BookingContext';
+import { useAppTheme } from '@/contexts/ThemeContext';
+import { useResponsive } from '@/utils/responsive';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
-  Dimensions,
   ImageBackground,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 import Animated, {
   FadeInDown,
-  FadeInUp,
   FadeInRight,
+  FadeInUp,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { ProductImage } from '@/components/product-image';
-import { InfiniteMarquee } from '@/components/infinite-marquee';
-import { formatPrice, mockLocations, mockHomestays, Homestay, Location } from '@/constants/mockData';
-import { useBooking } from '@/contexts/BookingContext';
-import { useAppTheme } from '@/contexts/ThemeContext';
-import { useResponsive } from '@/utils/responsive';
-import { API_BASE_URL, fetchWithTimeout } from '@/config/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TRENDING_KEYWORDS = [
   { icon: 'bed-outline', text: 'Villa hồ bơi riêng', badge: 'VIP', badgeColor: '#0284C7' },

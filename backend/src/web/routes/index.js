@@ -18,7 +18,6 @@ const router = express.Router();
 
 router.use("/properties", propertyRouter);
 router.use("/bookings", bookingRouter);
-router.use("/reviews", reviewRouter);
 router.use("/quick-manage", quickManageRouter);
 router.use("/host/properties", hostPropertyRouter);
 router.use("/host/bookings", hostBookingRouter);

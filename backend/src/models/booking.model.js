@@ -155,6 +155,8 @@ class BookingModel {
         b.payment_status AS payment_status_display,
         pay.proof_image_url,
         pay.transaction_code,
+        MAX(r.rating) AS review_rating,
+        MAX(r.comment) AS review_comment,
         b.created_at
       FROM bookings b
       LEFT JOIN users u ON b.user_id = u.id
@@ -164,6 +166,7 @@ class BookingModel {
       LEFT JOIN property_images pi ON pi.property_id = p.id AND pi.is_primary = 1
       LEFT JOIN promotions prom ON b.promotion_id = prom.id
       LEFT JOIN payments pay ON pay.booking_id = b.id
+      LEFT JOIN reviews r ON r.booking_id = b.id
       WHERE b.id = ? OR b.booking_code = ?
       GROUP BY b.id`,
       [id, id]
@@ -211,6 +214,8 @@ class BookingModel {
         b.payment_status AS payment_status,
         b.payment_status AS payment_status_display,
         COALESCE(MAX(pay.proof_image_url), b.payment_proof_image) AS proof_image_url,
+        MAX(r.rating) AS review_rating,
+        MAX(r.comment) AS review_comment,
         b.created_at
       FROM bookings b
       JOIN properties p ON b.property_id = p.id
@@ -219,6 +224,7 @@ class BookingModel {
       LEFT JOIN property_images pi ON pi.property_id = p.id AND pi.is_primary = 1
       LEFT JOIN promotions prom ON b.promotion_id = prom.id
       LEFT JOIN payments pay ON pay.booking_id = b.id
+      LEFT JOIN reviews r ON r.booking_id = b.id
       WHERE (b.user_id = ? OR b.guest_id = ?)
     `;
     const params = [userId, userId];
