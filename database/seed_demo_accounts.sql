@@ -38,17 +38,18 @@ ON DUPLICATE KEY UPDATE
   `balance` = VALUES(`balance`),
   `status` = 'active';
 
--- DỌN DẸP BẢN GHI CON LIÊN QUAN TRƯỚC
-DELETE FROM `withdrawals` WHERE `user_id` IN (4, 8);
-DELETE FROM `refunds` WHERE `user_id` IN (4, 8);
+-- DỌN DẸP TOÀN BỘ BẢN GHI CON LIÊN QUAN TRƯỚC THEO ID DUY NHẤT
+DELETE FROM `withdrawals` WHERE `user_id` IN (4, 8) OR `id` IN (401, 402, 403, 404, 801);
+DELETE FROM `refunds` WHERE `user_id` IN (4, 8) OR `id` IN (401, 402, 403, 801, 802);
 DELETE FROM `wallet_transactions` WHERE `user_id` IN (4, 8);
-DELETE FROM `bookings` WHERE `user_id` IN (4, 8);
+DELETE FROM `bookings` WHERE `user_id` IN (4, 8) OR `id` BETWEEN 4000 AND 4999 OR `id` BETWEEN 8000 AND 8999;
 DELETE FROM `favorites` WHERE `user_id` IN (4, 8);
-DELETE FROM `bank_accounts` WHERE `user_id` IN (4, 8);
+DELETE FROM `bank_accounts` WHERE `user_id` IN (4, 8) OR `id` IN (401, 402, 403, 801, 802);
 DELETE FROM `reviews` WHERE `user_id` IN (4, 8);
 DELETE FROM `point_transactions` WHERE `user_id` IN (4, 8);
 DELETE FROM `booking_messages` WHERE `sender_id` IN (4, 8);
-DELETE FROM `disputes` WHERE `reporter_id` IN (4, 8);
+DELETE FROM `booking_conversations` WHERE `booking_id` IN (4001, 8001);
+DELETE FROM `disputes` WHERE `reporter_id` IN (4, 8) OR `id` = 401;
 
 -- 3. LIÊN KẾT TÀI KHOẢN NGÂN HÀNG CHO 2 TÀI KHOẢN
 INSERT INTO `bank_accounts` (`id`, `user_id`, `bank_name`, `bank_code`, `account_number`, `account_holder_name`, `is_default`, `status`) VALUES
@@ -344,8 +345,6 @@ INSERT INTO `point_transactions` (`user_id`, `title`, `points`, `type`, `created
 (8, 'Hoàn thành chuyến đi Sa Pa', 150, 'earn', DATE_SUB(NOW(), INTERVAL 18 DAY));
 
 -- 11. TẠO CUỘC TRÒ CHUYỆN (CHAT) VỚI CHỦ NHÀ CHO ĐƠN ĐANG Ở (BK-STAY-4001)
-DELETE FROM `booking_conversations` WHERE `booking_id` IN (4001, 8001);
-
 INSERT INTO `booking_conversations` (`id`, `booking_id`, `created_at`) VALUES
 (4001, 4001, DATE_SUB(NOW(), INTERVAL 2 DAY)),
 (8001, 8001, DATE_SUB(NOW(), INTERVAL 2 DAY));
