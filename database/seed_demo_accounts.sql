@@ -12,6 +12,9 @@
 
 USE `homestay_db`;
 
+-- TẮT TẠM THỜI KIỂM TRA KHÓA NGOẠI ĐỂ TRÁNH LỖI XUNG ĐỘT THỨ TỰ XÓA BẢN GHI
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- 1. ĐẢM BẢO 2 TÀI KHOẢN TỒN TẠI VÀ CÓ ROLE CUSTOMER, ĐÃ XÁC MINH
 INSERT INTO `users` (`id`, `name`, `full_name`, `email`, `password`, `password_hash`, `role`, `status`, `phone`, `address`, `location`, `birth_date`, `avatar_url`, `reward_points`, `is_verified`, `is_active`)
 VALUES
@@ -35,8 +38,19 @@ ON DUPLICATE KEY UPDATE
   `balance` = VALUES(`balance`),
   `status` = 'active';
 
--- 3. LIÊN KẾT TÀI KHOẢN NGÂN HÀNG CHO 2 TÀI KHOẢN
+-- DỌN DẸP BẢN GHI CON LIÊN QUAN TRƯỚC
+DELETE FROM `withdrawals` WHERE `user_id` IN (4, 8);
+DELETE FROM `refunds` WHERE `user_id` IN (4, 8);
+DELETE FROM `wallet_transactions` WHERE `user_id` IN (4, 8);
+DELETE FROM `bookings` WHERE `user_id` IN (4, 8);
+DELETE FROM `favorites` WHERE `user_id` IN (4, 8);
 DELETE FROM `bank_accounts` WHERE `user_id` IN (4, 8);
+DELETE FROM `reviews` WHERE `user_id` IN (4, 8);
+DELETE FROM `point_transactions` WHERE `user_id` IN (4, 8);
+DELETE FROM `booking_messages` WHERE `sender_id` IN (4, 8);
+DELETE FROM `disputes` WHERE `reporter_id` IN (4, 8);
+
+-- 3. LIÊN KẾT TÀI KHOẢN NGÂN HÀNG CHO 2 TÀI KHOẢN
 INSERT INTO `bank_accounts` (`id`, `user_id`, `bank_name`, `bank_code`, `account_number`, `account_holder_name`, `is_default`, `status`) VALUES
 (401, 4, 'Techcombank (TCB)', 'TCB', '19071766471019', 'PHAM XUAN CHUAN', 1, 'active'),
 (402, 4, 'MB Bank (Quân Đội)', 'MB', '0901234567899', 'PHAM XUAN CHUAN', 0, 'active'),
@@ -45,7 +59,6 @@ INSERT INTO `bank_accounts` (`id`, `user_id`, `bank_name`, `bank_code`, `account
 (802, 8, 'Techcombank (TCB)', 'TCB', '19034567891011', 'NGUYEN THI HUONG', 0, 'active');
 
 -- 4. TẠO 50+ BẢN GHI HOMESTAY YÊU THÍCH (FAVORITES) CHO CẢ 2 USER
-DELETE FROM `favorites` WHERE `user_id` IN (4, 8);
 INSERT IGNORE INTO `favorites` (`user_id`, `property_id`, `created_at`)
 SELECT 4, p.id, DATE_SUB(NOW(), INTERVAL (p.id * 3) HOUR)
 FROM properties p
@@ -59,11 +72,8 @@ WHERE p.is_deleted = 0 AND p.is_active = 1
 ORDER BY p.id DESC
 LIMIT 50;
 
--- 5. XÓA BOOKINGS CŨ CỦA 2 TÀI KHOẢN ĐỂ TẠO LẠI 55+ BẢN GHI CHUẨN MỰC
-DELETE FROM `bookings` WHERE `user_id` IN (4, 8);
-
+-- 5. TẠO 55+ BẢN GHI BOOKINGS CHUẨN MỰC
 -- A. ĐƠN ĐANG Ở (CURRENTLY STAYING): Check-in hôm qua/hôm nay và Check-out 2-3 ngày nữa
--- Phục vụ test trực tiếp tab "Đang ở" vừa thêm!
 INSERT INTO `bookings` (
   `id`, `booking_code`, `property_id`, `user_id`, `guest_name`, `guest_phone`,
   `check_in`, `check_out`, `guests`, `nights`, `price_per_night`, `discount_amount`, `total_price`,
@@ -89,7 +99,6 @@ INSERT INTO `bookings` (
  'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80', 'Đang ở Sa Pa săn mây rất đẹp', DATE_SUB(NOW(), INTERVAL 3 DAY));
 
 -- B. ĐƠN SẮP TỚI (UPCOMING): Check-in trong tương lai (3 ngày đến 2 tháng tới)
--- Gồm cả đơn đã duyệt, đơn đã gửi biên lai chờ duyệt, và đơn chưa thanh toán
 INSERT INTO `bookings` (
   `id`, `booking_code`, `property_id`, `user_id`, `guest_name`, `guest_phone`,
   `check_in`, `check_out`, `guests`, `nights`, `price_per_night`, `discount_amount`, `total_price`,
@@ -249,7 +258,6 @@ INSERT INTO `bookings` (
  DATE_SUB(NOW(), INTERVAL 24 DAY), 'Chi phí phát sinh cao', 'Hủy hoàn 70%', DATE_SUB(NOW(), INTERVAL 26 DAY));
 
 -- 6. TẠO HỒ SƠ HOÀN TIỀN (REFUNDS) TƯƠNG ỨNG CHO CÁC ĐƠN HỦY
-DELETE FROM `refunds` WHERE `user_id` IN (4, 8);
 INSERT INTO `refunds` (`id`, `booking_id`, `user_id`, `total_paid`, `refund_amount`, `cancellation_fee`, `refund_percentage`, `policy_code`, `reason_code`, `reason_text`, `status`, `created_at`) VALUES
 (401, 4201, 4, 2000000, 1400000, 600000, 70.00, 'CANCEL_72H_70_PERCENT', 'CHANGE_OF_PLAN', 'Tôi thay đổi kế hoạch công tác', 'completed', DATE_SUB(NOW(), INTERVAL 10 DAY)),
 (402, 4202, 4, 3000000, 2100000, 900000, 70.00, 'CANCEL_72H_70_PERCENT', 'SCHEDULE_ISSUE', 'Bận việc gia đình đột xuất', 'completed', DATE_SUB(NOW(), INTERVAL 20 DAY)),
@@ -258,9 +266,6 @@ INSERT INTO `refunds` (`id`, `booking_id`, `user_id`, `total_paid`, `refund_amou
 (802, 8202, 8, 2000000, 1400000, 600000, 70.00, 'CANCEL_72H_70_PERCENT', 'PRICE_ISSUE', 'Chi phí phát sinh cao', 'completed', DATE_SUB(NOW(), INTERVAL 24 DAY));
 
 -- 7. TẠO 50+ BẢN GHI BIẾN ĐỘNG SỐ DƯ SỔ CÁI (WALLET_TRANSACTIONS)
--- Đảm bảo màn hình Ví điện tử cuộn mượt mà với đầy đủ loại: REFUND, WITHDRAWAL, DEPOSIT
-DELETE FROM `wallet_transactions` WHERE `user_id` IN (4, 8);
-
 -- Giao dịch hoàn tiền (REFUND) từ các đơn hủy
 INSERT INTO `wallet_transactions` (`wallet_id`, `user_id`, `type`, `amount`, `balance_before`, `balance_after`, `reference_type`, `reference_id`, `description`, `status`, `created_at`) VALUES
 (4, 4, 'REFUND', 1400000, 2450000, 3850000, 'booking_refund', 4201, 'Hoàn tiền hủy phòng 70% (Mã đơn: BK-CAN-4201)', 'completed', DATE_SUB(NOW(), INTERVAL 10 DAY)),
@@ -305,7 +310,6 @@ INSERT INTO `wallet_transactions` (`wallet_id`, `user_id`, `type`, `amount`, `ba
 (8, 8, 'DEPOSIT', 500000, 270000, 770000, 'manual_deposit', 8001, 'Nạp tiền ví điện tử', 'completed', DATE_SUB(NOW(), INTERVAL 30 DAY));
 
 -- 8. TẠO LỆNH RÚT TIỀN (WITHDRAWALS) - CÓ CẢ LỆNH ĐANG CHỜ DUYỆT ĐỂ DEMO TRỰC TIẾP
-DELETE FROM `withdrawals` WHERE `user_id` IN (4, 8);
 INSERT INTO `withdrawals` (`id`, `user_id`, `wallet_id`, `bank_account_id`, `amount`, `status`, `admin_note`, `processed_by`, `processed_at`, `created_at`) VALUES
 -- Lệnh đang chờ duyệt (Pending) của Chuẩn -> Để lúc thuyết trình có thể mở Web Admin bấm "Duyệt chuyển tiền" ngay trước mắt thầy!
 (401, 4, 4, 401, 500000, 'pending', NULL, NULL, NULL, NOW()),
@@ -319,7 +323,6 @@ INSERT INTO `withdrawals` (`id`, `user_id`, `wallet_id`, `bank_account_id`, `amo
 (801, 8, 8, 801, 800000, 'completed', 'Chuyển tiền VCB thành công', 1, DATE_SUB(NOW(), INTERVAL 20 DAY), DATE_SUB(NOW(), INTERVAL 21 DAY));
 
 -- 9. TẠO ĐÁNH GIÁ (REVIEWS) 5★ TỪ CHUẨN VÀ HƯƠNG CHO CÁC CHỖ NGHỈ
-DELETE FROM `reviews` WHERE `user_id` IN (4, 8);
 INSERT INTO `reviews` (`property_id`, `user_id`, `booking_id`, `rating`, `comment`, `is_verified`, `is_active`, `created_at`) VALUES
 (1, 4, 4101, 5, 'Phòng rất đẹp, view nhìn ra thung lũng đồi thông cực chill. Chủ nhà nhiệt tình hỗ trợ check-in sớm. Chắc chắn sẽ quay lại!', 1, 1, DATE_SUB(NOW(), INTERVAL 15 DAY)),
 (2, 4, 4102, 5, 'Villa hồ bơi riêng sạch sẽ, tiện nghi đầy đủ bếp nướng BBQ. Cả gia đình mình rất thích!', 1, 1, DATE_SUB(NOW(), INTERVAL 22 DAY)),
@@ -330,7 +333,6 @@ INSERT INTO `reviews` (`property_id`, `user_id`, `booking_id`, `rating`, `commen
 (4, 8, 8102, 5, 'Phòng decor phong cách vintage rất xinh, chụp ảnh góc nào cũng đẹp.', 1, 1, DATE_SUB(NOW(), INTERVAL 28 DAY));
 
 -- 10. TẠO LỊCH SỬ TÍCH ĐIỂM VÀ ĐỔI VOUCHER (POINT_TRANSACTIONS)
-DELETE FROM `point_transactions` WHERE `user_id` IN (4, 8);
 INSERT INTO `point_transactions` (`user_id`, `title`, `points`, `type`, `created_at`) VALUES
 (4, 'Thưởng thành viên mới đăng ký', 200, 'earn', DATE_SUB(NOW(), INTERVAL 60 DAY)),
 (4, 'Hoàn thành kỳ nghỉ tại Homestay #1', 150, 'earn', DATE_SUB(NOW(), INTERVAL 15 DAY)),
@@ -342,7 +344,6 @@ INSERT INTO `point_transactions` (`user_id`, `title`, `points`, `type`, `created
 (8, 'Hoàn thành chuyến đi Sa Pa', 150, 'earn', DATE_SUB(NOW(), INTERVAL 18 DAY));
 
 -- 11. TẠO CUỘC TRÒ CHUYỆN (CHAT) VỚI CHỦ NHÀ CHO ĐƠN ĐANG Ở (BK-STAY-4001)
-DELETE FROM `booking_messages` WHERE `sender_id` IN (4, 8);
 DELETE FROM `booking_conversations` WHERE `booking_id` IN (4001, 8001);
 
 INSERT INTO `booking_conversations` (`id`, `booking_id`, `created_at`) VALUES
@@ -358,9 +359,11 @@ INSERT INTO `booking_messages` (`conversation_id`, `sender_id`, `message`, `mess
 (4001, 2, 'Cảm ơn bạn! Chúc bạn và người thân có kỳ nghỉ thật tuyệt vời nha!', 'text', DATE_SUB(NOW(), INTERVAL 4 HOUR));
 
 -- 12. TẠO 1 BẢN GHI KHIẾU NẠI (DISPUTES) ĐỂ DEMO PHÂN HỆ TRUST & SAFETY
-DELETE FROM `disputes` WHERE `reporter_id` IN (4, 8);
 INSERT INTO `disputes` (`id`, `reporter_id`, `reporter_role`, `target_type`, `target_id`, `booking_id`, `category`, `reason`, `description`, `evidence_url`, `status`, `admin_note`, `resolution_action`, `resolved_by`, `created_at`, `resolved_at`) VALUES
 (401, 4, 'guest', 'booking', 4101, 4101, 'facility', 'Máy nước nóng phòng tắm bị rò nước', 'Trong đêm đầu tiên ở homestay, bình nước nóng phòng tắm số 2 bị rò rỉ nước nhỏ giọt. Chủ nhà đã khắc phục vào sáng hôm sau.', 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80', 'resolved', 'Admin đã tiếp nhận, chủ nhà đã hỗ trợ kịp thời và tặng bữa sáng miễn phí cho khách. Khách đồng ý đóng khiếu nại.', 'none', 1, DATE_SUB(NOW(), INTERVAL 14 DAY), DATE_SUB(NOW(), INTERVAL 13 DAY));
+
+-- BẬT LẠI KIỂM TRA KHÓA NGOẠI
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ==============================================================================
 -- HOÀN TẤT NẠP DỮ LIỆU DEMO BẢO VỆ ĐỒ ÁN!
