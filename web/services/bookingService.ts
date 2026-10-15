@@ -147,8 +147,13 @@ export async function createBooking(payload: {
 }
 
 export async function getMyBookings() {
-  const response = await apiRequest<any[]>("/api/bookings");
-  return response.map(mapBooking);
+  const response = await apiRequest<any>("/api/bookings");
+  const list = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data)
+    ? response.data
+    : [];
+  return list.map(mapBooking);
 }
 
 export async function getMyBookingById(id: number | string) {
@@ -222,8 +227,13 @@ export async function reviewHostBooking(
 }
 
 export async function getAdminBookings() {
-  const response = await apiRequest<any[]>("/api/admin/bookings");
-  return response.map(mapBooking);
+  const response = await apiRequest<any>("/api/admin/bookings");
+  const list = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data)
+    ? response.data
+    : [];
+  return list.map(mapBooking);
 }
 
 export async function getAdminBookingById(id: number | string) {

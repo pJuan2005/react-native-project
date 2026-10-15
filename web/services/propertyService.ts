@@ -196,8 +196,13 @@ export async function getPropertyUnavailableDates(id: string | number) {
 }
 
 export async function getAdminProperties() {
-  const data = await apiRequest<any[]>("/api/admin/properties");
-  return data.map(normalizePropertySummary);
+  const data = await apiRequest<any>("/api/admin/properties");
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.data)
+    ? data.data
+    : [];
+  return list.map(normalizePropertySummary);
 }
 
 export async function getAdminPropertyById(id: string | number) {
@@ -263,8 +268,13 @@ export async function updateAdminManageLinkState(id: number, isActive: boolean) 
 
 export async function getHostProperties(hostId?: number) {
   const query = typeof hostId === "number" ? `?hostId=${hostId}` : "";
-  const data = await apiRequest<any[]>(`/api/host/properties${query}`);
-  return data.map(normalizePropertySummary);
+  const data = await apiRequest<any>(`/api/host/properties${query}`);
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.data)
+    ? data.data
+    : [];
+  return list.map(normalizePropertySummary);
 }
 
 export async function getHostPropertyById(id: string | number, hostId?: number) {

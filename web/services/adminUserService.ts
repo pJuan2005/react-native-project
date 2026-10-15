@@ -58,8 +58,13 @@ function mapAdminUser(user: ApiAdminUser): AdminUserRecord {
 }
 
 export async function getAdminUsers() {
-  const response = await apiRequest<ApiAdminUser[]>("/api/admin/users");
-  return response.map(mapAdminUser);
+  const response = await apiRequest<any>("/api/admin/users");
+  const list = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data)
+    ? response.data
+    : [];
+  return list.map(mapAdminUser);
 }
 
 export async function getAdminUserById(id: number | string) {

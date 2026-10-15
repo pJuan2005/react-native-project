@@ -235,20 +235,22 @@ export async function getHostDashboard() {
 
 export async function getAdminDashboard() {
   const response = await apiRequest<any>("/api/admin/dashboard");
+  const data = response?.data || response;
   return {
-    summary: mapAdminSummary(response?.summary),
-    monthlyPerformance: mapMonthlyPerformance(response?.monthlyPerformance),
-    recentBookings: mapRecentBookings(response?.recentBookings),
+    summary: mapAdminSummary(data?.summary),
+    monthlyPerformance: mapMonthlyPerformance(data?.monthlyPerformance),
+    recentBookings: mapRecentBookings(data?.recentBookings),
   } satisfies AdminDashboardData;
 }
 
 export async function getAdminReports() {
   const response = await apiRequest<any>("/api/admin/reports");
+  const data = response?.data || response;
   return {
-    summary: mapAdminSummary(response?.summary),
-    monthlyPerformance: mapMonthlyPerformance(response?.monthlyPerformance),
-    bookingStatus: mapBreakdown(response?.bookingStatus),
-    propertyTypes: mapBreakdown(response?.propertyTypes),
-    topHosts: mapTopHosts(response?.topHosts),
+    summary: mapAdminSummary(data?.summary),
+    monthlyPerformance: mapMonthlyPerformance(data?.monthlyPerformance),
+    bookingStatus: mapBreakdown(data?.bookingStatus),
+    propertyTypes: mapBreakdown(data?.propertyTypes),
+    topHosts: mapTopHosts(data?.topHosts),
   } satisfies AdminReportsData;
 }
