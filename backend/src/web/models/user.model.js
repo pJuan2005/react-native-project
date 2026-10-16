@@ -185,6 +185,42 @@ User.updateByAdmin = async (id, payload) => {
     ],
   );
 
+  // CASCADE BLOCK: Nếu Admin block/inactive Host thì tự động ẩn toàn bộ homestay của Host đó.
+  // Khi mở block (status = 'active') thì kích hoạt lại.
+  try {
+    const isHostBlocked = payload.status === 'blocked' || payload.status === 'inactive';
+    if (isHostBlocked) {
+      await db.promise().query(
+        `UPDATE properties
+         SET is_active = 0, status = 'rejected'
+         WHERE host_id = ? AND is_deleted = 0`,
+        [id]
+      );
+      // Tự động ẩn các review của user bị block
+      await db.promise().query(
+        `UPDATE reviews
+         SET is_active = 0
+         WHERE (user_id = ? OR guest_id = ?)`,
+        [id, id]
+      );
+    } else if (payload.status === 'active') {
+      await db.promise().query(
+        `UPDATE properties
+         SET is_active = 1, status = 'approved'
+         WHERE host_id = ? AND is_deleted = 0`,
+        [id]
+      );
+      await db.promise().query(
+        `UPDATE reviews
+         SET is_active = 1
+         WHERE (user_id = ? OR guest_id = ?)`,
+        [id, id]
+      );
+    }
+  } catch (cascadeErr) {
+    console.warn('[Cascade User Status Warning]:', cascadeErr.message);
+  }
+
   return result.affectedRows > 0;
 };
 

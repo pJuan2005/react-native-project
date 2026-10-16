@@ -18,7 +18,7 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
   // Run DB Schema Auto-Migration
   await migrateDatabase();
 
-  // Background Worker: Tự động quét và giải phóng các phòng giữ chỗ quá 15 phút chưa thanh toán mỗi 60 giây
+  // Background Worker 1: Tự động quét và giải phóng các phòng giữ chỗ quá 15 phút chưa thanh toán mỗi 60 giây
   const BookingModel = require('./models/booking.model');
   setInterval(async () => {
     try {
@@ -28,6 +28,25 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
       }
     } catch (_) {}
   }, 60000);
+
+  // Background Worker 2: Scheduled Auto-Payout Worker (Tự động chi trả rút tiền định kỳ vào ngày cố định / batch queue)
+  const WalletService = require('./services/wallet.service');
+  setInterval(async () => {
+    try {
+      const now = new Date();
+      const currentDay = now.getDate(); // Ngày trong tháng
+      // Lịch chi trả tự động định kỳ: ngày 5, 15, 25 hàng tháng (hoặc chạy quét tự động ngầm định kỳ)
+      const isPayoutDay = [5, 15, 25].includes(currentDay);
+      if (isPayoutDay) {
+        const result = await WalletService.runScheduledAutoPayout({ maxBatch: 20 });
+        if (result.processedCount > 0) {
+          console.log(`[Auto-Payout Cron] Đã tự động giải ngân thành công ${result.processedCount} lệnh rút tiền (Tổng: ${result.totalAmount.toLocaleString('vi-VN')}₫).`);
+        }
+      }
+    } catch (cronErr) {
+      console.warn('[Auto-Payout Cron Warning]:', cronErr.message);
+    }
+  }, 300000); // Quét mỗi 5 phút trong ngày chi trả
 });
 
 // Graceful shutdown

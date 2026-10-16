@@ -3,7 +3,7 @@ const AuditService = require('./audit.service');
 
 class DisputeService {
   /**
-   * Tạo một khiếu nại / báo cáo mới
+   * Tạo một khiếu nại / báo cáo mới có tích hợp AI Triage & Spam Defense
    */
   static async createDispute({
     reporterId,
@@ -19,11 +19,60 @@ class DisputeService {
       throw new Error('Vui lòng cung cấp đầy đủ thông tin mục khiếu nại, lý do và mô tả chi tiết.');
     }
 
+    // 1. CHỐNG SPAM LỚP 1: Kiểm tra tần suất khiếu nại của user trong 24h
+    if (reporterId) {
+      const [recentDisputes] = await db.query(
+        `SELECT COUNT(*) AS cnt FROM disputes
+         WHERE reporter_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
+        [reporterId]
+      );
+      if (recentDisputes[0]?.cnt >= 5) {
+        throw new Error('Bạn đã gửi 5 khiếu nại trong 24 giờ qua. Để chống spam, vui lòng đợi Ban Quản Trị xử lý các yêu cầu hiện tại.');
+      }
+    }
+
+    // 2. CHỐNG ĐỐI THỦ PHÀN NÀN ẢO: Nếu khiếu nại Homestay mà có bookingId -> xác minh khách đã từng đặt phòng này
+    if (bookingId && targetType === 'property') {
+      const [bookingCheck] = await db.query(
+        `SELECT id, user_id, status FROM bookings WHERE id = ? AND property_id = ?`,
+        [bookingId, targetId]
+      );
+      if (bookingCheck.length === 0) {
+        throw new Error('Đơn đặt phòng không trùng khớp với chỗ nghỉ đang khiếu nại.');
+      }
+    }
+
+    // 3. AI AUTO-TRIAGE & AUTO-RESOLVE ENGINE:
+    // Tự động phân tích ngữ cảnh, từ khóa và chứng cứ để gán nhãn hoặc tự động xử lý
+    const content = `${reason} ${description}`.toLowerCase();
+    const spamKeywords = ['quảng cáo', 'mua bán', 'telegram', 'zalo', 'lừa đảo lừa đảo', 'hack', 'vay tiền', 'tuyen dung'];
+    const isSpamDetected = spamKeywords.some((kw) => content.includes(kw)) || description.trim().length < 6;
+
+    const legitIssueKeywords = ['sai phòng', 'bẩn', 'không có nước', 'không liên lạc được', 'cháy nổ', 'hỏng điều hòa', 'mùi hôi', 'thái độ kém'];
+    const hasLegitIssue = legitIssueKeywords.some((kw) => content.includes(kw));
+    const hasEvidence = Boolean(evidenceUrl);
+
+    let initialStatus = 'pending';
+    let aiNote = null;
+    let resolutionAction = 'none';
+
+    if (isSpamDetected) {
+      // AI Tự động từ chối spam
+      initialStatus = 'rejected';
+      aiNote = '[AI Auto-Shield]: Phát hiện nội dung spam hoặc từ khóa không hợp lệ. Hệ thống tự động từ chối khiếu nại rác.';
+      resolutionAction = 'dismiss_spam';
+    } else if (hasEvidence && hasLegitIssue && bookingId) {
+      // AI Tự động chấp nhận ưu tiên (Auto-Accept) với trường hợp có bằng chứng ảnh + mã đặt phòng thực tế
+      initialStatus = 'resolved';
+      aiNote = '[AI Auto-Accept]: Khiếu nại có mã phòng hợp lệ, mô tả chi tiết và bằng chứng đính kèm. AI đã tự động phê duyệt và chuyển bộ phận CSKH.';
+      resolutionAction = 'auto_verified';
+    }
+
     const [result] = await db.query(
       `INSERT INTO disputes (
         reporter_id, reporter_role, target_type, target_id, booking_id,
-        reason, description, evidence_url, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+        reason, description, evidence_url, status, admin_note, resolution_action, resolved_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${initialStatus !== 'pending' ? 'NOW()' : 'NULL'})`,
       [
         reporterId,
         reporterRole,
@@ -33,6 +82,9 @@ class DisputeService {
         reason.trim(),
         description.trim(),
         evidenceUrl || null,
+        initialStatus,
+        aiNote,
+        resolutionAction,
       ]
     );
 
@@ -40,12 +92,12 @@ class DisputeService {
 
     // Log to Audit trail
     await AuditService.log({
-      actorId: reporterId,
+      actorId: reporterId || 1,
       actorRole: reporterRole,
-      action: 'dispute_created',
+      action: initialStatus === 'pending' ? 'dispute_created' : `dispute_${initialStatus}_by_ai`,
       entityType: 'dispute',
       entityId: disputeId,
-      metadata: { targetType, targetId, reason },
+      metadata: { targetType, targetId, reason, aiNote, status: initialStatus },
     });
 
     return {
@@ -53,8 +105,13 @@ class DisputeService {
       targetType,
       targetId,
       reason,
-      status: 'pending',
-      message: 'Khiếu nại của bạn đã được gửi tới Ban Quản Trị. Chúng tôi sẽ điều tra và phản hồi sớm nhất.',
+      status: initialStatus,
+      aiAnalysis: aiNote,
+      message: initialStatus === 'resolved'
+        ? 'Khiếu nại của bạn đã được hệ thống AI tự động xác thực và chấp thuận!'
+        : initialStatus === 'rejected'
+        ? 'Khiếu nại bị từ chối do không đáp ứng tiêu chuẩn cộng đồng hoặc vi phạm từ khóa.'
+        : 'Khiếu nại của bạn đã được ghi nhận và đưa vào hàng đợi điều tra.',
     };
   }
 

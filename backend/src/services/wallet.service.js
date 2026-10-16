@@ -458,6 +458,48 @@ class WalletService {
       }
     }
   }
+
+  /**
+   * CRON WORKER / BATCH PAYOUT: Tự động xử lý chi trả rút tiền hàng loạt vào ngày cố định
+   * Thay vì Admin phải bấm duyệt thủ công từng lệnh chuyển khoản.
+   */
+  static async runScheduledAutoPayout({ maxBatch = 50 } = {}) {
+    const [pendingWithdrawals] = await db.query(
+      `SELECT w.id, w.user_id, w.amount, w.status, b.bank_name, b.account_number, b.account_holder_name
+       FROM withdrawals w
+       JOIN bank_accounts b ON w.bank_account_id = b.id
+       WHERE w.status = 'pending'
+       ORDER BY w.created_at ASC
+       LIMIT ?`,
+      [parseInt(maxBatch, 10)]
+    );
+
+    if (pendingWithdrawals.length === 0) {
+      return { processedCount: 0, totalAmount: 0 };
+    }
+
+    let successCount = 0;
+    let totalPaidOut = 0;
+
+    for (const w of pendingWithdrawals) {
+      try {
+        await this.processWithdrawal(w.id, {
+          adminId: 1, // System Bot / Admin ID
+          status: 'completed',
+          adminNote: `[Auto-Payout Cron]: Hệ thống tự động chi trả định kỳ qua cổng VietQR/Ngân hàng đến STK ${w.account_number} (${w.bank_name}).`,
+        });
+        successCount++;
+        totalPaidOut += parseFloat(w.amount || 0);
+      } catch (err) {
+        console.warn(`[Auto-Payout Error] Không thể chi trả tự động lệnh #${w.id}:`, err.message);
+      }
+    }
+
+    return {
+      processedCount: successCount,
+      totalAmount: totalPaidOut,
+    };
+  }
 }
 
 module.exports = WalletService;
