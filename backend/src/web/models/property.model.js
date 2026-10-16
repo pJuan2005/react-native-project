@@ -116,44 +116,61 @@ async function getAmenities(propertyId) {
 }
 
 async function getImageList(propertyId) {
-  const [rows] = await db.promise().query(
-    `SELECT MIN(id) AS id, image_url
-     FROM property_images
-     WHERE property_id = ?
-     GROUP BY image_url
-     ORDER BY is_primary DESC, sort_order ASC, id ASC
-     LIMIT 10`,
-    [propertyId],
-  );
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT id, image_url
+       FROM property_images
+       WHERE property_id = ?
+       ORDER BY is_primary DESC, sort_order ASC, id ASC
+       LIMIT 10`,
+      [propertyId],
+    );
 
-  return rows.map((row) => ({
-    id: Number(row.id),
-    url: row.image_url,
-  }));
+    const seen = new Set();
+    const result = [];
+    for (const row of rows) {
+      if (!seen.has(row.image_url)) {
+        seen.add(row.image_url);
+        result.push({
+          id: Number(row.id),
+          url: row.image_url,
+        });
+      }
+    }
+    return result;
+  } catch (err) {
+    console.warn('[getImageList Warning]:', err.message);
+    return [];
+  }
 }
 
 async function getReviewList(propertyId) {
-  const [rows] = await db.promise().query(
-    `SELECT
-      r.id,
-      r.rating,
-      r.comment,
-      r.created_at AS date,
-      u.full_name AS authorName
-     FROM reviews r
-     JOIN users u ON COALESCE(r.guest_id, r.user_id) = u.id
-     WHERE r.property_id = ?
-     ORDER BY r.created_at DESC`,
-    [propertyId],
-  );
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT
+        r.id,
+        r.rating,
+        r.comment,
+        r.created_at AS date,
+        COALESCE(u.full_name, u.name, 'Khách hàng') AS authorName
+       FROM reviews r
+       LEFT JOIN users u ON COALESCE(r.guest_id, r.user_id) = u.id
+       WHERE r.property_id = ?
+       ORDER BY r.created_at DESC`,
+      [propertyId],
+    );
 
-  return rows.map((row) => ({
-    id: Number(row.id),
-    rating: Number(row.rating),
-    comment: row.comment,
-    authorName: row.authorName,
-    date: row.date,
-  }));
+    return rows.map((row) => ({
+      id: Number(row.id),
+      rating: Number(row.rating),
+      comment: row.comment,
+      authorName: row.authorName,
+      date: row.date,
+    }));
+  } catch (err) {
+    console.warn('[getReviewList Warning]:', err.message);
+    return [];
+  }
 }
 
 async function buildPropertyDetail(row, options = {}) {
@@ -208,27 +225,32 @@ async function buildPropertyDetail(row, options = {}) {
 }
 
 async function getPropertyDetail(whereClause, params, options = {}) {
-  const [rows] = await db.promise().query(
-    `SELECT
-      p.*,
-      COALESCE(t.name, 'Homestay') AS property_type,
-      u.full_name AS hostName,
-      COUNT(r.id) AS reviewCount,
-      COALESCE(AVG(r.rating), 0) AS rating
-     FROM properties p
-     LEFT JOIN homestay_types t ON p.type_id = t.id
-     JOIN users u ON p.host_id = u.id
-     LEFT JOIN reviews r ON r.property_id = p.id
-     WHERE ${whereClause}
-     GROUP BY p.id`,
-    params,
-  );
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT
+        p.*,
+        COALESCE(t.name, 'Homestay') AS property_type,
+        COALESCE(u.full_name, u.name, 'Chủ nhà') AS hostName,
+        COUNT(r.id) AS reviewCount,
+        COALESCE(AVG(r.rating), 0) AS rating
+       FROM properties p
+       LEFT JOIN homestay_types t ON p.type_id = t.id
+       LEFT JOIN users u ON p.host_id = u.id
+       LEFT JOIN reviews r ON r.property_id = p.id
+       WHERE ${whereClause}
+       GROUP BY p.id, t.name, u.full_name, u.name`,
+      params,
+    );
 
-  if (rows.length === 0) {
-    return null;
+    if (rows.length === 0) {
+      return null;
+    }
+
+    return buildPropertyDetail(rows[0], options);
+  } catch (err) {
+    console.error('[getPropertyDetail Error]:', err);
+    throw err;
   }
-
-  return buildPropertyDetail(rows[0], options);
 }
 
 const FALLBACK_PROPERTIES = [
@@ -557,8 +579,8 @@ Property.setManageTokenActive = async (id, isActive, hostId = null) => {
 Property.getQuickManageByToken = async (token) =>
   getPropertyDetail(
     `p.manage_token = ?
-     AND p.manage_token_active = 1
-     AND p.status = 'approved'
+     AND COALESCE(p.manage_token_active, 1) = 1
+     AND (p.status = 'approved' OR p.status = 'active' OR p.is_active = 1)
      AND p.is_deleted = 0
      AND (p.manage_token_expires_at IS NULL OR p.manage_token_expires_at > NOW())`,
     [token],

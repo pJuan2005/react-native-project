@@ -39,20 +39,30 @@ function getNightCount(checkIn, checkOut) {
 }
 
 function buildQuickManageSummary(property, platformSettings, recentBookings, unavailableRanges) {
+  const safeBookings = Array.isArray(recentBookings) ? recentBookings : [];
   return {
     property,
-    unavailableRanges,
-    recentBookings: recentBookings.map((booking) => ({
-      ...booking,
-      paymentInfo: buildPaymentInfo(booking, platformSettings),
-    })),
+    unavailableRanges: Array.isArray(unavailableRanges) ? unavailableRanges : [],
+    recentBookings: safeBookings.map((booking) => {
+      try {
+        return {
+          ...booking,
+          paymentInfo: buildPaymentInfo(booking, platformSettings),
+        };
+      } catch (_) {
+        return {
+          ...booking,
+          paymentInfo: null,
+        };
+      }
+    }),
     settings: {
-      usdToVndRate: platformSettings.usdToVndRate,
+      usdToVndRate: platformSettings?.usdToVndRate || 25000,
       onlineCommissionRate:
-        platformSettings.onlineCommissionRate ?? platformSettings.platformCommissionRate,
-      directCommissionRate: platformSettings.directCommissionRate,
+        platformSettings?.onlineCommissionRate ?? platformSettings?.platformCommissionRate ?? 0.1,
+      directCommissionRate: platformSettings?.directCommissionRate || 0.03,
       directCommissionPercent: Number(
-        ((platformSettings.directCommissionRate || 0) * 100).toFixed(2),
+        (((platformSettings?.directCommissionRate || 0.03)) * 100).toFixed(2),
       ),
     },
   };
@@ -69,9 +79,18 @@ exports.getQuickManageProperty = async (req, res) => {
     }
 
     const [platformSettings, recentBookings, unavailableRanges] = await Promise.all([
-      PlatformSetting.getPlatformSettings(),
-      Booking.getByProperty(property.id),
-      Property.getManagedUnavailableDateRanges(property.id),
+      PlatformSetting.getPlatformSettings().catch((e) => {
+        console.warn('[getPlatformSettings Warning]:', e.message);
+        return {};
+      }),
+      Booking.getByProperty(property.id).catch((e) => {
+        console.warn('[Booking.getByProperty Warning]:', e.message);
+        return [];
+      }),
+      Property.getManagedUnavailableDateRanges(property.id).catch((e) => {
+        console.warn('[getManagedUnavailableDateRanges Warning]:', e.message);
+        return [];
+      }),
     ]);
 
     return res.json(
@@ -83,8 +102,10 @@ exports.getQuickManageProperty = async (req, res) => {
       ),
     );
   } catch (_error) {
+    console.error('[getQuickManageProperty ERROR]:', _error);
     return res.status(500).json({
       message: "Unable to load the quick management view right now.",
+      error: _error.message,
     });
   }
 };

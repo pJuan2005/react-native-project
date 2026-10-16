@@ -95,71 +95,76 @@ function mapBookingRow(row) {
 }
 
 async function getBookingList(whereClause, params = []) {
-  const [rows] = await db.promise().query(
-    `SELECT
-      b.id,
-      COALESCE(
-        b.booking_code,
-        CONCAT('BK', DATE_FORMAT(b.created_at, '%Y%m%d'), LPAD(b.id, 4, '0'))
-      ) AS bookingCode,
-      b.property_id AS propertyId,
-      p.name AS propertyTitle,
-      CONCAT(p.street_address, ', ', p.city, ', ', p.country) AS propertyLocation,
-      p.cover_image AS propertyImage,
-      p.host_id AS hostId,
-      host.full_name AS hostName,
-      guest.id AS guestId,
-      COALESCE(guest.full_name, b.guest_name_snapshot, 'Walk-in Guest') AS guestName,
-      COALESCE(guest.email, '') AS guestEmail,
-      COALESCE(guest.phone, b.guest_phone_snapshot, '') AS guestPhone,
-      b.check_in AS checkIn,
-      b.check_out AS checkOut,
-      COALESCE(b.nights, DATEDIFF(b.check_out, b.check_in)) AS nights,
-      b.guests,
-      b.total_price AS totalPrice,
-      b.status,
-      COALESCE(b.source, 'guest_online') AS source,
-      b.created_by AS createdBy,
-      COALESCE(b.payment_method, 'bank_transfer') AS paymentMethod,
-      COALESCE(
-        b.payment_reference,
-        CONCAT('HSBK', LPAD(b.id, 6, '0'))
-      ) AS paymentReference,
-      COALESCE(
-        b.payment_status,
-        CASE
-          WHEN b.status = 'confirmed' THEN 'verified'
-          WHEN b.status = 'cancelled' THEN 'rejected'
-          ELSE 'unpaid'
-        END
-      ) AS paymentStatus,
-      b.payment_proof_image AS paymentProofImage,
-      b.payment_submitted_at AS paymentSubmittedAt,
-      b.confirmed_by AS confirmedBy,
-      reviewer.full_name AS confirmedByName,
-      b.confirmed_at AS confirmedAt,
-      b.rejection_reason AS rejectionReason,
-      b.host_note AS hostNote,
-      b.checkin_instructions AS checkinInstructions,
-      COALESCE(b.commission_rate_applied, 0) AS commissionRateApplied,
-      COALESCE(b.commission_amount, 0) AS commissionAmount,
-      COALESCE(b.host_payout_amount, 0) AS hostPayoutAmount,
-      review.id AS reviewId,
-      review.rating AS reviewRating,
-      review.created_at AS reviewCreatedAt,
-      b.created_at AS createdAt
-     FROM bookings b
-     JOIN properties p ON p.id = b.property_id
-     LEFT JOIN users guest ON guest.id = COALESCE(b.guest_id, b.user_id)
-     LEFT JOIN users host ON host.id = p.host_id
-     LEFT JOIN users reviewer ON reviewer.id = b.confirmed_by
-     LEFT JOIN reviews review ON review.booking_id = b.id
-     WHERE ${whereClause} AND p.is_deleted = 0
-     ORDER BY b.id DESC, b.created_at DESC`,
-    params,
-  );
+  try {
+    const [rows] = await db.promise().query(
+      `SELECT
+        b.id,
+        COALESCE(
+          b.booking_code,
+          CONCAT('BK', DATE_FORMAT(b.created_at, '%Y%m%d'), LPAD(b.id, 4, '0'))
+        ) AS bookingCode,
+        b.property_id AS propertyId,
+        p.name AS propertyTitle,
+        CONCAT(p.street_address, ', ', p.city, ', ', p.country) AS propertyLocation,
+        p.cover_image AS propertyImage,
+        p.host_id AS hostId,
+        COALESCE(host.full_name, host.name, 'Chủ nhà') AS hostName,
+        guest.id AS guestId,
+        COALESCE(guest.full_name, guest.name, b.guest_name_snapshot, 'Walk-in Guest') AS guestName,
+        COALESCE(guest.email, '') AS guestEmail,
+        COALESCE(guest.phone, b.guest_phone_snapshot, '') AS guestPhone,
+        b.check_in AS checkIn,
+        b.check_out AS checkOut,
+        COALESCE(b.nights, DATEDIFF(b.check_out, b.check_in)) AS nights,
+        b.guests,
+        b.total_price AS totalPrice,
+        b.status,
+        COALESCE(b.source, 'guest_online') AS source,
+        b.created_by AS createdBy,
+        COALESCE(b.payment_method, 'bank_transfer') AS paymentMethod,
+        COALESCE(
+          b.payment_reference,
+          CONCAT('HSBK', LPAD(b.id, 6, '0'))
+        ) AS paymentReference,
+        COALESCE(
+          b.payment_status,
+          CASE
+            WHEN b.status = 'confirmed' THEN 'verified'
+            WHEN b.status = 'cancelled' THEN 'rejected'
+            ELSE 'unpaid'
+          END
+        ) AS paymentStatus,
+        b.payment_proof_image AS paymentProofImage,
+        b.payment_submitted_at AS paymentSubmittedAt,
+        b.confirmed_by AS confirmedBy,
+        COALESCE(reviewer.full_name, reviewer.name) AS confirmedByName,
+        b.confirmed_at AS confirmedAt,
+        b.rejection_reason AS rejectionReason,
+        b.host_note AS hostNote,
+        b.checkin_instructions AS checkinInstructions,
+        COALESCE(b.commission_rate_applied, 0) AS commissionRateApplied,
+        COALESCE(b.commission_amount, 0) AS commissionAmount,
+        COALESCE(b.host_payout_amount, 0) AS hostPayoutAmount,
+        review.id AS reviewId,
+        review.rating AS reviewRating,
+        review.created_at AS reviewCreatedAt,
+        b.created_at AS createdAt
+       FROM bookings b
+       JOIN properties p ON p.id = b.property_id
+       LEFT JOIN users guest ON guest.id = COALESCE(b.guest_id, b.user_id)
+       LEFT JOIN users host ON host.id = p.host_id
+       LEFT JOIN users reviewer ON reviewer.id = b.confirmed_by
+       LEFT JOIN reviews review ON review.booking_id = b.id
+       WHERE ${whereClause} AND p.is_deleted = 0
+       ORDER BY b.id DESC, b.created_at DESC`,
+      params,
+    );
 
-  return rows.map(mapBookingRow);
+    return rows.map(mapBookingRow);
+  } catch (err) {
+    console.warn('[getBookingList Warning]:', err.message);
+    return [];
+  }
 }
 
 async function getBookingDetail(whereClause, params = []) {
