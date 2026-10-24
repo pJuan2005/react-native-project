@@ -36,6 +36,17 @@ function formatCurrency(value: number | string | undefined) {
   return `${amount.toLocaleString("vi-VN")} ₫`;
 }
 
+function normalizeSearchText(text: string | undefined | null) {
+  if (!text) return "";
+  return String(text)
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .trim();
+}
+
 export default function ManagePropertiesPage() {
   const [properties, setProperties] = useState<PropertySummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,16 +72,38 @@ export default function ManagePropertiesPage() {
   }, []);
 
   const filtered = useMemo(() => {
+    const rawQuery = search.trim().toLowerCase();
+    if (!rawQuery) {
+      if (statusFilter === "all") return properties;
+      return properties.filter(
+        (p) => (p.status || "").toLowerCase() === statusFilter
+      );
+    }
+
+    // Tự động sửa lỗi gõ phím đảo chữ phổ biến (ví dụ: slient -> silent)
+    const correctedQuery = rawQuery.replace(/\bslient\b/g, "silent");
+    const normalizedQuery = normalizeSearchText(correctedQuery);
+
     return properties.filter((property) => {
-      const query = search.toLowerCase();
+      const title = String(property.title || property.name || "");
+      const location = String(property.location || property.city || "");
+      const hostName = String(property.hostName || "");
+
+      const normTitle = normalizeSearchText(title);
+      const normLoc = normalizeSearchText(location);
+      const normHost = normalizeSearchText(hostName);
+
       const matchSearch =
-        !query ||
-        property.title.toLowerCase().includes(query) ||
-        property.location.toLowerCase().includes(query) ||
-        property.hostName.toLowerCase().includes(query);
+        normTitle.includes(normalizedQuery) ||
+        normLoc.includes(normalizedQuery) ||
+        normHost.includes(normalizedQuery) ||
+        title.toLowerCase().includes(rawQuery) ||
+        location.toLowerCase().includes(rawQuery) ||
+        hostName.toLowerCase().includes(rawQuery);
 
       const matchStatus =
-        statusFilter === "all" || property.status.toLowerCase() === statusFilter;
+        statusFilter === "all" ||
+        (property.status || "").toLowerCase() === statusFilter;
 
       return matchSearch && matchStatus;
     });
