@@ -613,12 +613,14 @@ async function migrateDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    // 14. Bổ sung category vào disputes nếu chưa có
+    // 14. Bổ sung category vào disputes nếu chưa có và mở rộng status/resolution_action
     try {
       const [dCat] = await db.query("SHOW COLUMNS FROM disputes LIKE 'category'");
       if (dCat.length === 0) {
         await db.query("ALTER TABLE disputes ADD COLUMN category VARCHAR(50) NULL AFTER booking_id");
       }
+      await db.query("ALTER TABLE disputes MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'pending'");
+      await db.query("ALTER TABLE disputes MODIFY COLUMN resolution_action VARCHAR(50) NOT NULL DEFAULT 'none'");
     } catch (_) {}
 
     // 15. Tạo các bảng Wallets, Wallet Transactions, Bank Accounts, Withdrawals, Refunds

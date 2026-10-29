@@ -49,6 +49,7 @@ function getStatusBadge(status: DisputeItem["status"]) {
     case "resolved":
       return { label: "Đã giải quyết", bg: "#dcfce7", color: "#166534", border: "#bbf7d0" };
     case "rejected":
+    case "dismissed" as any:
       return { label: "Đã từ chối", bg: "#fee2e2", color: "#991b1b", border: "#fecaca" };
     default:
       return { label: status, bg: "#f1f5f9", color: "#475569", border: "#e2e8f0" };

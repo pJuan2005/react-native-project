@@ -60,12 +60,12 @@ class DisputeService {
       // AI Tự động từ chối spam
       initialStatus = 'rejected';
       aiNote = '[AI Auto-Shield]: Phát hiện nội dung spam hoặc từ khóa không hợp lệ. Hệ thống tự động từ chối khiếu nại rác.';
-      resolutionAction = 'dismiss_spam';
+      resolutionAction = 'none';
     } else if (hasEvidence && hasLegitIssue && bookingId) {
       // AI Tự động chấp nhận ưu tiên (Auto-Accept) với trường hợp có bằng chứng ảnh + mã đặt phòng thực tế
       initialStatus = 'resolved';
       aiNote = '[AI Auto-Accept]: Khiếu nại có mã phòng hợp lệ, mô tả chi tiết và bằng chứng đính kèm. AI đã tự động phê duyệt và chuyển bộ phận CSKH.';
-      resolutionAction = 'auto_verified';
+      resolutionAction = 'none';
     }
 
     const [result] = await db.query(
