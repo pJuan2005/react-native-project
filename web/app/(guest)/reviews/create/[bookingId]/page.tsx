@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { Star, ArrowLeft, Send, CheckCircle2 } from "lucide-react";
+import { SafeImage } from "@/components/shared/SafeImage";
 import { useAuth } from "@/components/context/AuthContext";
 import { getMyBookingById, type BookingRecord } from "@/services/bookingService";
 import { createReview } from "@/services/reviewService";
@@ -131,10 +131,11 @@ export default function CreateReviewPage() {
           {booking && (
             <div className="flex items-center gap-4 p-4 rounded-2xl bg-blue-50/60 border border-blue-100 mb-6">
               <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 relative shrink-0">
-                <Image
+                <SafeImage
                   src={booking.propertyImage || "/img/banner-home.jpg"}
                   alt={booking.propertyTitle}
                   fill
+                  fallbackSrc="/img/banner-home.jpg"
                   className="object-cover"
                 />
               </div>

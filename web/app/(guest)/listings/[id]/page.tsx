@@ -485,8 +485,11 @@ export default function DetailPage() {
             }}
           >
             <img
-              src={allImages[activeImg]}
+              src={allImages[activeImg] || "/img/home1.png"}
               alt={property.title}
+              onError={(e) => {
+                e.currentTarget.src = "/img/home1.png";
+              }}
               style={{
                 width: "100%",
                 height: "100%",
@@ -594,8 +597,12 @@ export default function DetailPage() {
                   }}
                 >
                   <img
-                    src={img}
+                    src={img || `/img/home${(idx % 11) + 1}.${(idx % 11) + 1 <= 3 ? "png" : "jpg"}`}
                     alt=""
+                    onError={(e) => {
+                      const num = (idx % 11) + 1;
+                      e.currentTarget.src = `/img/home${num}.${num <= 3 ? "png" : "jpg"}`;
+                    }}
                     style={{
                       width: "100%",
                       height: "100%",

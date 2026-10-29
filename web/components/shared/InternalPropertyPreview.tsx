@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { SafeImage } from "@/components/shared/SafeImage";
 import { useAuth } from "@/components/context/AuthContext";
 import {
   getAdminPropertyById,
@@ -342,13 +343,12 @@ export function InternalPropertyPreview({
               }}
             >
               {activeImage && (
-                <Image
+                <SafeImage
                   src={activeImage}
                   alt={property.title}
                   fill
                   sizes="(max-width: 1200px) 100vw, 66vw"
-                  unoptimized={isBackendUploadImage(activeImage)}
-                  style={{ objectFit: "cover" }}
+                  fallbackSrc="/img/home1.png"
                 />
               )}
             </div>
@@ -361,34 +361,39 @@ export function InternalPropertyPreview({
                   gap: 12,
                 }}
               >
-                {galleryImages.map((image, index) => (
-                  <button
-                    key={`${image}-${index}`}
-                    onClick={() => setActiveImage(image)}
-                    style={{
-                      position: "relative",
-                      height: 86,
-                      borderRadius: 12,
-                      overflow: "hidden",
-                      border:
-                        activeImage === image
-                          ? "2px solid #2563eb"
-                          : "1px solid #dbe2ea",
-                      padding: 0,
-                      background: "#fff",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Image
-                      src={image}
-                      alt={`${property.title} ${index + 1}`}
-                      fill
-                      sizes="110px"
-                      unoptimized={isBackendUploadImage(image)}
-                      style={{ objectFit: "cover" }}
-                    />
-                  </button>
-                ))}
+                {galleryImages.map((image, index) => {
+                  const fallbackNum = (index % 11) + 1;
+                  const fallbackExt = fallbackNum <= 3 ? "png" : "jpg";
+                  const fallbackUrl = `/img/home${fallbackNum}.${fallbackExt}`;
+
+                  return (
+                    <button
+                      key={`${image}-${index}`}
+                      onClick={() => setActiveImage(image)}
+                      style={{
+                        position: "relative",
+                        height: 86,
+                        borderRadius: 12,
+                        overflow: "hidden",
+                        border:
+                          activeImage === image
+                            ? "2px solid #2563eb"
+                            : "1px solid #dbe2ea",
+                        padding: 0,
+                        background: "#fff",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <SafeImage
+                        src={image}
+                        alt={`${property.title} ${index + 1}`}
+                        fill
+                        sizes="110px"
+                        fallbackSrc={fallbackUrl}
+                      />
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

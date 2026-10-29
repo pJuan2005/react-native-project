@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import {
   AlertTriangle,
   CalendarDays,
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { PaymentStatusBadge } from "@/components/shared/PaymentStatusBadge";
+import { SafeImage } from "@/components/shared/SafeImage";
 import {
   createDirectBookingByToken,
   getQuickManageData,
@@ -579,13 +579,12 @@ export default function QuickManagePropertyPage() {
                       background: "#e2e8f0",
                     }}
                   >
-                    <Image
+                    <SafeImage
                       src={data.property.image}
                       alt={data.property.title}
                       fill
                       sizes="(max-width: 1200px) 100vw, 50vw"
-                      unoptimized={isBackendUploadImage(data.property.image)}
-                      style={{ objectFit: "cover" }}
+                      fallbackSrc="/img/home1.png"
                     />
                   </div>
                 </div>

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Filter, MessageCircle, Search } from "lucide-react";
 import { BookingChatDialog } from "@/components/shared/BookingChatDialog";
@@ -8,6 +7,7 @@ import { PaginationControls } from "@/components/shared/PaginationControls";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { PaymentStatusBadge } from "@/components/shared/PaymentStatusBadge";
 import { BookingReviewDialog } from "@/components/shared/BookingReviewDialog";
+import { SafeImage } from "@/components/shared/SafeImage";
 import {
   getHostBookings,
   reviewHostBooking,
@@ -207,13 +207,13 @@ export default function HostBookingsPage() {
                   <tr key={booking.id}>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <Image
+                        <SafeImage
                           src={booking.propertyImage}
                           alt={booking.propertyTitle}
                           width={42}
                           height={42}
                           sizes="42px"
-                          unoptimized={isBackendUploadImage(booking.propertyImage)}
+                          fallbackSrc="/img/home1.png"
                           style={{ width: 42, height: 42, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
                         />
                         <div>

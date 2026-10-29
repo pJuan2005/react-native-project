@@ -29,7 +29,7 @@ function formatCurrency(value: number) {
 }
 
 function HostPropertyImage({ src, alt }: { src: string; alt: string }) {
-  const fallback = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80";
+  const fallback = "/img/home1.png";
   const [imgSrc, setImgSrc] = useState(src || fallback);
 
   useEffect(() => {

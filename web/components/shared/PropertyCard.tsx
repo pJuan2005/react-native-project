@@ -1,7 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Star, Users, Bed } from "lucide-react";
-import { isBackendUploadImage } from "@/lib/image";
+import { SafeImage } from "@/components/shared/SafeImage";
 
 interface Property {
   id: number;
@@ -32,14 +31,13 @@ export function PropertyCard({ property }: PropertyCardProps) {
         style={{ cursor: "pointer", height: "100%", display: "flex", flexDirection: "column" }}
       >
         <div style={{ overflow: "hidden", position: "relative", aspectRatio: "16 / 10", background: "#f1f5f9" }}>
-          <Image
+          <SafeImage
             src={property.image}
             alt={property.title}
             className="hs-property-img"
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            unoptimized={isBackendUploadImage(property.image)}
-            style={{ objectFit: "cover" }}
+            fallbackSrc={`/img/home${(property.id % 11) + 1}.${(property.id % 11) + 1 <= 3 ? "png" : "jpg"}`}
           />
         </div>
 
