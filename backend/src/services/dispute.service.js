@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const AuditService = require('./audit.service');
+const AIModerationService = require('./ai-moderation.service');
 
 class DisputeService {
   /**
@@ -42,49 +43,18 @@ class DisputeService {
       }
     }
 
-    // 3. AI AUTO-TRIAGE & AUTO-RESOLVE ENGINE:
-    // Tự động phân tích ngữ cảnh, từ khóa (cả có dấu & không dấu) và chứng cứ để gán nhãn hoặc tự động xử lý
-    const rawContent = `${reason} ${description}`.toLowerCase();
-    const normContent = rawContent
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .replace(/đ/g, 'd')
-      .replace(/Đ/g, 'D');
+    // 3. AI TRUST & SAFETY MODERATION (Hỗ trợ gọi trực tiếp LLM API: Gemini / OpenAI + Fallback Heuristic)
+    const aiResult = await AIModerationService.analyzeDispute({
+      reason,
+      description,
+      evidenceUrl,
+      bookingId,
+      targetType,
+    });
 
-    const spamKeywords = [
-      'quang cao', 'quảng cáo', 'mua ban', 'mua bán', 'telegram', 'zalo',
-      'lua dao', 'lừa đảo', 'hack', 'vay tien', 'vay tiền', 'tuyen dung',
-      'tuyển dụng', 'keo telegram', 'spam', 'cờ bạc', 'co bac'
-    ];
-    const isSpamDetected =
-      spamKeywords.some((kw) => rawContent.includes(kw) || normContent.includes(kw)) ||
-      description.trim().length < 6;
-
-    const legitIssueKeywords = [
-      'sai phong', 'sai phòng', 'ban', 'bẩn', 'khong co nuoc', 'không có nước',
-      'khong lien lac duoc', 'không liên lạc được', 'chay no', 'cháy nổ',
-      'hong dieu hoa', 'hỏng điều hòa', 'mui hoi', 'mùi hôi', 'thai do kem',
-      'thái độ kém', 'hong', 'hỏng', 'on ao', 'ồn ào', 'bẩn thỉu', 'ban thiu'
-    ];
-    const hasLegitIssue =
-      legitIssueKeywords.some((kw) => rawContent.includes(kw) || normContent.includes(kw));
-    const hasEvidence = Boolean(evidenceUrl);
-
-    let initialStatus = 'pending';
-    let aiNote = null;
-    let resolutionAction = 'none';
-
-    if (isSpamDetected) {
-      // AI Tự động từ chối spam
-      initialStatus = 'rejected';
-      aiNote = '[AI Auto-Shield]: Phát hiện nội dung spam hoặc từ khóa không hợp lệ. Hệ thống tự động từ chối khiếu nại rác.';
-      resolutionAction = 'none';
-    } else if (hasEvidence && hasLegitIssue && bookingId) {
-      // AI Tự động chấp nhận ưu tiên (Auto-Accept) với trường hợp có bằng chứng ảnh + mã đặt phòng thực tế
-      initialStatus = 'resolved';
-      aiNote = '[AI Auto-Accept]: Khiếu nại có mã phòng hợp lệ, mô tả chi tiết và bằng chứng đính kèm. AI đã tự động phê duyệt và chuyển bộ phận CSKH.';
-      resolutionAction = 'none';
-    }
+    const initialStatus = aiResult.decision || 'pending';
+    const aiNote = aiResult.aiNote;
+    const resolutionAction = 'none';
 
     const [result] = await db.query(
       `INSERT INTO disputes (
