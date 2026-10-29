@@ -43,13 +43,31 @@ class DisputeService {
     }
 
     // 3. AI AUTO-TRIAGE & AUTO-RESOLVE ENGINE:
-    // Tự động phân tích ngữ cảnh, từ khóa và chứng cứ để gán nhãn hoặc tự động xử lý
-    const content = `${reason} ${description}`.toLowerCase();
-    const spamKeywords = ['quảng cáo', 'mua bán', 'telegram', 'zalo', 'lừa đảo lừa đảo', 'hack', 'vay tiền', 'tuyen dung'];
-    const isSpamDetected = spamKeywords.some((kw) => content.includes(kw)) || description.trim().length < 6;
+    // Tự động phân tích ngữ cảnh, từ khóa (cả có dấu & không dấu) và chứng cứ để gán nhãn hoặc tự động xử lý
+    const rawContent = `${reason} ${description}`.toLowerCase();
+    const normContent = rawContent
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D');
 
-    const legitIssueKeywords = ['sai phòng', 'bẩn', 'không có nước', 'không liên lạc được', 'cháy nổ', 'hỏng điều hòa', 'mùi hôi', 'thái độ kém'];
-    const hasLegitIssue = legitIssueKeywords.some((kw) => content.includes(kw));
+    const spamKeywords = [
+      'quang cao', 'quảng cáo', 'mua ban', 'mua bán', 'telegram', 'zalo',
+      'lua dao', 'lừa đảo', 'hack', 'vay tien', 'vay tiền', 'tuyen dung',
+      'tuyển dụng', 'keo telegram', 'spam', 'cờ bạc', 'co bac'
+    ];
+    const isSpamDetected =
+      spamKeywords.some((kw) => rawContent.includes(kw) || normContent.includes(kw)) ||
+      description.trim().length < 6;
+
+    const legitIssueKeywords = [
+      'sai phong', 'sai phòng', 'ban', 'bẩn', 'khong co nuoc', 'không có nước',
+      'khong lien lac duoc', 'không liên lạc được', 'chay no', 'cháy nổ',
+      'hong dieu hoa', 'hỏng điều hòa', 'mui hoi', 'mùi hôi', 'thai do kem',
+      'thái độ kém', 'hong', 'hỏng', 'on ao', 'ồn ào', 'bẩn thỉu', 'ban thiu'
+    ];
+    const hasLegitIssue =
+      legitIssueKeywords.some((kw) => rawContent.includes(kw) || normContent.includes(kw));
     const hasEvidence = Boolean(evidenceUrl);
 
     let initialStatus = 'pending';
